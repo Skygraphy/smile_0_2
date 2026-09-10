@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "smile-app",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "cwd": "smile-app",
+      "args": [
+        "--dart-define=SUPABASE_URL=https://wxuipqaozvgzthlgnbgz.supabase.co",
+        "--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_Bb9-3HDlRCWoyHZsweKbZw_scLAvNpV"
+      ]
+    },
+    {
+      "name": "smile-app (release)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release",
+      "program": "lib/main.dart",
+      "cwd": "smile-app",
+      "args": [
+        "--dart-define=SUPABASE_URL=https://wxuipqaozvgzthlgnbgz.supabase.co",
+        "--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_Bb9-3HDlRCWoyHZsweKbZw_scLAvNpV"
+      ]
+    },
+    {
+      "name": "smile-frame",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "cwd": "smile-frame",
+      "args": ["--dart-define=SUPABASE_URL=https://wxuipqaozvgzthlgnbgz.supabase.co"]
+    },
+    {
+      "name": "smile-frame (release)",
+      "request": "launch",
+      "type": "dart",
+      "flutterMode": "release",
+      "program": "lib/main.dart",
+      "cwd": "smile-frame",
+      "args": ["--dart-define=SUPABASE_URL=https://wxuipqaozvgzthlgnbgz.supabase.co"]
+    }
+  ]
+}
