@@ -14,6 +14,11 @@ const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 interface ClaimRequest {
   code: string;
   space_id: string;
+  // "Gerät ersetzen": the old Frame this new one is meant to take over
+  // for (see migrations/0023_replace_device_on_pairing.sql). Staged here,
+  // applied at activation time (poll-device-pairing) -- same handoff
+  // claimed_by_user_id already uses.
+  replace_device_id?: string;
 }
 
 Deno.serve(async (req) => {
@@ -50,6 +55,17 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (!ownerRow) return jsonResponse({ error: "not_space_owner" }, 403);
 
+  if (body.replace_device_id) {
+    const { data: replaceTarget } = await supabaseAdmin
+      .from("devices")
+      .select("space_id")
+      .eq("id", body.replace_device_id)
+      .maybeSingle();
+    if (!replaceTarget || replaceTarget.space_id !== body.space_id) {
+      return jsonResponse({ error: "replace_device_id_not_in_space" }, 400);
+    }
+  }
+
   const { data: pairingCode, error: codeError } = await supabaseAdmin
     .from("pairing_codes")
     .select("*")
@@ -67,7 +83,11 @@ Deno.serve(async (req) => {
   // still matches once the first has landed.
   const { data: updated, error: updateError } = await supabaseAdmin
     .from("pairing_codes")
-    .update({ space_id: body.space_id })
+    .update({
+      space_id: body.space_id,
+      claimed_by_user_id: userId,
+      replace_device_id: body.replace_device_id ?? null,
+    })
     .eq("id", pairingCode.id)
     .is("space_id", null)
     .select()

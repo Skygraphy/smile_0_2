@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Runtime-prompted on Android 13+ by firebase_messaging's
+         requestPermission(); needed to show a system-tray notification
+         for a join request, an approval, or a new photo (data-only
+         messages, like smile-frame's own sync-nudge, don't need this). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="smile_app"
         android:name="${applicationName}"

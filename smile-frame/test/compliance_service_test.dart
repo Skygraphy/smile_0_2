@@ -43,8 +43,14 @@ void main() {
         .thenAnswer((_) async => http.Response(jsonEncode({'commands': []}), 200));
   });
 
-  test('a live pinned status is reported as-is and cached', () async {
-    when(() => kioskLockdown.checkStatus()).thenAnswer((_) async => true);
+  // Pinning is a manual, admin-triggered action now (Android's own
+  // Recent-Apps "Pin" gesture -- no in-app trigger, no Home-role
+  // auto-recovery), so an unpinned Frame is the expected normal state, not
+  // a compliance violation. The live pin status is still recorded (for
+  // device_settings_screen.dart's display) but never affects
+  // compliance_state, which is always reported as 'compliant'.
+  test('compliance_state is always compliant regardless of pin status', () async {
+    when(() => kioskLockdown.checkStatus()).thenAnswer((_) async => false);
     when(() => statusStore.save(any())).thenAnswer((_) async {});
 
     await service.submitHeartbeat();
@@ -53,31 +59,22 @@ void main() {
         .captured
         .single as String;
     expect(jsonDecode(captured)['compliance_state'], 'compliant');
+  });
+
+  test('a live status is cached for display, whatever its value', () async {
+    when(() => kioskLockdown.checkStatus()).thenAnswer((_) async => true);
+    when(() => statusStore.save(any())).thenAnswer((_) async {});
+
+    await service.submitHeartbeat();
+
     verify(() => statusStore.save(true)).called(1);
   });
 
-  test('an indeterminate status (background isolate) falls back to the last known value', () async {
+  test('an indeterminate status (background isolate, no native handler) is not cached', () async {
     when(() => kioskLockdown.checkStatus()).thenAnswer((_) async => null);
-    when(() => statusStore.read()).thenAnswer((_) async => true);
 
     await service.submitHeartbeat();
 
-    final captured = verify(() => httpClient.post(any(), headers: any(named: 'headers'), body: captureAny(named: 'body')))
-        .captured
-        .single as String;
-    expect(jsonDecode(captured)['compliance_state'], 'compliant');
     verifyNever(() => statusStore.save(any()));
-  });
-
-  test('an indeterminate status with no prior known value defaults to drift_detected', () async {
-    when(() => kioskLockdown.checkStatus()).thenAnswer((_) async => null);
-    when(() => statusStore.read()).thenAnswer((_) async => null);
-
-    await service.submitHeartbeat();
-
-    final captured = verify(() => httpClient.post(any(), headers: any(named: 'headers'), body: captureAny(named: 'body')))
-        .captured
-        .single as String;
-    expect(jsonDecode(captured)['compliance_state'], 'drift_detected');
   });
 }

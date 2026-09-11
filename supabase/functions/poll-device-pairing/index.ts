@@ -62,7 +62,12 @@ Deno.serve(async (req) => {
 
     if (claimError) return jsonResponse({ error: "activation_failed" }, 500);
     if (claimedRow) {
-      return await activateDevice(pairingCode.device_id, pairingCode.space_id);
+      return await activateDevice(
+        pairingCode.device_id,
+        pairingCode.space_id,
+        pairingCode.claimed_by_user_id,
+        pairingCode.replace_device_id,
+      );
     }
   }
 
@@ -76,16 +81,31 @@ Deno.serve(async (req) => {
     // Retry after a dropped response: mint a fresh credential set. Safe
     // because only whoever still holds the not-yet-expired code could
     // reach this branch, and the exposure window is that code's short TTL.
-    return await activateDevice(pairingCode.device_id, pairingCode.space_id);
+    return await activateDevice(
+      pairingCode.device_id,
+      pairingCode.space_id,
+      pairingCode.claimed_by_user_id,
+      pairingCode.replace_device_id,
+    );
   }
 
   return jsonResponse({ status: "pending" });
 });
 
-async function activateDevice(deviceId: string, spaceId: string): Promise<Response> {
+async function activateDevice(
+  deviceId: string,
+  spaceId: string,
+  pairedByUserId: string | null,
+  replaceDeviceId: string | null,
+): Promise<Response> {
   await supabase
     .from("devices")
-    .update({ space_id: spaceId, lifecycle_state: "active", last_seen_at: new Date().toISOString() })
+    .update({
+      space_id: spaceId,
+      lifecycle_state: "active",
+      last_seen_at: new Date().toISOString(),
+      paired_by_user_id: pairedByUserId,
+    })
     .eq("id", deviceId);
 
   const { data: existingPolicy } = await supabase
@@ -96,13 +116,36 @@ async function activateDevice(deviceId: string, spaceId: string): Promise<Respon
 
   let policy = existingPolicy;
   if (!policy) {
+    // "Gerät ersetzen" (migrations/0023_replace_device_on_pairing.sql):
+    // carry the old device's settings over instead of a bare default, so
+    // switching hardware doesn't quietly reset Channel-Wechsel/display
+    // preferences. Best-effort -- a missing/failed copy still leaves a
+    // perfectly usable default policy, never blocks pairing.
+    const replacementPolicy = replaceDeviceId
+      ? (await supabase.from("device_policies").select("*").eq("device_id", replaceDeviceId).maybeSingle()).data
+      : null;
     const { data: newPolicy, error: policyError } = await supabase
       .from("device_policies")
-      .insert({ device_id: deviceId })
+      .insert({
+        device_id: deviceId,
+        ...(replacementPolicy
+          ? {
+              display_mode: replacementPolicy.display_mode,
+              slideshow_interval_seconds: replacementPolicy.slideshow_interval_seconds,
+              compliance_check_interval_minutes: replacementPolicy.compliance_check_interval_minutes,
+              channel_switch_enabled: replacementPolicy.channel_switch_enabled,
+              max_local_cache_gb: replacementPolicy.max_local_cache_gb,
+            }
+          : {}),
+      })
       .select()
       .single();
     if (policyError || !newPolicy) return jsonResponse({ error: "policy_creation_failed" }, 500);
     policy = newPolicy;
+  }
+
+  if (replaceDeviceId) {
+    await migrateFromReplacedDevice(deviceId, replaceDeviceId);
   }
 
   const { data: existingCredentials } = await supabase
@@ -138,4 +181,46 @@ async function activateDevice(deviceId: string, spaceId: string): Promise<Respon
     refresh_secret: refreshSecret,
     policy,
   });
+}
+
+// "Gerät ersetzen": carries channel assignments and the photo backlog over
+// from an old Frame to its replacement, then retires the old one.
+// Best-effort throughout (logged via console.error, never thrown) --
+// a partial migration is still far better than blocking this device's
+// credential minting entirely, and is safe to re-run by hand if needed.
+async function migrateFromReplacedDevice(newDeviceId: string, oldDeviceId: string): Promise<void> {
+  try {
+    const { data: oldAssignments } = await supabase
+      .from("channel_memberships")
+      .select("channel_id, sort_order")
+      .eq("device_id", oldDeviceId)
+      .eq("role", "device");
+
+    if (oldAssignments && oldAssignments.length > 0) {
+      await supabase.from("channel_memberships").insert(
+        oldAssignments.map((a) => ({
+          device_id: newDeviceId,
+          channel_id: a.channel_id,
+          role: "device",
+          sort_order: a.sort_order,
+        })),
+      );
+    }
+
+    const { data: oldRecipients } = await supabase
+      .from("media_recipients")
+      .select("media_item_id, channel_id, sort_order, delivered_at, viewed_at, hidden_at")
+      .eq("device_id", oldDeviceId);
+
+    if (oldRecipients && oldRecipients.length > 0) {
+      await supabase.from("media_recipients").upsert(
+        oldRecipients.map((r) => ({ ...r, device_id: newDeviceId })),
+        { onConflict: "media_item_id,device_id", ignoreDuplicates: true },
+      );
+    }
+
+    await supabase.from("devices").update({ lifecycle_state: "retired" }).eq("id", oldDeviceId);
+  } catch (err) {
+    console.error("migrateFromReplacedDevice failed", oldDeviceId, "->", newDeviceId, err);
+  }
 }

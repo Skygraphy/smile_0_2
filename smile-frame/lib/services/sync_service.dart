@@ -80,6 +80,13 @@ class SyncService {
   final MediaCacheStore _cacheStore;
   final http.Client _httpClient;
 
+  /// Persists the Personal-Mode-picked channel (see
+  /// device_settings_screen.dart on the Smile-App side for how a device
+  /// gets assigned to more than one channel, and the `channel_switch_
+  /// enabled` policy gate). Caller still has to trigger a `sync()`
+  /// afterwards to actually pick up the new channel's content.
+  Future<void> selectChannel(String channelId) => _credentialsStore.savePreferredChannelId(channelId);
+
   Future<SyncResult> sync({String? fcmToken}) async {
     await _refreshIfNeeded();
 
@@ -89,46 +96,20 @@ class SyncService {
       return SyncResult(channelId: null, entries: local, policy: null, assignedChannels: const []);
     }
 
-    Map<String, dynamic>? firstPageData;
-    final remoteItems = <RemoteMediaEntry>[];
-    int? cursor;
-    // Loops through get-media-batch's keyset pages until exhausted, so a
-    // channel with more than one page's worth of assigned items still gets
-    // synced in full, not just the first page.
-    while (true) {
-      http.Response response;
-      try {
-        response = await _httpClient.post(
-          Uri.parse(BackendConfig.functionUrl('get-media-batch')),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'access_token': accessToken,
-            'fcm_token': ?fcmToken,
-            'cursor': ?cursor,
-          }),
-        );
-      } catch (_) {
-        return SyncResult(channelId: null, entries: local, policy: null, assignedChannels: const []);
-      }
-
-      if (response.statusCode != 200) {
-        return SyncResult(channelId: null, entries: local, policy: null, assignedChannels: const []);
-      }
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      firstPageData ??= data;
-      remoteItems.addAll(
-        ((data['items'] as List?) ?? []).cast<Map<String, dynamic>>().map((e) => RemoteMediaEntry(
-              mediaItemId: e['media_item_id'] as String,
-              mediaType: e['media_type'] as String,
-              sortOrder: e['sort_order'] as int,
-              displayUrl: e['display_url'] as String?,
-            )),
-      );
-      cursor = data['next_cursor'] as int?;
-      if (cursor == null) break;
+    final preferredChannelId = await _credentialsStore.preferredChannelId;
+    var page = await _fetchAllPages(accessToken: accessToken, fcmToken: fcmToken, channelIdOverride: preferredChannelId);
+    if (page.notAssignedToChosenChannel) {
+      // The channel this Frame was switched to (Personal Mode) is no
+      // longer assigned to it -- fall back to the server default instead
+      // of getting permanently stuck requesting a channel that's gone.
+      await _credentialsStore.clearPreferredChannelId();
+      page = await _fetchAllPages(accessToken: accessToken, fcmToken: fcmToken, channelIdOverride: null);
     }
-    final data = firstPageData;
+    if (page.failed) {
+      return SyncResult(channelId: null, entries: local, policy: null, assignedChannels: const []);
+    }
+    final data = page.firstPageData!;
+    final remoteItems = page.items;
 
     final diff = MediaCacheSync.diff(remoteItems, local);
 
@@ -196,6 +177,62 @@ class SyncService {
     );
   }
 
+  /// Loops through get-media-batch's keyset pages until exhausted, so a
+  /// channel with more than one page's worth of assigned items still gets
+  /// synced in full, not just the first page. [channelIdOverride] is the
+  /// Personal-Mode-picked channel (see DeviceCredentialsStore), if any --
+  /// omitted, the server falls back to its own default (first-assigned).
+  Future<_PageFetchResult> _fetchAllPages({
+    required String accessToken,
+    required String? fcmToken,
+    required String? channelIdOverride,
+  }) async {
+    Map<String, dynamic>? firstPageData;
+    final remoteItems = <RemoteMediaEntry>[];
+    int? cursor;
+    while (true) {
+      http.Response response;
+      try {
+        response = await _httpClient.post(
+          Uri.parse(BackendConfig.functionUrl('get-media-batch')),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'access_token': accessToken,
+            'fcm_token': ?fcmToken,
+            'channel_id': ?channelIdOverride,
+            'cursor': ?cursor,
+          }),
+        );
+      } catch (_) {
+        return _PageFetchResult.failed();
+      }
+
+      if (response.statusCode == 403 && channelIdOverride != null) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>?;
+        if (data?['error'] == 'device_not_assigned_to_channel') {
+          return _PageFetchResult.notAssigned();
+        }
+      }
+      if (response.statusCode != 200) {
+        return _PageFetchResult.failed();
+      }
+
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      firstPageData ??= data;
+      remoteItems.addAll(
+        ((data['items'] as List?) ?? []).cast<Map<String, dynamic>>().map((e) => RemoteMediaEntry(
+              mediaItemId: e['media_item_id'] as String,
+              mediaType: e['media_type'] as String,
+              sortOrder: e['sort_order'] as int,
+              displayUrl: e['display_url'] as String?,
+            )),
+      );
+      cursor = data['next_cursor'] as int?;
+      if (cursor == null) break;
+    }
+    return _PageFetchResult(firstPageData: firstPageData, items: remoteItems);
+  }
+
   Future<void> _refreshIfNeeded() async {
     final expiresAt = await _credentialsStore.accessTokenExpiresAt;
     final deviceId = await _credentialsStore.deviceId;
@@ -218,4 +255,27 @@ class SyncService {
       // shouldn't block this sync round.
     }
   }
+}
+
+class _PageFetchResult {
+  _PageFetchResult({this.firstPageData, this.items = const []})
+      : failed = false,
+        notAssignedToChosenChannel = false;
+
+  _PageFetchResult.failed()
+      : firstPageData = null,
+        items = const [],
+        failed = true,
+        notAssignedToChosenChannel = false;
+
+  _PageFetchResult.notAssigned()
+      : firstPageData = null,
+        items = const [],
+        failed = false,
+        notAssignedToChosenChannel = true;
+
+  final Map<String, dynamic>? firstPageData;
+  final List<RemoteMediaEntry> items;
+  final bool failed;
+  final bool notAssignedToChosenChannel;
 }

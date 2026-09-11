@@ -18,6 +18,7 @@ class ChannelListScreen extends StatefulWidget {
 class _ChannelListScreenState extends State<ChannelListScreen> {
   final _channelService = ChannelService();
   List<Map<String, dynamic>>? _channels;
+  String? _errorMessage;
   bool _isCreating = false;
 
   @override
@@ -27,9 +28,20 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
   }
 
   Future<void> _load() async {
-    final channels = await _channelService.listChannels(widget.spaceId);
-    if (!mounted) return;
-    setState(() => _channels = channels);
+    try {
+      final channels = await _channelService.listChannels(widget.spaceId);
+      if (!mounted) return;
+      setState(() {
+        _channels = channels;
+        _errorMessage = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _channels ??= const [];
+        _errorMessage = 'Channels konnten nicht geladen werden: $e';
+      });
+    }
   }
 
   Future<void> _createChannel() async {
@@ -56,6 +68,11 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  ),
                 for (final channel in _channels!)
                   Card(
                     child: ListTile(

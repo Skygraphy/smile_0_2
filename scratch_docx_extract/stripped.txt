@@ -1,0 +1,617 @@
+﻿
+Konzept: Smile & Smile-Frame
+1. Produktidee
+Smile ist eine digitale Plattform zum privaten Austausch und zur PrÃ¤sentation von Fotos innerhalb von Familien, Freundeskreisen und anderen persÃ¶nlichen Gruppen.
+Das System besteht aus zwei Komponenten:
+Smile â€“ mobile App zum Erstellen, Teilen und Verwalten von Foto-Inhalten 
+Smile-Frame â€“ dediziertes Display zur automatischen oder interaktiven Darstellung dieser Inhalte 
+Smile-Frame besitzt dabei zwei wesentliche Einsatzbereiche:
+Assistive Nutzung: Personen mit starken motorischen oder geistigen EinschrÃ¤nkungen erhalten automatisch Zugang zu Fotos, ohne ein Smartphone oder Tablet bedienen zu mÃ¼ssen. 
+Normale Nutzung: Familien und Freunde verwenden Smile auf ihren Smartphones und nutzen das Smile-Frame zusÃ¤tzlich als gemeinsames digitales Foto-Display, beispielsweise im Wohnzimmer. 
+Smile-Frame ist damit kein reines Hilfsmittel, sondern ein eigenstÃ¤ndiges Display-Endpoint fÃ¼r Smile-Inhalte.
+
+2. Grundprinzip der Plattform
+Die Architektur trennt konsequent zwischen:
+Person â€“ Inhalt â€“ Berechtigung â€“ GerÃ¤t
+Eine Person besitzt eine digitale IdentitÃ¤t.
+Ein Inhalt gehÃ¶rt zu einem Channel.
+Ein Channel gehÃ¶rt zu einem Smile Space.
+Ein Smile-Frame wird einem Smile Space zugeordnet.
+Damit lautet die grundlegende Struktur:
+User
+ â”‚
+ â”‚ Membership
+ â–¼
+Channel
+ â”‚
+ â”‚ gehÃ¶rt zu
+ â–¼
+Smile Space
+ â”‚
+ â”‚ Device Association
+ â–¼
+Smile-Frame
+
+3. Smile â€“ die menschliche Seite des Systems
+Smile ist die Anwendung, mit der Menschen Fotos austauschen.
+Die Benutzer arbeiten mit:
+ihrem Smartphone, 
+ihrem Tablet, 
+ihrem Smile-Account, 
+ihren Channels, 
+ihren Berechtigungen. 
+Smile ist damit human-centric.
+
+4. Passwordless Authentication
+Smile verwendet eine Passwordless Authentication mittels Email OTP.
+Der Benutzer benÃ¶tigt kein Passwort.
+Der Anmeldevorgang lautet:
+E-Mail-Adresse
+      â†“
+6-stelligen Code anfordern
+      â†“
+Code per E-Mail
+      â†“
+Code eingeben
+      â†“
+Authentifizierung
+      â†“
+Smile Session
+Der sechsstellige Code ist:
+zeitlich begrenzt, 
+einmalig verwendbar, 
+gegen Brute-Force-Angriffe geschÃ¼tzt, 
+durch Rate Limiting abgesichert. 
+Nach erfolgreicher Anmeldung verwendet Smile Access- und Refresh-Tokens.
+Eine erneute Anmeldung ist deshalb im Normalbetrieb nicht erforderlich.
+
+5. Der Smile Space
+Der Smile Space ist die zentrale organisatorische Einheit.
+Er reprÃ¤sentiert einen gemeinsamen digitalen Foto- und Kommunikationsraum.
+Ein Space kann beispielsweise heiÃŸen:
+â€žOma Mariaâ€œ
+oder:
+â€žFamilie MÃ¼llerâ€œ
+oder:
+â€žFamilie + Freundeâ€œ
+Der Space ist kein Benutzerkonto und keine einzelne Person.
+Er ist ein virtueller Ressourcen- und Berechtigungsraum.
+
+6. Channels
+Innerhalb eines Smile Space existieren mehrere Channels.
+Beispielsweise:
+Smile Space â€žOma Mariaâ€œ
+â”œâ”€â”€ Familie Tochter
+â”œâ”€â”€ Familie Sohn
+â”œâ”€â”€ Enkelkinder
+â””â”€â”€ Freunde
+Ein Channel ist ein eigenstÃ¤ndiger Content Stream.
+Er besitzt:
+eigene Benutzer, 
+eigene Memberships, 
+eigene Rollen, 
+eigene Berechtigungen, 
+eigene Fotos. 
+
+7. UnabhÃ¤ngige Benutzergruppen
+Die Benutzer eines Channels mÃ¼ssen die Benutzer anderer Channels weder kennen noch sehen.
+Beispielsweise:
+Familie Tochter
+    Anna
+    Peter
+    Lisa
+Familie Sohn
+    Thomas
+    Sabine
+    Max
+Enkelkinder
+    Julia
+    Michael
+Freunde
+    Hans
+    Karin
+Anna sieht nur den Bereich, fÃ¼r den sie berechtigt ist.
+Sie muss nicht wissen, wer zu â€žFamilie Sohnâ€œ gehÃ¶rt.
+Thomas erhÃ¤lt keine automatische Einsicht in â€žFamilie Tochterâ€œ.
+Das Backend erzwingt diese Resource Isolation.
+
+8. Membership und Rollen
+Die Verbindung zwischen einem Benutzer und einem Channel wird als Membership gespeichert.
+Eine Membership besitzt eine Rolle.
+Das System verwendet Role Based Access Control (RBAC).
+Die Rollen sind:
+Space Owner
+Verwaltet einen Smile Space.
+Channel Admin
+Verwaltet einen bestimmten Channel.
+Contributor
+Kann Fotos zu einem Channel hinzufÃ¼gen.
+Viewer
+Kann Inhalte ansehen.
+Device
+Kann Inhalte auf einem Smile-Frame darstellen.
+
+9. Es gibt keinen Super-Admin innerhalb eines Spaces
+Ein globaler Super-Admin fÃ¼r einen Smile Space ist nicht Bestandteil des Systems.
+Die Berechtigungen werden nach dem Prinzip:
+Least Privilege
+vergeben.
+Ein Channel Admin besitzt nur die Rechte, die fÃ¼r seinen Channel erforderlich sind.
+Dadurch kann beispielsweise die Familie der Tochter ihren eigenen Bereich verwalten, ohne Zugriff auf den Bereich der Familie des Sohnes zu erhalten.
+
+10. Platform Administrator
+Auf der technischen Ebene existiert ein Platform Administrator.
+Dieser gehÃ¶rt zum Betreiber der Smile-Plattform und nicht zu einem Smile Space.
+Seine Aufgaben sind:
+technischer Systembetrieb, 
+GerÃ¤teverwaltung, 
+Support, 
+MissbrauchsbekÃ¤mpfung, 
+Sperrung von Accounts, 
+Plattformwartung, 
+technische Administration. 
+Die technische Administration und die inhaltliche Verwaltung werden durch Separation of Duties getrennt.
+Der Platform Administrator ist nicht automatisch Mitglied eines Channels.
+
+11. Einladungen
+Benutzer werden Ã¼ber Invitations zu Channels hinzugefÃ¼gt.
+Ein Channel Admin kann beispielsweise:
+Familie Tochter
+      â†“
+Mitglied einladen
+      â†“
+E-Mail-Adresse
+      â†“
+Einladung
+      â†“
+Email OTP Authentication
+      â†“
+Membership wird aktiviert
+Der eingeladene Benutzer erhÃ¤lt dadurch ausschlieÃŸlich die fÃ¼r ihn bestimmte Channel-Berechtigung.
+
+12. Smile-Frame â€“ die GerÃ¤tewelt
+Das Smile-Frame ist kein Benutzer.
+Es besitzt keine normale BenutzeridentitÃ¤t.
+Es besitzt stattdessen eine:
+Device Identity
+Diese besteht aus:
+eindeutiger Device ID, 
+kryptografischem SchlÃ¼sselpaar, 
+gerÃ¤tespezifischem Credential. 
+Der private SchlÃ¼ssel verbleibt auf dem GerÃ¤t.
+Damit authentifiziert sich das Frame gegenÃ¼ber dem Backend als Managed Device.
+
+13. Pseudonymisierung
+Das Smile-Frame arbeitet mit seiner technischen IdentitÃ¤t und benÃ¶tigt keine unnÃ¶tigen personenbezogenen Informationen.
+Die Zuordnung
+Device
+   â†“
+Smile Space
+   â†“
+Personen / Gruppen
+wird im Backend verwaltet.
+Das GerÃ¤t selbst arbeitet primÃ¤r mit seiner Device ID und technischen Credentials.
+Damit ist das Frame pseudonymisiert, nicht anonym.
+
+14. Secure Pairing
+Ein neues Smile-Frame befindet sich zunÃ¤chst im Zustand:
+UNPAIRED
+Auf dem GerÃ¤t wird ein einmaliger Pairing-Code und QR-Code angezeigt.
+Beispielsweise:
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                     â”‚
+â”‚       QR-CODE       â”‚
+â”‚                     â”‚
+â”‚                     â”‚
+â”‚       482 731       â”‚
+â”‚                     â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+In Smile wird anschlieÃŸend:
+Einstellungen
+      â†“
+Smile-Frame
+      â†“
+Neues Frame hinzufÃ¼gen
+      â†“
+QR-Code scannen
+ausgefÃ¼hrt.
+
+15. Pairing ist Device Provisioning
+Der Pairing-Code dient ausschlieÃŸlich zur erstmaligen Einrichtung.
+Nach erfolgreichem Pairing wird:
+Pairing Code
+     â†“
+Device Authentication
+     â†“
+Device Credential
+erzeugt bzw. aktiviert.
+Der Pairing-Code wird anschlieÃŸend ungÃ¼ltig.
+Das dauerhafte Credential des GerÃ¤ts ist damit unabhÃ¤ngig vom einmaligen Pairing-Code.
+
+16. Frame wird einem Smile Space zugeordnet
+Das entscheidende Binding lautet:
+Smile-Frame
+      â†“
+Device Association
+      â†“
+Smile Space
+Nicht:
+Smile-Frame â†’ Benutzer
+Das Frame gehÃ¶rt organisatorisch zum Space.
+Dadurch erhÃ¤lt es Zugriff auf die fÃ¼r diesen Space freigegebenen Channels.
+
+17. Ein Space kann mehrere Frames besitzen
+Beispielsweise:
+Smile Space â€žOma Mariaâ€œ
+       â”‚
+       â”œâ”€â”€ Frame Wohnzimmer
+       â”œâ”€â”€ Frame Schlafzimmer
+       â””â”€â”€ Frame Pflegeheim
+Jedes Frame besitzt dabei seine eigene Device Identity.
+
+18. Ein Channel kann mehrere Frames versorgen
+Ein Channel kann gleichzeitig auf mehreren Frames dargestellt werden.
+Channel â€žEnkelkinderâ€œ
+          â”‚
+     â”Œâ”€â”€â”€â”€â”´â”€â”€â”€â”€â”
+     â†“         â†“
+ Frame A     Frame B
+Ein hochgeladenes Foto kann dadurch automatisch auf allen berechtigten Frames erscheinen.
+
+19. Smile-Frame besitzt zwei Betriebsmodi
+Assisted Mode
+Das Frame arbeitet weitgehend autonom.
+Die unterstÃ¼tzte Person muss das GerÃ¤t nicht bedienen.
+Foto hochgeladen
+      â†“
+Backend
+      â†“
+Frame
+      â†“
+automatische Anzeige
+Personal Mode
+Eine normale Person verwendet das Frame aktiv.
+Sie kann beispielsweise:
+Channels wechseln, 
+Fotos ansehen, 
+Ã¤ltere Fotos betrachten, 
+eine Diashow starten, 
+bestimmte Inhalte auswÃ¤hlen. 
+Das GerÃ¤t bleibt trotzdem ein dediziertes Foto- und Content-Display.
+
+20. Smile-Frame ist nicht nur ein AssistenzgerÃ¤t
+Diese Eigenschaft wird ausdrÃ¼cklich Bestandteil des Produktkonzepts.
+Eine Familie kann Smile ganz normal auf ihren Smartphones verwenden und zusÃ¤tzlich ein Smile-Frame im Wohnzimmer aufstellen.
+Beispiel:
+Anna â”€â”€â”
+Peter â”€â”¤
+Lisa â”€â”€â”¼â”€â”€â†’ Smile Backend â”€â”€â†’ Smile-Frame
+Max  â”€â”€â”¤
+Julia â”€â”˜
+Alle laden ihre Urlaubsfotos in Smile.
+Das Smile-Frame zeigt diese Fotos anschlieÃŸend als gemeinsames groÃŸes Display.
+Damit wird das Frame zum:
+Digital Photo Frame + Shared Photo Display
+
+21. Channels sind nicht auf Familienrollen beschrÃ¤nkt
+Ein Channel kann sowohl eine Personengruppe als auch ein thematischer Content Stream sein.
+Beispiele:
+Familie
+Freunde
+Enkelkinder
+Urlaub Italien 2026
+Weihnachten
+Geburtstag
+Hochzeit
+Die ursprÃ¼ngliche Aufteilung
+Familie Tochter / Familie Sohn / Enkelkinder / Freunde
+ist daher eine typische Verwendung, aber keine technische EinschrÃ¤nkung.
+
+22. Das Frame kann zwischen Channels wechseln
+Das Frame erhÃ¤lt vom Backend seine Channel-Konfiguration.
+Beispielsweise:
+1. Familie Tochter
+2. Familie Sohn
+3. Enkelkinder
+4. Freunde
+Der Benutzer kann zwischen diesen Channels wechseln.
+Die Reihenfolge und VerfÃ¼gbarkeit der Channels werden zentral konfiguriert.
+Das GerÃ¤t benÃ¶tigt dafÃ¼r keine lokale AdministrationsoberflÃ¤che.
+
+23. Smile-Frame lÃ¤uft im Kiosk Mode
+Das Betriebssystem arbeitet im:
+Single-App / Kiosk Mode
+FÃ¼r den Benutzer ist ausschlieÃŸlich Smile-Frame sichtbar.
+Nicht zugÃ¤nglich sind:
+Systemeinstellungen, 
+Browser, 
+App Store, 
+andere Apps, 
+Kontoverwaltung, 
+komplexe Betriebssystemfunktionen. 
+Das GerÃ¤t verhÃ¤lt sich dadurch wie ein eigenstÃ¤ndiges Produkt und nicht wie ein gewÃ¶hnliches Tablet.
+
+24. Zero-Touch-Betrieb
+Nach der einmaligen Einrichtung lÃ¤uft das Frame autonom.
+Boot
+ â†“
+Smile-Frame starten
+ â†“
+Netzwerk verbinden
+ â†“
+Device authentifizieren
+ â†“
+Konfiguration laden
+ â†“
+Fotos synchronisieren
+ â†“
+Normalbetrieb
+Nach einem Stromausfall oder Neustart ist keine Benutzerinteraktion notwendig.
+
+25. Offline-Toleranz
+Das Frame besitzt einen lokalen verschlÃ¼sselten Content Cache.
+Bereits synchronisierte Fotos bleiben dadurch auch bei einem Internetausfall verfÃ¼gbar.
+Cloud Storage
+      â†“
+Synchronisation
+      â†“
+Local Cache
+      â†“
+Anzeige
+Das System arbeitet damit offline-tolerant.
+
+26. Self-Healing
+Das GerÃ¤t verfÃ¼gt Ã¼ber einen Watchdog.
+Wenn die Anwendung nicht mehr reagiert:
+Application Failure
+       â†“
+Watchdog
+       â†“
+Application Restart
+Bei schwerwiegenden Fehlern erfolgt automatisch ein Systemneustart.
+Das Ziel ist ein Self-Healing Endpoint, das sich mÃ¶glichst selbst wieder in einen funktionierenden Zustand bringt.
+
+27. Heartbeat und Telemetrie
+Das Frame Ã¼bermittelt regelmÃ¤ÃŸig technische Statusinformationen an das Backend.
+Beispielsweise:
+Device ID
+App Version
+OS Version
+Uptime
+Storage
+Network Status
+Last Synchronisation
+Timestamp
+Damit erkennt die Plattform automatisch:
+ob das GerÃ¤t online ist, 
+wann es zuletzt synchronisiert wurde, 
+welche Softwareversion lÃ¤uft, 
+ob Speicherprobleme auftreten. 
+
+28. Remote Device Management
+Die GerÃ¤te werden zentral verwaltet.
+Die Administration sieht beispielsweise:
+Frame 8F3A72
+Status:          ONLINE
+App Version:     1.4.2
+Last Heartbeat:  16:42
+Last Sync:       16:41
+Storage:         61 %
+Network:         OK
+Damit ist eine weitgehende Fernwartung mÃ¶glich.
+
+29. OTA Updates
+Smile-Frame erhÃ¤lt Updates Ã¼ber:
+Over-the-Air Updates
+Die Software wird automatisch aktualisiert.
+Die Update-Infrastruktur verwendet:
+Atomic Updates / A-B Updates / Rollback
+Ein fehlerhaftes Update fÃ¼hrt dadurch nicht dauerhaft zu einem unbrauchbaren GerÃ¤t.
+
+30. Push und Polling
+Neue Inhalte werden primÃ¤r Ã¼ber einen Push-Mechanismus angekÃ¼ndigt.
+Foto hochgeladen
+      â†“
+Backend
+      â†“
+Push Notification
+      â†“
+Frame
+      â†“
+Foto herunterladen
+ZusÃ¤tzlich fÃ¼hrt das Frame regelmÃ¤ÃŸig einen Polling-Fallback durch.
+Dadurch bleibt die Synchronisation auch bei Problemen mit dem Push-System funktionsfÃ¤hig.
+
+31. Das Backend ist die zentrale Vertrauensinstanz
+Smile und Smile-Frame kommunizieren nicht direkt miteinander.
+Das Backend vermittelt zwischen beiden Seiten.
+Es verwaltet:
+Users
+Smile Spaces
+Channels
+Memberships
+Roles
+Permissions
+Devices
+Device Credentials
+Pairings
+Photos
+Photo Metadata
+Notifications
+Device Configuration
+Telemetry
+Software Versions
+Das Backend bildet damit den zentralen:
+Identity-, Authorization- und Device-Management-Layer.
+
+32. Sicherheitsmodell
+Das gesamte System besitzt mehrere Sicherheitsstufen:
+USER
+ â†“
+Email OTP
+ â†“
+Session
+DEVICE
+ â†“
+Device Identity
+ â†“
+Cryptographic Credential
+AUTHORIZATION
+ â†“
+Membership
+ â†“
+Role
+ â†“
+Permission
+RESOURCE
+ â†“
+Space
+ â†“
+Channel
+ â†“
+Photo
+Damit werden IdentitÃ¤t und Berechtigung strikt voneinander getrennt.
+
+33. Device Lifecycle Management
+Jedes Smile-Frame besitzt einen definierten Lebenszyklus:
+UNPAIRED
+    â†“
+PAIRING
+    â†“
+ACTIVE
+    â†“
+OFFLINE
+    â†“
+ACTIVE
+    â†“
+REVOKED
+    â†“
+RETIRED
+Ein verlorenes oder gestohlenes GerÃ¤t wird serverseitig revoked.
+Ein defektes GerÃ¤t kann durch ein neues GerÃ¤t ersetzt werden, ohne die vorhandene Space- und Channel-Struktur zu verÃ¤ndern.
+
+34. Das vollstÃ¤ndige Architekturmodell
+Damit ergibt sich folgende Gesamtstruktur:
+                         SMILE PLATFORM
+                               â”‚
+              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+              â”‚                                 â”‚
+        Identity Service                  Device Management
+              â”‚                                 â”‚
+              â–¼                                 â–¼
+         Smile Account                    Device Registry
+              â”‚                                 â”‚
+              â”‚ Membership                     â”‚
+              â–¼                                 â”‚
+          CHANNEL                              â”‚
+              â”‚                                 â”‚
+              â”‚ gehÃ¶rt zu                       â”‚
+              â–¼                                 â”‚
+        SMILE SPACE â—„â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+              â”‚
+              â”‚ Device Association
+              â–¼
+        SMILE-FRAME
+              â”‚
+       â”Œâ”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”
+       â”‚             â”‚
+ Assisted Mode   Personal Mode
+       â”‚             â”‚
+       â–¼             â–¼
+ autonome Anzeige   aktive Nutzung
+
+35. Das eigentliche Nutzererlebnis
+FÃ¼r den AngehÃ¶rigen
+Smile installieren
+       â†“
+E-Mail eingeben
+       â†“
+6-stelligen Code eingeben
+       â†“
+Smile ist aktiv
+       â†“
+Channel beitreten
+       â†“
+Fotos teilen
+FÃ¼r den Space Owner
+Smile Space erstellen
+       â†“
+Smile-Frame pairen
+       â†“
+Channels einrichten
+       â†“
+Channel-Admins bestimmen
+       â†“
+Mitglieder einladen
+FÃ¼r einen normalen Smile-Frame-Nutzer
+Smile Ã¶ffnen
+       â†“
+Fotos austauschen
+       â†“
+Smile-Frame zeigt Fotos
+       â†“
+Channel wechseln
+       â†“
+Fotos gemeinsam betrachten
+FÃ¼r eine unterstÃ¼tzte Person
+Smile-Frame einschalten
+       â†“
+Fotos erscheinen
+       â†“
+Neue Fotos erscheinen automatisch
+       â†“
+ggf. Channel wechseln
+       â†“
+Fotos betrachten
+
+36. Das zentrale Produktprinzip
+Das gesamte Konzept basiert damit auf einer klaren Trennung:
+Smile ist die Plattform zum Erstellen und Teilen von Inhalten.
+Der Smile Space ist der gemeinsame digitale Raum.
+Channels organisieren Inhalte und voneinander unabhÃ¤ngige Benutzergruppen.
+Memberships und Rollen bestimmen die Berechtigungen.
+Das Smile-Frame ist ein eigenstÃ¤ndiges, pseudonymisiertes Device.
+Pairing verbindet das Device mit einem Smile Space.
+Das Frame arbeitet danach autonom, offline-tolerant und remote verwaltet.
+Das Frame kann sowohl als AssistenzgerÃ¤t als auch als normales gemeinsames Foto-Display verwendet werden.
+
+37. Der eigentliche USP von Smile
+Der besondere Charakter von Smile liegt damit nicht allein im Fotoaustausch.
+Der entscheidende Unterschied zu klassischen Messenger- oder Foto-Sharing-Systemen ist die Verbindung von:
+einfacher menschlicher Authentifizierung
+
+unabhÃ¤ngigen Content-Gruppen
+
+feingranularer Berechtigungsstruktur
+
+Secure Device Pairing
+
+pseudonymisierten autonomen GerÃ¤ten
+
+Zero-Touch-Betrieb
+
+Remote Device Management
+
+einem universell einsetzbaren Foto-Display.
+Dadurch kann dieselbe technische Plattform zwei scheinbar vÃ¶llig unterschiedliche BedÃ¼rfnisse bedienen:
+                  SMILE
+                    â”‚
+        â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+        â”‚                       â”‚
+   Kommunikation           PrÃ¤sentation
+        â”‚                       â”‚
+   Smartphone              Smile-Frame
+        â”‚                       â”‚
+        â”‚               â”Œâ”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”
+        â”‚               â”‚               â”‚
+        â”‚           Assisted        Personal
+        â”‚             Mode            Mode
+        â”‚               â”‚               â”‚
+        â”‚          eingeschrÃ¤nkte    Familie /
+        â”‚             Person        Freunde
+        â”‚
+        â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                        â”‚
+                 Smile Backend
+Das ist das konsistente Gesamtbild von Smile: Eine Foto-Kommunikationsplattform, die nicht beim Smartphone endet, sondern Ã¼ber ein sicheres, autonomes und einfaches Display-Endpoint auch Menschen erreicht, die klassische digitale Kommunikation nicht selbststÃ¤ndig nutzen kÃ¶nnen.
+

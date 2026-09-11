@@ -62,6 +62,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   String? _cacheDirPath;
   String? _spaceName;
   String? _channelName;
+  String? _currentChannelId;
+  List<AssignedChannel> _assignedChannels = [];
   String? _fcmToken;
   int _currentIndex = 0;
   Timer? _syncTimer;
@@ -136,6 +138,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       _policy = result.policy;
       _loadedOnce = true;
       if (result.spaceName != null) _spaceName = result.spaceName;
+      _currentChannelId = result.channelId;
+      _assignedChannels = result.assignedChannels;
       final currentChannel = result.assignedChannels
           .where((c) => c.channelId == result.channelId)
           .map((c) => c.name)
@@ -182,6 +186,40 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     } else {
       _advance(1);
     }
+  }
+
+  // Personal Mode only (concept doc sect. 19) -- an Assisted Mode device
+  // (channelSwitchEnabled == false, the default) never shows this at all,
+  // and a device with only one assigned channel has nothing to switch to.
+  bool get _canSwitchChannel => (_policy?.channelSwitchEnabled ?? false) && _assignedChannels.length > 1;
+
+  Future<void> _pickChannel() async {
+    final sorted = [..._assignedChannels]..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: const Color(0xFF1C1C1E),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final channel in sorted)
+              ListTile(
+                title: Text(
+                  channel.name ?? channel.channelId,
+                  style: const TextStyle(color: Colors.white),
+                ),
+                trailing: channel.channelId == _currentChannelId
+                    ? const Icon(Icons.check, color: smileAccentColor)
+                    : null,
+                onTap: () => Navigator.of(context).pop(channel.channelId),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || picked == _currentChannelId) return;
+    await widget.syncService.selectChannel(picked);
+    await _sync();
   }
 
   void _toggleGrid() => setState(() => _showGrid = !_showGrid);
@@ -274,28 +312,41 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   Widget _buildSpaceChannelLabel() {
     if (_spaceName == null && _channelName == null) return const SizedBox.shrink();
+    final switchable = _canSwitchChannel;
     return Positioned(
       right: 16,
       bottom: 16,
       child: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: smileAccentColor, width: 1.5),
-          ),
-          child: RichText(
-            text: TextSpan(
-              style: const TextStyle(fontSize: 22, color: Colors.white70),
+        child: GestureDetector(
+          onTap: switchable ? _pickChannel : null,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: smileAccentColor, width: 1.5),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                if (_spaceName != null) TextSpan(text: _spaceName),
-                if (_spaceName != null && _channelName != null) const TextSpan(text: '  ·  '),
-                if (_channelName != null)
-                  TextSpan(
-                    text: _channelName,
-                    style: const TextStyle(color: smileAccentColor, fontWeight: FontWeight.w600),
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(fontSize: 22, color: Colors.white70),
+                    children: [
+                      if (_spaceName != null) TextSpan(text: _spaceName),
+                      if (_spaceName != null && _channelName != null) const TextSpan(text: '  ·  '),
+                      if (_channelName != null)
+                        TextSpan(
+                          text: _channelName,
+                          style: const TextStyle(color: smileAccentColor, fontWeight: FontWeight.w600),
+                        ),
+                    ],
                   ),
+                ),
+                if (switchable) ...[
+                  const SizedBox(width: 6),
+                  const Icon(Icons.unfold_more, color: smileAccentColor, size: 20),
+                ],
               ],
             ),
           ),

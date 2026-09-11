@@ -37,6 +37,7 @@ void main() {
     when(() => credentialsStore.accessTokenExpiresAt).thenAnswer((_) async => null);
     when(() => credentialsStore.deviceId).thenAnswer((_) async => null);
     when(() => credentialsStore.refreshSecret).thenAnswer((_) async => null);
+    when(() => credentialsStore.preferredChannelId).thenAnswer((_) async => null);
 
     when(() => httpClient.get(any())).thenAnswer((_) async => http.Response.bytes([1, 2, 3], 200));
   });

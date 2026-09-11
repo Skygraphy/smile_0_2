@@ -1,0 +1,12 @@
+-- "Gerät ersetzen" beim Frame-Pairing: a Frame gets a brand new device_id
+-- on every (re-)pairing (app reinstall, factory reset, or a genuinely new
+-- physical tablet) by design -- each Frame mints and holds its own
+-- credentials directly, nothing relayed through the claiming phone. That
+-- leaves channel assignments, device_policies, and the media_recipients
+-- backlog stranded on the old, now-dead device_id with nothing to migrate
+-- them automatically. This column lets a Space Owner say, at claim time,
+-- "this new Frame replaces that old one" -- poll-device-pairing's
+-- activateDevice performs the actual migration once the new device is
+-- real (see that file), mirroring how claimed_by_user_id already flows
+-- through this same claim-then-activate handoff.
+alter table pairing_codes add column replace_device_id uuid references devices(id);

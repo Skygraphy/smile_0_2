@@ -46,18 +46,14 @@ class ComplianceService {
     final accessToken = await _credentialsStore.accessToken;
     if (accessToken == null) return const [];
 
-    // A live answer (foreground, native handler reachable) is always
-    // authoritative and gets cached; an indeterminate answer (background
-    // isolate, no handler there) falls back to the last confirmed value
-    // instead of being reported as "definitely not pinned".
+    // Still recorded for visibility (device_settings_screen.dart shows it),
+    // but no longer fed into compliance_state below: pinning is a manual,
+    // admin-triggered action now (Android's own Recent-Apps "Pin" gesture,
+    // no in-app trigger and no Home-role auto-recovery -- see
+    // kiosk-lockdown-dev-mode memory), so an unpinned Frame is the expected
+    // normal state, not a violation to flag.
     final liveStatus = await _kioskLockdown.checkStatus();
-    final bool isPinned;
-    if (liveStatus != null) {
-      isPinned = liveStatus;
-      await _statusStore.save(liveStatus);
-    } else {
-      isPinned = await _statusStore.read() ?? false;
-    }
+    if (liveStatus != null) await _statusStore.save(liveStatus);
     String? appVersion;
     try {
       appVersion = (await PackageInfo.fromPlatform()).version;
@@ -72,7 +68,7 @@ class ComplianceService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'access_token': accessToken,
-          'compliance_state': isPinned ? 'compliant' : 'drift_detected',
+          'compliance_state': 'compliant',
           'app_version': ?appVersion,
           'os_version': Platform.operatingSystemVersion,
         }),

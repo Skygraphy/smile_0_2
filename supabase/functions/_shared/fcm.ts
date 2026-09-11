@@ -107,3 +107,37 @@ export async function sendDataMessage(fcmToken: string, data: Record<string, str
     throw new Error(`FCM send failed: ${await response.text()}`);
   }
 }
+
+/**
+ * Human-visible push (smile-app), unlike sendDataMessage above --
+ * Android/iOS show this in the system tray automatically whenever the app
+ * isn't in the foreground, no local-notification plumbing needed on the
+ * client for that case. Throws with a message containing the FCM error
+ * code (e.g. "UNREGISTERED") on failure, so callers can prune a dead token.
+ */
+export async function sendNotification(
+  fcmToken: string,
+  notification: { title: string; body: string },
+  data?: Record<string, string>,
+): Promise<void> {
+  const sa = getServiceAccount();
+  const accessToken = await getAccessToken();
+  const response = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: {
+        token: fcmToken,
+        notification,
+        data: data ?? {},
+        android: { priority: "high" },
+      },
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`FCM send failed: ${await response.text()}`);
+  }
+}

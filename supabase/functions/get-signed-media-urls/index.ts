@@ -22,6 +22,10 @@ interface RequestBody {
   channel_id: string;
   cursor?: string;
   limit?: number;
+  // When true, return *only* the caller's own hidden-for-me items in this
+  // channel (powers the Smile-App "Ausgeblendet" view) instead of the
+  // normal feed. See delete-media's "hide"/"unhide" actions.
+  only_hidden?: boolean;
 }
 
 Deno.serve(async (req) => {
@@ -56,14 +60,21 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (!membership) return jsonResponse({ error: "not_a_channel_member" }, 403);
 
-  // A "for me" hide (migrations/0018_media_delete.sql) only ever affects
-  // the caller's own feed -- fetch it before the main query so it can be
-  // excluded below.
+  // A "hide" (migrations/0018_media_delete.sql, delete-media's "hide"
+  // action) only ever affects the caller's own feed -- fetch it before the
+  // main query. Normally these ids are excluded; `only_hidden` flips that
+  // to power the Smile-App "Ausgeblendet" view. A "delete" (delete-media's
+  // "delete" action) removes the row outright, so it needs no filter here
+  // at all -- it's simply gone, in both views.
   const { data: hiddenRows } = await supabaseAdmin
     .from("media_item_hides")
     .select("media_item_id")
     .eq("user_id", userData.user.id);
   const hiddenIds = (hiddenRows ?? []).map((r) => r.media_item_id);
+
+  if (body.only_hidden && hiddenIds.length === 0) {
+    return jsonResponse({ items: [], next_cursor: null });
+  }
 
   // No `processing_status = 'ready'` filter here anymore: a not-yet-ready
   // row is still returned (with its preview_data_url, no display/thumbnail
@@ -71,22 +82,19 @@ Deno.serve(async (req) => {
   // placeholder while the upload/processing pipeline is still running,
   // WhatsApp-style. media_items_select RLS already allows any channel
   // member to see any row in their channel regardless of status.
-  //
-  // deleted_at.is.null,sender_id.eq.<caller>: a "for everyone" delete
-  // removes the row from every other member's feed immediately, but the
-  // sender who deleted it still gets it back here (with deleted_at set) so
-  // their own app can render a small "you deleted this" tombstone tile
-  // instead of the photo just silently vanishing.
   let query = supabaseAdmin
     .from("media_items")
     .select("*")
     .eq("channel_id", body.channel_id)
     .neq("processing_status", "failed")
-    .or(`deleted_at.is.null,sender_id.eq.${userData.user.id}`)
     .order("created_at", { ascending: false })
     .limit(limit);
   if (body.cursor) query = query.lt("created_at", body.cursor);
-  if (hiddenIds.length > 0) query = query.not("id", "in", `(${hiddenIds.join(",")})`);
+  query = body.only_hidden
+    ? query.in("id", hiddenIds)
+    : hiddenIds.length > 0
+    ? query.not("id", "in", `(${hiddenIds.join(",")})`)
+    : query;
 
   const { data: items, error: itemsError } = await query;
   if (itemsError) return jsonResponse({ error: "fetch_failed" }, 500);
@@ -121,7 +129,6 @@ Deno.serve(async (req) => {
     created_at: item.created_at,
     processing_status: item.processing_status,
     preview_data_url: item.preview_data_url,
-    deleted_at: item.deleted_at,
     display_url: item.storage_path_display ? displayUrlByPath.get(item.storage_path_display) ?? null : null,
     thumbnail_url: item.storage_path_thumbnail ? thumbnailUrlByPath.get(item.storage_path_thumbnail) ?? null : null,
   }));

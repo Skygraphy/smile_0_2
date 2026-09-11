@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/media_cache_service.dart';
 import '../services/media_service.dart';
+import 'channel_members_screen.dart';
 
 /// A picked photo shown in the grid immediately, before the network upload
 /// (let alone server-side processing) has even started -- WhatsApp-style
@@ -44,9 +45,15 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
   final List<_PendingUpload> _pendingUploads = [];
   bool _isUploading = false;
   String? _errorMessage;
+  String? _statusMessage;
   RealtimeChannel? _realtimeChannel;
   Timer? _realtimeDebounce;
   final Set<String> _selectedIds = {};
+  // "Ausblenden" (any member, personal, reversible, Smile-App only) is a
+  // completely separate feature from "Löschen" (sender/admin only,
+  // permanent, everywhere) -- this just switches which feed is being
+  // browsed, it never interacts with multi-select/delete state.
+  bool _showingHidden = false;
 
   bool get _selectionMode => _selectedIds.isNotEmpty;
 
@@ -58,6 +65,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
     // processing completions land here without polling -- media_items_select
     // RLS already lets any channel member see any row in their channel, so a
     // plain INSERT/UPDATE subscription is enough to know something changed.
+    // Hides/unhides never touch media_items, so this never fires for them --
+    // fine, since the hidden view is only ever refreshed by the viewer's own
+    // actions or a manual pull-to-refresh.
     _realtimeChannel = widget.mediaService.subscribeToChannelMedia(widget.channelId, _onRealtimeChange);
   }
 
@@ -91,43 +101,79 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
   }
 
   Future<void> _load() async {
-    final items = await widget.mediaService.fetchReadyMedia(widget.channelId);
-    if (!mounted) return;
-
-    // Fully download and decode each now-ready item that's still covered by
-    // a local pending tile *before* swapping -- otherwise CachedNetworkImage
-    // briefly paints its placeholder (or the blurry preview) for the one
-    // frame it takes to fetch the real thumbnail, which is exactly the
-    // "blur then sharp" pop this is trying to avoid. Once precached, the
-    // widget paints straight from Flutter's image cache with no placeholder
-    // frame at all.
-    for (final pending in _pendingUploads) {
-      MediaItem? readyItem;
-      for (final item in items) {
-        if (item.id == pending.mediaItemId && item.isReady) {
-          readyItem = item;
-          break;
-        }
-      }
-      final url = readyItem?.thumbnailUrl ?? readyItem?.displayUrl;
-      if (url == null) continue;
+    final List<MediaItem> items;
+    try {
+      items = _showingHidden
+          ? await widget.mediaService.fetchHiddenMedia(widget.channelId)
+          : await widget.mediaService.fetchReadyMedia(widget.channelId);
+    } catch (e) {
       if (!mounted) return;
-      await precacheImage(CachedNetworkImageProvider(url, cacheKey: '${readyItem!.id}_grid'), context);
+      // Without this, a permission/network failure here left _items stuck
+      // at null forever -- an unexplained, permanent loading spinner, since
+      // nothing else ever calls setState to move past it.
+      setState(() {
+        _items ??= const [];
+        _errorMessage = 'Fotos konnten nicht geladen werden: $e';
+      });
+      return;
     }
     if (!mounted) return;
 
+    if (!_showingHidden) {
+      // Fully download and decode each now-ready item that's still covered
+      // by a local pending tile *before* swapping -- otherwise
+      // CachedNetworkImage briefly paints its placeholder (or the blurry
+      // preview) for the one frame it takes to fetch the real thumbnail,
+      // which is exactly the "blur then sharp" pop this is trying to
+      // avoid. Once precached, the widget paints straight from Flutter's
+      // image cache with no placeholder frame at all. Irrelevant in the
+      // hidden view, which never has pending uploads of its own.
+      //
+      // Iterate a snapshot, not the live list: `_load()` can run
+      // concurrently with itself (the realtime subscription's debounced
+      // call can fire while `_pickAndUpload`'s own retry-loop call is still
+      // awaiting a precacheImage below), and the *other* call's `setState`
+      // mutating `_pendingUploads` mid-iteration throws
+      // ConcurrentModificationError.
+      for (final pending in _pendingUploads.toList()) {
+        MediaItem? readyItem;
+        for (final item in items) {
+          if (item.id == pending.mediaItemId && item.isReady) {
+            readyItem = item;
+            break;
+          }
+        }
+        final url = readyItem?.thumbnailUrl ?? readyItem?.displayUrl;
+        if (url == null) continue;
+        if (!mounted) return;
+        await precacheImage(CachedNetworkImageProvider(url, cacheKey: '${readyItem!.id}_grid'), context);
+      }
+      if (!mounted) return;
+    }
+
     setState(() {
       _items = items;
-      // Keep showing the full-quality local bytes (no spinner, no interim
-      // blurry preview) for as long as *this device's own* upload isn't
-      // actually ready yet -- only swap to the real thumbnail once it truly
-      // is, so there's exactly one clean handoff instead of local-preview ->
-      // blurry-server-preview -> real-thumbnail.
-      _pendingUploads.removeWhere(
-        (p) => p.mediaItemId != null && items.any((i) => i.id == p.mediaItemId && (i.isReady || i.isDeleted)),
-      );
+      if (!_showingHidden) {
+        // Keep showing the full-quality local bytes (no spinner, no interim
+        // blurry preview) for as long as *this device's own* upload isn't
+        // actually ready yet -- only swap to the real thumbnail once it
+        // truly is, so there's exactly one clean handoff instead of
+        // local-preview -> blurry-server-preview -> real-thumbnail.
+        _pendingUploads.removeWhere(
+          (p) => p.mediaItemId != null && items.any((i) => i.id == p.mediaItemId && i.isReady),
+        );
+      }
     });
-    unawaited(MediaCacheService.save(widget.channelId, items));
+    if (!_showingHidden) unawaited(MediaCacheService.save(widget.channelId, items));
+  }
+
+  void _toggleHiddenView() {
+    setState(() {
+      _showingHidden = !_showingHidden;
+      _items = null; // brief spinner while switching feeds, same as first open
+      _selectedIds.clear();
+    });
+    unawaited(_load());
   }
 
   Future<void> _pickAndUpload() async {
@@ -145,6 +191,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
     setState(() {
       _isUploading = true;
       _errorMessage = null;
+      _statusMessage = null;
       _pendingUploads.insert(0, pending);
     });
     try {
@@ -156,7 +203,15 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
         fileExtension: extension,
         mimeType: mimeType,
         onMediaItemCreated: (id) => pending.mediaItemId = id,
+        // A dropped connection (e.g. switching WiFi networks mid-upload) is
+        // retried automatically -- this just keeps the user informed while
+        // it's happening instead of the tile silently sitting there.
+        onRetrying: (attempt, maxAttempts) {
+          if (!mounted) return;
+          setState(() => _statusMessage = 'Verbindung unterbrochen, versuche erneut ($attempt/$maxAttempts)…');
+        },
       );
+      if (mounted) setState(() => _statusMessage = null);
       // Processing (resize/thumbnail) happens asynchronously in the
       // media-processing-service, so the real item may not be 'ready' yet
       // right after upload -- give it a few short retries before giving up.
@@ -168,7 +223,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _errorMessage = 'Upload fehlgeschlagen: $e');
+      setState(() {
+        _statusMessage = null;
+        _errorMessage = 'Upload fehlgeschlagen (auch nach mehreren Versuchen): $e';
+      });
     } finally {
       if (mounted) {
         setState(() {
@@ -187,36 +245,29 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
 
   void _clearSelection() => setState(_selectedIds.clear);
 
-  /// WhatsApp-style: pick a scope, then delete immediately -- no undo timer.
-  /// A denied id (someone else's photo, "for everyone" without admin rights)
-  /// doesn't block the rest of the batch; it's just reported afterwards.
+  /// Destructive and permanent: gone from the DB, every storage bucket,
+  /// every other member's feed, and every Smile-Frame the moment it's
+  /// confirmed (see supabase/functions/delete-media). No undo, no
+  /// placeholder -- just a plain yes/no confirmation. A denied id (someone
+  /// else's photo without admin/staff rights) doesn't block the rest of
+  /// the batch.
   Future<void> _confirmAndDeleteSelection() async {
-    final scope = await showDialog<MediaDeleteScope>(
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => SimpleDialog(
-        title: Text('${_selectedIds.length} Foto(s) löschen'),
-        children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(context, MediaDeleteScope.forMe),
-            child: const Text('Nur für mich löschen'),
-          ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(context, MediaDeleteScope.forEveryone),
-            child: const Text('Für alle löschen'),
-          ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Abbrechen'),
-          ),
+      builder: (context) => AlertDialog(
+        title: Text('${_selectedIds.length} Foto(s) endgültig löschen?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Löschen')),
         ],
       ),
     );
-    if (scope == null) return;
+    if (confirmed != true) return;
 
     final ids = _selectedIds.toList();
     _clearSelection();
     try {
-      final result = await widget.mediaService.deleteMedia(mediaItemIds: ids, scope: scope);
+      final result = await widget.mediaService.deletePhotos(ids);
       if (!mounted) return;
       setState(() {
         _errorMessage = result.deniedIds.isEmpty
@@ -230,6 +281,31 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
     }
   }
 
+  /// Non-destructive and personal: any channel member may hide/re-show any
+  /// selected photo(s) for just their own Smile-App view. Same multi-select
+  /// flow as delete (long-press, tap to add more), no confirmation dialog
+  /// since it's fully reversible -- just an eye icon next to the trash icon.
+  Future<void> _applyHideToggleToSelection() async {
+    final ids = _selectedIds.toList();
+    _clearSelection();
+    final hiding = !_showingHidden;
+    try {
+      final result = hiding
+          ? await widget.mediaService.hidePhotos(ids)
+          : await widget.mediaService.unhidePhotos(ids);
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = result.deniedIds.isEmpty
+            ? null
+            : '${result.deniedIds.length} Foto(s) nicht möglich.';
+      });
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = '${hiding ? "Ausblenden" : "Einblenden"} fehlgeschlagen: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -238,26 +314,67 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
               leading: IconButton(icon: const Icon(Icons.close), onPressed: _clearSelection),
               title: Text('${_selectedIds.length} ausgewählt'),
               actions: [
+                IconButton(
+                  icon: Icon(_showingHidden ? Icons.visibility : Icons.visibility_off),
+                  tooltip: _showingHidden ? 'Einblenden' : 'Ausblenden',
+                  onPressed: _applyHideToggleToSelection,
+                ),
                 IconButton(icon: const Icon(Icons.delete_outline), onPressed: _confirmAndDeleteSelection),
               ],
             )
-          : AppBar(title: Text(widget.channelName)),
-      floatingActionButton: _selectionMode
+          : _showingHidden
+              ? AppBar(
+                  // Entering/leaving this view reads as real navigation (a
+                  // sub-page, back arrow to leave) rather than a toggle --
+                  // it no longer shares the eye icon with the per-tile
+                  // hide/unhide action, which was confusing (same icon,
+                  // opposite meaning in each context).
+                  leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: _toggleHiddenView),
+                  title: const Text('Ausgeblendete Fotos'),
+                )
+              : AppBar(
+                  title: Text(widget.channelName),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.group),
+                      tooltip: 'Mitglieder',
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ChannelMembersScreen(
+                            channelId: widget.channelId,
+                            channelName: widget.channelName,
+                          ),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.hide_image_outlined),
+                      tooltip: 'Ausgeblendete Fotos',
+                      onPressed: _toggleHiddenView,
+                    ),
+                  ],
+                ),
+      floatingActionButton: _selectionMode || _showingHidden
           ? null
           : FloatingActionButton(
-        onPressed: _isUploading ? null : _pickAndUpload,
-        child: _isUploading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-              )
-            : const Icon(Icons.add_a_photo),
-      ),
+              onPressed: _isUploading ? null : _pickAndUpload,
+              child: _isUploading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.add_a_photo),
+            ),
       body: _items == null
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
+                if (_statusMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Text(_statusMessage!, style: Theme.of(context).textTheme.bodySmall),
+                  ),
                 if (_errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.all(8),
@@ -268,20 +385,25 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
                   ),
                 Expanded(
                   child: Builder(builder: (context) {
+                    final pendingCount = _showingHidden ? 0 : _pendingUploads.length;
                     final pendingIds = _pendingUploads.map((p) => p.mediaItemId).toSet();
                     // A row already covered by a local pending tile (this
                     // device's own not-yet-ready upload) is skipped here --
                     // otherwise it'd render twice: once at full local
                     // quality via the pending tile, once blurry via its
-                    // server-side preview.
-                    final visibleItems = _items!.where((item) => item.isReady || !pendingIds.contains(item.id)).toList();
+                    // server-side preview. Never applies in the hidden view.
+                    final visibleItems = _showingHidden
+                        ? _items!
+                        : _items!.where((item) => item.isReady || !pendingIds.contains(item.id)).toList();
                     return RefreshIndicator(
                       onRefresh: _load,
-                      child: visibleItems.isEmpty && _pendingUploads.isEmpty
+                      child: visibleItems.isEmpty && pendingCount == 0
                           ? ListView(
-                              children: const [
-                                SizedBox(height: 200),
-                                Center(child: Text('Noch keine Fotos')),
+                              children: [
+                                const SizedBox(height: 200),
+                                Center(
+                                  child: Text(_showingHidden ? 'Keine ausgeblendeten Fotos' : 'Noch keine Fotos'),
+                                ),
                               ],
                             )
                           : GridView.builder(
@@ -291,9 +413,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
                                 crossAxisSpacing: 4,
                                 mainAxisSpacing: 4,
                               ),
-                              itemCount: _pendingUploads.length + visibleItems.length,
+                              itemCount: pendingCount + visibleItems.length,
                               itemBuilder: (context, index) {
-                                if (index < _pendingUploads.length) {
+                                if (index < pendingCount) {
                                   final pending = _pendingUploads[index];
                                   // Keyed by the upload attempt itself (stable across
                                   // rebuilds) -- without a key, Flutter would tear this
@@ -301,18 +423,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
                                   // rebuild instead of recognizing it as unchanged.
                                   return _PhotoTile(key: ValueKey(pending), bytes: pending.bytes);
                                 }
-                                final item = visibleItems[index - _pendingUploads.length];
+                                final item = visibleItems[index - pendingCount];
                                 final previewBytes = item.previewDataUrl != null
                                     ? base64Decode(item.previewDataUrl!.split(',').last)
                                     : null;
-
-                                if (item.isDeleted) {
-                                  // Only ever returned to the person who deleted it "for
-                                  // everyone" (get-signed-media-urls carves out that
-                                  // exception) -- a small confirmation that it's gone,
-                                  // not a real photo any more, so not selectable.
-                                  return _DeletedTile(key: ValueKey(item.id), previewBytes: previewBytes);
-                                }
 
                                 final Widget tile;
                                 if (!item.isReady) {
@@ -347,6 +461,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
                                 final isSelected = _selectedIds.contains(item.id);
                                 return GestureDetector(
                                   key: ValueKey(item.id),
+                                  // Delete works the same way in both views -- a hidden
+                                  // photo can be deleted directly here instead of having
+                                  // to unhide it first.
                                   onLongPress: () => _toggleSelected(item.id),
                                   onTap: _selectionMode ? () => _toggleSelected(item.id) : null,
                                   child: Stack(
@@ -403,30 +520,3 @@ class _PhotoTile extends StatelessWidget {
   }
 }
 
-/// WhatsApp-style "you deleted this" confirmation: a small, dimmed version
-/// of the photo (its own instant preview -- already on hand, no extra
-/// fetch) with a trash icon, in place of the photo just silently vanishing
-/// from the sender's own grid. Nobody else (and no Smile-Frame) ever sees
-/// this -- get-signed-media-urls only hands a deleted row back to the
-/// person who deleted it.
-class _DeletedTile extends StatelessWidget {
-  const _DeletedTile({super.key, required this.previewBytes});
-
-  final Uint8List? previewBytes;
-
-  @override
-  Widget build(BuildContext context) {
-    final bytes = previewBytes;
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        bytes != null ? Image.memory(bytes, fit: BoxFit.cover) : const ColoredBox(color: Colors.black26),
-        Container(
-          color: Colors.black54,
-          alignment: Alignment.center,
-          child: const Icon(Icons.delete_outline, color: Colors.white70),
-        ),
-      ],
-    );
-  }
-}

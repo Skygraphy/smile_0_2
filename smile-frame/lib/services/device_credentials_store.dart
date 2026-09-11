@@ -15,6 +15,11 @@ class DeviceCredentialsStore {
   static const _keyAccessToken = 'access_token';
   static const _keyAccessTokenExpiresAt = 'access_token_expires_at';
   static const _keyRefreshSecret = 'refresh_secret';
+  // Personal Mode channel switcher (concept doc sect. 19): the last channel
+  // the person in front of this Frame explicitly picked. Never set at all
+  // for an Assisted Mode device -- sync() then just keeps taking the
+  // server's default, exactly like before this existed.
+  static const _keyPreferredChannelId = 'preferred_channel_id';
 
   Future<bool> isProvisioned() async {
     final deviceId = await _storage.read(key: _keyDeviceId);
@@ -63,6 +68,16 @@ class DeviceCredentialsStore {
     if (raw == null) return null;
     return DateTime.tryParse(raw);
   }
+
+  Future<String?> get preferredChannelId => _storage.read(key: _keyPreferredChannelId);
+
+  Future<void> savePreferredChannelId(String channelId) =>
+      _storage.write(key: _keyPreferredChannelId, value: channelId);
+
+  /// Called when the previously chosen channel turns out to no longer be
+  /// assigned to this device (get-media-batch's "device_not_assigned_to_
+  /// channel") -- falls back to the server default on the next sync.
+  Future<void> clearPreferredChannelId() => _storage.delete(key: _keyPreferredChannelId);
 
   Future<void> clear() => _storage.deleteAll();
 }

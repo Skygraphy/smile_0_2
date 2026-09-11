@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
 
   let recipientsQuery = supabase
     .from("media_recipients")
-    .select("id, sort_order, media_items(id, media_type, processing_status, storage_path_display, deleted_at)")
+    .select("id, sort_order, media_items(id, media_type, processing_status, storage_path_display)")
     .eq("device_id", claims.device_id)
     .eq("channel_id", channelId)
     .is("hidden_at", null)
@@ -151,10 +151,10 @@ Deno.serve(async (req) => {
   for (const r of recipients ?? []) {
     // deno-lint-ignore no-explicit-any
     const mi = r.media_items as any;
-    // A "for everyone" delete (migrations/0018_media_delete.sql) must
-    // vanish from every frame, no tombstone -- unlike the sender's own app,
-    // a frame has no notion of "who deleted it" to show that to.
-    if (!mi || mi.processing_status !== "ready" || !mi.storage_path_display || mi.deleted_at) continue;
+    // A "for everyone" delete (delete-media) removes the media_items row
+    // outright (cascading to media_recipients), so a deleted photo simply
+    // won't join here any more -- nothing extra to filter for it.
+    if (!mi || mi.processing_status !== "ready" || !mi.storage_path_display) continue;
     const { data: signed } = await supabase.storage
       .from("media-display")
       .createSignedUrl(mi.storage_path_display, SIGNED_URL_TTL_SECONDS);

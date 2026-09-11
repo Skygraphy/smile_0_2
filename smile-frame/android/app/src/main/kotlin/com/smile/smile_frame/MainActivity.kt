@@ -40,11 +40,20 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler(kioskLockdown)
     }
 
-    // Auto re-pin on resume is deliberately disabled during development
-    // (2026-09-07): it turns every app start/relaunch into a Screen-Pinning
-    // + Home-role confirmation dance, which made ordinary manual test runs
-    // (flutter run/install) unreasonably slow to iterate on. The
-    // KioskLockdownPlugin methods (pin/checkStatus/requestHomeRoleIfNeeded)
-    // are untouched and ready to be wired back in for Phase 8 hardening --
-    // only the automatic on-resume trigger is removed here.
+    // Auto re-pin on resume, and the Home-role auto-recovery-after-reboot
+    // mechanism, are a deliberate permanent decision (2026-09-11), not a
+    // temporary dev convenience: Screen Pinning is triggered manually by
+    // whoever sets up a Frame (Android's own Recent-Apps "Pin" gesture --
+    // no in-app button needed), and the person can't do anything else on
+    // the tablet once pinned regardless of how pinning was triggered, so
+    // the automatic path adds no safety benefit. The Home role is a
+    // device-wide, hard-to-reverse change (this app becomes the exclusive
+    // Android launcher) whose only purpose is surviving an unattended
+    // reboot -- not worth the risk for a device that normally just stays
+    // powered on; the one time it was tested it coincided with a scary,
+    // still-not-fully-explained ADB/USB hang on the test tablet (see
+    // kiosk-lockdown-dev-mode memory). If a real need for unattended
+    // reboot recovery ever comes up, KioskLockdownPlugin's
+    // pin/checkStatus/requestHomeRoleIfNeeded methods are still intact and
+    // tested -- only the automatic triggers were ever removed.
 }

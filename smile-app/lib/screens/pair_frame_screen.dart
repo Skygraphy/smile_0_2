@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 
+import '../services/device_service.dart';
 import '../services/pairing_service.dart';
 import 'qr_scan_screen.dart';
 
 /// "Neues Frame hinzufügen" (concept doc sect. 14): enter or scan the code
-/// shown on a Frame's screen to bind it to [spaceId].
+/// shown on a Frame's screen to bind it to [spaceId]. Also offers "Ersetzt
+/// dieses Gerät ein bestehendes Frame?" -- every (re-)pairing mints a
+/// brand new device_id (see migrations/0023_replace_device_on_pairing.sql),
+/// so without this a replaced Frame would start from a completely blank
+/// slate: no channel assignments, no policy, no photos.
 class PairFrameScreen extends StatefulWidget {
-  PairFrameScreen({super.key, required this.spaceId, PairingService? pairingService})
-      : pairingService = pairingService ?? PairingService();
+  PairFrameScreen({
+    super.key,
+    required this.spaceId,
+    PairingService? pairingService,
+    DeviceService? deviceService,
+  })  : pairingService = pairingService ?? PairingService(),
+        deviceService = deviceService ?? DeviceService();
 
   final String spaceId;
   final PairingService pairingService;
+  final DeviceService deviceService;
 
   @override
   State<PairFrameScreen> createState() => _PairFrameScreenState();
@@ -21,6 +32,30 @@ class _PairFrameScreenState extends State<PairFrameScreen> {
   bool _isSubmitting = false;
   String? _errorMessage;
   bool _success = false;
+  List<SmileDevice>? _replaceableDevices;
+  String? _replaceDeviceId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReplaceableDevices();
+  }
+
+  Future<void> _loadReplaceableDevices() async {
+    try {
+      final devices = await widget.deviceService.listDevices(widget.spaceId);
+      if (!mounted) return;
+      setState(() => _replaceableDevices = devices);
+    } catch (_) {
+      // Best-effort and non-critical -- this only feeds the optional
+      // "Ersetzt dieses Gerät ein bestehendes Frame?" picker; a failure
+      // here should never block pairing a plain new device. Leaving
+      // _replaceableDevices null just means that picker silently doesn't
+      // show up (same as "no devices yet"), not a scary error banner on
+      // the main pairing screen.
+      if (mounted) setState(() => _replaceableDevices = const []);
+    }
+  }
 
   @override
   void dispose() {
@@ -45,7 +80,16 @@ class _PairFrameScreenState extends State<PairFrameScreen> {
       _errorMessage = null;
     });
     try {
-      await widget.pairingService.claimDevicePairing(code: code, spaceId: widget.spaceId);
+      final replaceDeviceId = _replaceDeviceId;
+      if (replaceDeviceId == null) {
+        await widget.pairingService.claimDevicePairing(code: code, spaceId: widget.spaceId);
+      } else {
+        await widget.pairingService.claimDevicePairing(
+          code: code,
+          spaceId: widget.spaceId,
+          replaceDeviceId: replaceDeviceId,
+        );
+      }
       if (!mounted) return;
       setState(() => _success = true);
     } on PairingClaimException catch (e) {
@@ -62,7 +106,7 @@ class _PairFrameScreenState extends State<PairFrameScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Neues Frame hinzufügen')),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: _success ? _buildSuccess() : _buildForm(),
         ),
@@ -88,6 +132,19 @@ class _PairFrameScreenState extends State<PairFrameScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text('Scanne den QR-Code auf dem Bildschirm des Smile-Frame, oder gib den Code manuell ein.'),
+        if (_replaceableDevices != null && _replaceableDevices!.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          DropdownButtonFormField<String?>(
+            initialValue: _replaceDeviceId,
+            decoration: const InputDecoration(labelText: 'Ersetzt dieses Gerät ein bestehendes Frame?'),
+            items: [
+              const DropdownMenuItem(value: null, child: Text('Nein, neues Gerät')),
+              for (final device in _replaceableDevices!)
+                DropdownMenuItem(value: device.id, child: Text(device.name)),
+            ],
+            onChanged: _isSubmitting ? null : (value) => setState(() => _replaceDeviceId = value),
+          ),
+        ],
         const SizedBox(height: 24),
         ElevatedButton.icon(
           onPressed: _isSubmitting ? null : _scan,
