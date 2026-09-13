@@ -52,17 +52,24 @@ Deno.serve(async (req) => {
 
   const { data: channel } = await supabaseAdmin
     .from("channels")
-    .select("name, space_id")
+    .select("name")
     .eq("id", joinRequest.channel_id)
     .maybeSingle();
   if (!channel) return jsonResponse({ error: "channel_not_found" }, 404);
 
-  const { data: ownerRow } = await supabaseAdmin
-    .from("space_owners")
-    .select("id")
-    .eq("space_id", channel.space_id)
-    .eq("user_id", userId)
-    .maybeSingle();
+  // A channel can be linked to more than one Space now -- an owner of
+  // *any* linked Space may decide join requests, same as any other
+  // channel-admin-equivalent action.
+  const { data: spaceLinks } = await supabaseAdmin
+    .from("space_channels")
+    .select("space_id")
+    .eq("channel_id", joinRequest.channel_id);
+  const linkedSpaceIds = (spaceLinks ?? []).map((l) => l.space_id as string);
+
+  const { data: ownerRows } = linkedSpaceIds.length > 0
+    ? await supabaseAdmin.from("space_owners").select("id").in("space_id", linkedSpaceIds).eq("user_id", userId)
+    : { data: [] as { id: string }[] };
+  const ownerRow = (ownerRows ?? []).length > 0 ? ownerRows![0] : null;
 
   const { data: membership } = await supabaseAdmin
     .from("channel_memberships")

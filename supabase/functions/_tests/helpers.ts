@@ -97,6 +97,10 @@ export async function accessTokenFor(email: string): Promise<{ accessToken: stri
 export const FIXTURES = {
   adminEmail: Deno.env.get("TEST_ADMIN_EMAIL") ?? "admin@skygraphy.com",
   omaSpaceId: Deno.env.get("TEST_OMA_SPACE_ID") ?? "6f3a1f25-e9c3-4c5e-83dd-557d3dc01615",
+  // Real second Space (also owned by adminEmail) -- used by
+  // multi_space_channels.test.ts for the "share a channel with a second
+  // Space" scenario (0030_multi_space_channels.sql).
+  opaSpaceId: Deno.env.get("TEST_OPA_SPACE_ID") ?? "27fbf71c-21a4-452f-a70d-abb39a003604",
   enkelkinderChannelId: Deno.env.get("TEST_ENKELKINDER_CHANNEL_ID") ?? "6785a8dd-772f-43c7-aa42-45e1ac5365a1",
   stammtischChannelId: Deno.env.get("TEST_STAMMTISCH_CHANNEL_ID") ?? "9c74b88f-a13f-4084-b2f6-2caf817830a7",
 };

@@ -3,6 +3,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../main.dart';
 import '../services/membership_service.dart';
+import '../widgets/smile_avatar.dart';
 
 /// Channel roster + role management + code-based invites (Phase 6a). Any
 /// member can see the roster and generate an invite code; role changes,
@@ -117,7 +118,7 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${member.email ?? "Mitglied"} entfernen?'),
+        title: Text('${member.label} entfernen?'),
         content: const Text('Die Person verliert den Zugriff auf diesen Channel.'),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Abbrechen')),
@@ -145,7 +146,6 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
             setDialogState(() => isCreating = true);
             try {
               final created = await widget.membershipService.createChannelInvite(
-                spaceId: roster.spaceId,
                 channelId: widget.channelId,
                 requiresApproval: requiresApproval,
               );
@@ -223,6 +223,91 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
     );
   }
 
+  /// "Mit anderem Space teilen" (0030_multi_space_channels.sql): generates a
+  /// channel_space_share code -- the owner of a *different* Space redeems
+  /// it (via a "Code einlösen" action on spaces_screen.dart) to link their
+  /// own Space to this channel, so both households see and can post into
+  /// the same channel from then on.
+  Future<void> _showShareWithSpaceDialog() async {
+    ChannelInvite? invite;
+    String? error;
+    bool isCreating = false;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          Future<void> generate() async {
+            setDialogState(() => isCreating = true);
+            try {
+              final created = await widget.membershipService.createChannelSpaceShare(channelId: widget.channelId);
+              setDialogState(() => invite = created);
+            } catch (e) {
+              setDialogState(() => error = 'Code konnte nicht erstellt werden: $e');
+            }
+          }
+
+          return AlertDialog(
+            title: const Text('Mit anderem Space teilen'),
+            content: SizedBox(
+              width: 280,
+              child: invite != null
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Zeige diesen Code dem Owner des anderen Space -- er/sie löst ihn unter "Meine Spaces" ein.',
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          color: Colors.white,
+                          child: QrImageView(data: invite!.code, size: 200),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          invite!.code,
+                          style: const TextStyle(fontSize: 28, letterSpacing: 4, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text('Gültig bis ${invite!.expiresAt.toLocal()}'.split('.').first),
+                      ],
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Ab dann sehen und teilen beide Spaces diesen Channel gemeinsam.'),
+                        const SizedBox(height: 8),
+                        if (error != null) ...[
+                          Text(error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                          const SizedBox(height: 8),
+                        ],
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: isCreating ? null : generate,
+                          child: isCreating
+                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                              : const Text('Code erzeugen'),
+                        ),
+                      ],
+                    ),
+            ),
+            actions: [
+              if (invite != null)
+                TextButton(
+                  onPressed: () async {
+                    await widget.membershipService.revokeInvite(invite!.id);
+                    if (context.mounted) Navigator.of(context).pop();
+                  },
+                  child: const Text('Widerrufen'),
+                ),
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Schließen')),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> _showAddExistingMemberDialog() async {
     final roster = _roster;
     if (roster == null) return;
@@ -233,10 +318,25 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           if (candidates == null && error == null) {
-            widget.membershipService
-                .listAddableSpaceMembers(spaceId: roster.spaceId, excludeChannelId: widget.channelId)
-                .then((result) => setDialogState(() => candidates = result))
-                .catchError((e) => setDialogState(() => error = 'Liste konnte nicht geladen werden: $e'));
+            // A channel can be linked to more than one Space now -- merge
+            // candidates from every linked Space the caller can query
+            // (list-space-members itself still gates each call to
+            // Space-Owner-or-staff of that specific Space).
+            Future.wait(
+              roster.spaces.map(
+                (space) => widget.membershipService
+                    .listAddableSpaceMembers(spaceId: space.id, excludeChannelId: widget.channelId)
+                    .catchError((_) => <SpaceMemberCandidate>[]),
+              ),
+            ).then((results) {
+              final byUserId = <String, SpaceMemberCandidate>{};
+              for (final list in results) {
+                for (final c in list) {
+                  byUserId[c.userId] = c;
+                }
+              }
+              setDialogState(() => candidates = byUserId.values.toList());
+            }).catchError((e) => setDialogState(() => error = 'Liste konnte nicht geladen werden: $e'));
           }
           if (error != null) {
             return AlertDialog(content: Text(error!), actions: [
@@ -262,7 +362,8 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
                 children: [
                   for (final candidate in candidates!)
                     ListTile(
-                      title: Text(candidate.email ?? candidate.userId),
+                      leading: SmileAvatar(name: candidate.label, avatarUrl: candidate.avatarUrl),
+                      title: Text(candidate.label),
                       onTap: () async {
                         await widget.membershipService.addExistingMember(
                           channelId: widget.channelId,
@@ -306,8 +407,8 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
               children: [
                 for (final member in roster.members)
                   ListTile(
-                    leading: const Icon(Icons.person),
-                    title: Text(member.email ?? member.userId),
+                    leading: SmileAvatar(name: member.label, avatarUrl: member.avatarUrl),
+                    title: Text(member.label),
                     subtitle: Text(
                       member.isGroupDerived
                           ? '${_roleLabels[member.role] ?? member.role} · über Gruppe „${member.viaGroupName}"'
@@ -351,8 +452,8 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
                   ),
                   for (final request in _joinRequests)
                     ListTile(
-                      leading: const Icon(Icons.person_outline),
-                      title: Text(request.email ?? request.id),
+                      leading: SmileAvatar(name: request.label, avatarUrl: request.avatarUrl),
+                      title: Text(request.label),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -386,6 +487,14 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
                           onPressed: _showAddExistingMemberDialog,
                           icon: const Icon(Icons.person_add),
                           label: const Text('Bestehendes Mitglied hinzufügen'),
+                        ),
+                      ],
+                      if (roster.callerIsAdmin || roster.callerIsSpaceOwner) ...[
+                        const SizedBox(height: 8),
+                        OutlinedButton.icon(
+                          onPressed: _showShareWithSpaceDialog,
+                          icon: const Icon(Icons.hub_outlined),
+                          label: const Text('Mit anderem Space teilen'),
                         ),
                       ],
                     ],

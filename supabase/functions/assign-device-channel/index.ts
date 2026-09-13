@@ -53,11 +53,20 @@ Deno.serve(async (req) => {
   const { data: device } = await supabaseAdmin.from("devices").select("space_id").eq("id", body.device_id).maybeSingle();
   if (!device) return jsonResponse({ error: "device_not_found" }, 404);
 
-  const { data: channel } = await supabaseAdmin.from("channels").select("space_id").eq("id", body.channel_id).maybeSingle();
+  const { data: channel } = await supabaseAdmin.from("channels").select("id").eq("id", body.channel_id).maybeSingle();
   if (!channel) return jsonResponse({ error: "channel_not_found" }, 404);
-  // A Frame conceptually belongs to one Space -- refuse a cross-Space
-  // assignment even though nothing else would technically stop it.
-  if (channel.space_id !== device.space_id) return jsonResponse({ error: "channel_not_in_device_space" }, 400);
+  // A Frame conceptually belongs to one Space -- refuse an assignment
+  // unless the channel is actually linked to that Space (space_channels).
+  // A shared channel (linked to more than one Space) can now legitimately
+  // be assigned in either -- e.g. Opa's Frame showing the "Enkelkinder"
+  // channel shared from Oma's Space.
+  const { data: link } = await supabaseAdmin
+    .from("space_channels")
+    .select("space_id")
+    .eq("channel_id", body.channel_id)
+    .eq("space_id", device.space_id)
+    .maybeSingle();
+  if (!link) return jsonResponse({ error: "channel_not_in_device_space" }, 400);
 
   if (!isStaff) {
     const { data: ownerRow } = await supabaseAdmin

@@ -8,6 +8,7 @@
 // exempt from that boundary everywhere else in the schema.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { fetchProfilesByUserId } from "../_shared/profiles.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -53,8 +54,8 @@ Deno.serve(async (req) => {
 
   if (!isStaff && !ownerRow) return jsonResponse({ error: "not_space_owner" }, 403);
 
-  const { data: channels } = await supabaseAdmin.from("channels").select("id").eq("space_id", body.space_id);
-  const channelIds = (channels ?? []).map((c) => c.id as string);
+  const { data: links } = await supabaseAdmin.from("space_channels").select("channel_id").eq("space_id", body.space_id);
+  const channelIds = (links ?? []).map((l) => l.channel_id as string);
   if (channelIds.length === 0) return jsonResponse({ candidates: [] });
 
   const { data: memberships, error: membersError } = await supabaseAdmin
@@ -71,10 +72,18 @@ Deno.serve(async (req) => {
     ...new Set((memberships ?? []).map((m) => m.user_id as string).filter((id) => !excludedUserIds.has(id))),
   ];
 
+  const profilesByUserId = await fetchProfilesByUserId(supabaseAdmin, candidateUserIds);
+
   const candidates = await Promise.all(
     candidateUserIds.map(async (id) => {
       const { data: userRecord } = await supabaseAdmin.auth.admin.getUserById(id);
-      return { user_id: id, email: userRecord?.user?.email ?? null };
+      const profile = profilesByUserId.get(id);
+      return {
+        user_id: id,
+        email: userRecord?.user?.email ?? null,
+        display_name: profile?.display_name ?? null,
+        avatar_url: profile?.avatar_url ?? null,
+      };
     }),
   );
 

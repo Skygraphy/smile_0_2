@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches SmileTheme.surface in lib/theme/smile_theme.dart, a true
+         neutral with no hue tint (the app's dark surfaces must stay
+         grayscale, not pick up the coral primary). -->
+    <color name="ic_launcher_background">#121212</color>
+</resources>

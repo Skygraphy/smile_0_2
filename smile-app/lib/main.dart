@@ -3,15 +3,17 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
 import 'screens/channel_feed_screen.dart';
 import 'screens/channel_members_screen.dart';
+import 'screens/channels_home_screen.dart';
 import 'screens/login_screen.dart';
-import 'screens/spaces_screen.dart';
+import 'screens/profile_setup_screen.dart';
+import 'services/profile_service.dart';
 import 'services/push_service.dart';
+import 'theme/smile_theme.dart';
 
 final supabase = Supabase.instance.client;
 
@@ -79,34 +81,12 @@ class SmileApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const accent = Color(0xFFFF6F61); // Living Coral
-    final textTheme = GoogleFonts.interTextTheme(ThemeData.dark().textTheme);
     return MaterialApp(
       title: 'Smile',
       navigatorKey: navigatorKey,
       scaffoldMessengerKey: scaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: accent,
-          brightness: Brightness.dark,
-        ),
-        textTheme: textTheme,
-        useMaterial3: true,
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(8)),
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
-      ),
+      theme: SmileTheme.themeData,
       home: AuthGate(),
     );
   }
@@ -135,10 +115,91 @@ class AuthGate extends StatelessWidget {
           // cold start, so a token obtained after this widget first built
           // (permission granted later, token rotated) still gets saved.
           unawaited(pushService.requestPermission().then((_) => pushService.registerCurrentToken()));
-          return const SpacesScreen();
+          // Keyed by user id so signing out and back in as someone else
+          // (common on a shared test device) re-checks that person's own
+          // profile instead of reusing the previous user's cached state.
+          return _ProfileGate(key: ValueKey(session.user.id));
         }
         return const LoginScreen();
       },
     );
+  }
+}
+
+/// Every user needs at least a display name (migrations/0029's not-null
+/// profiles.display_name) before using the rest of the app -- an avatar
+/// is optional, SmileAvatar's initials fallback covers that half of the
+/// requirement automatically. Shown once per account, right after the
+/// auth session exists but before SpacesScreen, then never again once a
+/// profiles row exists.
+class _ProfileGate extends StatefulWidget {
+  const _ProfileGate({super.key});
+
+  @override
+  State<_ProfileGate> createState() => _ProfileGateState();
+}
+
+class _ProfileGateState extends State<_ProfileGate> {
+  final _profileService = ProfileService();
+  bool _isLoading = true;
+  bool _hasProfile = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final profile = await _profileService.getMyProfile();
+      if (!mounted) return;
+      setState(() {
+        _hasProfile = profile != null;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Profil konnte nicht geladen werden: $e';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_errorMessage != null) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(_errorMessage!, textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                ElevatedButton(onPressed: _check, child: const Text('Erneut versuchen')),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    if (!_hasProfile) {
+      return ProfileSetupScreen(
+        profileService: _profileService,
+        onDone: () => setState(() => _hasProfile = true),
+      );
+    }
+    return ChannelsHomeScreen();
   }
 }

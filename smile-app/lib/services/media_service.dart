@@ -13,9 +13,14 @@ class MediaItem {
     required this.displayUrl,
     required this.createdAt,
     required this.processingStatus,
+    required this.senderId,
     this.thumbnailUrl,
     this.previewDataUrl,
     this.caption,
+    this.senderDisplayName,
+    this.senderAvatarUrl,
+    this.width,
+    this.height,
   });
 
   final String id;
@@ -26,8 +31,20 @@ class MediaItem {
   final String? caption;
   final String processingStatus; // 'uploaded' | 'processing' | 'ready'
   final DateTime createdAt;
+  final String senderId;
+  final String? senderDisplayName;
+  final String? senderAvatarUrl;
+  // Original pixel dimensions, if known (populated once processing
+  // finishes) -- lets the feed show a photo at its own aspect ratio
+  // instead of always cropping to a square.
+  final int? width;
+  final int? height;
 
   bool get isReady => processingStatus == 'ready';
+
+  String get senderLabel => senderDisplayName ?? senderId;
+
+  double? get aspectRatio => (width != null && height != null && height! > 0) ? width! / height! : null;
 
   factory MediaItem.fromJson(Map<String, dynamic> json) => MediaItem(
         id: json['id'] as String,
@@ -38,6 +55,11 @@ class MediaItem {
         caption: json['caption'] as String?,
         processingStatus: json['processing_status'] as String? ?? 'ready',
         createdAt: DateTime.parse(json['created_at'] as String),
+        senderId: json['sender_id'] as String,
+        senderDisplayName: json['sender_display_name'] as String?,
+        senderAvatarUrl: json['sender_avatar_url'] as String?,
+        width: json['width'] as int?,
+        height: json['height'] as int?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -49,6 +71,11 @@ class MediaItem {
         'caption': caption,
         'processing_status': processingStatus,
         'created_at': createdAt.toIso8601String(),
+        'sender_id': senderId,
+        'sender_display_name': senderDisplayName,
+        'sender_avatar_url': senderAvatarUrl,
+        'width': width,
+        'height': height,
       };
 }
 

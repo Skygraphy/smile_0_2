@@ -7,6 +7,7 @@
 // authorization surface.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { fetchProfilesByUserId } from "../_shared/profiles.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -42,15 +43,28 @@ Deno.serve(async (req) => {
   const { data: staffRow } = await supabaseAdmin.from("staff_members").select("user_id").eq("user_id", userId).maybeSingle();
   const isStaff = Boolean(staffRow);
 
-  const { data: channel } = await supabaseAdmin.from("channels").select("space_id").eq("id", body.channel_id).maybeSingle();
+  const { data: channel } = await supabaseAdmin.from("channels").select("id").eq("id", body.channel_id).maybeSingle();
   if (!channel) return jsonResponse({ error: "channel_not_found" }, 404);
 
-  const { data: ownerRow } = await supabaseAdmin
-    .from("space_owners")
-    .select("id")
-    .eq("space_id", channel.space_id)
-    .eq("user_id", userId)
-    .maybeSingle();
+  // A channel can be linked to more than one Space now (space_channels) --
+  // an owner of *any* linked Space gets the same admin-equivalent power a
+  // single-space owner always had, consistent with sharing being meant to
+  // give both households real, symmetric control.
+  const { data: spaceLinks } = await supabaseAdmin
+    .from("space_channels")
+    .select("spaces(id, name)")
+    .eq("channel_id", body.channel_id);
+  const linkedSpaces = (spaceLinks ?? [])
+    // deno-lint-ignore no-explicit-any
+    .map((row) => row.spaces as any)
+    .filter(Boolean)
+    .map((s) => ({ id: s.id as string, name: s.name as string }));
+  const linkedSpaceIds = linkedSpaces.map((s) => s.id);
+
+  const { data: ownerRows } = linkedSpaceIds.length > 0
+    ? await supabaseAdmin.from("space_owners").select("id").in("space_id", linkedSpaceIds).eq("user_id", userId)
+    : { data: [] as { id: string }[] };
+  const ownerRow = (ownerRows ?? []).length > 0 ? ownerRows![0] : null;
 
   const { data: membership } = await supabaseAdmin
     .from("channel_memberships")
@@ -83,13 +97,18 @@ Deno.serve(async (req) => {
     for (const g of groupRows ?? []) groupNameById.set(g.id as string, g.name as string);
   }
 
+  const profilesByUserId = await fetchProfilesByUserId(supabaseAdmin, (memberships ?? []).map((m) => m.user_id as string));
+
   const members = await Promise.all(
     (memberships ?? []).map(async (m) => {
       const { data: userRecord } = await supabaseAdmin.auth.admin.getUserById(m.user_id as string);
+      const profile = profilesByUserId.get(m.user_id as string);
       return {
         membership_id: m.id,
         user_id: m.user_id,
         email: userRecord?.user?.email ?? null,
+        display_name: profile?.display_name ?? null,
+        avatar_url: profile?.avatar_url ?? null,
         role: m.role,
         created_at: m.created_at,
         via_group_name: m.via_group_id ? groupNameById.get(m.via_group_id as string) ?? null : null,
@@ -99,7 +118,7 @@ Deno.serve(async (req) => {
 
   return jsonResponse({
     members,
-    space_id: channel.space_id,
+    spaces: linkedSpaces,
     caller_is_admin: isChannelAdmin,
     caller_is_space_owner: isSpaceOwner,
   });

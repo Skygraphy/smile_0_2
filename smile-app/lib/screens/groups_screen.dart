@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/group_service.dart';
+import '../widgets/smile_avatar.dart';
 import 'group_detail_screen.dart';
 
 /// "Meine Gruppen" (Phase 6b): personal, creator-owned distribution lists
@@ -106,7 +107,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                 for (final group in groups)
                   Card(
                     child: ListTile(
-                      leading: const Icon(Icons.diversity_3),
+                      leading: SmileAvatar(name: group.name, avatarUrl: group.avatarUrl),
                       title: Text(group.name),
                       onTap: () async {
                         await Navigator.of(context).push(
@@ -136,15 +137,15 @@ class _GroupsScreenState extends State<GroupsScreen> {
                   for (final membership in memberships)
                     Card(
                       child: ListTile(
-                        leading: const Icon(Icons.diversity_3_outlined),
+                        leading: SmileAvatar(name: membership.groupName, avatarUrl: membership.groupAvatarUrl),
                         title: Text(membership.groupName),
                         subtitle: Text(
                           [
-                            if (membership.ownerEmail != null) 'von ${membership.ownerEmail}',
+                            if (membership.ownerLabel.isNotEmpty) 'von ${membership.ownerLabel}',
                             if (membership.channels.isEmpty)
                               'noch keinem Channel freigegeben'
                             else
-                              'Zugriff auf: ${membership.channels.map((c) => '${c.spaceName} → ${c.channelName}').join(', ')}',
+                              'Zugriff auf: ${membership.channels.map((c) => '${c.spaceLabel} → ${c.channelName}').join(', ')}',
                           ].join(' · '),
                         ),
                         trailing: IconButton(

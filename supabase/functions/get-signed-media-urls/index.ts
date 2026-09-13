@@ -11,6 +11,7 @@
 // older left.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { fetchProfilesByUserId } from "../_shared/profiles.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -122,16 +123,29 @@ Deno.serve(async (req) => {
   const displayUrlByPath = new Map((displaySigned.data ?? []).map((s) => [s.path, s.signedUrl]));
   const thumbnailUrlByPath = new Map((thumbnailSigned.data ?? []).map((s) => [s.path, s.signedUrl]));
 
-  const results = (items ?? []).map((item) => ({
-    id: item.id,
-    media_type: item.media_type,
-    caption: item.caption,
-    created_at: item.created_at,
-    processing_status: item.processing_status,
-    preview_data_url: item.preview_data_url,
-    display_url: item.storage_path_display ? displayUrlByPath.get(item.storage_path_display) ?? null : null,
-    thumbnail_url: item.storage_path_thumbnail ? thumbnailUrlByPath.get(item.storage_path_thumbnail) ?? null : null,
-  }));
+  // Powers the chat-style feed's left/right + avatar+name layout
+  // (channel_feed_screen.dart) -- who sent each photo, resolved the same
+  // way every other roster already resolves a member's name/avatar.
+  const profilesBySenderId = await fetchProfilesByUserId(supabaseAdmin, (items ?? []).map((item) => item.sender_id as string));
+
+  const results = (items ?? []).map((item) => {
+    const profile = profilesBySenderId.get(item.sender_id as string);
+    return {
+      id: item.id,
+      media_type: item.media_type,
+      caption: item.caption,
+      created_at: item.created_at,
+      processing_status: item.processing_status,
+      preview_data_url: item.preview_data_url,
+      display_url: item.storage_path_display ? displayUrlByPath.get(item.storage_path_display) ?? null : null,
+      thumbnail_url: item.storage_path_thumbnail ? thumbnailUrlByPath.get(item.storage_path_thumbnail) ?? null : null,
+      width: item.width,
+      height: item.height,
+      sender_id: item.sender_id,
+      sender_display_name: profile?.display_name ?? null,
+      sender_avatar_url: profile?.avatar_url ?? null,
+    };
+  });
 
   const nextCursor = results.length === limit ? results[results.length - 1].created_at : null;
 

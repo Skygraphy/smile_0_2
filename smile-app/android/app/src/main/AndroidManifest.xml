@@ -4,10 +4,15 @@
          for a join request, an approval, or a new photo (data-only
          messages, like smile-frame's own sync-nudge, don't need this). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- image_picker's camera source (avatar upload, "Foto aufnehmen"),
+         requested at runtime by the plugin, but still has to be declared. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <application
         android:label="smile_app"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round">
         <activity
             android:name=".MainActivity"
             android:exported="true"

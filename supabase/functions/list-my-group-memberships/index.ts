@@ -8,6 +8,7 @@
 // into the caller's own memberships.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { avatarPublicUrl, fetchProfilesByUserId } from "../_shared/profiles.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -37,14 +38,33 @@ Deno.serve(async (req) => {
   const groupIds = (memberRows ?? []).map((r) => r.group_id as string);
   if (groupIds.length === 0) return jsonResponse({ memberships: [] });
 
-  const { data: groups } = await supabaseAdmin.from("groups").select("id, name, owner_id").in("id", groupIds);
+  const { data: groups } = await supabaseAdmin.from("groups").select("id, name, owner_id, avatar_path").in("id", groupIds);
+  const ownerProfilesById = await fetchProfilesByUserId(supabaseAdmin, (groups ?? []).map((g) => g.owner_id as string));
 
   const { data: grants } = await supabaseAdmin
     .from("group_channel_grants")
-    .select("group_id, channel_id, channels(name, spaces(name))")
+    .select("group_id, channel_id, channels(name)")
     .in("group_id", groupIds);
 
-  const channelsByGroup = new Map<string, { channel_id: string; channel_name: string; space_name: string }[]>();
+  const grantedChannelIds = [...new Set((grants ?? []).map((g) => g.channel_id as string))];
+  // A channel can be linked to more than one Space now -- collect all of
+  // them per channel instead of a single nested `spaces(name)` embed
+  // (which relied on the now-removed channels.space_id FK).
+  const { data: spaceLinks } = grantedChannelIds.length > 0
+    ? await supabaseAdmin.from("space_channels").select("channel_id, spaces(name)").in("channel_id", grantedChannelIds)
+    : { data: [] as { channel_id: string; spaces: { name: string } | null }[] };
+  const spaceNamesByChannel = new Map<string, string[]>();
+  for (const row of spaceLinks ?? []) {
+    // deno-lint-ignore no-explicit-any
+    const space = row.spaces as any;
+    if (!space) continue;
+    const channelId = row.channel_id as string;
+    const list = spaceNamesByChannel.get(channelId) ?? [];
+    list.push(space.name as string);
+    spaceNamesByChannel.set(channelId, list);
+  }
+
+  const channelsByGroup = new Map<string, { channel_id: string; channel_name: string; space_names: string[] }[]>();
   for (const g of grants ?? []) {
     // deno-lint-ignore no-explicit-any
     const channel = g.channels as any;
@@ -52,7 +72,7 @@ Deno.serve(async (req) => {
     list.push({
       channel_id: g.channel_id as string,
       channel_name: channel?.name ?? null,
-      space_name: channel?.spaces?.name ?? null,
+      space_names: spaceNamesByChannel.get(g.channel_id as string) ?? [],
     });
     channelsByGroup.set(g.group_id as string, list);
   }
@@ -60,10 +80,13 @@ Deno.serve(async (req) => {
   const memberships = await Promise.all(
     (groups ?? []).map(async (group) => {
       const { data: ownerRecord } = await supabaseAdmin.auth.admin.getUserById(group.owner_id as string);
+      const ownerProfile = ownerProfilesById.get(group.owner_id as string);
       return {
         group_id: group.id,
         group_name: group.name,
+        group_avatar_url: avatarPublicUrl(group.avatar_path as string | null),
         owner_email: ownerRecord?.user?.email ?? null,
+        owner_display_name: ownerProfile?.display_name ?? null,
         channels: channelsByGroup.get(group.id as string) ?? [],
       };
     }),

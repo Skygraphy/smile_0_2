@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 
 import '../main.dart';
-import '../services/push_service.dart';
+import '../services/membership_service.dart';
 import 'channel_list_screen.dart';
 import 'device_list_screen.dart';
-import 'groups_screen.dart';
 import 'join_channel_screen.dart';
 import 'pair_frame_screen.dart';
 
-/// Landing screen after login. Full Space/Channel management (creation
-/// flow, channel setup, member invites, device fleet) is Phase 6 scope --
-/// this is deliberately minimal: list Spaces the user owns, let them
-/// create one if they have none, and pair a Frame to one (Phase 2's own
-/// scope, concept doc sect. 14).
+/// "Meine Spaces" -- Space/Frame administration (create a Space, pair a
+/// Frame, manage devices). Demoted from the app's landing screen to a
+/// secondary area reachable from channels_home_screen.dart's overflow
+/// menu once the home screen became a flat, recency-sorted Channel list
+/// (Spaces/Frames are infrastructure behind the actual communication,
+/// not the communication itself -- see project_ui-redesign-concepts).
+/// A normal pushed screen now, no header camera/overflow chrome of its
+/// own -- that lives on the actual home screen only, same as WhatsApp
+/// never repeats its own chat-list header controls on a sub-screen.
 class SpacesScreen extends StatefulWidget {
   const SpacesScreen({super.key});
 
@@ -21,28 +24,9 @@ class SpacesScreen extends StatefulWidget {
 }
 
 class _SpacesScreenState extends State<SpacesScreen> {
-  final _pushService = PushService();
   List<Map<String, dynamic>>? _spaces;
   String? _errorMessage;
   bool _isCreating = false;
-
-  /// Deregisters this device's push token *before* signing out -- once
-  /// signed out there's no session left for user_push_tokens' RLS
-  /// (`user_id = auth.uid()`) to authorize the delete under, and without
-  /// this a shared/reused device would keep getting the previous account's
-  /// notifications (join requests, new photos, ...) until FCM eventually
-  /// reports the token dead on its own.
-  Future<void> _signOut() async {
-    final token = await _pushService.getToken();
-    if (token != null) {
-      try {
-        await supabase.from('user_push_tokens').delete().eq('fcm_token', token);
-      } catch (_) {
-        // Best-effort -- signing out must not get stuck on this.
-      }
-    }
-    await supabase.auth.signOut();
-  }
 
   @override
   void initState() {
@@ -70,6 +54,53 @@ class _SpacesScreenState extends State<SpacesScreen> {
     }
   }
 
+  /// Redeeming a channel_space_share code (0030_multi_space_channels.sql):
+  /// links one of *my* Spaces to a channel someone else shares -- e.g. Opa
+  /// entering a code Oma generated in her "Enkelkinder" channel so both
+  /// households see and can post into it from then on. Unlike a plain
+  /// membership invite (JoinChannelScreen), this needs the redeemer to also
+  /// pick *which* of their own Spaces gets linked.
+  Future<void> _redeemChannelSpaceShare() async {
+    final spaces = _spaces;
+    if (spaces == null || spaces.isEmpty) return;
+    final code = await showDialog<String>(
+      context: context,
+      builder: (context) => _EnterCodeDialog(),
+    );
+    if (code == null || code.trim().isEmpty) return;
+
+    String? spaceId = spaces.length == 1 ? spaces.first['id'] as String : null;
+    if (spaceId == null && mounted) {
+      spaceId = await showDialog<String>(
+        context: context,
+        builder: (context) => SimpleDialog(
+          title: const Text('Mit welchem Space verknüpfen?'),
+          children: [
+            for (final space in spaces)
+              SimpleDialogOption(
+                onPressed: () => Navigator.of(context).pop(space['id'] as String),
+                child: Text(space['name'] as String),
+              ),
+          ],
+        ),
+      );
+    }
+    if (spaceId == null) return;
+
+    try {
+      final result = await MembershipService().claimChannelSpaceShare(code: code.trim(), spaceId: spaceId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('"${result.channelName}" ist jetzt mit diesem Space verknüpft.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Code konnte nicht eingelöst werden: $e')),
+      );
+    }
+  }
+
   Future<void> _createSpace() async {
     final name = await showDialog<String>(
       context: context,
@@ -87,36 +118,19 @@ class _SpacesScreenState extends State<SpacesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final email = supabase.auth.currentUser?.email ?? '';
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Smile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.diversity_3),
-            tooltip: 'Meine Gruppen',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => GroupsScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Abmelden',
-            onPressed: _signOut,
-          ),
-        ],
+        title: const Text('Meine Spaces'),
       ),
       body: _spaces == null
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                Text('Angemeldet als $email', style: Theme.of(context).textTheme.bodySmall),
                 if (_errorMessage != null) ...[
-                  const SizedBox(height: 8),
                   Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  const SizedBox(height: 16),
                 ],
-                const SizedBox(height: 16),
                 for (final space in _spaces!)
                   Card(
                     child: ListTile(
@@ -175,8 +189,50 @@ class _SpacesScreenState extends State<SpacesScreen> {
                   icon: const Icon(Icons.group_add),
                   label: const Text('Einladung einlösen'),
                 ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: (_spaces?.isEmpty ?? true) ? null : _redeemChannelSpaceShare,
+                  icon: const Icon(Icons.hub_outlined),
+                  label: const Text('Channel-Code einlösen'),
+                ),
               ],
             ),
+    );
+  }
+}
+
+class _EnterCodeDialog extends StatefulWidget {
+  @override
+  State<_EnterCodeDialog> createState() => _EnterCodeDialogState();
+}
+
+class _EnterCodeDialogState extends State<_EnterCodeDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Code eingeben'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        textCapitalization: TextCapitalization.characters,
+        decoration: const InputDecoration(labelText: 'Code'),
+        onSubmitted: (value) => Navigator.of(context).pop(value),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Abbrechen')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: const Text('Einlösen'),
+        ),
+      ],
     );
   }
 }

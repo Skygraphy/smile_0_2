@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
   for (let attempt = 0; attempt < MAX_CLAIM_ATTEMPTS; attempt++) {
     const { data: pairingCode, error: codeError } = await supabaseAdmin
       .from("pairing_codes")
-      .select("*, channels(name, space_id)")
+      .select("*, channels(name)")
       .eq("code", body.code.trim().toUpperCase())
       .eq("code_type", "channel_invite")
       .maybeSingle();
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     if (pairingCode.use_count >= pairingCode.max_uses) return jsonResponse({ error: "code_already_used" }, 410);
 
     const channelId = pairingCode.channel_id as string;
-    const channelRecord = pairingCode.channels as { name: string; space_id: string } | null;
+    const channelRecord = pairingCode.channels as { name: string } | null;
     const channelName = channelRecord?.name ?? "";
 
     const { data: existingMembership } = await supabaseAdmin
@@ -91,15 +91,24 @@ Deno.serve(async (req) => {
       if (requestError) return jsonResponse({ error: "request_failed", detail: requestError.message }, 500);
 
       // Best-effort: nudge whoever can actually approve this (channel
-      // admins + the Space Owner) so it doesn't just sit unnoticed until
-      // someone happens to open the channel's Mitglieder screen.
+      // admins + every linked Space's owners -- a channel can now be
+      // shared across more than one Space) so it doesn't just sit
+      // unnoticed until someone happens to open the channel's
+      // Mitglieder screen.
       if (channelRecord) {
+        const { data: spaceLinks } = await supabaseAdmin.from("space_channels").select("space_id").eq(
+          "channel_id",
+          channelId,
+        );
+        const linkedSpaceIds = (spaceLinks ?? []).map((l) => l.space_id as string);
         const [{ data: admins }, { data: owners }] = await Promise.all([
           supabaseAdmin.from("channel_memberships").select("user_id").eq("channel_id", channelId).eq(
             "role",
             "channel_admin",
           ),
-          supabaseAdmin.from("space_owners").select("user_id").eq("space_id", channelRecord.space_id),
+          linkedSpaceIds.length > 0
+            ? supabaseAdmin.from("space_owners").select("user_id").in("space_id", linkedSpaceIds)
+            : Promise.resolve({ data: [] as { user_id: string }[] }),
         ]);
         const recipientIds = [
           ...new Set([...(admins ?? []).map((a) => a.user_id), ...(owners ?? []).map((o) => o.user_id)]),

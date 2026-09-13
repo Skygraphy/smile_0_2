@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../services/avatar_upload.dart';
 import '../services/group_service.dart';
+import '../widgets/avatar_picker.dart';
+import '../widgets/smile_avatar.dart';
 
 /// Two independent sections for one group: who's in it, and which channels
 /// it's granted access to. Both take effect immediately -- adding a member
@@ -21,11 +24,49 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   List<GroupMember>? _members;
   List<GroupGrant>? _grants;
   String? _errorMessage;
+  late String? _avatarUrl = widget.group.avatarUrl;
+  bool _isPickingAvatar = false;
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  /// Optional -- SmileAvatar's initials fallback already covers "every
+  /// group needs at least a profile picture" on its own; this just lets
+  /// the owner add a real photo.
+  Future<void> _pickAvatar() async {
+    final source = await showAvatarSourceSheet(context);
+    if (source == null) return;
+    String? url;
+    if (source == AvatarSource.url) {
+      if (!mounted) return;
+      final enteredUrl = await showAvatarUrlDialog(context);
+      if (enteredUrl == null || enteredUrl.trim().isEmpty) return;
+      setState(() => _isPickingAvatar = true);
+      try {
+        url = await widget.groupService.uploadGroupAvatarFromUrl(widget.group.id, enteredUrl.trim());
+      } on AvatarUrlException catch (e) {
+        if (mounted) setState(() => _errorMessage = e.message);
+      } catch (e) {
+        if (mounted) setState(() => _errorMessage = 'Gruppenbild konnte nicht hochgeladen werden: $e');
+      }
+    } else {
+      setState(() => _isPickingAvatar = true);
+      try {
+        url = source == AvatarSource.camera
+            ? await widget.groupService.uploadGroupAvatarFromCamera(widget.group.id)
+            : await widget.groupService.uploadGroupAvatarFromGallery(widget.group.id);
+      } catch (e) {
+        if (mounted) setState(() => _errorMessage = 'Gruppenbild konnte nicht hochgeladen werden: $e');
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _isPickingAvatar = false;
+      if (url != null) _avatarUrl = url;
+    });
   }
 
   Future<void> _load() async {
@@ -100,7 +141,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           for (final channel in choices)
             SimpleDialogOption(
               onPressed: () => Navigator.of(context).pop(channel),
-              child: Text('${channel.spaceName} → ${channel.channelName}'),
+              child: Text('${channel.spaceLabel} → ${channel.channelName}'),
             ),
         ],
       ),
@@ -131,14 +172,43 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                   ),
+                Center(
+                  child: GestureDetector(
+                    onTap: _isPickingAvatar ? null : _pickAvatar,
+                    child: Stack(
+                      children: [
+                        SmileAvatar(name: widget.group.name, avatarUrl: _avatarUrl, size: 72),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: CircleAvatar(
+                            radius: 13,
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            child: _isPickingAvatar
+                                ? const SizedBox(
+                                    width: 12,
+                                    height: 12,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                                    ),
+                                  )
+                                : Icon(Icons.camera_alt, size: 13, color: Theme.of(context).colorScheme.onPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
                 Text('Mitglieder', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 if (members.isEmpty) const Text('Noch niemand in dieser Gruppe.'),
                 for (final member in members)
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.person),
-                    title: Text(member.email ?? member.userId),
+                    leading: SmileAvatar(name: member.label, avatarUrl: member.avatarUrl),
+                    title: Text(member.label),
                     trailing: IconButton(
                       icon: const Icon(Icons.close),
                       tooltip: 'Entfernen',
@@ -158,7 +228,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.photo_library_outlined),
-                    title: Text('${grant.spaceName} → ${grant.channelName}'),
+                    title: Text('${grant.spaceLabel} → ${grant.channelName}'),
                     trailing: IconButton(
                       icon: const Icon(Icons.close),
                       tooltip: 'Widerrufen',

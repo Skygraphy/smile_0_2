@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
+import '../widgets/otp_code_field.dart';
+import '../widgets/smile_mark.dart';
+import '../widgets/smile_wordmark.dart';
 
 /// Passwordless Email-OTP login (concept doc sect. 4): request a 6-digit
 /// code by email, then verify it. On success, AuthGate's own
@@ -74,35 +77,47 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Smile',
-                    style: Theme.of(context).textTheme.headlineLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  if (_step == _LoginStep.enterEmail) ..._buildEmailStep(),
-                  if (_step == _LoginStep.enterCode) ..._buildCodeStep(),
-                  if (_errorMessage != null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      _errorMessage!,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
-                      textAlign: TextAlign.center,
+        // A LayoutBuilder + minHeight ConstrainedBox keeps the form
+        // centered when it fits, but lets it scroll instead of
+        // overflowing once the on-screen keyboard shrinks the available
+        // height (hit in practice once the logo/wordmark made this
+        // screen taller -- a plain Center+Column can't scroll at all).
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 400),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Center(child: SmileMark(size: 56)),
+                          const SizedBox(height: 12),
+                          const Center(child: SmileWordmark(fontSize: 32)),
+                          const SizedBox(height: 32),
+                          if (_step == _LoginStep.enterEmail) ..._buildEmailStep(),
+                          if (_step == _LoginStep.enterCode) ..._buildCodeStep(),
+                          if (_errorMessage != null) ...[
+                            const SizedBox(height: 16),
+                            Text(
+                              _errorMessage!,
+                              style: TextStyle(color: Theme.of(context).colorScheme.error),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                  ],
-                ],
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
@@ -143,15 +158,13 @@ class _LoginScreenState extends State<LoginScreen> {
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 16),
-      TextField(
-        controller: _codeController,
-        keyboardType: TextInputType.number,
-        autofillHints: const [AutofillHints.oneTimeCode],
-        maxLength: 6,
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 24, letterSpacing: 8),
-        decoration: const InputDecoration(counterText: ''),
-        onSubmitted: (_) => _verifyCode(),
+      Center(
+        child: OtpCodeField(
+          controller: _codeController,
+          autofocus: true,
+          onCompleted: (_) => _verifyCode(),
+          onSubmitted: (_) => _verifyCode(),
+        ),
       ),
       const SizedBox(height: 24),
       ElevatedButton(

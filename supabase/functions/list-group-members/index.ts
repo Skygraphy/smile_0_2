@@ -5,6 +5,7 @@
 // group's owner (or staff) may list its members.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { fetchProfilesByUserId } from "../_shared/profiles.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -51,13 +52,18 @@ Deno.serve(async (req) => {
     .order("created_at");
   if (membersError) return jsonResponse({ error: "fetch_failed" }, 500);
 
+  const profilesByUserId = await fetchProfilesByUserId(supabaseAdmin, (members ?? []).map((m) => m.user_id as string));
+
   const resolved = await Promise.all(
     (members ?? []).map(async (m) => {
       const { data: userRecord } = await supabaseAdmin.auth.admin.getUserById(m.user_id as string);
+      const profile = profilesByUserId.get(m.user_id as string);
       return {
         id: m.id,
         user_id: m.user_id,
         email: userRecord?.user?.email ?? null,
+        display_name: profile?.display_name ?? null,
+        avatar_url: profile?.avatar_url ?? null,
         created_at: m.created_at,
       };
     }),
