@@ -1,10 +1,10 @@
-// Best-effort push to wake a Frame for an immediate sync/compliance check,
-// bypassing the periodic poll interval. Authenticated as the caller's own
-// session (real Supabase Auth JWT, unlike the device-facing functions);
-// manually checks is_space_owner-equivalent so a caller can only nudge
-// devices in a Space they own. Failure here is never fatal -- the normal
-// poll cycle (submit-heartbeat, get-media-batch) remains the real delivery
-// guarantee, matching smile_0_1's notify-device.
+// Best-effort push to wake a Frame for an immediate sync, bypassing the
+// periodic poll interval. Authenticated as the caller's own session (real
+// Supabase Auth JWT) -- the frames_select RLS policy (is_space_owner or
+// staff, see migrations/0031_architecture_reset.sql) is reused directly to
+// authorize the read instead of re-implementing the same ownership check
+// here. Failure here is never fatal -- the normal poll cycle
+// (submit-heartbeat, get-media-batch) remains the real delivery guarantee.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { sendDataMessage } from "../_shared/fcm.ts";
@@ -13,7 +13,7 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 interface RequestBody {
-  device_id: string;
+  frame_id: string;
 }
 
 Deno.serve(async (req) => {
@@ -35,31 +35,19 @@ Deno.serve(async (req) => {
   } catch {
     return jsonResponse({ error: "invalid_json" }, 400);
   }
-  if (!body.device_id) return jsonResponse({ error: "device_id_required" }, 400);
+  if (!body.frame_id) return jsonResponse({ error: "frame_id_required" }, 400);
 
-  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+  // RLS (frames_select: is_space_owner or staff) does the authorization --
+  // a caller who doesn't own this Frame's Space simply gets no row back.
+  const { data: frame } = await supabaseAsUser.from("frames").select("id, fcm_token").eq("id", body.frame_id).maybeSingle();
+  if (!frame) return jsonResponse({ error: "frame_not_found" }, 404);
 
-  const { data: device } = await supabaseAdmin
-    .from("devices")
-    .select("id, space_id, fcm_token")
-    .eq("id", body.device_id)
-    .maybeSingle();
-  if (!device) return jsonResponse({ error: "device_not_found" }, 404);
-
-  const { data: ownerRow } = await supabaseAdmin
-    .from("space_owners")
-    .select("id")
-    .eq("space_id", device.space_id)
-    .eq("user_id", userData.user.id)
-    .maybeSingle();
-  if (!ownerRow) return jsonResponse({ error: "not_space_owner" }, 403);
-
-  if (!device.fcm_token) {
+  if (!frame.fcm_token) {
     return jsonResponse({ status: "no_fcm_token" });
   }
 
   try {
-    await sendDataMessage(device.fcm_token, { type: "sync_now" });
+    await sendDataMessage(frame.fcm_token, { type: "sync_now" });
     return jsonResponse({ status: "sent" });
   } catch (e) {
     return jsonResponse({ status: "send_failed", detail: String(e) });

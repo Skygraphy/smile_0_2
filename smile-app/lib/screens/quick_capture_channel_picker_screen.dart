@@ -126,7 +126,7 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
                             ListTile(
                               leading: const Icon(Icons.photo_library_outlined),
                               title: Text(channel.channelName),
-                              subtitle: Text(channel.spaceLabel),
+                              subtitle: Text(channel.spaceName),
                               trailing: _uploadingTo == channel
                                   ? const SizedBox(
                                       width: 20,

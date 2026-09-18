@@ -1,27 +1,18 @@
 import '../main.dart';
 
-/// Channel creation goes through the `create_channel` Postgres function
-/// (0030_multi_space_channels.sql) rather than a direct insert: `channels`
-/// no longer carries a `space_id` column to check an insert policy against
-/// -- a channel can be linked to more than one Space via `space_channels`
-/// -- so the function does both inserts atomically and checks
-/// Space-Owner-or-staff authorization itself. The existing
-/// on_channel_created trigger still auto-joins the creator as
-/// channel_admin so they can immediately post into their own channel.
+/// Channel creation is a plain client insert -- `channels.space_id` is a
+/// real not-null column again (migrations/0031_architecture_reset.sql
+/// replaced the old n:m `space_channels` join table), so `channels_owner_insert`'s
+/// RLS (`is_space_owner(space_id)`) is all the authorization this needs; no
+/// RPC/Edge Function required. `on_channel_created` still auto-joins the
+/// creator (the SCO) into `channel_members` so they can post immediately.
 class ChannelService {
   Future<List<Map<String, dynamic>>> listChannels(String spaceId) async {
-    final rows = await supabase
-        .from('space_channels')
-        .select('channels(id, name)')
-        .eq('space_id', spaceId)
-        .order('created_at');
-    return rows
-        .map((row) => row['channels'] as Map<String, dynamic>)
-        .toList()
-        .cast<Map<String, dynamic>>();
+    final rows = await supabase.from('channels').select('id, name').eq('space_id', spaceId).order('created_at');
+    return (rows as List).cast<Map<String, dynamic>>();
   }
 
   Future<void> createChannel({required String spaceId, required String name}) async {
-    await supabase.rpc('create_channel', params: {'p_space_id': spaceId, 'p_name': name});
+    await supabase.from('channels').insert({'space_id': spaceId, 'name': name});
   }
 }

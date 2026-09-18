@@ -2,21 +2,23 @@
 // "check per-id permission, apply, report partial success" shape -- they
 // are NOT two flavors of the same action:
 //
-// "delete" is destructive and permanent: only the sender or a channel
-// admin/staff member may do it. Once confirmed it's an immediate, real
-// delete -- the media_items row (cascading to media_recipients and
-// media_item_hides) and every storage object
-// (media-originals/media-display/media-thumbnails) are removed outright.
-// Gone from every Smile-App client, every Smile-Frame (get-media-batch
-// simply won't find it any more, and the frame's existing sync-diff evicts
-// the local cache file the same way it already handles any other removed
-// photo), the DB, and every cache -- no placeholder, no second
-// confirmation, no delay beyond the automatic push-triggered sync (see
-// push-devices.ts) nudging frames to notice immediately instead of on
+// "delete" is destructive and permanent: only the sender or the channel's
+// SCO (Space/Channel Owner -- its home Space's owner, the sole
+// administrator, see migrations/0031_architecture_reset.sql) or staff may
+// do it. Once confirmed it's an immediate, real delete -- the media_items
+// row (cascading to media_recipients and media_item_hides) and every
+// storage object (media-originals/media-display/media-thumbnails) are
+// removed outright. Gone from every Smile-App client, every Smile-Frame
+// (get-media-batch simply won't find it any more, and the frame's existing
+// sync-diff evicts the local cache file the same way it already handles
+// any other removed photo), the DB, and every cache -- no placeholder, no
+// second confirmation, no delay beyond the automatic push-triggered sync
+// (see push-frames.ts) nudging frames to notice immediately instead of on
 // their next poll.
 //
-// "hide"/"unhide" are non-destructive and personal: ANY member of the
-// item's channel (any role, not just sender/admin) may hide or re-show an
+// "hide"/"unhide" are non-destructive and personal: any member OR any
+// shared-into Space's owner (channel_shares -- view-only, but that
+// includes hiding a photo from your own view) may hide or re-show an
 // individual photo for their own Smile-App view only (media_item_hides).
 // The photo is completely untouched for everyone else, and Smile-Frame
 // never hears about this at all -- a Frame has no per-viewer identity to
@@ -27,7 +29,7 @@
 // reports per-item outcome instead of failing the whole call.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { pushSyncNowToDevices } from "../_shared/push-devices.ts";
+import { pushSyncNowToFrames } from "../_shared/push-frames.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -81,17 +83,33 @@ Deno.serve(async (req) => {
   const isStaff = Boolean(staffRow);
 
   const channelIds = [...new Set((items ?? []).map((item) => item.channel_id))];
-  const { data: memberships } = await supabaseAdmin
-    .from("channel_memberships")
-    .select("channel_id, role")
-    .eq("user_id", userId)
-    .in("channel_id", channelIds);
-  const adminChannelIds = new Set(
-    (memberships ?? []).filter((m) => m.role === "channel_admin").map((m) => m.channel_id),
+
+  // "delete" is SCO-only (or staff/sender) -- the sole administrator of a
+  // channel, per migrations/0031_architecture_reset.sql, no delegated
+  // channel_admin role any more. "hide"/"unhide" is any member OR a
+  // shared-into Space's owner (view-only access still includes hiding a
+  // photo from your own view, same as any other viewer).
+  const [{ data: channelRows }, { data: memberRows }, { data: shareRows }] = await Promise.all([
+    supabaseAdmin.from("channels").select("id, space_id").in("id", channelIds),
+    supabaseAdmin.from("channel_members").select("channel_id").eq("user_id", userId).in("channel_id", channelIds),
+    supabaseAdmin
+      .from("channel_shares")
+      .select("channel_id, spaces!inner(owner_id)")
+      .eq("spaces.owner_id", userId)
+      .in("channel_id", channelIds),
+  ]);
+  const spaceIds = [...new Set((channelRows ?? []).map((c) => c.space_id as string))];
+  const { data: spaceRows } = spaceIds.length > 0
+    ? await supabaseAdmin.from("spaces").select("id, owner_id").in("id", spaceIds)
+    : { data: [] as { id: string; owner_id: string }[] };
+  const ownerBySpace = new Map((spaceRows ?? []).map((s) => [s.id as string, s.owner_id as string]));
+  const scoChannelIds = new Set(
+    (channelRows ?? []).filter((c) => ownerBySpace.get(c.space_id as string) === userId).map((c) => c.id as string),
   );
-  // hide/unhide just needs *some* membership in the item's channel --
-  // any role, including plain viewer/contributor.
-  const memberChannelIds = new Set((memberships ?? []).map((m) => m.channel_id));
+  const memberChannelIds = new Set([
+    ...(memberRows ?? []).map((m) => m.channel_id as string),
+    ...(shareRows ?? []).map((s) => s.channel_id as string),
+  ]);
 
   const foundIds = new Set((items ?? []).map((item) => item.id));
   const applied: string[] = [];
@@ -101,8 +119,8 @@ Deno.serve(async (req) => {
   const allowedIds: string[] = [];
   for (const item of items ?? []) {
     const allowed = body.action === "delete"
-      ? item.sender_id === userId || adminChannelIds.has(item.channel_id) || isStaff
-      : memberChannelIds.has(item.channel_id);
+      ? item.sender_id === userId || scoChannelIds.has(item.channel_id) || isStaff
+      : memberChannelIds.has(item.channel_id) || scoChannelIds.has(item.channel_id);
     if (allowed) {
       allowedIds.push(item.id);
     } else {
@@ -138,15 +156,12 @@ Deno.serve(async (req) => {
       // personal Smile-App view preference that never changes what a
       // frame shows.
       const affectedChannelIds = [...new Set(allowedIds.map((id) => allowedItemsById.get(id)!.channel_id))];
-      const { data: deviceMemberships } = await supabaseAdmin
-        .from("channel_memberships")
-        .select("device_id")
-        .in("channel_id", affectedChannelIds)
-        .eq("role", "device");
-      const deviceIds = (deviceMemberships ?? [])
-        .map((m: { device_id: string | null }) => m.device_id)
-        .filter((id: string | null): id is string => Boolean(id));
-      await pushSyncNowToDevices(supabaseAdmin, deviceIds);
+      const { data: frameLinks } = await supabaseAdmin
+        .from("frame_channels")
+        .select("frame_id")
+        .in("channel_id", affectedChannelIds);
+      const frameIds = (frameLinks ?? []).map((l: { frame_id: string }) => l.frame_id);
+      await pushSyncNowToFrames(supabaseAdmin, frameIds);
     } else if (body.action === "hide") {
       const { error: hideError } = await supabaseAdmin
         .from("media_item_hides")

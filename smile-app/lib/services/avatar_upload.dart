@@ -6,13 +6,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
 
-/// Shared by [ProfileService] (user avatars) and [GroupService] (group
-/// avatars): three ways to get an avatar image -- camera, an existing
-/// photo, or a URL -- all uploading to the `avatars` bucket at a fixed
-/// path, overwriting whatever was there before (there's only ever one
-/// current avatar per user/group, never a history of old ones). Each
-/// returns the object path (not yet a URL) on success, or null if the
-/// user cancelled a picker.
+/// Used by [ProfileService] for user avatars: three ways to get an avatar
+/// image -- camera, an existing photo, or a URL -- all uploading to the
+/// `avatars` bucket at a fixed path, overwriting whatever was there before
+/// (there's only ever one current avatar per user, never a history of old
+/// ones). Each returns the object path (not yet a URL) on success, or null
+/// if the user cancelled a picker.
 
 Future<String?> pickAndUploadFromCamera(String objectPath) => _pickAndUpload(objectPath, ImageSource.camera);
 

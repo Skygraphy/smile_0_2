@@ -5,50 +5,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../main.dart';
-import '../services/command_executor.dart';
-import '../services/compliance_service.dart';
-import '../services/kiosk_lockdown.dart';
+import '../services/heartbeat_service.dart';
 import '../services/media_cache_store.dart';
 import '../services/media_cache_sync.dart';
 import '../services/push_service.dart';
 import '../services/push_sync_signal.dart';
 import '../services/sync_service.dart';
 
-/// The Frame's actual display (concept doc sect. 19): 'slideshow' mode
-/// auto-advances on a timer, 'manual' mode advances on tap -- driven
-/// entirely by device_policies.display_mode, never a local setting. Renders
-/// only from the local cache; syncing (get-media-batch, download, evict) is
-/// a separate periodic concern layered on top, so the display never blocks
-/// on network and stays up fully offline once something is cached.
+/// The Frame's actual display: 'slideshow' mode auto-advances on a timer,
+/// 'manual' mode advances on tap -- driven entirely by the Frame's own
+/// display_mode row (migrations/0031_architecture_reset.sql), never a
+/// local setting. Renders only from the local cache; syncing
+/// (get-media-batch, download, evict) is a separate periodic concern
+/// layered on top, so the display never blocks on network and stays up
+/// fully offline once something is cached.
 class SlideshowScreen extends StatefulWidget {
   SlideshowScreen({
     super.key,
     SyncService? syncService,
     MediaCacheStore? cacheStore,
-    KioskLockdown? kioskLockdown,
-    ComplianceService? complianceService,
-    CommandExecutor? commandExecutor,
+    HeartbeatService? heartbeatService,
     PushService? pushService,
   })  : syncService = syncService ?? SyncService(),
         cacheStore = cacheStore ?? MediaCacheStore(),
-        kioskLockdown = kioskLockdown ?? KioskLockdown(),
-        complianceService = complianceService ?? ComplianceService(),
-        pushService = pushService ?? PushService() {
-    this.commandExecutor = commandExecutor ??
-        CommandExecutor(
-          syncService: this.syncService,
-          cacheStore: this.cacheStore,
-          complianceService: this.complianceService,
-          kioskLockdown: this.kioskLockdown,
-        );
-  }
+        heartbeatService = heartbeatService ?? HeartbeatService(),
+        pushService = pushService ?? PushService();
 
   final SyncService syncService;
   final MediaCacheStore cacheStore;
-  final KioskLockdown kioskLockdown;
-  final ComplianceService complianceService;
+  final HeartbeatService heartbeatService;
   final PushService pushService;
-  late final CommandExecutor commandExecutor;
 
   @override
   State<SlideshowScreen> createState() => _SlideshowScreenState();
@@ -58,7 +44,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   static const _syncInterval = Duration(minutes: 2);
 
   List<CachedMediaEntry> _entries = [];
-  DevicePolicyInfo? _policy;
+  FrameSettingsInfo? _settings;
   String? _cacheDirPath;
   String? _spaceName;
   String? _channelName;
@@ -135,7 +121,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     if (!mounted) return;
     setState(() {
       _entries = result.entries;
-      _policy = result.policy;
+      _settings = result.settings;
       _loadedOnce = true;
       if (result.spaceName != null) _spaceName = result.spaceName;
       _currentChannelId = result.channelId;
@@ -152,24 +138,13 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       }
     });
     _restartAdvanceTimerIfNeeded();
-    unawaited(_runComplianceCheck());
-  }
-
-  // ComplianceWorker-equivalent while foregrounded (concept doc sect. 27-28):
-  // submits a heartbeat and executes anything the backend queued. The
-  // WorkManager-backed background loop that covers the app-not-foregrounded
-  // case is a separate, later hardening pass.
-  Future<void> _runComplianceCheck() async {
-    final commands = await widget.complianceService.submitHeartbeat();
-    for (final command in commands) {
-      await widget.commandExecutor.execute(command);
-    }
+    unawaited(widget.heartbeatService.submitHeartbeat(fcmToken: _fcmToken));
   }
 
   void _restartAdvanceTimerIfNeeded() {
     _advanceTimer?.cancel();
-    if (_policy?.displayMode != 'manual' && _entries.length > 1) {
-      final seconds = _policy?.slideshowIntervalSeconds ?? 8;
+    if (_settings?.displayMode != 'manual' && _entries.length > 1) {
+      final seconds = _settings?.slideshowIntervalSeconds ?? 8;
       _advanceTimer = Timer.periodic(Duration(seconds: seconds), (_) => _advance(1));
     }
   }
@@ -180,7 +155,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   }
 
   void _handleTap(TapDownDetails details, double width) {
-    if (_policy?.displayMode != 'manual') return;
+    if (_settings?.displayMode != 'manual') return;
     if (details.globalPosition.dx < width / 2) {
       _advance(-1);
     } else {
@@ -188,10 +163,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     }
   }
 
-  // Personal Mode only (concept doc sect. 19) -- an Assisted Mode device
-  // (channelSwitchEnabled == false, the default) never shows this at all,
-  // and a device with only one assigned channel has nothing to switch to.
-  bool get _canSwitchChannel => (_policy?.channelSwitchEnabled ?? false) && _assignedChannels.length > 1;
+  // Personal Mode only -- an Assisted Mode Frame (channelSwitchEnabled ==
+  // false, the default) never shows this at all, and a Frame with only one
+  // assigned channel has nothing to switch to.
+  bool get _canSwitchChannel => (_settings?.channelSwitchEnabled ?? false) && _assignedChannels.length > 1;
 
   Future<void> _pickChannel() async {
     final sorted = [..._assignedChannels]..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));

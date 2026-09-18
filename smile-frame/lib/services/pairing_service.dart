@@ -4,44 +4,23 @@ import 'package:http/http.dart' as http;
 
 import '../config/backend_config.dart';
 
-class PairingRequest {
-  PairingRequest({
-    required this.deviceId,
-    required this.code,
-    required this.expiresAt,
-    required this.pollIntervalSeconds,
-  });
-
-  final String deviceId;
-  final String code;
-  final DateTime expiresAt;
-  final int pollIntervalSeconds;
-
-  factory PairingRequest.fromJson(Map<String, dynamic> json) => PairingRequest(
-        deviceId: json['device_id'] as String,
-        code: json['code'] as String,
-        expiresAt: DateTime.parse(json['expires_at'] as String),
-        pollIntervalSeconds: json['poll_interval_seconds'] as int,
-      );
-}
-
-class DeviceCredentials {
-  DeviceCredentials({
-    required this.deviceId,
+class FrameCredentials {
+  FrameCredentials({
+    required this.frameId,
     required this.spaceId,
     required this.accessToken,
     required this.accessTokenExpiresAt,
     required this.refreshSecret,
   });
 
-  final String deviceId;
+  final String frameId;
   final String spaceId;
   final String accessToken;
   final DateTime accessTokenExpiresAt;
   final String refreshSecret;
 
-  factory DeviceCredentials.fromJson(Map<String, dynamic> json) => DeviceCredentials(
-        deviceId: json['device_id'] as String,
+  factory FrameCredentials.fromJson(Map<String, dynamic> json) => FrameCredentials(
+        frameId: json['frame_id'] as String,
         spaceId: json['space_id'] as String,
         accessToken: json['access_token'] as String,
         accessTokenExpiresAt: DateTime.parse(json['access_token_expires_at'] as String),
@@ -67,47 +46,32 @@ class RefreshedTokens {
       );
 }
 
-/// Thin client for the pairing/credential Edge Functions. See
-/// supabase/functions/{request,poll}-device-pairing and
-/// refresh-device-token for the server side of this exchange.
+/// Thin client for the pairing/credential Edge Functions. Reversed order
+/// from the pre-reset schema (migrations/0031_architecture_reset.sql): a
+/// Space owner creates the Frame record and its pairing code from the
+/// Smile app first (create-frame); this Frame only ever has to claim that
+/// already-existing code, typed in by whoever is standing in front of it
+/// -- no more request/poll dance.
 class PairingService {
   PairingService({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
 
-  Future<PairingRequest> requestPairing({String? deviceName, String? androidId, String? appVersion}) async {
+  Future<FrameCredentials> claimPairing(String code) async {
     final response = await _client.post(
-      Uri.parse(BackendConfig.functionUrl('request-device-pairing')),
+      Uri.parse(BackendConfig.functionUrl('claim-frame-pairing')),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'device_name': ?deviceName,
-        'android_id': ?androidId,
-        'app_version': ?appVersion,
-      }),
+      body: jsonEncode({'code': code}),
     );
     _throwIfError(response);
-    return PairingRequest.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return FrameCredentials.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
-  /// Returns null while pairing is still pending; returns the device's own
-  /// credentials the moment a Space Owner has claimed the code.
-  Future<DeviceCredentials?> pollPairing({required String deviceId, required String code}) async {
+  Future<RefreshedTokens> refreshToken({required String frameId, required String refreshSecret}) async {
     final response = await _client.post(
-      Uri.parse(BackendConfig.functionUrl('poll-device-pairing')),
+      Uri.parse(BackendConfig.functionUrl('refresh-frame-token')),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'device_id': deviceId, 'code': code}),
-    );
-    _throwIfError(response);
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    if (json['status'] == 'pending') return null;
-    return DeviceCredentials.fromJson(json);
-  }
-
-  Future<RefreshedTokens> refreshToken({required String deviceId, required String refreshSecret}) async {
-    final response = await _client.post(
-      Uri.parse(BackendConfig.functionUrl('refresh-device-token')),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'device_id': deviceId, 'refresh_secret': refreshSecret}),
+      body: jsonEncode({'frame_id': frameId, 'refresh_secret': refreshSecret}),
     );
     _throwIfError(response);
     return RefreshedTokens.fromJson(jsonDecode(response.body) as Map<String, dynamic>);

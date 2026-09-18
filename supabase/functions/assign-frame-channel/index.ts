@@ -1,26 +1,27 @@
-// Called from smile-app's device_settings_screen.dart ("Channel zuweisen").
-// A bare client-side insert into channel_memberships was the original
-// implementation, but that only makes a device eligible to *see* a channel
-// going forward -- media_recipients (the table get-media-batch actually
-// reads, see _shared/media-fanout.ts) is only ever populated at
-// upload/processing-ready time, for whichever devices were *already*
-// assigned then. A device assigned to a channel with existing ready photos
-// therefore showed nothing until its next upload -- this function does the
-// assignment AND backfills media_recipients for that channel's existing
-// ready items in one step, exactly mirroring fanOutToDevices' own
-// sort_order convention (the item's created_at, epoch ms), so a newly
-// assigned device is never missing anything a device assigned earlier
-// would already have.
+// Called from smile-app's frame settings screen ("Channel zuweisen"). A
+// bare client-side insert into frame_channels was possible (RLS's
+// frame_channels_owner_write already allows exactly this), but that only
+// makes a Frame eligible to *see* a channel going forward --
+// media_recipients (the table get-media-batch actually reads, see
+// _shared/media-fanout.ts) is only ever populated at upload/processing-
+// ready time, for whichever Frames were *already* assigned then. A Frame
+// assigned to a channel with existing ready photos would therefore show
+// nothing until the next upload -- this function does the assignment AND
+// backfills media_recipients for that channel's existing ready items in
+// one step, mirroring fanOutToFrames' own sort_order convention (the
+// item's created_at, epoch ms).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { pushSyncNowToDevices } from "../_shared/push-devices.ts";
+import { pushSyncNowToFrames } from "../_shared/push-frames.ts";
+import { resolveChannelAccess } from "../_shared/channel-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 interface RequestBody {
-  device_id: string;
+  frame_id: string;
   channel_id: string;
+  sort_order?: number;
 }
 
 Deno.serve(async (req) => {
@@ -43,51 +44,36 @@ Deno.serve(async (req) => {
   } catch {
     return jsonResponse({ error: "invalid_json" }, 400);
   }
-  if (!body.device_id || !body.channel_id) return jsonResponse({ error: "device_id_and_channel_id_required" }, 400);
+  if (!body.frame_id || !body.channel_id) return jsonResponse({ error: "frame_id_and_channel_id_required" }, 400);
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
   const { data: staffRow } = await supabaseAdmin.from("staff_members").select("user_id").eq("user_id", userId).maybeSingle();
   const isStaff = Boolean(staffRow);
 
-  const { data: device } = await supabaseAdmin.from("devices").select("space_id").eq("id", body.device_id).maybeSingle();
-  if (!device) return jsonResponse({ error: "device_not_found" }, 404);
+  const { data: frame } = await supabaseAdmin.from("frames").select("id, space_id").eq("id", body.frame_id).maybeSingle();
+  if (!frame) return jsonResponse({ error: "frame_not_found" }, 404);
 
-  const { data: channel } = await supabaseAdmin.from("channels").select("id").eq("id", body.channel_id).maybeSingle();
-  if (!channel) return jsonResponse({ error: "channel_not_found" }, 404);
-  // A Frame conceptually belongs to one Space -- refuse an assignment
-  // unless the channel is actually linked to that Space (space_channels).
-  // A shared channel (linked to more than one Space) can now legitimately
-  // be assigned in either -- e.g. Opa's Frame showing the "Enkelkinder"
-  // channel shared from Oma's Space.
-  const { data: link } = await supabaseAdmin
-    .from("space_channels")
-    .select("space_id")
-    .eq("channel_id", body.channel_id)
-    .eq("space_id", device.space_id)
-    .maybeSingle();
-  if (!link) return jsonResponse({ error: "channel_not_in_device_space" }, 400);
+  const { data: spaceRow } = await supabaseAdmin.from("spaces").select("owner_id").eq("id", frame.space_id).maybeSingle();
+  if (!spaceRow) return jsonResponse({ error: "space_not_found" }, 404);
+  if (!isStaff && spaceRow.owner_id !== userId) return jsonResponse({ error: "not_space_owner" }, 403);
 
-  if (!isStaff) {
-    const { data: ownerRow } = await supabaseAdmin
-      .from("space_owners")
-      .select("id")
-      .eq("space_id", device.space_id)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!ownerRow) return jsonResponse({ error: "not_space_owner" }, 403);
-  }
-
-  const { data: existingAssignments } = await supabaseAdmin
-    .from("channel_memberships")
-    .select("id")
-    .eq("device_id", body.device_id)
-    .eq("role", "device");
-  const sortOrder = existingAssignments?.length ?? 0;
+  // A Frame may show any channel its own Space can view -- its home
+  // Space's own channels, or a channel shared into that Space
+  // (channel_shares). Reuses the same view-access check RLS itself makes
+  // (can_view_channel), just evaluated for the Frame's Space owner instead
+  // of the caller (they may differ if staff is doing this on someone's
+  // behalf).
+  const access = await resolveChannelAccess(supabaseAdmin, body.channel_id, spaceRow.owner_id as string);
+  if (!access.exists) return jsonResponse({ error: "channel_not_found" }, 404);
+  if (!access.canView) return jsonResponse({ error: "channel_not_visible_to_frame_space" }, 400);
 
   const { error: insertError } = await supabaseAdmin
-    .from("channel_memberships")
-    .insert({ channel_id: body.channel_id, device_id: body.device_id, role: "device", sort_order: sortOrder });
+    .from("frame_channels")
+    .upsert(
+      { frame_id: body.frame_id, channel_id: body.channel_id, sort_order: body.sort_order ?? 0 },
+      { onConflict: "frame_id,channel_id" },
+    );
   if (insertError) return jsonResponse({ error: "assign_failed", detail: insertError.message }, 500);
 
   const { data: readyItems } = await supabaseAdmin
@@ -100,15 +86,15 @@ Deno.serve(async (req) => {
     await supabaseAdmin.from("media_recipients").upsert(
       readyItems.map((item) => ({
         media_item_id: item.id,
-        device_id: body.device_id,
+        frame_id: body.frame_id,
         channel_id: body.channel_id,
         sort_order: new Date(item.created_at).getTime(),
       })),
-      { onConflict: "media_item_id,device_id", ignoreDuplicates: true },
+      { onConflict: "media_item_id,frame_id", ignoreDuplicates: true },
     );
   }
 
-  await pushSyncNowToDevices(supabaseAdmin, [body.device_id]);
+  await pushSyncNowToFrames(supabaseAdmin, [body.frame_id]);
 
   return jsonResponse({ status: "assigned", backfilled_items: readyItems?.length ?? 0 });
 });

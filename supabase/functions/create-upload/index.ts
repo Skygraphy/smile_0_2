@@ -1,5 +1,6 @@
-// Called by the Smile app to start an upload. Validates the caller is at
-// least a contributor in the target channel, pre-creates the media_items
+// Called by the Smile app to start an upload. Validates the caller is a
+// member of the target channel (channel_members -- posting rights, see
+// migrations/0031_architecture_reset.sql), pre-creates the media_items
 // row, and returns a signed Storage upload URL/token -- the client never
 // gets direct write access to the media-originals bucket.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -60,13 +61,13 @@ Deno.serve(async (req) => {
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
   const { data: membership } = await supabaseAdmin
-    .from("channel_memberships")
-    .select("role")
+    .from("channel_members")
+    .select("user_id")
     .eq("channel_id", body.channel_id)
     .eq("user_id", userId)
     .maybeSingle();
-  if (!membership || !["channel_admin", "contributor"].includes(membership.role)) {
-    return jsonResponse({ error: "not_a_contributor" }, 403);
+  if (!membership) {
+    return jsonResponse({ error: "not_a_channel_member" }, 403);
   }
 
   const mediaItemId = crypto.randomUUID();

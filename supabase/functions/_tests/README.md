@@ -19,28 +19,30 @@ export SUPABASE_ANON_KEY="..."           # same command, the "anon" row
 deno test --allow-net --allow-env supabase/functions/_tests/
 ```
 
-`helpers.ts`'s `FIXTURES` also assumes a couple of real, pre-existing rows
-(a Space, two Channels, one real admin user) exist in the project --
-override `TEST_ADMIN_EMAIL` / `TEST_OMA_SPACE_ID` /
-`TEST_ENKELKINDER_CHANNEL_ID` / `TEST_STAMMTISCH_CHANNEL_ID` if the
-project's seed data ever changes; the defaults match this project's
-current "Oma" Space test data.
+`helpers.ts`'s `FIXTURES` only names two real, pre-existing project
+accounts (`TEST_ADMIN_EMAIL` / `TEST_ERNST_EMAIL`) -- override if those
+ever change. Everything else (Spaces, Channels, Frames) is created and
+torn down per-test: the architecture reset
+(migrations/0031_architecture_reset.sql) wiped every row, so there are no
+more fixed Space/Channel ids to point at.
 
 ## What's covered vs. not
 
-- `channel_join_requests.test.ts` -- Phase 6c: request → pending → list →
-  approve (membership + `use_count`), and request → reject → re-request.
-- `groups.test.ts` -- Phase 6b's `reconcile_channel_group_access` trigger:
-  granting a channel to a group with existing members, removing a member
-  revokes exactly what the group granted, a pre-existing direct membership
-  is never duplicated/reattributed, and RLS blocks granting a channel the
-  caller doesn't administer.
-- `self_service_leave.test.ts` -- direct-membership self-leave, a
-  group-derived row correctly refusing a direct self-leave, and leaving
-  the group itself correctly cascading via the reconcile trigger.
+- `architecture_reset.test.ts` -- the Phase 2 (Edge Functions) suite for
+  the User/Space/Channel/Frame model: channel creation auto-joins its SCO
+  and hides the channel from a stranger; a channel-membership invite is
+  invisible to the invitee until accepted (`list-my-invites` resolves the
+  channel name for them) and grants posting rights once accepted; a
+  channel-share invite grants a linked Space's owner view access but a
+  verified hard `403` on any write, and is unilaterally revocable; a Frame
+  created via `create-frame` can be claimed via `claim-frame-pairing`, and
+  `assign-frame-channel` backfills `media_recipients` for a channel's
+  already-`ready` photos so `get-media-batch`'s very first poll sees them.
 
 Not yet covered (candidates for the next addition, not because they're
-low-risk, just not ported yet): `delete-media` (delete/hide/unhide),
-`assign-device-channel`'s `media_recipients` backfill, the
-"Gerät ersetzen" pairing migration flow. Port the same pattern from this
-session's transcript/scratchpad scripts if picking one of these up.
+low-risk, just not ported yet): the real upload pipeline end-to-end
+(`create-upload` → real bytes PUT to the signed URL → `complete-upload` →
+`fanOutToFrames`) -- `architecture_reset.test.ts` seeds an already-`ready`
+media_items row directly instead, to test the assignment/backfill/poll
+path without needing real storage bytes; `delete-media` (delete/hide/
+unhide) against the new schema; `refresh-frame-token`'s rotation.

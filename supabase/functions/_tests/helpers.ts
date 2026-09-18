@@ -76,6 +76,19 @@ export async function deleteUser(userId: string): Promise<void> {
   await req(`${url}/auth/v1/admin/users/${userId}`, asService({ method: "DELETE" }));
 }
 
+/**
+ * spaces.owner_id is `on delete restrict` (migrations/0031_architecture_reset.sql,
+ * deliberately -- an owner's account being deleted must never silently
+ * take their whole Space down with it), so `deleteUser` on a Space owner
+ * fails silently (its result is never checked -- best-effort cleanup)
+ * unless every Space they own is deleted first. Call this in a test's
+ * `finally`, before `deleteUser`, for every Space id it created.
+ */
+export async function deleteSpace(spaceId: string): Promise<void> {
+  const { url } = requireEnv();
+  await req(`${url}/rest/v1/spaces?id=eq.${spaceId}`, asService({ method: "DELETE" }));
+}
+
 /** Real Supabase Auth session for any user (existing or throwaway), via magic-link + verify -- no password needed. */
 export async function accessTokenFor(email: string): Promise<{ accessToken: string; userId: string }> {
   const { url, serviceKey, anonKey } = requireEnv();
@@ -93,14 +106,15 @@ export async function accessTokenFor(email: string): Promise<{ accessToken: stri
   return { accessToken: verifyResp.access_token as string, userId: verifyResp.user.id as string };
 }
 
-/** Test fixtures -- real rows in the linked project, reused read-only by every test (never mutated in place). Override via env if the project's seed data ever changes. */
+/**
+ * Test fixtures. The architecture reset (migrations/0031_architecture_reset.sql)
+ * wiped every row -- there are no more pre-existing Space/Channel fixtures
+ * to point at, so tests create and tear down their own via these two real,
+ * pre-existing project accounts (both have a confirmed profile already,
+ * satisfying the onboarding gate). Override via env if the project's real
+ * accounts ever change.
+ */
 export const FIXTURES = {
   adminEmail: Deno.env.get("TEST_ADMIN_EMAIL") ?? "admin@skygraphy.com",
-  omaSpaceId: Deno.env.get("TEST_OMA_SPACE_ID") ?? "6f3a1f25-e9c3-4c5e-83dd-557d3dc01615",
-  // Real second Space (also owned by adminEmail) -- used by
-  // multi_space_channels.test.ts for the "share a channel with a second
-  // Space" scenario (0030_multi_space_channels.sql).
-  opaSpaceId: Deno.env.get("TEST_OPA_SPACE_ID") ?? "27fbf71c-21a4-452f-a70d-abb39a003604",
-  enkelkinderChannelId: Deno.env.get("TEST_ENKELKINDER_CHANNEL_ID") ?? "6785a8dd-772f-43c7-aa42-45e1ac5365a1",
-  stammtischChannelId: Deno.env.get("TEST_STAMMTISCH_CHANNEL_ID") ?? "9c74b88f-a13f-4084-b2f6-2caf817830a7",
+  ernstEmail: Deno.env.get("TEST_ERNST_EMAIL") ?? "ernst.schiener@skygraphy.com",
 };

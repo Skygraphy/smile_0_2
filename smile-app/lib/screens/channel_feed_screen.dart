@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 import '../services/media_cache_service.dart';
 import '../services/media_service.dart';
+import '../services/membership_service.dart';
 import '../widgets/smile_avatar.dart';
 import 'channel_members_screen.dart';
 
@@ -54,11 +55,14 @@ class ChannelFeedScreen extends StatefulWidget {
     required this.channelId,
     required this.channelName,
     MediaService? mediaService,
-  }) : mediaService = mediaService ?? MediaService();
+    MembershipService? membershipService,
+  })  : mediaService = mediaService ?? MediaService(),
+        membershipService = membershipService ?? MembershipService();
 
   final String channelId;
   final String channelName;
   final MediaService mediaService;
+  final MembershipService membershipService;
 
   @override
   State<ChannelFeedScreen> createState() => _ChannelFeedScreenState();
@@ -92,10 +96,18 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
   bool _showingHidden = false;
   bool get _selectionMode => _selectedIds.isNotEmpty;
 
+  // A viewer who can see this channel only via a Space they own being
+  // shared into it (channel_shares) never posted here -- null while
+  // loading, so the FAB stays hidden rather than briefly flashing the
+  // wrong affordance.
+  MyChannelMembershipStatus? _myStatus;
+  bool _isRequestingMembership = false;
+
   @override
   void initState() {
     super.initState();
     _loadFromCacheThenRefresh();
+    unawaited(_loadMyStatus());
     // Other members' (or this device's own, on a second screen) uploads and
     // processing completions land here without polling -- media_items_select
     // RLS already lets any channel member see any row in their channel, so a
@@ -105,6 +117,45 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
     // actions or a manual pull-to-refresh.
     _realtimeChannel = widget.mediaService.subscribeToChannelMedia(widget.channelId, _onRealtimeChange);
     _scrollController.addListener(_updateStickyDate);
+  }
+
+  Future<void> _loadMyStatus() async {
+    try {
+      final status = await widget.membershipService.getMyMembershipStatus(widget.channelId);
+      if (!mounted) return;
+      setState(() => _myStatus = status);
+    } catch (_) {
+      // Best-effort -- worst case the upload FAB stays hidden for a
+      // member whose status failed to load, never the reverse.
+    }
+  }
+
+  Future<void> _requestMembership() async {
+    setState(() => _isRequestingMembership = true);
+    try {
+      await widget.membershipService.requestMembership(widget.channelId);
+      await _loadMyStatus();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Anfrage fehlgeschlagen: $e')));
+    } finally {
+      if (mounted) setState(() => _isRequestingMembership = false);
+    }
+  }
+
+  Future<void> _withdrawMembershipRequest() async {
+    final requestId = _myStatus?.pendingRequestId;
+    if (requestId == null) return;
+    setState(() => _isRequestingMembership = true);
+    try {
+      await widget.membershipService.withdrawMembershipRequest(requestId);
+      await _loadMyStatus();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Zurückziehen fehlgeschlagen: $e')));
+    } finally {
+      if (mounted) setState(() => _isRequestingMembership = false);
+    }
   }
 
   /// Finds whichever date separator has most recently scrolled to (or
@@ -567,18 +618,33 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
                     ),
                   ],
                 ),
-      floatingActionButton: _selectionMode || _showingHidden
+      floatingActionButton: _selectionMode || _showingHidden || _myStatus == null
           ? null
-          : FloatingActionButton(
-              onPressed: _isUploading ? null : _pickAndUpload,
-              child: _isUploading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Icon(Icons.add_a_photo),
-            ),
+          : _myStatus!.isMember
+              ? FloatingActionButton(
+                  onPressed: _isUploading ? null : _pickAndUpload,
+                  child: _isUploading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.add_a_photo),
+                )
+              : FloatingActionButton.extended(
+                  // Only a Space-shared viewer (never a plain member, that
+                  // branch above already covers them) ever lands here --
+                  // requesting posting rights for themselves, the other
+                  // symmetric half of channel_members_screen.dart's
+                  // "Person einladen".
+                  onPressed: _isRequestingMembership
+                      ? null
+                      : (_myStatus!.pendingRequestId != null ? _withdrawMembershipRequest : _requestMembership),
+                  icon: _isRequestingMembership
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : Icon(_myStatus!.pendingRequestId != null ? Icons.hourglass_top : Icons.person_add),
+                  label: Text(_myStatus!.pendingRequestId != null ? 'Anfrage gesendet' : 'Beitritt anfragen'),
+                ),
       body: _items == null
           ? const Center(child: CircularProgressIndicator())
           : Column(

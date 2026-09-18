@@ -4,13 +4,13 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:mocktail/mocktail.dart';
-import 'package:smile_frame/services/device_credentials_store.dart';
+import 'package:smile_frame/services/frame_credentials_store.dart';
 import 'package:smile_frame/services/media_cache_store.dart';
 import 'package:smile_frame/services/sync_service.dart';
 
 class MockHttpClient extends Mock implements http.Client {}
 
-class MockDeviceCredentialsStore extends Mock implements DeviceCredentialsStore {}
+class MockFrameCredentialsStore extends Mock implements FrameCredentialsStore {}
 
 void main() {
   setUpAll(() {
@@ -18,24 +18,24 @@ void main() {
   });
 
   late MockHttpClient httpClient;
-  late MockDeviceCredentialsStore credentialsStore;
+  late MockFrameCredentialsStore credentialsStore;
   late Directory tempDir;
   late MediaCacheStore cacheStore;
   late SyncService service;
 
   setUp(() async {
     httpClient = MockHttpClient();
-    credentialsStore = MockDeviceCredentialsStore();
+    credentialsStore = MockFrameCredentialsStore();
     tempDir = await Directory.systemTemp.createTemp('sync_service_test_');
     cacheStore = MediaCacheStore(cacheDirectory: tempDir);
     service = SyncService(credentialsStore: credentialsStore, cacheStore: cacheStore, httpClient: httpClient);
 
     when(() => credentialsStore.accessToken).thenAnswer((_) async => 'test-token');
-    // No token-expiry/device-id/refresh-secret stubbed with real values --
+    // No token-expiry/frame-id/refresh-secret stubbed with real values --
     // _refreshIfNeeded reads all three and bails out early whenever any of
     // them is null, which keeps this test focused on the pagination loop.
     when(() => credentialsStore.accessTokenExpiresAt).thenAnswer((_) async => null);
-    when(() => credentialsStore.deviceId).thenAnswer((_) async => null);
+    when(() => credentialsStore.frameId).thenAnswer((_) async => null);
     when(() => credentialsStore.refreshSecret).thenAnswer((_) async => null);
     when(() => credentialsStore.preferredChannelId).thenAnswer((_) async => null);
 
@@ -63,7 +63,7 @@ void main() {
               },
             ],
             'next_cursor': 100,
-            'policy': null,
+            'settings': null,
             'assigned_channels': [],
             'space_name': 'Test Space',
           }),
@@ -83,7 +83,7 @@ void main() {
             },
           ],
           'next_cursor': null,
-          'policy': null,
+          'settings': null,
           'assigned_channels': [],
           'space_name': 'Test Space',
         }),
@@ -106,7 +106,7 @@ void main() {
           'channel_id': 'chan-1',
           'items': <Map<String, dynamic>>[],
           'next_cursor': null,
-          'policy': null,
+          'settings': null,
           'assigned_channels': [],
           'space_name': 'Test Space',
         }),

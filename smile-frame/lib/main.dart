@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'screens/pairing_screen.dart';
 import 'screens/slideshow_screen.dart';
-import 'services/device_credentials_store.dart';
+import 'services/frame_credentials_store.dart';
 import 'services/media_cache_store.dart';
 import 'services/pairing_service.dart';
 import 'services/push_service.dart';
@@ -54,16 +54,16 @@ class SmileFrameApp extends StatelessWidget {
 class StartupGate extends StatefulWidget {
   StartupGate({
     super.key,
-    DeviceCredentialsStore? credentialsStore,
+    FrameCredentialsStore? credentialsStore,
     PairingService? pairingService,
     SyncService? syncService,
     MediaCacheStore? cacheStore,
-  })  : credentialsStore = credentialsStore ?? DeviceCredentialsStore(),
+  })  : credentialsStore = credentialsStore ?? FrameCredentialsStore(),
         pairingService = pairingService ?? PairingService(),
         syncService = syncService ?? SyncService(),
         cacheStore = cacheStore ?? MediaCacheStore();
 
-  final DeviceCredentialsStore credentialsStore;
+  final FrameCredentialsStore credentialsStore;
   final PairingService pairingService;
   final SyncService syncService;
   final MediaCacheStore cacheStore;
@@ -73,9 +73,9 @@ class StartupGate extends StatefulWidget {
 }
 
 class _StartupGateState extends State<StartupGate> {
-  DeviceCredentialsStore get _credentialsStore => widget.credentialsStore;
+  FrameCredentialsStore get _credentialsStore => widget.credentialsStore;
   bool? _isProvisioned;
-  String? _deviceId;
+  String? _frameId;
 
   @override
   void initState() {
@@ -85,11 +85,11 @@ class _StartupGateState extends State<StartupGate> {
 
   Future<void> _check() async {
     final provisioned = await _credentialsStore.isProvisioned();
-    final deviceId = provisioned ? await _credentialsStore.deviceId : null;
+    final frameId = provisioned ? await _credentialsStore.frameId : null;
     if (!mounted) return;
     setState(() {
       _isProvisioned = provisioned;
-      _deviceId = deviceId;
+      _frameId = frameId;
     });
   }
 
@@ -98,7 +98,7 @@ class _StartupGateState extends State<StartupGate> {
     if (_isProvisioned == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    if (_isProvisioned == true && _deviceId != null) {
+    if (_isProvisioned == true && _frameId != null) {
       return SlideshowScreen(syncService: widget.syncService, cacheStore: widget.cacheStore);
     }
     return PairingScreen(

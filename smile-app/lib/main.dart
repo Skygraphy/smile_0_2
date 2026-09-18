@@ -7,9 +7,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
 import 'screens/channel_feed_screen.dart';
-import 'screens/channel_members_screen.dart';
 import 'screens/channels_home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/my_invites_screen.dart';
 import 'screens/profile_setup_screen.dart';
 import 'services/profile_service.dart';
 import 'services/push_service.dart';
@@ -50,11 +50,11 @@ Future<void> main() async {
   runApp(const SmileApp());
 }
 
-/// Routes a tapped notification to the channel it's about -- see the three
-/// server-side triggers in claim-channel-invite, decide-channel-join-request,
-/// and _shared/media-fanout.ts for the `type`/`channel_id`/`channel_name`
-/// data shape. Best-effort: an unrecognized/incomplete payload just does
-/// nothing rather than crashing whatever screen happens to be showing.
+/// Routes a tapped notification -- see invite-channel-member,
+/// invite-channel-share, and _shared/media-fanout.ts for the
+/// `type`/`channel_id`/`channel_name` data shape. Best-effort: an
+/// unrecognized/incomplete payload just does nothing rather than crashing
+/// whatever screen happens to be showing.
 void _openNotificationTarget(Map<String, dynamic> data) {
   final type = data['type'] as String?;
   final channelId = data['channel_id'] as String?;
@@ -64,11 +64,12 @@ void _openNotificationTarget(Map<String, dynamic> data) {
   if (navigator == null) return;
 
   switch (type) {
-    case 'join_request':
-      navigator.push(
-        MaterialPageRoute(builder: (_) => ChannelMembersScreen(channelId: channelId, channelName: channelName)),
-      );
-    case 'join_request_approved':
+    case 'channel_membership_invite':
+    case 'channel_share_invite':
+      // The recipient isn't a channel member (or hasn't linked their Space)
+      // yet -- can't view the channel itself before accepting, so this
+      // opens their invite inbox instead.
+      navigator.push(MaterialPageRoute(builder: (_) => MyInvitesScreen()));
     case 'new_photo':
       navigator.push(
         MaterialPageRoute(builder: (_) => ChannelFeedScreen(channelId: channelId, channelName: channelName)),

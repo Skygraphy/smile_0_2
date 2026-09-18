@@ -1,7 +1,7 @@
-// Generates and hashes device refresh secrets, and generates pairing
+// Generates and hashes Frame refresh secrets, and generates pairing
 // codes. Only the SHA-256 hash of a refresh secret is ever persisted
-// (device_credentials.refresh_secret_hash) -- the raw secret exists only
-// transiently, in the single HTTP response body of the device that just
+// (frame_credentials.refresh_secret_hash) -- the raw secret exists only
+// transiently, in the single HTTP response body of the Frame that just
 // (re)claimed it.
 
 export function generateRefreshSecret(): string {

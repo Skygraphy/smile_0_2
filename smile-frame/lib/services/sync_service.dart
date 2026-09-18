@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config/backend_config.dart';
-import 'device_credentials_store.dart';
+import 'frame_credentials_store.dart';
 import 'media_cache_store.dart';
 import 'media_cache_sync.dart';
 import 'pairing_service.dart';
 
-class DevicePolicyInfo {
-  DevicePolicyInfo({
+class FrameSettingsInfo {
+  FrameSettingsInfo({
     required this.displayMode,
     required this.slideshowIntervalSeconds,
     required this.channelSwitchEnabled,
@@ -21,7 +21,7 @@ class DevicePolicyInfo {
   final bool channelSwitchEnabled;
   final double? maxLocalCacheGb;
 
-  factory DevicePolicyInfo.fromJson(Map<String, dynamic> json) => DevicePolicyInfo(
+  factory FrameSettingsInfo.fromJson(Map<String, dynamic> json) => FrameSettingsInfo(
         displayMode: json['display_mode'] as String? ?? 'slideshow',
         slideshowIntervalSeconds: json['slideshow_interval_seconds'] as int? ?? 8,
         channelSwitchEnabled: json['channel_switch_enabled'] as bool? ?? false,
@@ -47,44 +47,44 @@ class SyncResult {
   SyncResult({
     required this.channelId,
     required this.entries,
-    required this.policy,
+    required this.settings,
     required this.assignedChannels,
     this.spaceName,
   });
 
   final String? channelId;
   final List<CachedMediaEntry> entries;
-  final DevicePolicyInfo? policy;
+  final FrameSettingsInfo? settings;
   final List<AssignedChannel> assignedChannels;
   final String? spaceName;
 }
 
 /// Orchestrates one sync round: refresh the access token if it's close to
 /// expiry, call get-media-batch, diff against the local cache, download
-/// what's new, evict what's gone (and whatever's over the policy's byte
+/// what's new, evict what's gone (and whatever's over the settings' byte
 /// cap), persist the updated index. A failed network call falls back to
-/// whatever is already cached -- offline tolerance (concept doc sect. 25).
+/// whatever is already cached -- offline tolerance.
 class SyncService {
   SyncService({
     PairingService? pairingService,
-    DeviceCredentialsStore? credentialsStore,
+    FrameCredentialsStore? credentialsStore,
     MediaCacheStore? cacheStore,
     http.Client? httpClient,
   })  : _pairingService = pairingService ?? PairingService(),
-        _credentialsStore = credentialsStore ?? DeviceCredentialsStore(),
+        _credentialsStore = credentialsStore ?? FrameCredentialsStore(),
         _cacheStore = cacheStore ?? MediaCacheStore(),
         _httpClient = httpClient ?? http.Client();
 
   final PairingService _pairingService;
-  final DeviceCredentialsStore _credentialsStore;
+  final FrameCredentialsStore _credentialsStore;
   final MediaCacheStore _cacheStore;
   final http.Client _httpClient;
 
-  /// Persists the Personal-Mode-picked channel (see
-  /// device_settings_screen.dart on the Smile-App side for how a device
-  /// gets assigned to more than one channel, and the `channel_switch_
-  /// enabled` policy gate). Caller still has to trigger a `sync()`
-  /// afterwards to actually pick up the new channel's content.
+  /// Persists the Personal-Mode-picked channel (see frame_settings_screen.dart
+  /// on the Smile-App side for how a Frame gets assigned to more than one
+  /// channel, and the `channel_switch_enabled` setting gate). Caller still
+  /// has to trigger a `sync()` afterwards to actually pick up the new
+  /// channel's content.
   Future<void> selectChannel(String channelId) => _credentialsStore.savePreferredChannelId(channelId);
 
   Future<SyncResult> sync({String? fcmToken}) async {
@@ -93,7 +93,7 @@ class SyncService {
     final accessToken = await _credentialsStore.accessToken;
     final local = await _cacheStore.readIndex();
     if (accessToken == null) {
-      return SyncResult(channelId: null, entries: local, policy: null, assignedChannels: const []);
+      return SyncResult(channelId: null, entries: local, settings: null, assignedChannels: const []);
     }
 
     final preferredChannelId = await _credentialsStore.preferredChannelId;
@@ -106,7 +106,7 @@ class SyncService {
       page = await _fetchAllPages(accessToken: accessToken, fcmToken: fcmToken, channelIdOverride: null);
     }
     if (page.failed) {
-      return SyncResult(channelId: null, entries: local, policy: null, assignedChannels: const []);
+      return SyncResult(channelId: null, entries: local, settings: null, assignedChannels: const []);
     }
     final data = page.firstPageData!;
     final remoteItems = page.items;
@@ -150,9 +150,9 @@ class SyncService {
       ...newEntries,
     ]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
-    final policyJson = data['policy'] as Map<String, dynamic>?;
-    final policy = policyJson != null ? DevicePolicyInfo.fromJson(policyJson) : null;
-    final maxBytes = policy?.maxLocalCacheGb != null ? (policy!.maxLocalCacheGb! * 1024 * 1024 * 1024).round() : null;
+    final settingsJson = data['settings'] as Map<String, dynamic>?;
+    final settings = settingsJson != null ? FrameSettingsInfo.fromJson(settingsJson) : null;
+    final maxBytes = settings?.maxLocalCacheGb != null ? (settings!.maxLocalCacheGb! * 1024 * 1024 * 1024).round() : null;
 
     final toEvict = MediaCacheSync.entriesToEvictForCap(merged, maxBytes);
     final evictIds = toEvict.map((e) => e.mediaItemId).toSet();
@@ -171,7 +171,7 @@ class SyncService {
     return SyncResult(
       channelId: data['channel_id'] as String?,
       entries: finalEntries,
-      policy: policy,
+      settings: settings,
       assignedChannels: assignedChannels,
       spaceName: data['space_name'] as String?,
     );
@@ -180,7 +180,7 @@ class SyncService {
   /// Loops through get-media-batch's keyset pages until exhausted, so a
   /// channel with more than one page's worth of assigned items still gets
   /// synced in full, not just the first page. [channelIdOverride] is the
-  /// Personal-Mode-picked channel (see DeviceCredentialsStore), if any --
+  /// Personal-Mode-picked channel (see FrameCredentialsStore), if any --
   /// omitted, the server falls back to its own default (first-assigned).
   Future<_PageFetchResult> _fetchAllPages({
     required String accessToken,
@@ -209,7 +209,7 @@ class SyncService {
 
       if (response.statusCode == 403 && channelIdOverride != null) {
         final data = jsonDecode(response.body) as Map<String, dynamic>?;
-        if (data?['error'] == 'device_not_assigned_to_channel') {
+        if (data?['error'] == 'frame_not_assigned_to_channel') {
           return _PageFetchResult.notAssigned();
         }
       }
@@ -235,16 +235,16 @@ class SyncService {
 
   Future<void> _refreshIfNeeded() async {
     final expiresAt = await _credentialsStore.accessTokenExpiresAt;
-    final deviceId = await _credentialsStore.deviceId;
+    final frameId = await _credentialsStore.frameId;
     final refreshSecret = await _credentialsStore.refreshSecret;
-    if (expiresAt == null || deviceId == null || refreshSecret == null) return;
+    if (expiresAt == null || frameId == null || refreshSecret == null) return;
 
     const totalTtl = Duration(hours: 1); // matches the backend's access-token TTL
     final remaining = expiresAt.difference(DateTime.now());
     if (remaining > Duration(milliseconds: (totalTtl.inMilliseconds * 0.25).round())) return;
 
     try {
-      final refreshed = await _pairingService.refreshToken(deviceId: deviceId, refreshSecret: refreshSecret);
+      final refreshed = await _pairingService.refreshToken(frameId: frameId, refreshSecret: refreshSecret);
       await _credentialsStore.saveRefreshedTokens(
         accessToken: refreshed.accessToken,
         accessTokenExpiresAt: refreshed.accessTokenExpiresAt,

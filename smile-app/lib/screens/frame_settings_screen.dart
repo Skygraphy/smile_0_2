@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
 
-import '../services/device_service.dart';
+import '../services/frame_service.dart';
 
-/// Channel-Wechsel-Freigabe (Personal Mode, concept doc sect. 19) and which
-/// channels of its own Space a device shows -- the minimal device-settings
-/// surface needed to make the Frame channel-switcher usable. See
-/// device_service.dart for why this is scoped to the device's own Space.
-class DeviceSettingsScreen extends StatefulWidget {
-  const DeviceSettingsScreen({
+/// Channel-Wechsel-Freigabe (Personal Mode) and which channels a Frame
+/// shows -- the minimal Frame-settings surface needed to make the Frame
+/// channel-switcher usable. No MDM/compliance surface any more (removed
+/// with the architecture reset, migrations/0031_architecture_reset.sql) --
+/// just plain operational telemetry (last seen, app version, battery).
+class FrameSettingsScreen extends StatefulWidget {
+  const FrameSettingsScreen({
     super.key,
-    required this.device,
+    required this.frame,
     required this.spaceId,
-    required this.deviceService,
+    required this.frameService,
   });
 
-  final SmileDevice device;
+  final SmileFrame frame;
   final String spaceId;
-  final DeviceService deviceService;
+  final FrameService frameService;
 
   @override
-  State<DeviceSettingsScreen> createState() => _DeviceSettingsScreenState();
+  State<FrameSettingsScreen> createState() => _FrameSettingsScreenState();
 }
 
-class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
-  late SmileDevice _device = widget.device;
-  List<DeviceChannelAssignment>? _assignments;
-  bool? _channelSwitchEnabled;
+class _FrameSettingsScreenState extends State<FrameSettingsScreen> {
+  late SmileFrame _frame = widget.frame;
+  List<FrameChannelAssignment>? _assignments;
   String? _errorMessage;
 
   @override
@@ -36,34 +36,31 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
 
   Future<void> _load() async {
     try {
-      final results = await Future.wait([
-        widget.deviceService.getDevice(widget.device.id),
-        widget.deviceService.listAssignedChannels(widget.device.id),
-        widget.deviceService.getChannelSwitchEnabled(widget.device.id),
+      final results = await Future.wait<dynamic>([
+        widget.frameService.getFrame(widget.frame.id),
+        widget.frameService.listAssignedChannels(widget.frame.id),
       ]);
       if (!mounted) return;
       setState(() {
-        _device = results[0] as SmileDevice;
-        _assignments = results[1] as List<DeviceChannelAssignment>;
-        _channelSwitchEnabled = results[2] as bool;
+        _frame = results[0] as SmileFrame;
+        _assignments = results[1] as List<FrameChannelAssignment>;
         _errorMessage = null;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _assignments ??= const [];
-        _channelSwitchEnabled ??= false;
-        _errorMessage = 'Geräte-Details konnten nicht geladen werden: $e';
+        _errorMessage = 'Frame-Details konnten nicht geladen werden: $e';
       });
     }
   }
 
   Future<void> _rename() async {
-    final controller = TextEditingController(text: _device.name);
+    final controller = TextEditingController(text: _frame.name);
     final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Gerät umbenennen'),
+        title: const Text('Frame umbenennen'),
         content: TextField(controller: controller, autofocus: true, decoration: const InputDecoration(labelText: 'Name')),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Abbrechen')),
@@ -71,18 +68,18 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         ],
       ),
     );
-    if (name == null || name.trim().isEmpty || name.trim() == _device.name) return;
-    await widget.deviceService.renameDevice(deviceId: _device.id, name: name.trim());
+    if (name == null || name.trim().isEmpty || name.trim() == _frame.name) return;
+    await widget.frameService.renameFrame(frameId: _frame.id, name: name.trim());
     await _load();
   }
 
   Future<void> _toggleRevoked() async {
-    final revoking = !_device.isRevoked;
+    final revoking = !_frame.isRevoked;
     if (revoking) {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Gerät widerrufen?'),
+          title: const Text('Frame widerrufen?'),
           content: const Text(
             'Das Frame verliert sofort jeden Zugriff (Sync, Fotos). Es kann später jederzeit wieder aktiviert werden.',
           ),
@@ -94,24 +91,35 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       );
       if (confirmed != true) return;
     }
-    await widget.deviceService.setRevoked(deviceId: _device.id, revoked: revoking);
+    await widget.frameService.setRevoked(frameId: _frame.id, revoked: revoking);
     await _load();
   }
 
   Future<void> _toggleChannelSwitch(bool value) async {
-    setState(() => _channelSwitchEnabled = value);
-    await widget.deviceService.setChannelSwitchEnabled(deviceId: _device.id, enabled: value);
+    setState(() => _frame = SmileFrame(
+          id: _frame.id,
+          name: _frame.name,
+          lifecycleState: _frame.lifecycleState,
+          channelSwitchEnabled: value,
+          pairingCode: _frame.pairingCode,
+          pairingCodeExpiresAt: _frame.pairingCodeExpiresAt,
+          currentAppVersion: _frame.currentAppVersion,
+          lastSeenAt: _frame.lastSeenAt,
+          batteryLevel: _frame.batteryLevel,
+          isCharging: _frame.isCharging,
+        ));
+    await widget.frameService.setChannelSwitchEnabled(frameId: _frame.id, enabled: value);
   }
 
-  Future<void> _unassign(DeviceChannelAssignment assignment) async {
-    await widget.deviceService.unassignChannel(assignment.membershipId);
+  Future<void> _unassign(FrameChannelAssignment assignment) async {
+    await widget.frameService.unassignChannel(frameId: _frame.id, channelId: assignment.channelId);
     await _load();
   }
 
   Future<void> _assignChannel() async {
-    final choices = await widget.deviceService.listUnassignedChannelsInSpace(
+    final choices = await widget.frameService.listUnassignedChannelsInSpace(
       spaceId: widget.spaceId,
-      deviceId: _device.id,
+      frameId: _frame.id,
     );
     if (!mounted) return;
     if (choices.isEmpty) {
@@ -119,7 +127,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Channel zuweisen'),
-          content: const Text('Es gibt keine weiteren Channels in diesem Space.'),
+          content: const Text('Es gibt keine weiteren Channels, die dieser Space sehen kann.'),
           actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Schließen'))],
         ),
       );
@@ -139,27 +147,26 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
       ),
     );
     if (picked == null) return;
-    await widget.deviceService.assignChannel(deviceId: _device.id, channelId: picked.channelId);
+    await widget.frameService.assignChannel(frameId: _frame.id, channelId: picked.channelId);
     await _load();
   }
 
   @override
   Widget build(BuildContext context) {
     final assignments = _assignments;
-    final channelSwitchEnabled = _channelSwitchEnabled;
     return Scaffold(
       appBar: AppBar(
-        title: Text(_device.name),
+        title: Text(_frame.name),
         actions: [
           IconButton(icon: const Icon(Icons.edit), tooltip: 'Umbenennen', onPressed: _rename),
           IconButton(
-            icon: Icon(_device.isRevoked ? Icons.lock_open : Icons.block),
-            tooltip: _device.isRevoked ? 'Wieder aktivieren' : 'Widerrufen',
+            icon: Icon(_frame.isRevoked ? Icons.lock_open : Icons.block),
+            tooltip: _frame.isRevoked ? 'Wieder aktivieren' : 'Widerrufen',
             onPressed: _toggleRevoked,
           ),
         ],
       ),
-      body: assignments == null || channelSwitchEnabled == null
+      body: assignments == null
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(16),
@@ -177,7 +184,7 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
                   subtitle: const Text(
                     'Personal Mode: die Person vor dem Frame kann selbst zwischen den zugewiesenen Channels wechseln.',
                   ),
-                  value: channelSwitchEnabled,
+                  value: _frame.channelSwitchEnabled,
                   onChanged: _toggleChannelSwitch,
                 ),
                 const SizedBox(height: 20),
@@ -206,12 +213,6 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
   }
 
   Widget _buildStatusCard(BuildContext context) {
-    final complianceLabels = {
-      'compliant': 'Konform',
-      'drift_detected': 'Abweichung erkannt',
-      'repaired': 'Repariert',
-      'unknown': 'Unbekannt',
-    };
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -221,32 +222,26 @@ class _DeviceSettingsScreenState extends State<DeviceSettingsScreen> {
             Row(
               children: [
                 Icon(
-                  _device.isRevoked ? Icons.block : Icons.circle,
+                  _frame.isRevoked ? Icons.block : Icons.circle,
                   size: 12,
-                  color: _device.isRevoked
+                  color: _frame.isRevoked
                       ? Theme.of(context).colorScheme.error
-                      : (_device.lifecycleState == 'active' ? Colors.green : Colors.grey),
+                      : (_frame.lifecycleState == 'active' ? Colors.green : Colors.grey),
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  _device.isRevoked ? 'Widerrufen' : (_device.lifecycleState == 'active' ? 'Aktiv' : 'Offline'),
+                  _frame.isRevoked ? 'Widerrufen' : (_frame.lifecycleState == 'active' ? 'Aktiv' : 'Wartet auf Kopplung'),
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            _statusRow('Zuletzt gesehen', _formatDateTime(_device.lastSeenAt)),
-            _statusRow('App-Version', _device.currentAppVersion ?? '—'),
+            _statusRow('Zuletzt gesehen', _formatDateTime(_frame.lastSeenAt)),
+            _statusRow('App-Version', _frame.currentAppVersion ?? '—'),
             _statusRow(
               'Akku',
-              _device.batteryLevel != null
-                  ? '${_device.batteryLevel}%${_device.isCharging == true ? ' (lädt)' : ''}'
-                  : '—',
-            ),
-            _statusRow(
-              'Compliance',
-              _device.lastComplianceState != null
-                  ? '${complianceLabels[_device.lastComplianceState] ?? _device.lastComplianceState} · ${_formatDateTime(_device.lastComplianceCheckAt)}'
+              _frame.batteryLevel != null
+                  ? '${_frame.batteryLevel}%${_frame.isCharging == true ? ' (lädt)' : ''}'
                   : '—',
             ),
           ],

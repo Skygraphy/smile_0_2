@@ -2,9 +2,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../main.dart';
 
-/// Human-facing push notifications (join requests, approvals, new photos --
-/// see the three server-side triggers this pairs with:
-/// claim-channel-invite, decide-channel-join-request, _shared/media-fanout.ts).
+/// Human-facing push notifications (channel invites, channel shares, new
+/// photos -- see the server-side callers this pairs with:
+/// invite-channel-member, invite-channel-share, _shared/media-fanout.ts).
 /// Unlike smile-frame's PushService, these are real notification payloads
 /// (title/body) the OS shows automatically whenever the app isn't in the
 /// foreground -- no background-isolate handling needed here.

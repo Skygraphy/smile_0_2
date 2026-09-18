@@ -5,8 +5,7 @@ import '../services/channel_picker_service.dart';
 import '../widgets/smile_avatar.dart';
 import '../widgets/smile_wordmark.dart';
 import 'channel_feed_screen.dart';
-import 'groups_screen.dart';
-import 'join_channel_screen.dart';
+import 'my_invites_screen.dart';
 import 'quick_capture_channel_picker_screen.dart';
 import 'settings_screen.dart';
 import 'spaces_screen.dart';
@@ -72,8 +71,8 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> {
     await _load();
   }
 
-  Future<void> _joinByInvite() async {
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => JoinChannelScreen()));
+  Future<void> _openMyInvites() async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => MyInvitesScreen()));
     await _load();
   }
 
@@ -120,10 +119,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> {
                 child: const Text('Einstellungen'),
               ),
               PopupMenuItem(value: _openMySpaces, child: const Text('Meine Spaces')),
-              PopupMenuItem(
-                value: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => GroupsScreen())),
-                child: const Text('Meine Gruppen'),
-              ),
+              PopupMenuItem(value: _openMyInvites, child: const Text('Meine Einladungen')),
             ],
           ),
         ],
@@ -131,7 +127,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> {
       body: channels == null
           ? const Center(child: CircularProgressIndicator())
           : channels.isEmpty
-              ? _EmptyState(errorMessage: _errorMessage, onOpenSpaces: _openMySpaces, onJoinByInvite: _joinByInvite)
+              ? _EmptyState(errorMessage: _errorMessage, onOpenSpaces: _openMySpaces, onOpenMyInvites: _openMyInvites)
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView(
@@ -145,7 +141,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> {
                         ListTile(
                           leading: SmileAvatar(name: channel.channelName),
                           title: Text(channel.channelName),
-                          subtitle: Text(channel.spaceLabel),
+                          subtitle: Text(channel.isMember ? channel.spaceLabel : '${channel.spaceLabel} · nur ansehen'),
                           trailing: Text(
                             _relativeTime(channel.lastActivityAt),
                             style: Theme.of(context).textTheme.bodySmall,
@@ -170,11 +166,11 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.errorMessage, required this.onOpenSpaces, required this.onJoinByInvite});
+  const _EmptyState({required this.errorMessage, required this.onOpenSpaces, required this.onOpenMyInvites});
 
   final String? errorMessage;
   final VoidCallback onOpenSpaces;
-  final VoidCallback onJoinByInvite;
+  final VoidCallback onOpenMyInvites;
 
   @override
   Widget build(BuildContext context) {
@@ -189,7 +185,7 @@ class _EmptyState extends StatelessWidget {
               const SizedBox(height: 16),
             ],
             const Text(
-              'Noch keine Channels. Lege einen Space an oder tritt einem Channel per Einladung bei.',
+              'Noch keine Channels. Lege einen Space an oder nimm eine Einladung an.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -200,9 +196,9 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: onJoinByInvite,
-              icon: const Icon(Icons.group_add),
-              label: const Text('Einladung einlösen'),
+              onPressed: onOpenMyInvites,
+              icon: const Icon(Icons.mail_outline),
+              label: const Text('Meine Einladungen'),
             ),
           ],
         ),

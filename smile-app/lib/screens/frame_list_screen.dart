@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 
-import '../services/device_service.dart';
-import 'device_settings_screen.dart';
+import '../services/frame_service.dart';
+import 'frame_settings_screen.dart';
 
-/// Per-Space device list -- reached from spaces_screen.dart. Shows each
-/// device's lifecycle status at a glance; renaming, revoke/reactivate, and
-/// compliance detail live in device_settings_screen.dart.
-class DeviceListScreen extends StatefulWidget {
-  DeviceListScreen({super.key, required this.spaceId, required this.spaceName, DeviceService? deviceService})
-      : deviceService = deviceService ?? DeviceService();
+/// Per-Space Frame list -- reached from spaces_screen.dart. Shows each
+/// Frame's lifecycle status at a glance; renaming, revoke/reactivate, and
+/// channel assignment live in frame_settings_screen.dart.
+class FrameListScreen extends StatefulWidget {
+  FrameListScreen({super.key, required this.spaceId, required this.spaceName, FrameService? frameService})
+      : frameService = frameService ?? FrameService();
 
   final String spaceId;
   final String spaceName;
-  final DeviceService deviceService;
+  final FrameService frameService;
 
   @override
-  State<DeviceListScreen> createState() => _DeviceListScreenState();
+  State<FrameListScreen> createState() => _FrameListScreenState();
 }
 
-class _DeviceListScreenState extends State<DeviceListScreen> {
-  List<SmileDevice>? _devices;
+class _FrameListScreenState extends State<FrameListScreen> {
+  List<SmileFrame>? _frames;
   String? _errorMessage;
 
   @override
@@ -30,41 +30,37 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
 
   Future<void> _load() async {
     try {
-      final devices = await widget.deviceService.listDevices(widget.spaceId);
+      final frames = await widget.frameService.listFrames(widget.spaceId);
       if (!mounted) return;
       setState(() {
-        _devices = devices;
+        _frames = frames;
         _errorMessage = null;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _devices ??= const [];
-        _errorMessage = 'Geräte konnten nicht geladen werden: $e';
+        _frames ??= const [];
+        _errorMessage = 'Frames konnten nicht geladen werden: $e';
       });
     }
   }
 
-  bool _isInactive(SmileDevice device) => device.lifecycleState == 'revoked' || device.lifecycleState == 'retired';
-
-  String _statusLabel(SmileDevice device) => switch (device.lifecycleState) {
+  String _statusLabel(SmileFrame frame) => switch (frame.lifecycleState) {
         'active' => 'Aktiv',
-        'offline' => 'Offline',
         'revoked' => 'Widerrufen',
-        'retired' => 'Ersetzt (retired)',
-        'pairing' => 'Wird gekoppelt…',
-        _ => device.lifecycleState,
+        'pending' => 'Wartet auf Kopplung…',
+        _ => frame.lifecycleState,
       };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Geräte · ${widget.spaceName}')),
-      body: _devices == null
+      appBar: AppBar(title: Text('Frames · ${widget.spaceName}')),
+      body: _frames == null
           ? const Center(child: CircularProgressIndicator())
-          : _devices!.isEmpty
+          : _frames!.isEmpty
               ? Center(
-                  child: Text(_errorMessage ?? 'Noch kein Frame in diesem Space gekoppelt.'),
+                  child: Text(_errorMessage ?? 'Noch kein Frame in diesem Space erstellt.'),
                 )
               : ListView(
                   children: [
@@ -73,25 +69,25 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
                         padding: const EdgeInsets.all(16),
                         child: Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                       ),
-                    for (final device in _devices!)
+                    for (final frame in _frames!)
                       ListTile(
                         leading: Icon(
                           Icons.tablet_mac,
-                          color: _isInactive(device) ? Theme.of(context).disabledColor : null,
+                          color: frame.isRevoked ? Theme.of(context).disabledColor : null,
                         ),
                         title: Text(
-                          device.name,
-                          style: _isInactive(device) ? TextStyle(color: Theme.of(context).disabledColor) : null,
+                          frame.name,
+                          style: frame.isRevoked ? TextStyle(color: Theme.of(context).disabledColor) : null,
                         ),
-                        subtitle: Text(_statusLabel(device)),
+                        subtitle: Text(_statusLabel(frame)),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: () async {
                           await Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => DeviceSettingsScreen(
-                                device: device,
+                              builder: (_) => FrameSettingsScreen(
+                                frame: frame,
                                 spaceId: widget.spaceId,
-                                deviceService: widget.deviceService,
+                                frameService: widget.frameService,
                               ),
                             ),
                           );

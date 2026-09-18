@@ -10,7 +10,7 @@
 // MEDIA_PROCESSING_CALLBACK_TOKEN instead.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { fanOutToDevices } from "../_shared/media-fanout.ts";
+import { fanOutToFrames } from "../_shared/media-fanout.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
       .select("channel_id")
       .maybeSingle();
     if (error) return jsonResponse({ error: "update_failed", detail: error.message }, 500);
-    if (updated?.channel_id) await fanOutToDevices(supabaseAdmin, body.media_item_id, updated.channel_id);
+    if (updated?.channel_id) await fanOutToFrames(supabaseAdmin, body.media_item_id, updated.channel_id);
   } else {
     const { error } = await supabaseAdmin
       .from("media_items")

@@ -1,14 +1,14 @@
 // The kiosk sync endpoint. Unauthenticated at the gateway level
-// (--no-verify-jwt) -- the device presents its own access token in the
-// body, verified here with our own HS256 secret (see _shared/device-jwt.ts
-// and the Phase 3 note on why devices never hit PostgREST directly with
-// this token). Re-checks lifecycle_state and credential_version against the
-// DB on every call, mirroring what is_own_device() enforces for RLS-backed
-// access -- a still-unexpired token from before a credential rotation is
-// rejected here exactly like it would be at the RLS layer.
+// (--no-verify-jwt) -- the Frame presents its own access token in the
+// body, verified here with our own HS256 secret (see _shared/frame-jwt.ts
+// and migrations/0031_architecture_reset.sql's header comment on why
+// Frames never hit PostgREST/RLS directly any more). Re-checks
+// lifecycle_state and credential_version against the DB on every call --
+// a still-unexpired token from before a credential rotation (or a revoked
+// Frame) is rejected here.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { verifyDeviceAccessToken } from "../_shared/device-jwt.ts";
+import { verifyFrameAccessToken } from "../_shared/frame-jwt.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
@@ -43,26 +43,32 @@ Deno.serve(async (req) => {
 
   let claims;
   try {
-    claims = await verifyDeviceAccessToken(body.access_token);
+    claims = await verifyFrameAccessToken(body.access_token);
   } catch {
     return jsonResponse({ error: "invalid_or_expired_token" }, 401);
   }
 
-  const { data: device } = await supabase
-    .from("devices")
-    .select("id, lifecycle_state, space_id, spaces(name)")
-    .eq("id", claims.device_id)
+  const { data: frame } = await supabase
+    .from("frames")
+    .select("id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, max_local_cache_gb, spaces(name)")
+    .eq("id", claims.frame_id)
     .maybeSingle();
-  if (!device || !["active", "offline"].includes(device.lifecycle_state)) {
-    return jsonResponse({ error: "device_not_active" }, 403);
+  if (!frame || frame.lifecycle_state !== "active") {
+    return jsonResponse({ error: "frame_not_active" }, 403);
   }
   // deno-lint-ignore no-explicit-any
-  const spaceName = (device.spaces as any)?.name ?? null;
+  const spaceName = (frame.spaces as any)?.name ?? null;
+  const settings = {
+    display_mode: frame.display_mode,
+    slideshow_interval_seconds: frame.slideshow_interval_seconds,
+    channel_switch_enabled: frame.channel_switch_enabled,
+    max_local_cache_gb: frame.max_local_cache_gb,
+  };
 
   const { data: credentials } = await supabase
-    .from("device_credentials")
+    .from("frame_credentials")
     .select("refresh_secret_version")
-    .eq("device_id", claims.device_id)
+    .eq("frame_id", claims.frame_id)
     .maybeSingle();
   if (!credentials || credentials.refresh_secret_version !== claims.credential_version) {
     return jsonResponse({ error: "stale_credential_version" }, 401);
@@ -70,40 +76,20 @@ Deno.serve(async (req) => {
 
   if (body.fcm_token || body.battery_level !== undefined || body.is_charging !== undefined) {
     await supabase
-      .from("devices")
+      .from("frames")
       .update({
         ...(body.fcm_token ? { fcm_token: body.fcm_token } : {}),
         ...(body.battery_level !== undefined ? { battery_level: body.battery_level } : {}),
         ...(body.is_charging !== undefined ? { is_charging: body.is_charging } : {}),
         last_seen_at: new Date().toISOString(),
       })
-      .eq("id", claims.device_id);
+      .eq("id", claims.frame_id);
   }
-
-  let channelId = body.channel_id;
-  if (!channelId) {
-    const { data: firstAssignment } = await supabase
-      .from("channel_memberships")
-      .select("channel_id")
-      .eq("device_id", claims.device_id)
-      .eq("role", "device")
-      .order("sort_order", { ascending: true, nullsFirst: false })
-      .limit(1)
-      .maybeSingle();
-    channelId = firstAssignment?.channel_id;
-  }
-
-  const { data: policy } = await supabase
-    .from("device_policies")
-    .select("*")
-    .eq("device_id", claims.device_id)
-    .maybeSingle();
 
   const { data: assignedChannelsRaw } = await supabase
-    .from("channel_memberships")
+    .from("frame_channels")
     .select("channel_id, sort_order, channels(name)")
-    .eq("device_id", claims.device_id)
-    .eq("role", "device")
+    .eq("frame_id", claims.frame_id)
     .order("sort_order", { ascending: true });
 
   const assignedChannels = (assignedChannelsRaw ?? []).map((a) => ({
@@ -113,32 +99,30 @@ Deno.serve(async (req) => {
     sort_order: a.sort_order,
   }));
 
+  let channelId = body.channel_id;
+  if (!channelId) channelId = assignedChannels[0]?.channel_id;
+
   if (!channelId) {
     return jsonResponse({
       channel_id: null,
       items: [],
       next_cursor: null,
-      policy,
+      settings,
       assigned_channels: assignedChannels,
       space_name: spaceName,
     });
   }
 
-  const { data: assignment } = await supabase
-    .from("channel_memberships")
-    .select("id")
-    .eq("channel_id", channelId)
-    .eq("device_id", claims.device_id)
-    .eq("role", "device")
-    .maybeSingle();
-  if (!assignment) return jsonResponse({ error: "device_not_assigned_to_channel" }, 403);
+  if (!assignedChannels.some((a) => a.channel_id === channelId)) {
+    return jsonResponse({ error: "frame_not_assigned_to_channel" }, 403);
+  }
 
   const limit = Math.min(Math.max(body.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
 
   let recipientsQuery = supabase
     .from("media_recipients")
     .select("id, sort_order, media_items(id, media_type, processing_status, storage_path_display)")
-    .eq("device_id", claims.device_id)
+    .eq("frame_id", claims.frame_id)
     .eq("channel_id", channelId)
     .is("hidden_at", null)
     .order("sort_order", { ascending: true })
@@ -177,7 +161,7 @@ Deno.serve(async (req) => {
     channel_id: channelId,
     items,
     next_cursor: nextCursor,
-    policy,
+    settings,
     assigned_channels: assignedChannels,
     space_name: spaceName,
   });

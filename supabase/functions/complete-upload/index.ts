@@ -8,7 +8,7 @@
 // degradation smile_0_1 used for an unconfigured transcode step.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { fanOutToDevices } from "../_shared/media-fanout.ts";
+import { fanOutToFrames } from "../_shared/media-fanout.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
         .update({ storage_path_display: mediaItem.storage_path_original, processing_status: "ready" })
         .eq("id", mediaItem.id);
       if (updateError) return jsonResponse({ error: "update_failed" }, 500);
-      await fanOutToDevices(supabaseAdmin, mediaItem.id, mediaItem.channel_id);
+      await fanOutToFrames(supabaseAdmin, mediaItem.id, mediaItem.channel_id);
       return jsonResponse({ status: "ready" });
     }
     return jsonResponse({ status: "pending_processing", detail: "media_processing_service_not_configured" });

@@ -12,6 +12,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { fetchProfilesByUserId } from "../_shared/profiles.ts";
+import { resolveChannelAccess } from "../_shared/channel-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -53,13 +54,13 @@ Deno.serve(async (req) => {
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-  const { data: membership } = await supabaseAdmin
-    .from("channel_memberships")
-    .select("role")
-    .eq("channel_id", body.channel_id)
-    .eq("user_id", userData.user.id)
-    .maybeSingle();
-  if (!membership) return jsonResponse({ error: "not_a_channel_member" }, 403);
+  // A shared-into Space's owner can view the feed too (channel_shares is
+  // view-only but that includes seeing photos, a deliberate behavior
+  // change from the pre-reset schema -- see can_view_channel()'s comment
+  // in migrations/0031_architecture_reset.sql), so this checks the same
+  // broader "can view" condition RLS itself would, not just channel_members.
+  const access = await resolveChannelAccess(supabaseAdmin, body.channel_id, userData.user.id);
+  if (!access.canView) return jsonResponse({ error: "not_a_channel_member" }, 403);
 
   // A "hide" (migrations/0018_media_delete.sql, delete-media's "hide"
   // action) only ever affects the caller's own feed -- fetch it before the

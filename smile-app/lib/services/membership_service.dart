@@ -1,305 +1,281 @@
-import 'dart:math';
-
 import '../main.dart';
-import 'channel_picker_service.dart' show SpaceRef;
 
 class ChannelMember {
-  ChannelMember({
-    required this.membershipId,
-    required this.userId,
-    required this.email,
-    required this.displayName,
-    required this.avatarUrl,
-    required this.role,
-    required this.viaGroupName,
-  });
+  ChannelMember({required this.userId, required this.displayName, required this.avatarUrl, required this.createdAt});
 
-  final String membershipId;
   final String userId;
-  final String? email;
   final String? displayName;
   final String? avatarUrl;
-  final String role;
-  // Set when this row exists because of a Phase 6b group grant (see
-  // migrations/0020_groups.sql), not a direct invite/add -- null otherwise.
-  final String? viaGroupName;
+  final DateTime createdAt;
 
-  bool get isGroupDerived => viaGroupName != null;
-
-  /// A profile row always has display_name once onboarding runs
-  /// (migrations/0029) -- this fallback only matters for a member who
-  /// somehow never went through main.dart's profile gate.
-  String get label => displayName ?? email ?? userId;
+  String get label => displayName ?? userId;
 
   factory ChannelMember.fromJson(Map<String, dynamic> json) => ChannelMember(
-        membershipId: json['membership_id'] as String,
         userId: json['user_id'] as String,
-        email: json['email'] as String?,
         displayName: json['display_name'] as String?,
         avatarUrl: json['avatar_url'] as String?,
-        role: json['role'] as String,
-        viaGroupName: json['via_group_name'] as String?,
+        createdAt: DateTime.parse(json['created_at'] as String),
       );
 }
 
-class SpaceMemberCandidate {
-  SpaceMemberCandidate({required this.userId, required this.email, required this.displayName, required this.avatarUrl});
-
-  final String userId;
-  final String? email;
-  final String? displayName;
-  final String? avatarUrl;
-
-  String get label => displayName ?? email ?? userId;
-
-  factory SpaceMemberCandidate.fromJson(Map<String, dynamic> json) => SpaceMemberCandidate(
-        userId: json['user_id'] as String,
-        email: json['email'] as String?,
-        displayName: json['display_name'] as String?,
-        avatarUrl: json['avatar_url'] as String?,
-      );
-}
-
-class ChannelInvite {
-  ChannelInvite({required this.id, required this.code, required this.expiresAt});
+/// A Space this channel is currently shared into (view-only) --
+/// migrations/0031_architecture_reset.sql's `channel_shares`.
+class SharedSpaceRef {
+  SharedSpaceRef({required this.id, required this.name});
 
   final String id;
-  final String code;
-  final DateTime expiresAt;
+  final String name;
 
-  factory ChannelInvite.fromJson(Map<String, dynamic> json) => ChannelInvite(
-        id: json['id'] as String,
-        code: json['code'] as String,
-        expiresAt: DateTime.parse(json['expires_at'] as String),
-      );
+  factory SharedSpaceRef.fromJson(Map<String, dynamic> json) =>
+      SharedSpaceRef(id: json['id'] as String, name: json['name'] as String);
 }
 
 class ChannelRoster {
-  ChannelRoster({
-    required this.members,
-    required this.spaces,
-    required this.callerIsAdmin,
-    required this.callerIsSpaceOwner,
-  });
+  ChannelRoster({required this.members, required this.sharedSpaces, required this.callerIsSco});
 
   final List<ChannelMember> members;
-  // A channel can be linked to more than one Space now -- e.g. shared
-  // between two households -- so this is a list, not a single space_id.
-  final List<SpaceRef> spaces;
-  final bool callerIsAdmin;
-  final bool callerIsSpaceOwner;
+  final List<SharedSpaceRef> sharedSpaces;
+  final bool callerIsSco;
 }
 
-enum ChannelJoinStatus { joined, alreadyMember, pendingApproval }
+enum RequestKind { membership, share }
 
-class ChannelJoinResult {
-  ChannelJoinResult({required this.status, required this.channelId, required this.channelName});
+enum RequestDirection { invite, request }
 
-  final ChannelJoinStatus status;
-  final String channelId;
-  final String channelName;
-}
-
-class ChannelSpaceShareResult {
-  ChannelSpaceShareResult({required this.channelId, required this.channelName});
-
-  final String channelId;
-  final String channelName;
-}
-
-class JoinRequest {
-  JoinRequest({required this.id, required this.email, required this.displayName, required this.avatarUrl, required this.requestedAt});
+/// One row from either `channel_membership_requests` (posting rights) or
+/// `channel_share_requests` (view-only Space link) -- see
+/// list-my-invites/index.ts, which resolves the channel name and the
+/// counterpart's profile server-side (neither is visible to an invitee via
+/// plain RLS before they've accepted, by design).
+class ChannelRequest {
+  ChannelRequest({
+    required this.id,
+    required this.kind,
+    required this.channelId,
+    required this.channelName,
+    required this.counterpartUserId,
+    required this.counterpartDisplayName,
+    required this.counterpartAvatarUrl,
+    required this.direction,
+    required this.requestedAt,
+    this.spaceId,
+  });
 
   final String id;
-  final String? email;
-  final String? displayName;
-  final String? avatarUrl;
+  final RequestKind kind;
+  final String channelId;
+  final String? channelName;
+  final String counterpartUserId;
+  final String? counterpartDisplayName;
+  final String? counterpartAvatarUrl;
+  final RequestDirection direction;
   final DateTime requestedAt;
+  // Share requests only -- the requester's own Space, already known for a
+  // 'request'; null for an 'invite' until the invitee accepts.
+  final String? spaceId;
 
-  String get label => displayName ?? email ?? id;
+  String get counterpartLabel => counterpartDisplayName ?? counterpartUserId;
 
-  factory JoinRequest.fromJson(Map<String, dynamic> json) => JoinRequest(
+  factory ChannelRequest.fromJson(Map<String, dynamic> json, RequestKind kind) => ChannelRequest(
         id: json['id'] as String,
-        email: json['email'] as String?,
-        displayName: json['display_name'] as String?,
-        avatarUrl: json['avatar_url'] as String?,
+        kind: kind,
+        channelId: json['channel_id'] as String,
+        channelName: json['channel_name'] as String?,
+        counterpartUserId: json['counterpart_user_id'] as String,
+        counterpartDisplayName: json['counterpart_display_name'] as String?,
+        counterpartAvatarUrl: json['counterpart_avatar_url'] as String?,
+        direction: json['direction'] == 'invite' ? RequestDirection.invite : RequestDirection.request,
         requestedAt: DateTime.parse(json['requested_at'] as String),
+        spaceId: json['space_id'] as String?,
       );
 }
 
-/// Member roster/role-management (list-channel-members, list-space-members)
-/// and code-based channel invites (pairing_codes with code_type =
-/// 'channel_invite', claim-channel-invite) -- see the Phase 6a plan for why
-/// this deviates from the concept doc's email-invite text in favor of a
-/// WhatsApp-style shareable code/QR, mirroring pair_frame_screen.dart's
-/// existing Frame-pairing flow.
-class MembershipService {
-  static const _codeCharset = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-  static const _codeLength = 8;
-  static const _inviteMaxUses = 20;
-  static const _inviteValidity = Duration(days: 7);
+/// The caller's own relationship to one channel -- powers
+/// channel_feed_screen.dart's "Beitritt anfragen" affordance for someone
+/// who can currently only *view* the channel (via a Space they own being
+/// shared into it, see [SharedSpaceRef]) but never posted.
+class MyChannelMembershipStatus {
+  MyChannelMembershipStatus({required this.isMember, this.pendingRequestId});
 
+  final bool isMember;
+  // Set when the caller already has a pending self-initiated 'request'
+  // row waiting on the SCO's decision -- lets the UI offer "withdraw"
+  // instead of submitting a second one (which would violate the
+  // partial-unique index anyway).
+  final String? pendingRequestId;
+}
+
+class MyInvitesInbox {
+  MyInvitesInbox({required this.membershipRequests, required this.shareRequests});
+
+  final List<ChannelRequest> membershipRequests;
+  final List<ChannelRequest> shareRequests;
+
+  bool get isEmpty => membershipRequests.isEmpty && shareRequests.isEmpty;
+}
+
+/// Channel membership (posting rights) and view-only Space sharing, both
+/// via the symmetric "Facebook friend request" invite/request/accept model
+/// -- see migrations/0031_architecture_reset.sql. Deciding (accept/
+/// decline) and self-initiated "request" rows are always plain,
+/// RLS-governed table calls, never an Edge Function -- only the
+/// email->user_id lookup an "invite" needs, and any read that has to cross
+/// into another user's profile, requires one.
+class MembershipService {
   Future<ChannelRoster> listChannelMembers(String channelId) async {
     final response = await supabase.functions.invoke('list-channel-members', body: {'channel_id': channelId});
     final data = response.data as Map<String, dynamic>;
     if (data['error'] != null) throw MembershipServiceException(data['error'] as String);
     final members = (data['members'] as List).cast<Map<String, dynamic>>();
-    final spaces = (data['spaces'] as List).cast<Map<String, dynamic>>();
+    final sharedSpaces = (data['shared_spaces'] as List).cast<Map<String, dynamic>>();
     return ChannelRoster(
       members: members.map(ChannelMember.fromJson).toList(),
-      spaces: spaces.map(SpaceRef.fromJson).toList(),
-      callerIsAdmin: data['caller_is_admin'] as bool,
-      callerIsSpaceOwner: data['caller_is_space_owner'] as bool,
+      sharedSpaces: sharedSpaces.map(SharedSpaceRef.fromJson).toList(),
+      callerIsSco: data['caller_is_sco'] as bool,
     );
   }
 
-  Future<List<SpaceMemberCandidate>> listAddableSpaceMembers({
-    required String spaceId,
-    required String excludeChannelId,
-  }) async {
-    final response = await supabase.functions.invoke('list-space-members', body: {
-      'space_id': spaceId,
-      'exclude_channel_id': excludeChannelId,
-    });
-    final data = response.data as Map<String, dynamic>;
-    if (data['error'] != null) throw MembershipServiceException(data['error'] as String);
-    final candidates = (data['candidates'] as List).cast<Map<String, dynamic>>();
-    return candidates.map(SpaceMemberCandidate.fromJson).toList();
+  /// SCO-only (enforced server-side and by RLS on the resulting delete).
+  Future<void> removeMember({required String channelId, required String userId}) async {
+    await supabase.from('channel_members').delete().eq('channel_id', channelId).eq('user_id', userId);
   }
 
-  Future<void> updateMemberRole(String membershipId, String role) async {
-    await supabase.from('channel_memberships').update({'role': role}).eq('id', membershipId);
+  /// Self-service leave -- a member removing their own row.
+  Future<void> leaveChannel(String channelId) async {
+    await supabase.from('channel_members').delete().eq('channel_id', channelId).eq(
+        'user_id', supabase.auth.currentUser!.id);
   }
 
-  Future<void> removeMember(String membershipId) async {
-    await supabase.from('channel_memberships').delete().eq('id', membershipId);
-  }
-
-  /// Self-service leave (migrations/0026_self_service_leave.sql) -- RLS
-  /// only allows this for a direct membership (`via_group_id is null`);
-  /// leaving a group-derived one has to happen via [GroupService.leaveGroup]
-  /// instead, same reasoning as why channel_members_screen.dart hides the
-  /// admin "Entfernen" action for those rows.
-  Future<void> leaveChannel(String membershipId) async {
-    await supabase.from('channel_memberships').delete().eq('id', membershipId);
-  }
-
-  Future<void> addExistingMember({
-    required String channelId,
-    required String userId,
-    required String role,
-  }) async {
-    await supabase.from('channel_memberships').insert({
+  /// SCO invites a known person (by email) to become a posting member.
+  Future<void> inviteMember({required String channelId, required String email}) async {
+    final response = await supabase.functions.invoke('invite-channel-member', body: {
       'channel_id': channelId,
-      'user_id': userId,
-      'role': role,
+      'email': email,
+    });
+    final data = response.data as Map<String, dynamic>?;
+    final status = data?['status'] as String?;
+    if (status != 'invited' && status != 'already_member') {
+      throw ChannelRequestException(data?['error'] as String? ?? 'unknown_error');
+    }
+  }
+
+  /// SCO invites a known person (by email) to view-share this channel with
+  /// one of their own Spaces (which one is chosen by the invitee at
+  /// accept time).
+  Future<void> inviteShare({required String channelId, required String email}) async {
+    final response = await supabase.functions.invoke('invite-channel-share', body: {
+      'channel_id': channelId,
+      'email': email,
+    });
+    final data = response.data as Map<String, dynamic>?;
+    if (data?['status'] != 'invited') {
+      throw ChannelRequestException(data?['error'] as String? ?? 'unknown_error');
+    }
+  }
+
+  Future<void> decideMembershipRequest(String requestId, {required bool accept}) async {
+    await supabase
+        .from('channel_membership_requests')
+        .update({'status': accept ? 'accepted' : 'declined'}).eq('id', requestId);
+  }
+
+  /// Deciding a share *invite* also supplies which of the caller's own
+  /// Spaces to link, in the same call -- see
+  /// channel_share_requests_decide's RLS. Deciding a *request* (the SCO's
+  /// job) needs no [spaceId], it's already on the row.
+  Future<void> decideShareRequest(String requestId, {required bool accept, String? spaceId}) async {
+    await supabase.from('channel_share_requests').update({
+      'status': accept ? 'accepted' : 'declined',
+      'space_id': ?spaceId,
+    }).eq('id', requestId);
+  }
+
+  /// A viewer (sees the channel only via a Space they own being shared
+  /// into it) requesting posting rights for themselves -- the *other*
+  /// symmetric half of [inviteMember]. A plain RLS-governed insert
+  /// (channel_membership_requests_insert allows `direction = 'request'
+  /// and user_id = auth.uid()` unconditionally), decided later by the
+  /// channel's SCO via [decideMembershipRequest].
+  Future<void> requestMembership(String channelId) async {
+    await supabase.from('channel_membership_requests').insert({
+      'channel_id': channelId,
+      'user_id': supabase.auth.currentUser!.id,
+      'direction': 'request',
     });
   }
 
-  Future<ChannelInvite> createChannelInvite({
-    required String channelId,
-    bool requiresApproval = false,
-  }) async {
-    final random = Random.secure();
-    final code = List.generate(_codeLength, (_) => _codeCharset[random.nextInt(_codeCharset.length)]).join();
-    final expiresAt = DateTime.now().toUtc().add(_inviteValidity);
-    // No space_id: channel_invite authorization only ever checks
-    // is_channel_member(channel_id) (0009), and a channel can now be
-    // linked to more than one Space anyway, so there's no single space to
-    // meaningfully attribute the code to.
-    final row = await supabase
-        .from('pairing_codes')
-        .insert({
-          'channel_id': channelId,
-          'code': code,
-          'code_type': 'channel_invite',
-          'expires_at': expiresAt.toIso8601String(),
-          'max_uses': _inviteMaxUses,
-          'requires_approval': requiresApproval,
-        })
-        .select()
-        .single();
-    return ChannelInvite.fromJson(row);
-  }
-
-  Future<void> revokeInvite(String pairingCodeId) async {
-    await supabase.from('pairing_codes').delete().eq('id', pairingCodeId);
-  }
-
-  /// Sharing an existing channel with a second Space -- same pairing_codes
-  /// mechanism as [createChannelInvite] (0030_multi_space_channels.sql),
-  /// just a different code_type and no space_id encoded in the code: the
-  /// person redeeming it (an owner of some *other* Space) picks which of
-  /// their own Spaces to link at redemption time, see
-  /// [claimChannelSpaceShare].
-  Future<ChannelInvite> createChannelSpaceShare({required String channelId}) async {
-    final random = Random.secure();
-    final code = List.generate(_codeLength, (_) => _codeCharset[random.nextInt(_codeCharset.length)]).join();
-    final expiresAt = DateTime.now().toUtc().add(_inviteValidity);
-    final row = await supabase
-        .from('pairing_codes')
-        .insert({
-          'channel_id': channelId,
-          'code': code,
-          'code_type': 'channel_space_share',
-          'expires_at': expiresAt.toIso8601String(),
-          'max_uses': _inviteMaxUses,
-        })
-        .select()
-        .single();
-    return ChannelInvite.fromJson(row);
-  }
-
-  Future<ChannelSpaceShareResult> claimChannelSpaceShare({required String code, required String spaceId}) async {
-    final response = await supabase.functions.invoke('claim-channel-space-share', body: {
-      'code': code,
-      'space_id': spaceId,
-    });
-    final data = response.data as Map<String, dynamic>?;
-    if (data?['status'] != 'linked') {
-      throw ChannelInviteException(data?['error'] as String? ?? 'unknown_error');
-    }
-    return ChannelSpaceShareResult(channelId: data!['channel_id'] as String, channelName: data['channel_name'] as String);
-  }
-
-  Future<ChannelJoinResult> joinChannelWithCode(String code) async {
-    final response = await supabase.functions.invoke('claim-channel-invite', body: {'code': code});
-    final data = response.data as Map<String, dynamic>?;
-    final status = switch (data?['status'] as String?) {
-      'joined' => ChannelJoinStatus.joined,
-      'already_member' => ChannelJoinStatus.alreadyMember,
-      'pending_approval' => ChannelJoinStatus.pendingApproval,
-      _ => null,
-    };
-    if (status == null) {
-      throw ChannelInviteException(data?['error'] as String? ?? 'unknown_error');
-    }
-    return ChannelJoinResult(
-      status: status,
-      channelId: data!['channel_id'] as String,
-      channelName: data['channel_name'] as String,
+  /// Whether the caller already posts here, or -- if not -- whether they
+  /// already have a pending [requestMembership] waiting on the SCO.
+  Future<MyChannelMembershipStatus> getMyMembershipStatus(String channelId) async {
+    final userId = supabase.auth.currentUser!.id;
+    final results = await Future.wait<dynamic>([
+      supabase.from('channel_members').select('user_id').eq('channel_id', channelId).eq('user_id', userId),
+      supabase
+          .from('channel_membership_requests')
+          .select('id')
+          .eq('channel_id', channelId)
+          .eq('user_id', userId)
+          .eq('direction', 'request')
+          .eq('status', 'pending'),
+    ]);
+    final memberRows = results[0] as List;
+    final requestRows = results[1] as List;
+    return MyChannelMembershipStatus(
+      isMember: memberRows.isNotEmpty,
+      pendingRequestId: requestRows.isNotEmpty ? requestRows.first['id'] as String : null,
     );
   }
 
-  /// Pending "Beitrittsanfragen" (Phase 6c) for a channel the caller
-  /// administers -- generated by someone redeeming a `requires_approval`
-  /// invite code instead of joining outright.
-  Future<List<JoinRequest>> listJoinRequests(String channelId) async {
-    final response = await supabase.functions.invoke('list-channel-join-requests', body: {'channel_id': channelId});
-    final data = response.data as Map<String, dynamic>;
-    if (data['error'] != null) throw MembershipServiceException(data['error'] as String);
-    final requests = (data['requests'] as List).cast<Map<String, dynamic>>();
-    return requests.map(JoinRequest.fromJson).toList();
+  Future<void> withdrawMembershipRequest(String requestId) async {
+    await supabase.from('channel_membership_requests').delete().eq('id', requestId);
   }
 
-  Future<void> decideJoinRequest(String requestId, {required bool approve}) async {
-    final response = await supabase.functions.invoke('decide-channel-join-request', body: {
-      'request_id': requestId,
-      'decision': approve ? 'approve' : 'reject',
-    });
-    final data = response.data as Map<String, dynamic>?;
-    if (data?['error'] != null) throw MembershipServiceException(data!['error'] as String);
+  Future<void> withdrawShareRequest(String requestId) async {
+    await supabase.from('channel_share_requests').delete().eq('id', requestId);
   }
+
+  /// The linked Space's owner unilaterally revoking their own share --
+  /// channel_shares_owner_delete's RLS never lets the channel's own SCO
+  /// block this.
+  Future<void> revokeShare({required String channelId, required String spaceId}) async {
+    await supabase.from('channel_shares').delete().eq('channel_id', channelId).eq('space_id', spaceId);
+  }
+
+  /// Every Space this channel is currently shared into, plus the channel's
+  /// own name -- powers a Space owner's "Freigaben verwalten" screen (see
+  /// spaces_screen.dart), which needs to work from the Space side, not the
+  /// channel side, since only the linked Space's *own* owner may revoke.
+  Future<List<SharedChannelSummary>> listSharedChannelsForSpace(String spaceId) async {
+    final rows = await supabase.from('channel_shares').select('channel_id, channels(name)').eq('space_id', spaceId);
+    return (rows as List).cast<Map<String, dynamic>>().map((row) {
+      final channel = row['channels'] as Map<String, dynamic>;
+      return SharedChannelSummary(channelId: row['channel_id'] as String, channelName: channel['name'] as String);
+    }).toList();
+  }
+
+  /// The caller's own personal inbox (no [channelId]), or -- for a
+  /// channel's SCO -- every pending request/invite for that one channel
+  /// (the admin view). See list-my-invites/index.ts for why this has to be
+  /// an Edge Function: an invitee can't see the channel's own name via
+  /// plain RLS before accepting.
+  Future<MyInvitesInbox> listMyInvites({String? channelId}) async {
+    final response = await supabase.functions.invoke('list-my-invites', body: {'channel_id': ?channelId});
+    final data = response.data as Map<String, dynamic>;
+    if (data['error'] != null) throw MembershipServiceException(data['error'] as String);
+    final membershipRequests = (data['membership_requests'] as List).cast<Map<String, dynamic>>();
+    final shareRequests = (data['share_requests'] as List).cast<Map<String, dynamic>>();
+    return MyInvitesInbox(
+      membershipRequests: membershipRequests.map((r) => ChannelRequest.fromJson(r, RequestKind.membership)).toList(),
+      shareRequests: shareRequests.map((r) => ChannelRequest.fromJson(r, RequestKind.share)).toList(),
+    );
+  }
+}
+
+class SharedChannelSummary {
+  SharedChannelSummary({required this.channelId, required this.channelName});
+
+  final String channelId;
+  final String channelName;
 }
 
 class MembershipServiceException implements Exception {
@@ -311,18 +287,18 @@ class MembershipServiceException implements Exception {
   String toString() => 'MembershipServiceException($code)';
 }
 
-class ChannelInviteException implements Exception {
-  ChannelInviteException(this.code);
+class ChannelRequestException implements Exception {
+  ChannelRequestException(this.code);
 
   final String code;
 
   String get message => switch (code) {
-        'invalid_code' => 'Ungültiger Code.',
-        'code_expired' => 'Der Code ist abgelaufen.',
-        'code_already_used' => 'Dieser Code wurde bereits zu oft verwendet.',
-        _ => 'Beitreten fehlgeschlagen.',
+        'user_not_found' => 'Diese Person hat noch keinen Smile-Account.',
+        'not_channel_sco' => 'Du bist nicht berechtigt, diesen Channel zu verwalten.',
+        'request_already_pending' => 'Es gibt bereits eine offene Einladung/Anfrage.',
+        _ => 'Aktion fehlgeschlagen.',
       };
 
   @override
-  String toString() => 'ChannelInviteException($code)';
+  String toString() => 'ChannelRequestException($code)';
 }

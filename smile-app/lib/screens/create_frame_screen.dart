@@ -1,127 +1,97 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
-import '../services/device_service.dart';
-import '../services/pairing_service.dart';
-import 'qr_scan_screen.dart';
+import '../services/frame_service.dart';
 
-/// "Neues Frame hinzufügen" (concept doc sect. 14): enter or scan the code
-/// shown on a Frame's screen to bind it to [spaceId]. Also offers "Ersetzt
-/// dieses Gerät ein bestehendes Frame?" -- every (re-)pairing mints a
-/// brand new device_id (see migrations/0023_replace_device_on_pairing.sql),
-/// so without this a replaced Frame would start from a completely blank
-/// slate: no channel assignments, no policy, no photos.
-class PairFrameScreen extends StatefulWidget {
-  PairFrameScreen({
-    super.key,
-    required this.spaceId,
-    PairingService? pairingService,
-    DeviceService? deviceService,
-  })  : pairingService = pairingService ?? PairingService(),
-        deviceService = deviceService ?? DeviceService();
+/// "Frame erstellen": the Space owner names a new Frame (like a Channel) --
+/// reversed order from the pre-reset pairing flow (the owner used to scan
+/// a code the physical hardware showed; now the hardware consumes a code
+/// this screen shows, see migrations/0031_architecture_reset.sql). The
+/// Frame record and its pairing code exist immediately; the physical
+/// Smile-Frame device activates itself once it's given this code
+/// (claim-frame-pairing) -- no further action needed here.
+class CreateFrameScreen extends StatefulWidget {
+  CreateFrameScreen({super.key, required this.spaceId, FrameService? frameService})
+      : frameService = frameService ?? FrameService();
 
   final String spaceId;
-  final PairingService pairingService;
-  final DeviceService deviceService;
+  final FrameService frameService;
 
   @override
-  State<PairFrameScreen> createState() => _PairFrameScreenState();
+  State<CreateFrameScreen> createState() => _CreateFrameScreenState();
 }
 
-class _PairFrameScreenState extends State<PairFrameScreen> {
-  final _codeController = TextEditingController();
-  bool _isSubmitting = false;
+class _CreateFrameScreenState extends State<CreateFrameScreen> {
+  final _nameController = TextEditingController();
+  bool _isCreating = false;
   String? _errorMessage;
-  bool _success = false;
-  List<SmileDevice>? _replaceableDevices;
-  String? _replaceDeviceId;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadReplaceableDevices();
-  }
-
-  Future<void> _loadReplaceableDevices() async {
-    try {
-      final devices = await widget.deviceService.listDevices(widget.spaceId);
-      if (!mounted) return;
-      setState(() => _replaceableDevices = devices);
-    } catch (_) {
-      // Best-effort and non-critical -- this only feeds the optional
-      // "Ersetzt dieses Gerät ein bestehendes Frame?" picker; a failure
-      // here should never block pairing a plain new device. Leaving
-      // _replaceableDevices null just means that picker silently doesn't
-      // show up (same as "no devices yet"), not a scary error banner on
-      // the main pairing screen.
-      if (mounted) setState(() => _replaceableDevices = const []);
-    }
-  }
+  SmileFrame? _created;
 
   @override
   void dispose() {
-    _codeController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
-  Future<void> _scan() async {
-    final code = await Navigator.of(context).push<String>(
-      MaterialPageRoute(builder: (_) => const QrScanScreen(title: 'Frame-Code scannen')),
-    );
-    if (code == null || !mounted) return;
-    _codeController.text = code.trim().toUpperCase();
-    await _submit();
-  }
-
-  Future<void> _submit() async {
-    final code = _codeController.text.trim().toUpperCase();
-    if (code.isEmpty) return;
+  Future<void> _create() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return;
     setState(() {
-      _isSubmitting = true;
+      _isCreating = true;
       _errorMessage = null;
     });
     try {
-      final replaceDeviceId = _replaceDeviceId;
-      if (replaceDeviceId == null) {
-        await widget.pairingService.claimDevicePairing(code: code, spaceId: widget.spaceId);
-      } else {
-        await widget.pairingService.claimDevicePairing(
-          code: code,
-          spaceId: widget.spaceId,
-          replaceDeviceId: replaceDeviceId,
-        );
-      }
+      final frame = await widget.frameService.createFrame(spaceId: widget.spaceId, name: name);
       if (!mounted) return;
-      setState(() => _success = true);
-    } on PairingClaimException catch (e) {
-      setState(() => _errorMessage = e.message);
-    } catch (_) {
-      setState(() => _errorMessage = 'Koppeln fehlgeschlagen. Bitte erneut versuchen.');
+      setState(() => _created = frame);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = 'Frame konnte nicht erstellt werden: $e');
     } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+      if (mounted) setState(() => _isCreating = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Neues Frame hinzufügen')),
+      appBar: AppBar(title: const Text('Frame erstellen')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: _success ? _buildSuccess() : _buildForm(),
+          child: _created != null ? _buildCode(_created!) : _buildForm(),
         ),
       ),
     );
   }
 
-  Widget _buildSuccess() {
-    return const Center(
+  Widget _buildCode(SmileFrame frame) {
+    final code = frame.pairingCode!;
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.check_circle, size: 64, color: Colors.green),
-          SizedBox(height: 16),
-          Text('Frame gekoppelt. Es aktiviert sich in Kürze von selbst.'),
+          Icon(Icons.check_circle, size: 48, color: Colors.green),
+          const SizedBox(height: 16),
+          Text('"${frame.name}" wurde angelegt.', textAlign: TextAlign.center),
+          const SizedBox(height: 8),
+          const Text('Gib diesen Code am neuen Smile-Frame ein, oder lass ihn den QR-Code scannen.'),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(12),
+            color: Colors.white,
+            child: QrImageView(data: code, size: 200),
+          ),
+          const SizedBox(height: 16),
+          Text(code, style: const TextStyle(fontSize: 28, letterSpacing: 4, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          if (frame.pairingCodeExpiresAt != null)
+            Text('Gültig bis ${frame.pairingCodeExpiresAt!.toLocal()}'.split('.').first),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Fertig'),
+          ),
         ],
       ),
     );
@@ -131,39 +101,20 @@ class _PairFrameScreenState extends State<PairFrameScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Scanne den QR-Code auf dem Bildschirm des Smile-Frame, oder gib den Code manuell ein.'),
-        if (_replaceableDevices != null && _replaceableDevices!.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          DropdownButtonFormField<String?>(
-            initialValue: _replaceDeviceId,
-            decoration: const InputDecoration(labelText: 'Ersetzt dieses Gerät ein bestehendes Frame?'),
-            items: [
-              const DropdownMenuItem(value: null, child: Text('Nein, neues Gerät')),
-              for (final device in _replaceableDevices!)
-                DropdownMenuItem(value: device.id, child: Text(device.name)),
-            ],
-            onChanged: _isSubmitting ? null : (value) => setState(() => _replaceDeviceId = value),
-          ),
-        ],
-        const SizedBox(height: 24),
-        ElevatedButton.icon(
-          onPressed: _isSubmitting ? null : _scan,
-          icon: const Icon(Icons.qr_code_scanner),
-          label: const Text('QR-Code scannen'),
-        ),
+        const Text('Wie soll das neue Frame heißen (z.B. "Küche")?'),
         const SizedBox(height: 24),
         TextField(
-          controller: _codeController,
-          textCapitalization: TextCapitalization.characters,
-          decoration: const InputDecoration(labelText: 'Code manuell eingeben'),
-          onSubmitted: (_) => _submit(),
+          controller: _nameController,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Name'),
+          onSubmitted: (_) => _create(),
         ),
         const SizedBox(height: 16),
         ElevatedButton(
-          onPressed: _isSubmitting ? null : _submit,
-          child: _isSubmitting
+          onPressed: _isCreating ? null : _create,
+          child: _isCreating
               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Koppeln'),
+              : const Text('Erstellen'),
         ),
         if (_errorMessage != null) ...[
           const SizedBox(height: 16),
