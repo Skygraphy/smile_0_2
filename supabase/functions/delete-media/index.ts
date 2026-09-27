@@ -88,22 +88,27 @@ Deno.serve(async (req) => {
   // channel_admin role any more. "hide"/"unhide" is any member OR a
   // shared-into Space's owner (view-only access still includes hiding a
   // photo from your own view, same as any other viewer).
-  const [{ data: channelRows }, { data: memberRows }, { data: shareRows }] = await Promise.all([
+  //
+  // "SCO" includes co-owners (migrations/0037_space_co_owners.sql) -- this
+  // function bypasses RLS, so it has to replicate that itself; before, a
+  // co-owner was wrongly refused deleting others' photos (and hiding in a
+  // channel shared into a Space they co-own).
+  const [{ data: channelRows }, { data: memberRows }, { data: ownedSpaces }, { data: coOwnedSpaces }] = await Promise.all([
     supabaseAdmin.from("channels").select("id, space_id").in("id", channelIds),
     supabaseAdmin.from("channel_members").select("channel_id").eq("user_id", userId).in("channel_id", channelIds),
-    supabaseAdmin
-      .from("channel_shares")
-      .select("channel_id, spaces!inner(owner_id)")
-      .eq("spaces.owner_id", userId)
-      .in("channel_id", channelIds),
+    supabaseAdmin.from("spaces").select("id").eq("owner_id", userId),
+    supabaseAdmin.from("space_co_owners").select("space_id").eq("user_id", userId),
   ]);
-  const spaceIds = [...new Set((channelRows ?? []).map((c) => c.space_id as string))];
-  const { data: spaceRows } = spaceIds.length > 0
-    ? await supabaseAdmin.from("spaces").select("id, owner_id").in("id", spaceIds)
-    : { data: [] as { id: string; owner_id: string }[] };
-  const ownerBySpace = new Map((spaceRows ?? []).map((s) => [s.id as string, s.owner_id as string]));
+  const mySpaceIds = [
+    ...(ownedSpaces ?? []).map((s: { id: string }) => s.id),
+    ...(coOwnedSpaces ?? []).map((s: { space_id: string }) => s.space_id),
+  ];
+  const { data: shareRows } = mySpaceIds.length > 0
+    ? await supabaseAdmin.from("channel_shares").select("channel_id").in("space_id", mySpaceIds).in("channel_id", channelIds)
+    : { data: [] as { channel_id: string }[] };
+  const mySpaceIdSet = new Set(mySpaceIds);
   const scoChannelIds = new Set(
-    (channelRows ?? []).filter((c) => ownerBySpace.get(c.space_id as string) === userId).map((c) => c.id as string),
+    (channelRows ?? []).filter((c) => mySpaceIdSet.has(c.space_id as string)).map((c) => c.id as string),
   );
   const memberChannelIds = new Set([
     ...(memberRows ?? []).map((m) => m.channel_id as string),

@@ -15,4 +15,10 @@ class ChannelService {
   Future<void> createChannel({required String spaceId, required String name}) async {
     await supabase.from('channels').insert({'space_id': spaceId, 'name': name});
   }
+
+  /// Permanent, for everyone -- via delete-space-or-channel/index.ts, not a
+  /// plain RLS delete, so the photo files in Storage go too.
+  Future<void> deleteChannel(String channelId) async {
+    await supabase.functions.invoke('delete-space-or-channel', body: {'kind': 'channel', 'id': channelId});
+  }
 }

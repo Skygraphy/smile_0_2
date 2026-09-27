@@ -60,6 +60,15 @@ Deno.serve(async (req) => {
     .filter(Boolean)
     .map((s) => ({ id: s.id as string, name: s.name as string }));
 
+  // The home Space's Administrator can't be removed by a co-owner
+  // (migrations/0045) -- the client needs to know who that is to hide the
+  // remove button for them.
+  const { data: homeSpace } = await supabaseAdmin
+    .from("spaces")
+    .select("owner_id")
+    .eq("id", access.homeSpaceId)
+    .maybeSingle();
+
   const profilesByUserId = await fetchProfilesByUserId(supabaseAdmin, (memberships ?? []).map((m) => m.user_id as string));
 
   const members = (memberships ?? []).map((m) => {
@@ -76,5 +85,6 @@ Deno.serve(async (req) => {
     members,
     shared_spaces: sharedSpaces,
     caller_is_sco: access.isSco,
+    administrator_user_id: homeSpace?.owner_id ?? null,
   });
 });

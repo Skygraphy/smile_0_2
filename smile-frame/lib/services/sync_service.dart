@@ -50,13 +50,40 @@ class SyncResult {
     required this.settings,
     required this.assignedChannels,
     this.spaceName,
+    this.deactivated = false,
+    this.unpaired = false,
   });
+
+  /// The server reports this Frame as revoked (frame_not_active) -- the
+  /// local cache has already been wiped; show nothing but a notice until
+  /// the Space owner reactivates it.
+  SyncResult.deactivated()
+      : channelId = null,
+        entries = const [],
+        settings = null,
+        assignedChannels = const [],
+        spaceName = null,
+        deactivated = true,
+        unpaired = false;
+
+  /// The Frame record no longer exists (its Space was deleted) -- cache AND
+  /// credentials are gone; the app has to go back to pairing.
+  SyncResult.unpaired()
+      : channelId = null,
+        entries = const [],
+        settings = null,
+        assignedChannels = const [],
+        spaceName = null,
+        deactivated = false,
+        unpaired = true;
 
   final String? channelId;
   final List<CachedMediaEntry> entries;
   final FrameSettingsInfo? settings;
   final List<AssignedChannel> assignedChannels;
   final String? spaceName;
+  final bool deactivated;
+  final bool unpaired;
 }
 
 /// Orchestrates one sync round: refresh the access token if it's close to
@@ -88,7 +115,9 @@ class SyncService {
   Future<void> selectChannel(String channelId) => _credentialsStore.savePreferredChannelId(channelId);
 
   Future<SyncResult> sync({String? fcmToken}) async {
-    await _refreshIfNeeded();
+    final refresh = await _refreshIfNeeded();
+    if (refresh == _RefreshOutcome.frameNotFound) return _unpair();
+    if (refresh == _RefreshOutcome.frameNotActive) return _deactivate();
 
     final accessToken = await _credentialsStore.accessToken;
     final local = await _cacheStore.readIndex();
@@ -105,6 +134,8 @@ class SyncService {
       await _credentialsStore.clearPreferredChannelId();
       page = await _fetchAllPages(accessToken: accessToken, fcmToken: fcmToken, channelIdOverride: null);
     }
+    if (page.frameNotFound) return _unpair();
+    if (page.frameNotActive) return _deactivate();
     if (page.failed) {
       return SyncResult(channelId: null, entries: local, settings: null, assignedChannels: const []);
     }
@@ -207,9 +238,14 @@ class SyncService {
         return _PageFetchResult.failed();
       }
 
-      if (response.statusCode == 403 && channelIdOverride != null) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>?;
-        if (data?['error'] == 'frame_not_assigned_to_channel') {
+      if (response.statusCode == 403) {
+        Map<String, dynamic>? data;
+        try {
+          data = jsonDecode(response.body) as Map<String, dynamic>?;
+        } catch (_) {}
+        if (data?['error'] == 'frame_not_found') return _PageFetchResult.notFound();
+        if (data?['error'] == 'frame_not_active') return _PageFetchResult.notActive();
+        if (channelIdOverride != null && data?['error'] == 'frame_not_assigned_to_channel') {
           return _PageFetchResult.notAssigned();
         }
       }
@@ -233,15 +269,38 @@ class SyncService {
     return _PageFetchResult(firstPageData: firstPageData, items: remoteItems);
   }
 
-  Future<void> _refreshIfNeeded() async {
+  /// Revoked from the Smile-App ("Frame widerrufen"): the promise there is
+  /// that the Frame loses access to the photos immediately -- so falling
+  /// back to the offline cache (right for a mere network failure) would be
+  /// exactly wrong here. Wipe every cached file; credentials are kept so a
+  /// later "Wieder aktivieren" resumes without re-pairing.
+  Future<SyncResult> _deactivate() async {
+    await _wipeCache();
+    return SyncResult.deactivated();
+  }
+
+  Future<SyncResult> _unpair() async {
+    await _wipeCache();
+    await _credentialsStore.clear();
+    return SyncResult.unpaired();
+  }
+
+  Future<void> _wipeCache() async {
+    for (final entry in await _cacheStore.readIndex()) {
+      await _cacheStore.deleteFile(entry.fileName);
+    }
+    await _cacheStore.writeIndex(const []);
+  }
+
+  Future<_RefreshOutcome> _refreshIfNeeded() async {
     final expiresAt = await _credentialsStore.accessTokenExpiresAt;
     final frameId = await _credentialsStore.frameId;
     final refreshSecret = await _credentialsStore.refreshSecret;
-    if (expiresAt == null || frameId == null || refreshSecret == null) return;
+    if (expiresAt == null || frameId == null || refreshSecret == null) return _RefreshOutcome.skipped;
 
     const totalTtl = Duration(hours: 1); // matches the backend's access-token TTL
     final remaining = expiresAt.difference(DateTime.now());
-    if (remaining > Duration(milliseconds: (totalTtl.inMilliseconds * 0.25).round())) return;
+    if (remaining > Duration(milliseconds: (totalTtl.inMilliseconds * 0.25).round())) return _RefreshOutcome.skipped;
 
     try {
       final refreshed = await _pairingService.refreshToken(frameId: frameId, refreshSecret: refreshSecret);
@@ -250,32 +309,67 @@ class SyncService {
         accessTokenExpiresAt: refreshed.accessTokenExpiresAt,
         refreshSecret: refreshed.refreshSecret,
       );
+      return _RefreshOutcome.refreshed;
+    } on PairingException catch (e) {
+      // A revoked Frame can't refresh either -- and once its access token
+      // has expired, get-media-batch can only say "invalid token", so this
+      // is the one place that still learns *why*.
+      if (e.code == 'frame_not_found') return _RefreshOutcome.frameNotFound;
+      if (e.code == 'frame_not_active') return _RefreshOutcome.frameNotActive;
+      return _RefreshOutcome.failed;
     } catch (_) {
       // Keep using the still-valid old token; a transient refresh failure
       // shouldn't block this sync round.
+      return _RefreshOutcome.failed;
     }
   }
 }
 
+enum _RefreshOutcome { skipped, refreshed, failed, frameNotActive, frameNotFound }
+
 class _PageFetchResult {
   _PageFetchResult({this.firstPageData, this.items = const []})
       : failed = false,
-        notAssignedToChosenChannel = false;
+        notAssignedToChosenChannel = false,
+        frameNotActive = false,
+        frameNotFound = false;
 
   _PageFetchResult.failed()
       : firstPageData = null,
         items = const [],
         failed = true,
-        notAssignedToChosenChannel = false;
+        notAssignedToChosenChannel = false,
+        frameNotActive = false,
+        frameNotFound = false;
 
   _PageFetchResult.notAssigned()
       : firstPageData = null,
         items = const [],
         failed = false,
-        notAssignedToChosenChannel = true;
+        notAssignedToChosenChannel = true,
+        frameNotActive = false,
+        frameNotFound = false;
+
+  _PageFetchResult.notActive()
+      : firstPageData = null,
+        items = const [],
+        failed = false,
+        notAssignedToChosenChannel = false,
+        frameNotActive = true,
+        frameNotFound = false;
+
+  _PageFetchResult.notFound()
+      : firstPageData = null,
+        items = const [],
+        failed = false,
+        notAssignedToChosenChannel = false,
+        frameNotActive = false,
+        frameNotFound = true;
 
   final Map<String, dynamic>? firstPageData;
   final List<RemoteMediaEntry> items;
   final bool failed;
   final bool notAssignedToChosenChannel;
+  final bool frameNotActive;
+  final bool frameNotFound;
 }

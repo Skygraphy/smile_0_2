@@ -35,7 +35,10 @@ class _SpaceCoOwnersScreenState extends State<SpaceCoOwnersScreen> with SyncRelo
   }
 
   @override
-  Future<void> onSync() => _load();
+  Future<void> onSync() async {
+    if (await closeIfGone(context, table: 'spaces', id: widget.spaceId)) return;
+    await _load();
+  }
 
   Future<void> _load() async {
     try {

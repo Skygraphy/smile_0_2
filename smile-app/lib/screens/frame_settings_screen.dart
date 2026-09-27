@@ -36,7 +36,10 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
   }
 
   @override
-  Future<void> onSync() => _load();
+  Future<void> onSync() async {
+    if (await closeIfGone(context, table: 'frames', id: widget.frame.id)) return;
+    await _load();
+  }
 
   Future<void> _load() async {
     try {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../services/membership_service.dart';
+import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import 'channel_list_screen.dart';
 import 'create_frame_screen.dart';
@@ -39,7 +40,7 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
 
   Future<void> _loadSpaces() async {
     try {
-      final rows = await supabase.from('spaces').select('id, name').order('created_at');
+      final rows = await supabase.from('spaces').select('id, name, owner_id').order('created_at');
       if (!mounted) return;
       setState(() {
         _spaces = List<Map<String, dynamic>>.from(rows);
@@ -69,6 +70,38 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
       await _loadSpaces();
     } finally {
       if (mounted) setState(() => _isCreating = false);
+    }
+  }
+
+  Future<void> _deleteSpace(Map<String, dynamic> space) async {
+    final name = space['name'] as String;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Space „$name“ löschen?'),
+        content: const Text(
+          'Alle Channels dieses Space mit allen Fotos, alle Frames und alle Freigaben werden für alle '
+          'endgültig gelöscht. Das kann nicht rückgängig gemacht werden.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Abbrechen')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            child: const Text('Endgültig löschen'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await SpaceService().deleteSpace(space['id'] as String);
+      await _loadSpaces();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Space „$name“ gelöscht.')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Löschen fehlgeschlagen: $e')));
     }
   }
 
@@ -143,6 +176,13 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
                             ),
                             child: const Text('Verwaltung teilen'),
                           ),
+                          // Administrator only -- co-owners manage, but
+                          // never end the Space (delete-space-or-channel).
+                          if (space['owner_id'] == supabase.auth.currentUser?.id)
+                            PopupMenuItem(
+                              value: () => _deleteSpace(space),
+                              child: Text('Space löschen', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                            ),
                         ],
                       ),
                     ),

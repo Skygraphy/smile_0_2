@@ -38,7 +38,10 @@ Deno.serve(async (req) => {
     .eq("id", body.frame_id)
     .maybeSingle();
 
-  if (!frame || frame.lifecycle_state !== "active") {
+  // Deleted (its Space was deleted) vs. merely revoked: a deleted Frame
+  // has to go back to pairing, a revoked one just waits to be reactivated.
+  if (!frame) return jsonResponse({ error: "frame_not_found" }, 403);
+  if (frame.lifecycle_state !== "active") {
     return jsonResponse({ error: "frame_not_active" }, 403);
   }
 

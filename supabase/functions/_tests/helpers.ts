@@ -4,6 +4,8 @@
 // auth user(s)/rows and tears them down in a `finally`, so running this
 // suite is safe against real project data. See README.md for how to run
 // it and which env vars it needs.
+import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
@@ -114,6 +116,34 @@ export async function accessTokenFor(email: string): Promise<{ accessToken: stri
  * satisfying the onboarding gate). Override via env if the project's real
  * accounts ever change.
  */
+export async function ensureProfile(userId: string, displayName: string) {
+  await svc("profiles", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify({ user_id: userId, display_name: displayName }),
+  });
+}
+
+export async function createSpace(accessToken: string, name: string): Promise<string> {
+  const { status, body } = await asUser("spaces", accessToken, {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ name }),
+  });
+  assertEquals(status, 201, JSON.stringify(body));
+  return body[0].id as string;
+}
+
+export async function createChannel(accessToken: string, spaceId: string, name: string): Promise<string> {
+  const { status, body } = await asUser("channels", accessToken, {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ space_id: spaceId, name }),
+  });
+  assertEquals(status, 201, JSON.stringify(body));
+  return body[0].id as string;
+}
+
 export const FIXTURES = {
   adminEmail: Deno.env.get("TEST_ADMIN_EMAIL") ?? "admin@skygraphy.com",
   ernstEmail: Deno.env.get("TEST_ERNST_EMAIL") ?? "ernst.schiener@skygraphy.com",

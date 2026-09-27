@@ -41,7 +41,10 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> with SyncRe
   }
 
   @override
-  Future<void> onSync() => _load();
+  Future<void> onSync() async {
+    if (await closeIfGone(context, table: 'channels', id: widget.channelId)) return;
+    await _load();
+  }
 
   Future<void> _load() async {
     try {
@@ -218,7 +221,12 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> with SyncRe
                   ListTile(
                     leading: SmileAvatar(name: member.label, avatarUrl: member.avatarUrl),
                     title: Text(member.label),
-                    trailing: roster.callerIsSco && member.userId != currentUserId
+                    subtitle: member.userId == roster.administratorUserId ? const Text('Administrator') : null,
+                    // Nobody but the Administrator themselves may remove the
+                    // Administrator -- not even a co-owner (migrations/0045).
+                    trailing: roster.callerIsSco &&
+                            member.userId != currentUserId &&
+                            member.userId != roster.administratorUserId
                         ? IconButton(
                             icon: const Icon(Icons.close),
                             tooltip: 'Entfernen',

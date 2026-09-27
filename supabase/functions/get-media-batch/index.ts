@@ -53,7 +53,10 @@ Deno.serve(async (req) => {
     .select("id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, max_local_cache_gb, spaces(name)")
     .eq("id", claims.frame_id)
     .maybeSingle();
-  if (!frame || frame.lifecycle_state !== "active") {
+  // Deleted (its Space was deleted) vs. merely revoked: a deleted Frame
+  // has to go back to pairing, a revoked one just waits to be reactivated.
+  if (!frame) return jsonResponse({ error: "frame_not_found" }, 403);
+  if (frame.lifecycle_state !== "active") {
     return jsonResponse({ error: "frame_not_active" }, 403);
   }
   // deno-lint-ignore no-explicit-any

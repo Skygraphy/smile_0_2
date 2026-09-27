@@ -29,7 +29,10 @@ class _ChannelListScreenState extends State<ChannelListScreen> with SyncReload {
   }
 
   @override
-  Future<void> onSync() => _load();
+  Future<void> onSync() async {
+    if (await closeIfGone(context, table: 'spaces', id: widget.spaceId)) return;
+    await _load();
+  }
 
   Future<void> _load() async {
     try {
@@ -63,6 +66,38 @@ class _ChannelListScreenState extends State<ChannelListScreen> with SyncReload {
     }
   }
 
+  Future<void> _deleteChannel(Map<String, dynamic> channel) async {
+    final name = channel['name'] as String;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Channel „$name“ löschen?'),
+        content: const Text(
+          'Alle Fotos in diesem Channel werden für alle Mitglieder, alle verknüpften Spaces und auf allen Frames '
+          'endgültig gelöscht. Das kann nicht rückgängig gemacht werden.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Abbrechen')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            child: const Text('Endgültig löschen'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await _channelService.deleteChannel(channel['id'] as String);
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Channel „$name“ gelöscht.')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Löschen fehlgeschlagen: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -88,6 +123,14 @@ class _ChannelListScreenState extends State<ChannelListScreen> with SyncReload {
                             channelName: channel['name'] as String,
                           ),
                         ),
+                      ),
+                      // Only the Administrator/co-owners ever reach this
+                      // screen (spaces_screen lists only Spaces they manage).
+                      trailing: PopupMenuButton<VoidCallback>(
+                        onSelected: (action) => action(),
+                        itemBuilder: (context) => [
+                          PopupMenuItem(value: () => _deleteChannel(channel), child: const Text('Channel löschen')),
+                        ],
                       ),
                     ),
                   ),

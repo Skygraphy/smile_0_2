@@ -99,7 +99,7 @@ class _StartupGateState extends State<StartupGate> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (_isProvisioned == true && _frameId != null) {
-      return SlideshowScreen(syncService: widget.syncService, cacheStore: widget.cacheStore);
+      return SlideshowScreen(syncService: widget.syncService, cacheStore: widget.cacheStore, onUnpaired: _check);
     }
     return PairingScreen(
       pairingService: widget.pairingService,

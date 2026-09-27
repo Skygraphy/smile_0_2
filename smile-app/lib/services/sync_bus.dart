@@ -1,6 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+
+import '../main.dart';
 
 /// One "something you can see changed" signal. [tables]/[channelIds]/
 /// [spaceIds] are empty for [SyncEvent.everything] (app resumed -- any
@@ -87,3 +89,34 @@ mixin SyncReload<T extends StatefulWidget> on State<T> {
     super.dispose();
   }
 }
+
+/// For screens about ONE Channel/Space/Frame: after a sync, if that row is
+/// gone -- deleted, or the viewer lost access (removed as member, share
+/// revoked, no longer co-owner) -- close everything back to the home screen
+/// instead of leaving a dead screen with an error and stale cached photos.
+/// Returns true if it closed. RLS decides "visible", so both cases look
+/// the same here, hence the neutral wording.
+Future<bool> closeIfGone(BuildContext context, {required String table, required String id}) async {
+  final Map<String, dynamic>? row;
+  try {
+    row = await supabase.from(table).select('id').eq('id', id).maybeSingle();
+  } catch (_) {
+    return false; // network trouble is not "gone"
+  }
+  if (row != null || !context.mounted) return false;
+  final navigator = Navigator.of(context);
+  if (!navigator.canPop()) return false;
+  navigator.popUntil((route) => route.isFirst);
+  // Several screens of the same stack can detect this in the same sync --
+  // one notice is enough.
+  final now = DateTime.now();
+  if (_lastGoneNotice == null || now.difference(_lastGoneNotice!) > const Duration(seconds: 3)) {
+    _lastGoneNotice = now;
+    scaffoldMessengerKey.currentState?.showSnackBar(
+      const SnackBar(content: Text('Das ist nicht mehr verfügbar – gelöscht oder kein Zugriff mehr.')),
+    );
+  }
+  return true;
+}
+
+DateTime? _lastGoneNotice;

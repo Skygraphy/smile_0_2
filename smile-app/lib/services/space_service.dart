@@ -117,6 +117,13 @@ class MyCoOwnerInvite {
 /// handled automatically by a DB trigger, not from here -- see the
 /// migration's `handle_space_owner_removal`.
 class SpaceService {
+  /// Administrator only (a co-owner may manage, never end the Space) --
+  /// permanent, for everyone: every channel, photo and Frame of it. Via
+  /// delete-space-or-channel/index.ts so the photo files go too.
+  Future<void> deleteSpace(String spaceId) async {
+    await supabase.functions.invoke('delete-space-or-channel', body: {'kind': 'space', 'id': spaceId});
+  }
+
   /// Founder + every co-owner of this Space (oldest-added first -- also
   /// the order `handle_space_owner_removal` promotes from if the founder's
   /// account is ever deleted, so this list already shows who'd be next in

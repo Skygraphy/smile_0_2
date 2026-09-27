@@ -26,6 +26,7 @@ class SlideshowScreen extends StatefulWidget {
     MediaCacheStore? cacheStore,
     HeartbeatService? heartbeatService,
     PushService? pushService,
+    this.onUnpaired,
   })  : syncService = syncService ?? SyncService(),
         cacheStore = cacheStore ?? MediaCacheStore(),
         heartbeatService = heartbeatService ?? HeartbeatService(),
@@ -33,6 +34,10 @@ class SlideshowScreen extends StatefulWidget {
 
   final SyncService syncService;
   final MediaCacheStore cacheStore;
+
+  /// This Frame was deleted (its Space was deleted) -- credentials are
+  /// already cleared; StartupGate re-checks and shows pairing again.
+  final VoidCallback? onUnpaired;
   final HeartbeatService heartbeatService;
   final PushService pushService;
 
@@ -55,6 +60,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   Timer? _syncTimer;
   Timer? _advanceTimer;
   bool _loadedOnce = false;
+  // Revoked in the Smile-App -- the cache is already wiped (SyncService),
+  // this just swaps the whole screen for a notice. Keeps syncing on the
+  // usual timer/push, so "Wieder aktivieren" brings it straight back.
+  bool _deactivated = false;
   // Tile-grid overview toggle: reuses the same `_entries`/`_cacheDirPath`
   // this screen already syncs and caches, so it updates live the instant a
   // push-triggered `_sync()` lands -- no separate data path needed. Meant
@@ -119,7 +128,12 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   Future<void> _sync() async {
     final result = await widget.syncService.sync(fcmToken: _fcmToken);
     if (!mounted) return;
+    if (result.unpaired) {
+      widget.onUnpaired?.call();
+      return;
+    }
     setState(() {
+      _deactivated = result.deactivated;
       _entries = result.entries;
       _settings = result.settings;
       _loadedOnce = true;
@@ -212,6 +226,22 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_deactivated) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(32),
+            child: Text(
+              'Dieser Frame wurde deaktiviert.\nBitte wende dich an den Administrator des Space.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70, fontSize: 20),
+            ),
+          ),
+        ),
       );
     }
 

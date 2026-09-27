@@ -119,7 +119,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       event.channelIds.contains(widget.channelId) || event.tables.contains('profiles') || event.tables.contains('media_item_hides');
 
   @override
-  Future<void> onSync() => _refreshAll();
+  Future<void> onSync() async {
+    if (await closeIfGone(context, table: 'channels', id: widget.channelId)) return;
+    await _refreshAll();
+  }
 
   /// Pull-to-refresh's own handler: also re-checks membership status, not
   /// just the feed itself -- nothing else notices when the channel's SCO

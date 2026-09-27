@@ -14,35 +14,10 @@ import {
   deleteUser,
   deleteSpace,
   accessTokenFor,
+  ensureProfile,
+  createSpace,
+  createChannel,
 } from "./helpers.ts";
-
-async function ensureProfile(userId: string, displayName: string) {
-  await svc("profiles", {
-    method: "POST",
-    headers: { Prefer: "resolution=merge-duplicates" },
-    body: JSON.stringify({ user_id: userId, display_name: displayName }),
-  });
-}
-
-async function createSpace(accessToken: string, name: string): Promise<string> {
-  const { status, body } = await asUser("spaces", accessToken, {
-    method: "POST",
-    headers: { Prefer: "return=representation" },
-    body: JSON.stringify({ name }),
-  });
-  assertEquals(status, 201, JSON.stringify(body));
-  return body[0].id as string;
-}
-
-async function createChannel(accessToken: string, spaceId: string, name: string): Promise<string> {
-  const { status, body } = await asUser("channels", accessToken, {
-    method: "POST",
-    headers: { Prefer: "return=representation" },
-    body: JSON.stringify({ space_id: spaceId, name }),
-  });
-  assertEquals(status, 201, JSON.stringify(body));
-  return body[0].id as string;
-}
 
 Deno.test("channel create auto-joins the SCO and blocks a stranger", async () => {
   requireEnv();

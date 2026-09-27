@@ -33,11 +33,15 @@ class SharedSpaceRef {
 }
 
 class ChannelRoster {
-  ChannelRoster({required this.members, required this.sharedSpaces, required this.callerIsSco});
+  ChannelRoster({required this.members, required this.sharedSpaces, required this.callerIsSco, this.administratorUserId});
 
   final List<ChannelMember> members;
   final List<SharedSpaceRef> sharedSpaces;
   final bool callerIsSco;
+
+  /// The home Space's Administrator -- shown as such, and never removable
+  /// by anyone else (a co-owner included).
+  final String? administratorUserId;
 }
 
 enum RequestKind { membership, share }
@@ -140,6 +144,7 @@ class MembershipService {
       members: members.map(ChannelMember.fromJson).toList(),
       sharedSpaces: sharedSpaces.map(SharedSpaceRef.fromJson).toList(),
       callerIsSco: data['caller_is_sco'] as bool,
+      administratorUserId: data['administrator_user_id'] as String?,
     );
   }
 
