@@ -5,10 +5,10 @@
 // ready items), and both completion paths -- the synchronous passthrough
 // fallback in complete-upload and the async media-processing-service
 // callback -- need it, so it lives here once rather than duplicated in
-// both. Also pushes each Frame a "sync now" so the new photo shows up
-// immediately instead of waiting for the next periodic poll, and
-// (separately) notifies the channel's human members.
-import { pushSyncNowToFrames } from "./push-frames.ts";
+// both. The media_recipients insert itself is what makes each Frame sync
+// immediately (sync_notify() trigger, migrations/0041_fcm_sync.sql); this
+// only adds the visible "new photo" notification for the channel's human
+// members.
 import { pushNotificationToUsers } from "./push-users.ts";
 
 // deno-lint-ignore no-explicit-any
@@ -37,8 +37,6 @@ export async function fanOutToFrames(supabaseAdmin: any, mediaItemId: string, ch
       })),
       { onConflict: "media_item_id,frame_id", ignoreDuplicates: true },
     );
-
-    await pushSyncNowToFrames(supabaseAdmin, frameIds);
   }
 
   await notifyChannelMembersOfNewPhoto(supabaseAdmin, channelId, mediaItem?.sender_id ?? null);

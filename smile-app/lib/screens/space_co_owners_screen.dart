@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../services/space_service.dart';
+import '../services/sync_bus.dart';
 import '../widgets/email_dialog.dart';
 import '../widgets/smile_avatar.dart';
 
@@ -23,7 +24,7 @@ class SpaceCoOwnersScreen extends StatefulWidget {
   State<SpaceCoOwnersScreen> createState() => _SpaceCoOwnersScreenState();
 }
 
-class _SpaceCoOwnersScreenState extends State<SpaceCoOwnersScreen> {
+class _SpaceCoOwnersScreenState extends State<SpaceCoOwnersScreen> with SyncReload {
   SpaceCoOwnership? _ownership;
   String? _errorMessage;
 
@@ -32,6 +33,9 @@ class _SpaceCoOwnersScreenState extends State<SpaceCoOwnersScreen> {
     super.initState();
     _load();
   }
+
+  @override
+  Future<void> onSync() => _load();
 
   Future<void> _load() async {
     try {

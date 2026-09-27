@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../main.dart';
 
 /// A person with full, ongoing SCO-equivalent power over a Space, granted
@@ -180,6 +182,8 @@ class SpaceService {
     await supabase
         .from('space_co_owner_invites')
         .update({'status': accept ? 'accepted' : 'declined'}).eq('id', inviteId);
+    // Best-effort, fire-and-forget: see notify-request-decided/index.ts.
+    unawaited(supabase.functions.invoke('notify-request-decided', body: {'kind': 'co_owner', 'id': inviteId}));
   }
 
   /// The founder may remove any co-owner; a co-owner may also remove

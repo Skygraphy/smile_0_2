@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../services/membership_service.dart';
+import '../services/sync_bus.dart';
 import '../widgets/email_dialog.dart';
 import '../widgets/smile_avatar.dart';
 
@@ -28,7 +29,7 @@ class ChannelMembersScreen extends StatefulWidget {
   State<ChannelMembersScreen> createState() => _ChannelMembersScreenState();
 }
 
-class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
+class _ChannelMembersScreenState extends State<ChannelMembersScreen> with SyncReload {
   ChannelRoster? _roster;
   MyInvitesInbox? _inbox;
   String? _errorMessage;
@@ -38,6 +39,9 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
     super.initState();
     _load();
   }
+
+  @override
+  Future<void> onSync() => _load();
 
   Future<void> _load() async {
     try {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/frame_service.dart';
+import '../services/sync_bus.dart';
 import 'frame_settings_screen.dart';
 
 /// Per-Space Frame list -- reached from spaces_screen.dart. Shows each
@@ -18,7 +19,7 @@ class FrameListScreen extends StatefulWidget {
   State<FrameListScreen> createState() => _FrameListScreenState();
 }
 
-class _FrameListScreenState extends State<FrameListScreen> {
+class _FrameListScreenState extends State<FrameListScreen> with SyncReload {
   List<SmileFrame>? _frames;
   String? _errorMessage;
 
@@ -27,6 +28,9 @@ class _FrameListScreenState extends State<FrameListScreen> {
     super.initState();
     _load();
   }
+
+  @override
+  Future<void> onSync() => _load();
 
   Future<void> _load() async {
     try {

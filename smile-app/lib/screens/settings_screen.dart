@@ -4,6 +4,7 @@ import '../main.dart';
 import '../services/avatar_upload.dart';
 import '../services/profile_service.dart';
 import '../services/push_service.dart';
+import '../services/sync_bus.dart';
 import '../widgets/avatar_picker.dart';
 import '../widgets/smile_avatar.dart';
 import 'avatar_viewer_screen.dart';
@@ -27,7 +28,7 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
   final _pushService = PushService();
   SmileProfile? _profile;
   String? _errorMessage;
@@ -38,6 +39,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     _load();
   }
+
+  @override
+  Future<void> onSync() => _load();
 
   Future<void> _load() async {
     try {

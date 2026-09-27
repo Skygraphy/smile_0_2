@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../services/membership_service.dart';
 import '../services/space_service.dart';
+import '../services/sync_bus.dart';
 import '../widgets/smile_avatar.dart';
 
 /// "Meine Einladungen": the caller's personal inbox for both connection
@@ -24,7 +25,7 @@ class MyInvitesScreen extends StatefulWidget {
   State<MyInvitesScreen> createState() => _MyInvitesScreenState();
 }
 
-class _MyInvitesScreenState extends State<MyInvitesScreen> {
+class _MyInvitesScreenState extends State<MyInvitesScreen> with SyncReload {
   MyInvitesInbox? _inbox;
   List<MyCoOwnerInvite>? _coOwnerInvites;
   List<Map<String, dynamic>>? _mySpaces;
@@ -35,6 +36,9 @@ class _MyInvitesScreenState extends State<MyInvitesScreen> {
     super.initState();
     _load();
   }
+
+  @override
+  Future<void> onSync() => _load();
 
   Future<void> _load() async {
     try {

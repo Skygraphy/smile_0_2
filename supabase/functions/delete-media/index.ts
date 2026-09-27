@@ -13,7 +13,7 @@
 // sync-diff evicts the local cache file the same way it already handles
 // any other removed photo), the DB, and every cache -- no placeholder, no
 // second confirmation, no delay beyond the automatic push-triggered sync
-// (see push-frames.ts) nudging frames to notice immediately instead of on
+// (sync_notify() trigger, migrations/0041_fcm_sync.sql) nudging frames to notice immediately instead of on
 // their next poll.
 //
 // "hide"/"unhide" are non-destructive and personal: any member OR any
@@ -29,7 +29,6 @@
 // reports per-item outcome instead of failing the whole call.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { pushSyncNowToFrames } from "../_shared/push-frames.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -151,17 +150,9 @@ Deno.serve(async (req) => {
 
       const { error: deleteError } = await supabaseAdmin.from("media_items").delete().in("id", allowedIds);
       if (deleteError) return jsonResponse({ error: "delete_failed", detail: deleteError.message }, 500);
-
-      // Only a real delete needs to reach a frame -- hide/unhide are a
-      // personal Smile-App view preference that never changes what a
-      // frame shows.
-      const affectedChannelIds = [...new Set(allowedIds.map((id) => allowedItemsById.get(id)!.channel_id))];
-      const { data: frameLinks } = await supabaseAdmin
-        .from("frame_channels")
-        .select("frame_id")
-        .in("channel_id", affectedChannelIds);
-      const frameIds = (frameLinks ?? []).map((l: { frame_id: string }) => l.frame_id);
-      await pushSyncNowToFrames(supabaseAdmin, frameIds);
+      // Reaching the affected Frames (and every member's feed) is the
+      // sync_notify() trigger's job now -- the cascaded media_recipients
+      // delete pushes each Frame, see migrations/0041_fcm_sync.sql.
     } else if (body.action === "hide") {
       const { error: hideError } = await supabaseAdmin
         .from("media_item_hides")

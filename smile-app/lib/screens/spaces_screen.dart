@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../services/membership_service.dart';
+import '../services/sync_bus.dart';
 import 'channel_list_screen.dart';
 import 'create_frame_screen.dart';
 import 'frame_list_screen.dart';
@@ -22,7 +23,7 @@ class SpacesScreen extends StatefulWidget {
   State<SpacesScreen> createState() => _SpacesScreenState();
 }
 
-class _SpacesScreenState extends State<SpacesScreen> {
+class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
   List<Map<String, dynamic>>? _spaces;
   String? _errorMessage;
   bool _isCreating = false;
@@ -32,6 +33,9 @@ class _SpacesScreenState extends State<SpacesScreen> {
     super.initState();
     _loadSpaces();
   }
+
+  @override
+  Future<void> onSync() => _loadSpaces();
 
   Future<void> _loadSpaces() async {
     try {

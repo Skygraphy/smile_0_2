@@ -12,7 +12,6 @@
 // item's created_at, epoch ms).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { pushSyncNowToFrames } from "../_shared/push-frames.ts";
 import { resolveChannelAccess } from "../_shared/channel-access.ts";
 import { isSpaceOwnerOrCoOwner } from "../_shared/space-access.ts";
 
@@ -97,7 +96,8 @@ Deno.serve(async (req) => {
     );
   }
 
-  await pushSyncNowToFrames(supabaseAdmin, [body.frame_id]);
+  // No explicit push needed: the frame_channels insert above fires
+  // sync_notify(), which pushes this Frame (migrations/0041_fcm_sync.sql).
 
   return jsonResponse({ status: "assigned", backfilled_items: readyItems?.length ?? 0 });
 });

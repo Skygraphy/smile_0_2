@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../services/channel_picker_service.dart';
+import '../services/sync_bus.dart';
 import '../widgets/smile_avatar.dart';
 import '../widgets/smile_wordmark.dart';
 import 'channel_feed_screen.dart';
@@ -29,7 +30,7 @@ class ChannelsHomeScreen extends StatefulWidget {
   State<ChannelsHomeScreen> createState() => _ChannelsHomeScreenState();
 }
 
-class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> {
+class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload {
   List<ChannelWithActivity>? _channels;
   String? _errorMessage;
 
@@ -38,6 +39,9 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> {
     super.initState();
     _load();
   }
+
+  @override
+  Future<void> onSync() => _load();
 
   Future<void> _load() async {
     try {

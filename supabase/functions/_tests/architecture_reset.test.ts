@@ -158,12 +158,12 @@ Deno.test("channel share invite -> accept grants view only, never write, and is 
     const requestId = inviteResp.body.request_id as string;
 
     // Accept, supplying which of their own Spaces to link, in the same call.
-    const { status: acceptStatus } = await asUser(`channel_share_requests?id=eq.${requestId}`, otherToken, {
+    const { status: acceptStatus, body: acceptBody } = await asUser(`channel_share_requests?id=eq.${requestId}`, otherToken, {
       method: "PATCH",
       headers: { Prefer: "return=minimal" },
       body: JSON.stringify({ status: "accepted", space_id: otherSpaceId }),
     });
-    assertEquals(acceptStatus, 204);
+    assertEquals(acceptStatus, 204, JSON.stringify(acceptBody));
 
     const { status: shareSelect, body: shareBody } = await asUser(
       `channel_shares?channel_id=eq.${channelId}&space_id=eq.${otherSpaceId}`,

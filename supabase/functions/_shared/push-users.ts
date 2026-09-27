@@ -1,6 +1,6 @@
-// Human-facing push notifications (smile-app) -- mirrors push-frames.ts'
-// shape (best-effort, never throws) but sends a real notification
-// (title/body), not a data-only sync nudge, and fans out to every token a
+// Human-facing push notifications (smile-app) -- best-effort, never throws,
+// but sends a real notification (title/body), unlike sync-fanout's silent
+// data messages, and fans out to every token a
 // user has registered (multiple devices/reinstalls).
 import { sendNotification } from "./fcm.ts";
 
@@ -22,7 +22,7 @@ export async function pushNotificationToUsers(
       try {
         await sendNotification(t.fcm_token, notification, data);
       } catch (err) {
-        // Best-effort, same as push-frames.ts -- but a permanently dead
+        // Best-effort -- but a permanently dead
         // token (app uninstalled, token rotated) is worth pruning so it
         // doesn't keep failing forever on every future notification.
         const message = String(err);

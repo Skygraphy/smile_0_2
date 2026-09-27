@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/membership_service.dart';
+import '../services/sync_bus.dart';
 
 /// "Freigaben verwalten": every channel currently shared (view-only) into
 /// this Space, with a revoke action -- the linked Space's own owner can
@@ -26,7 +27,7 @@ class SpaceSharedChannelsScreen extends StatefulWidget {
   State<SpaceSharedChannelsScreen> createState() => _SpaceSharedChannelsScreenState();
 }
 
-class _SpaceSharedChannelsScreenState extends State<SpaceSharedChannelsScreen> {
+class _SpaceSharedChannelsScreenState extends State<SpaceSharedChannelsScreen> with SyncReload {
   List<SharedChannelSummary>? _channels;
   String? _errorMessage;
 
@@ -35,6 +36,9 @@ class _SpaceSharedChannelsScreenState extends State<SpaceSharedChannelsScreen> {
     super.initState();
     _load();
   }
+
+  @override
+  Future<void> onSync() => _load();
 
   Future<void> _load() async {
     try {

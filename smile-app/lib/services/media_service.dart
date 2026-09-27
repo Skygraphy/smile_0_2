@@ -130,26 +130,6 @@ class MediaService {
     return items;
   }
 
-  /// Notifies [onChange] whenever a media_items row in [channelId] is
-  /// inserted or updated -- lets other members' feeds pick up a new photo
-  /// (even just-uploaded, still-processing ones, via their preview) or a
-  /// processing completion without polling. Caller must dispose the
-  /// returned channel (`supabase.removeChannel`) when done.
-  RealtimeChannel subscribeToChannelMedia(String channelId, void Function() onChange) {
-    final channel = supabase.channel('media_items_$channelId')
-      ..onPostgresChanges(
-        event: PostgresChangeEvent.all,
-        schema: 'public',
-        table: 'media_items',
-        filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'channel_id', value: channelId),
-        callback: (_) => onChange(),
-      )
-      ..subscribe();
-    return channel;
-  }
-
-  Future<void> unsubscribe(RealtimeChannel channel) => supabase.removeChannel(channel);
-
   /// A tiny, low-quality JPEG (few KB at most) encoded as a data URI --
   /// shown as an instant blurry placeholder (WhatsApp-style) in other
   /// members' feeds the moment the row is created, well before the real

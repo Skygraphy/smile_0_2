@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/frame_service.dart';
+import '../services/sync_bus.dart';
 
 /// Channel-Wechsel-Freigabe (Personal Mode) and which channels a Frame
 /// shows -- the minimal Frame-settings surface needed to make the Frame
@@ -23,7 +24,7 @@ class FrameSettingsScreen extends StatefulWidget {
   State<FrameSettingsScreen> createState() => _FrameSettingsScreenState();
 }
 
-class _FrameSettingsScreenState extends State<FrameSettingsScreen> {
+class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncReload {
   late SmileFrame _frame = widget.frame;
   List<FrameChannelAssignment>? _assignments;
   String? _errorMessage;
@@ -33,6 +34,9 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> {
     super.initState();
     _load();
   }
+
+  @override
+  Future<void> onSync() => _load();
 
   Future<void> _load() async {
     try {

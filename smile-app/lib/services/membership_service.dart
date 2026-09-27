@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../main.dart';
 
 class ChannelMember {
@@ -183,6 +185,11 @@ class MembershipService {
     await supabase
         .from('channel_membership_requests')
         .update({'status': accept ? 'accepted' : 'declined'}).eq('id', requestId);
+    // Best-effort, fire-and-forget: lets the other side know without
+    // waiting for them to notice on their own next refresh -- see
+    // notify-request-decided/index.ts. Deciding itself stays the plain RLS
+    // write above; this is purely the notification side effect.
+    unawaited(supabase.functions.invoke('notify-request-decided', body: {'kind': 'membership', 'id': requestId}));
   }
 
   /// Deciding a share *invite* also supplies which of the caller's own
@@ -194,6 +201,7 @@ class MembershipService {
       'status': accept ? 'accepted' : 'declined',
       'space_id': ?spaceId,
     }).eq('id', requestId);
+    unawaited(supabase.functions.invoke('notify-request-decided', body: {'kind': 'share', 'id': requestId}));
   }
 
   /// A viewer (sees the channel only via a Space they own being shared

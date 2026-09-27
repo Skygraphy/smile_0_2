@@ -6,12 +6,12 @@ import 'dart:ui' as ui;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
 import '../services/media_cache_service.dart';
 import '../services/media_service.dart';
 import '../services/membership_service.dart';
+import '../services/sync_bus.dart';
 import '../widgets/smile_avatar.dart';
 import 'channel_members_screen.dart';
 
@@ -68,14 +68,12 @@ class ChannelFeedScreen extends StatefulWidget {
   State<ChannelFeedScreen> createState() => _ChannelFeedScreenState();
 }
 
-class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
+class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   List<MediaItem>? _items;
   final List<_PendingUpload> _pendingUploads = [];
   bool _isUploading = false;
   String? _errorMessage;
   String? _statusMessage;
-  RealtimeChannel? _realtimeChannel;
-  Timer? _realtimeDebounce;
   final Set<String> _selectedIds = {};
   // WhatsApp's own "floating" date header: pinned at the top of the
   // visible feed, updating to whichever day's messages are currently
@@ -108,16 +106,20 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
     super.initState();
     _loadFromCacheThenRefresh();
     unawaited(_loadMyStatus());
-    // Other members' (or this device's own, on a second screen) uploads and
-    // processing completions land here without polling -- media_items_select
-    // RLS already lets any channel member see any row in their channel, so a
-    // plain INSERT/UPDATE subscription is enough to know something changed.
-    // Hides/unhides never touch media_items, so this never fires for them --
-    // fine, since the hidden view is only ever refreshed by the viewer's own
-    // actions or a manual pull-to-refresh.
-    _realtimeChannel = widget.mediaService.subscribeToChannelMedia(widget.channelId, _onRealtimeChange);
     _scrollController.addListener(_updateStickyDate);
   }
+
+  // Other members' uploads/processing completions/deletes, a hide on this
+  // user's other device, a membership decision, a name change -- all
+  // arrive as FCM sync pushes (SyncBus). The feed is the one expensive
+  // reload, so it only reacts to changes concerning this channel (or a
+  // profile, which may be a sender's name/avatar shown here).
+  @override
+  bool isSyncRelevant(SyncEvent event) =>
+      event.channelIds.contains(widget.channelId) || event.tables.contains('profiles') || event.tables.contains('media_item_hides');
+
+  @override
+  Future<void> onSync() => _refreshAll();
 
   /// Pull-to-refresh's own handler: also re-checks membership status, not
   /// just the feed itself -- nothing else notices when the channel's SCO
@@ -223,19 +225,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
     if (next != _stickyDate) setState(() => _stickyDate = next);
   }
 
-  void _onRealtimeChange() {
-    // Several rows can change in a burst (e.g. a batch upload finishing
-    // processing one after another) -- debounce so that doesn't turn into a
-    // `_load()` per row.
-    _realtimeDebounce?.cancel();
-    _realtimeDebounce = Timer(const Duration(milliseconds: 400), () => unawaited(_load()));
-  }
-
   @override
   void dispose() {
-    _realtimeDebounce?.cancel();
-    final channel = _realtimeChannel;
-    if (channel != null) unawaited(widget.mediaService.unsubscribe(channel));
     _scrollController.dispose();
     super.dispose();
   }
@@ -283,7 +274,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
       // hidden view, which never has pending uploads of its own.
       //
       // Iterate a snapshot, not the live list: `_load()` can run
-      // concurrently with itself (the realtime subscription's debounced
+      // concurrently with itself (the SyncBus-triggered debounced
       // call can fire while `_pickAndUpload`'s own retry-loop call is still
       // awaiting a precacheImage below), and the *other* call's `setState`
       // mutating `_pendingUploads` mid-iteration throws
@@ -521,7 +512,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
         final pending = _pendingUploads[i];
         // Keyed by the upload attempt itself (stable across rebuilds) --
         // without a key, Flutter would tear this tile down and recreate
-        // it on every realtime-triggered rebuild instead of recognizing
+        // it on every sync-triggered rebuild instead of recognizing
         // it as unchanged.
         rows.add(_ChatRow(
           key: ValueKey(pending),

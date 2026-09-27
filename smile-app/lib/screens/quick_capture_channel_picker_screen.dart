@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../services/channel_picker_service.dart';
 import '../services/media_service.dart';
+import '../services/sync_bus.dart';
 import 'channel_feed_screen.dart';
 
 /// The step after the header camera icon (spaces_screen.dart) captures a
@@ -33,7 +34,7 @@ class QuickCaptureChannelPickerScreen extends StatefulWidget {
   State<QuickCaptureChannelPickerScreen> createState() => _QuickCaptureChannelPickerScreenState();
 }
 
-class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPickerScreen> {
+class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPickerScreen> with SyncReload {
   List<UploadableChannel>? _channels;
   String? _errorMessage;
   UploadableChannel? _uploadingTo;
@@ -43,6 +44,9 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
     super.initState();
     _load();
   }
+
+  @override
+  Future<void> onSync() => _load();
 
   Future<void> _load() async {
     try {

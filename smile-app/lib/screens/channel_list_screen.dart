@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/channel_service.dart';
+import '../services/sync_bus.dart';
 import 'channel_feed_screen.dart';
 
 /// Minimal Space-Owner-Home for Phase 3 testing (full version with device
@@ -15,7 +16,7 @@ class ChannelListScreen extends StatefulWidget {
   State<ChannelListScreen> createState() => _ChannelListScreenState();
 }
 
-class _ChannelListScreenState extends State<ChannelListScreen> {
+class _ChannelListScreenState extends State<ChannelListScreen> with SyncReload {
   final _channelService = ChannelService();
   List<Map<String, dynamic>>? _channels;
   String? _errorMessage;
@@ -26,6 +27,9 @@ class _ChannelListScreenState extends State<ChannelListScreen> {
     super.initState();
     _load();
   }
+
+  @override
+  Future<void> onSync() => _load();
 
   Future<void> _load() async {
     try {
