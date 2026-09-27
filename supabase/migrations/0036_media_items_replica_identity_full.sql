@@ -1,0 +1,19 @@
+-- Realtime bug found during manual testing: deleting a photo never reached
+-- OTHER members' live feed (channel_feed_screen.dart's postgres_changes
+-- subscription, media_service.dart), even though the delete itself worked
+-- correctly (delete-media/index.ts) and both the deleting device and the
+-- Frame (which polls via get-media-batch, not realtime) picked it up fine.
+--
+-- Root cause: under the default REPLICA IDENTITY, a DELETE's WAL record
+-- only carries the primary key of the old row -- not channel_id or any
+-- other column. Supabase Realtime has to re-evaluate media_items_select's
+-- RLS policy (which needs channel_id) against that old row before it can
+-- decide whether a given subscriber is even allowed to see the delete --
+-- and with the old row truncated to just `id`, it can't, so it silently
+-- drops the event for every subscriber instead of risking a leak. INSERT/
+-- UPDATE were never affected: those always carry the full new row.
+--
+-- REPLICA IDENTITY FULL makes Postgres log the entire old row on
+-- update/delete, giving Realtime what it needs to apply the RLS check
+-- correctly.
+alter table media_items replica identity full;

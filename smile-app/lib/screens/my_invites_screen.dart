@@ -54,6 +54,12 @@ class _MyInvitesScreenState extends State<MyInvitesScreen> {
     try {
       await widget.membershipService.decideMembershipRequest(request.id, accept: accept);
       await _load();
+      if (!mounted) return;
+      if (accept) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Beitritt zu "${request.channelName ?? request.channelId}" angenommen.')),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Aktion fehlgeschlagen: $e')));
@@ -98,6 +104,14 @@ class _MyInvitesScreenState extends State<MyInvitesScreen> {
     try {
       await widget.membershipService.decideShareRequest(request.id, accept: true, spaceId: spaceId);
       await _load();
+      // The row simply vanishes from the list on success (it's no longer
+      // pending) -- with no other feedback that looks identical to nothing
+      // having happened at all, which is exactly the confusion this
+      // SnackBar exists to prevent.
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Freigabe für "${request.channelName ?? request.channelId}" angenommen.')),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Annehmen fehlgeschlagen: $e')));

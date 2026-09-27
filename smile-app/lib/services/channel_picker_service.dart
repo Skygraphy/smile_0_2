@@ -57,9 +57,14 @@ class ChannelWithActivity {
 /// ready media_item per channel" needs real aggregation).
 class ChannelPickerService {
   Future<List<UploadableChannel>> listMyUploadableChannels() async {
+    // The explicit `!channels_space_id_fkey` hint is required: PostgREST
+    // can also reach `spaces` from `channels` indirectly through
+    // `channel_shares` (which has FKs to both), so a bare `spaces(...)`
+    // embed is ambiguous (PGRST201) -- see list-my-channels/index.ts for
+    // the matching server-side fix and why this wasn't caught earlier.
     final rows = await supabase
         .from('channel_members')
-        .select('channel_id, channels(name, spaces(name))')
+        .select('channel_id, channels(name, spaces!channels_space_id_fkey(name))')
         .order('created_at');
     return (rows as List).cast<Map<String, dynamic>>().map((row) {
       final channel = row['channels'] as Map<String, dynamic>;

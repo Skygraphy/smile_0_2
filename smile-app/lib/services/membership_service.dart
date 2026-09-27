@@ -95,9 +95,15 @@ class ChannelRequest {
 /// who can currently only *view* the channel (via a Space they own being
 /// shared into it, see [SharedSpaceRef]) but never posted.
 class MyChannelMembershipStatus {
-  MyChannelMembershipStatus({required this.isMember, this.pendingRequestId});
+  MyChannelMembershipStatus({required this.isMember, required this.isSco, this.pendingRequestId});
 
   final bool isMember;
+  // Whether the caller is this channel's SCO -- lets
+  // channel_feed_screen.dart know, client-side, whether a delete of
+  // someone else's photo will actually be allowed, so it can skip
+  // presenting a confirmation dialog for a delete the server would only
+  // reject afterwards.
+  final bool isSco;
   // Set when the caller already has a pending self-initiated 'request'
   // row waiting on the SCO's decision -- lets the UI offer "withdraw"
   // instead of submitting a second one (which would violate the
@@ -205,7 +211,8 @@ class MembershipService {
   }
 
   /// Whether the caller already posts here, or -- if not -- whether they
-  /// already have a pending [requestMembership] waiting on the SCO.
+  /// already have a pending [requestMembership] waiting on the SCO; also
+  /// whether they're this channel's SCO.
   Future<MyChannelMembershipStatus> getMyMembershipStatus(String channelId) async {
     final userId = supabase.auth.currentUser!.id;
     final results = await Future.wait<dynamic>([
@@ -217,11 +224,23 @@ class MembershipService {
           .eq('user_id', userId)
           .eq('direction', 'request')
           .eq('status', 'pending'),
+      // spaces_select's RLS (owner_id = auth.uid() or is_staff()) means
+      // this embed comes back null for anyone but the home Space's real
+      // owner -- no separate "am I SCO" endpoint needed, the RLS filter
+      // itself *is* the check.
+      supabase
+          .from('channels')
+          .select('spaces!channels_space_id_fkey(owner_id)')
+          .eq('id', channelId)
+          .maybeSingle(),
     ]);
     final memberRows = results[0] as List;
     final requestRows = results[1] as List;
+    final channelRow = results[2] as Map<String, dynamic>?;
+    final ownerId = (channelRow?['spaces'] as Map<String, dynamic>?)?['owner_id'] as String?;
     return MyChannelMembershipStatus(
       isMember: memberRows.isNotEmpty,
+      isSco: ownerId == userId,
       pendingRequestId: requestRows.isNotEmpty ? requestRows.first['id'] as String : null,
     );
   }

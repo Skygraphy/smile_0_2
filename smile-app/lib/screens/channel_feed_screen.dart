@@ -119,6 +119,14 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
     _scrollController.addListener(_updateStickyDate);
   }
 
+  /// Pull-to-refresh's own handler: also re-checks membership status, not
+  /// just the feed itself -- nothing else notices when the channel's SCO
+  /// decides a pending request/invite on their own device (same gap
+  /// channel_members_screen.dart and my_invites_screen.dart have), so
+  /// without this the FAB stays stuck on "Anfrage gesendet" forever even
+  /// after being approved.
+  Future<void> _refreshAll() => Future.wait([_load(), _loadMyStatus()]);
+
   Future<void> _loadMyStatus() async {
     try {
       final status = await widget.membershipService.getMyMembershipStatus(widget.channelId);
@@ -403,10 +411,32 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
   /// else's photo without admin/staff rights) doesn't block the rest of
   /// the batch.
   Future<void> _confirmAndDeleteSelection() async {
+    // delete-media/index.ts only ever allows the sender, the channel's SCO,
+    // or staff to actually delete a given photo -- checking that client-
+    // side too means a non-SCO who selects someone else's photo never even
+    // sees a confirmation dialog for a delete that was always going to be
+    // denied. Staff isn't checked here (no cheap client-side signal for
+    // it), so a staff member deleting someone else's photo still goes
+    // through the server-side deniedIds path below, same as before.
+    final myUserId = supabase.auth.currentUser?.id;
+    final isSco = _myStatus?.isSco ?? false;
+    final deletableIds = _selectedIds.where((id) {
+      if (isSco) return true;
+      final item = _items!.firstWhere((i) => i.id == id);
+      return item.senderId == myUserId;
+    }).toList();
+
+    if (deletableIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Du darfst nur eigene Fotos löschen.')),
+      );
+      return;
+    }
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${_selectedIds.length} Foto(s) endgültig löschen?'),
+        title: Text('${deletableIds.length} Foto(s) endgültig löschen?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Löschen')),
@@ -415,7 +445,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
     );
     if (confirmed != true) return;
 
-    final ids = _selectedIds.toList();
+    final ids = deletableIds;
     _clearSelection();
     try {
       final result = await widget.mediaService.deletePhotos(ids);
@@ -676,7 +706,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
                         : _items!.where((item) => item.isReady || !pendingIds.contains(item.id)).toList();
                     if (visibleItems.isEmpty && pendingCount == 0) {
                       return RefreshIndicator(
-                        onRefresh: _load,
+                        onRefresh: _refreshAll,
                         child: ListView(
                           children: [
                             const SizedBox(height: 200),
@@ -691,7 +721,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> {
                       key: _feedStackKey,
                       children: [
                         RefreshIndicator(
-                          onRefresh: _load,
+                          onRefresh: _refreshAll,
                           child: ListView(
                             // Index 0 is the newest thing (a pending upload
                             // if any, else the newest ready item -- same

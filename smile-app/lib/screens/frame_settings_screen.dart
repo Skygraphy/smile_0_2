@@ -107,6 +107,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> {
           lastSeenAt: _frame.lastSeenAt,
           batteryLevel: _frame.batteryLevel,
           isCharging: _frame.isCharging,
+          deviceModel: _frame.deviceModel,
         ));
     await widget.frameService.setChannelSwitchEnabled(frameId: _frame.id, enabled: value);
   }
@@ -236,6 +237,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> {
               ],
             ),
             const SizedBox(height: 12),
+            _statusRow('Gerät', _frame.deviceModel ?? '—'),
             _statusRow('Zuletzt gesehen', _formatDateTime(_frame.lastSeenAt)),
             _statusRow('App-Version', _frame.currentAppVersion ?? '—'),
             _statusRow(

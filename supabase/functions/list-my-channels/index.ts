@@ -45,7 +45,17 @@ Deno.serve(async (req) => {
   if (channelIds.length === 0) return jsonResponse({ channels: [] });
 
   const [{ data: channels, error: channelsError }, { data: shareRows }] = await Promise.all([
-    supabaseAdmin.from("channels").select("id, name, space_id, spaces(id, name), created_at").in("id", channelIds),
+    // The explicit `!channels_space_id_fkey` hint is required: PostgREST
+    // can also reach `spaces` from `channels` indirectly through
+    // `channel_shares` (which has FKs to both), so a bare `spaces(...)`
+    // embed is ambiguous (PGRST201: "more than one relationship was
+    // found") the moment PostgREST's schema cache has picked up
+    // channel_shares' FKs -- independent of whether any row actually
+    // exists in it. This is why it wasn't caught during Phase 1-3
+    // testing (done shortly after the schema reset, likely before
+    // PostgREST's cache had settled) but broke on the very first real
+    // walkthrough afterward.
+    supabaseAdmin.from("channels").select("id, name, space_id, spaces!channels_space_id_fkey(id, name), created_at").in("id", channelIds),
     // Every Space this channel is shared into (not just the caller's own)
     // -- a shared channel shows both households' Space names, the same
     // reason WhatsApp shows every member of a group, not just the ones

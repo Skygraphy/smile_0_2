@@ -12,6 +12,7 @@ class SmileFrame {
     this.lastSeenAt,
     this.batteryLevel,
     this.isCharging,
+    this.deviceModel,
   });
 
   final String id;
@@ -24,6 +25,10 @@ class SmileFrame {
   final DateTime? lastSeenAt;
   final int? batteryLevel;
   final bool? isCharging;
+  // Which physical device this Frame record is actually bound to (e.g.
+  // "samsung SM-P610") -- reported by the Frame itself on every heartbeat.
+  // Null until the paired hardware's first heartbeat lands.
+  final String? deviceModel;
 
   bool get isRevoked => lifecycleState == 'revoked';
   bool get isPending => lifecycleState == 'pending';
@@ -40,6 +45,7 @@ class SmileFrame {
         lastSeenAt: json['last_seen_at'] != null ? DateTime.parse(json['last_seen_at'] as String) : null,
         batteryLevel: json['battery_level'] as int?,
         isCharging: json['is_charging'] as bool?,
+        deviceModel: json['device_model'] as String?,
       );
 }
 
@@ -67,7 +73,7 @@ class AssignableChannel {
 /// display setting remain.
 class FrameService {
   static const _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, pairing_code, '
-      'pairing_code_expires_at, current_app_version, last_seen_at, battery_level, is_charging';
+      'pairing_code_expires_at, current_app_version, last_seen_at, battery_level, is_charging, device_model';
 
   Future<List<SmileFrame>> listFrames(String spaceId) async {
     final rows = await supabase.from('frames').select(_frameColumns).eq('space_id', spaceId).order('created_at');

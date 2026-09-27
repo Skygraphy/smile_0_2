@@ -22,6 +22,7 @@ interface RequestBody {
   battery_level?: number;
   is_charging?: boolean;
   fcm_token?: string;
+  device_model?: string;
 }
 
 Deno.serve(async (req) => {
@@ -69,6 +70,7 @@ Deno.serve(async (req) => {
       ...(body.battery_level !== undefined ? { battery_level: body.battery_level } : {}),
       ...(body.is_charging !== undefined ? { is_charging: body.is_charging } : {}),
       ...(body.fcm_token ? { fcm_token: body.fcm_token } : {}),
+      ...(body.device_model ? { device_model: body.device_model } : {}),
     })
     .eq("id", claims.frame_id);
 

@@ -196,7 +196,13 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
       ),
       body: roster == null
           ? Center(child: _errorMessage != null ? Text(_errorMessage!) : const CircularProgressIndicator())
-          : ListView(
+          // Nothing here pushes updates when someone ELSE decides a pending
+          // request/invite (e.g. the invitee accepting on their own device)
+          // -- pull-to-refresh is the only way to see that without leaving
+          // and reopening the screen. Matches my_invites_screen.dart.
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
               children: [
                 if (_errorMessage != null)
                   Padding(
@@ -252,7 +258,13 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
                     ListTile(
                       leading: SmileAvatar(name: request.counterpartLabel, avatarUrl: request.counterpartAvatarUrl),
                       title: Text(request.counterpartLabel),
-                      subtitle: const Text('Wartet auf Annahme'),
+                      // "Wartet auf Annahme" directly under the invitee's own
+                      // name reads as if THEY are waiting on something --
+                      // really it's the SCO (viewer) waiting on THEIR
+                      // acceptance. Impersonal phrasing plus the channel
+                      // name avoids that misreading and removes any doubt
+                      // about which channel this invite belongs to.
+                      subtitle: Text('${widget.channelName} · Annahme ausstehend'),
                       trailing: IconButton(
                         icon: const Icon(Icons.close),
                         tooltip: 'Zurückziehen',
@@ -313,7 +325,7 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
                     ListTile(
                       leading: SmileAvatar(name: request.counterpartLabel, avatarUrl: request.counterpartAvatarUrl),
                       title: Text(request.counterpartLabel),
-                      subtitle: const Text('Wartet auf Annahme'),
+                      subtitle: Text('${widget.channelName} · Annahme ausstehend'),
                       trailing: IconButton(
                         icon: const Icon(Icons.close),
                         tooltip: 'Zurückziehen',
@@ -344,6 +356,7 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
                 ],
                 const SizedBox(height: 16),
               ],
+              ),
             ),
     );
   }
