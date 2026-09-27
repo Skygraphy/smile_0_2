@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../services/membership_service.dart';
+import '../widgets/email_dialog.dart';
 import '../widgets/smile_avatar.dart';
 
 /// Channel roster + the two symmetric invite mechanisms (see
@@ -99,7 +100,7 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
   Future<void> _showInviteMemberDialog() async {
     final email = await showDialog<String>(
       context: context,
-      builder: (context) => const _EmailDialog(
+      builder: (context) => const EmailDialog(
         title: 'Person einladen',
         explanation: 'Die Person braucht bereits einen Smile-Account. Sie kann die Einladung annehmen oder ablehnen.',
         confirmLabel: 'Einladen',
@@ -119,7 +120,7 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
   Future<void> _showInviteShareDialog() async {
     final email = await showDialog<String>(
       context: context,
-      builder: (context) => const _EmailDialog(
+      builder: (context) => const EmailDialog(
         title: 'Space einladen',
         explanation:
             'Der/die Owner eines anderen Space kann diesen Channel danach mit seinem/ihrem Space nur ansehen (kein Posten).',
@@ -358,53 +359,6 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> {
               ],
               ),
             ),
-    );
-  }
-}
-
-class _EmailDialog extends StatefulWidget {
-  const _EmailDialog({required this.title, required this.explanation, required this.confirmLabel});
-
-  final String title;
-  final String explanation;
-  final String confirmLabel;
-
-  @override
-  State<_EmailDialog> createState() => _EmailDialogState();
-}
-
-class _EmailDialogState extends State<_EmailDialog> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.title),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(widget.explanation, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(labelText: 'E-Mail-Adresse'),
-            onSubmitted: (value) => Navigator.of(context).pop(value),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Abbrechen')),
-        TextButton(onPressed: () => Navigator.of(context).pop(_controller.text), child: Text(widget.confirmLabel)),
-      ],
     );
   }
 }

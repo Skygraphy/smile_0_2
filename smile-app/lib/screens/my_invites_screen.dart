@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../services/membership_service.dart';
+import '../services/space_service.dart';
 import '../widgets/smile_avatar.dart';
 
 /// "Meine Einladungen": the caller's personal inbox for both connection
@@ -12,10 +13,12 @@ import '../widgets/smile_avatar.dart';
 /// join_channel_screen.dart's code-redemption flow entirely -- there is no
 /// more shareable code, only a known person inviting another known person.
 class MyInvitesScreen extends StatefulWidget {
-  MyInvitesScreen({super.key, MembershipService? membershipService})
-      : membershipService = membershipService ?? MembershipService();
+  MyInvitesScreen({super.key, MembershipService? membershipService, SpaceService? spaceService})
+      : membershipService = membershipService ?? MembershipService(),
+        spaceService = spaceService ?? SpaceService();
 
   final MembershipService membershipService;
+  final SpaceService spaceService;
 
   @override
   State<MyInvitesScreen> createState() => _MyInvitesScreenState();
@@ -23,6 +26,7 @@ class MyInvitesScreen extends StatefulWidget {
 
 class _MyInvitesScreenState extends State<MyInvitesScreen> {
   MyInvitesInbox? _inbox;
+  List<MyCoOwnerInvite>? _coOwnerInvites;
   List<Map<String, dynamic>>? _mySpaces;
   String? _errorMessage;
 
@@ -37,16 +41,34 @@ class _MyInvitesScreenState extends State<MyInvitesScreen> {
       final results = await Future.wait<dynamic>([
         widget.membershipService.listMyInvites(),
         supabase.from('spaces').select('id, name').order('created_at'),
+        widget.spaceService.listMyCoOwnerInvites(),
       ]);
       if (!mounted) return;
       setState(() {
         _inbox = results[0] as MyInvitesInbox;
         _mySpaces = List<Map<String, dynamic>>.from(results[1] as List);
+        _coOwnerInvites = results[2] as List<MyCoOwnerInvite>;
         _errorMessage = null;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() => _errorMessage = 'Einladungen konnten nicht geladen werden: $e');
+    }
+  }
+
+  Future<void> _decideCoOwnerInvite(MyCoOwnerInvite invite, {required bool accept}) async {
+    try {
+      await widget.spaceService.decideCoOwnerInvite(invite.id, accept: accept);
+      await _load();
+      if (!mounted) return;
+      if (accept) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Verwaltung von "${invite.spaceName ?? invite.spaceId}" übernommen.')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Aktion fehlgeschlagen: $e')));
     }
   }
 
@@ -143,6 +165,7 @@ class _MyInvitesScreenState extends State<MyInvitesScreen> {
       ...(inbox?.membershipRequests ?? []).where((r) => r.direction == RequestDirection.request),
       ...(inbox?.shareRequests ?? []).where((r) => r.direction == RequestDirection.request),
     ];
+    final coOwnerInvites = _coOwnerInvites ?? [];
 
     return Scaffold(
       appBar: AppBar(title: const Text('Meine Einladungen')),
@@ -157,10 +180,33 @@ class _MyInvitesScreenState extends State<MyInvitesScreen> {
                     Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     const SizedBox(height: 16),
                   ],
-                  if (pendingToMe.isEmpty && mySentRequests.isEmpty)
+                  if (pendingToMe.isEmpty && mySentRequests.isEmpty && coOwnerInvites.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
                       child: Text('Keine offenen Einladungen oder Anfragen.'),
+                    ),
+                  for (final invite in coOwnerInvites)
+                    Card(
+                      child: ListTile(
+                        leading: SmileAvatar(name: invite.founderLabel, avatarUrl: invite.founderAvatarUrl),
+                        title: Text(invite.spaceName ?? invite.spaceId),
+                        subtitle: Text('${invite.founderLabel} lädt dich ein, diesen Space mitzuverwalten'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.check, color: Colors.green),
+                              tooltip: 'Annehmen',
+                              onPressed: () => _decideCoOwnerInvite(invite, accept: true),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, color: Colors.red),
+                              tooltip: 'Ablehnen',
+                              onPressed: () => _decideCoOwnerInvite(invite, accept: false),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   for (final request in pendingToMe)
                     Card(

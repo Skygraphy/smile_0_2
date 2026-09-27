@@ -6,6 +6,7 @@ import 'channel_list_screen.dart';
 import 'create_frame_screen.dart';
 import 'frame_list_screen.dart';
 import 'my_invites_screen.dart';
+import 'space_co_owners_screen.dart';
 import 'space_shared_channels_screen.dart';
 
 /// "Meine Spaces" -- Space/Frame administration (create a Space, create a
@@ -126,6 +127,17 @@ class _SpacesScreenState extends State<SpacesScreen> {
                               ),
                             ),
                             child: const Text('Freigaben verwalten'),
+                          ),
+                          PopupMenuItem(
+                            value: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => SpaceCoOwnersScreen(
+                                  spaceId: space['id'] as String,
+                                  spaceName: space['name'] as String,
+                                ),
+                              ),
+                            ),
+                            child: const Text('Verwaltung teilen'),
                           ),
                         ],
                       ),

@@ -14,6 +14,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { pushSyncNowToFrames } from "../_shared/push-frames.ts";
 import { resolveChannelAccess } from "../_shared/channel-access.ts";
+import { isSpaceOwnerOrCoOwner } from "../_shared/space-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -56,7 +57,9 @@ Deno.serve(async (req) => {
 
   const { data: spaceRow } = await supabaseAdmin.from("spaces").select("owner_id").eq("id", frame.space_id).maybeSingle();
   if (!spaceRow) return jsonResponse({ error: "space_not_found" }, 404);
-  if (!isStaff && spaceRow.owner_id !== userId) return jsonResponse({ error: "not_space_owner" }, 403);
+  if (!isStaff && !(await isSpaceOwnerOrCoOwner(supabaseAdmin, frame.space_id, userId))) {
+    return jsonResponse({ error: "not_space_owner" }, 403);
+  }
 
   // A Frame may show any channel its own Space can view -- its home
   // Space's own channels, or a channel shared into that Space

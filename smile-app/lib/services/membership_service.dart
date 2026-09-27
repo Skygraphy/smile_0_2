@@ -212,9 +212,13 @@ class MembershipService {
 
   /// Whether the caller already posts here, or -- if not -- whether they
   /// already have a pending [requestMembership] waiting on the SCO; also
-  /// whether they're this channel's SCO.
+  /// whether they're this channel's SCO -- the channel's home Space's
+  /// founder, or a co-owner of it (migrations/0037_space_co_owners.sql).
   Future<MyChannelMembershipStatus> getMyMembershipStatus(String channelId) async {
     final userId = supabase.auth.currentUser!.id;
+    final channelRow = await supabase.from('channels').select('space_id').eq('id', channelId).maybeSingle();
+    final spaceId = channelRow?['space_id'] as String?;
+
     final results = await Future.wait<dynamic>([
       supabase.from('channel_members').select('user_id').eq('channel_id', channelId).eq('user_id', userId),
       supabase
@@ -224,23 +228,22 @@ class MembershipService {
           .eq('user_id', userId)
           .eq('direction', 'request')
           .eq('status', 'pending'),
-      // spaces_select's RLS (owner_id = auth.uid() or is_staff()) means
-      // this embed comes back null for anyone but the home Space's real
-      // owner -- no separate "am I SCO" endpoint needed, the RLS filter
-      // itself *is* the check.
-      supabase
-          .from('channels')
-          .select('spaces!channels_space_id_fkey(owner_id)')
-          .eq('id', channelId)
-          .maybeSingle(),
+      if (spaceId != null)
+        supabase.from('spaces').select('owner_id').eq('id', spaceId).maybeSingle()
+      else
+        Future<Map<String, dynamic>?>.value(null),
+      if (spaceId != null)
+        supabase.from('space_co_owners').select('user_id').eq('space_id', spaceId).eq('user_id', userId)
+      else
+        Future<List<dynamic>>.value(const []),
     ]);
     final memberRows = results[0] as List;
     final requestRows = results[1] as List;
-    final channelRow = results[2] as Map<String, dynamic>?;
-    final ownerId = (channelRow?['spaces'] as Map<String, dynamic>?)?['owner_id'] as String?;
+    final spaceRow = results[2] as Map<String, dynamic>?;
+    final coOwnerRows = results[3] as List;
     return MyChannelMembershipStatus(
       isMember: memberRows.isNotEmpty,
-      isSco: ownerId == userId,
+      isSco: spaceRow?['owner_id'] == userId || coOwnerRows.isNotEmpty,
       pendingRequestId: requestRows.isNotEmpty ? requestRows.first['id'] as String : null,
     );
   }

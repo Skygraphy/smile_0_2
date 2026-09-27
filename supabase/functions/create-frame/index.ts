@@ -10,6 +10,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { generatePairingCode } from "../_shared/device-secret.ts";
+import { isSpaceOwnerOrCoOwner } from "../_shared/space-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -49,9 +50,8 @@ Deno.serve(async (req) => {
 
   const { data: staffRow } = await supabaseAdmin.from("staff_members").select("user_id").eq("user_id", userId).maybeSingle();
   const isStaff = Boolean(staffRow);
-  if (!isStaff) {
-    const { data: spaceRow } = await supabaseAdmin.from("spaces").select("owner_id").eq("id", body.space_id).maybeSingle();
-    if (!spaceRow || spaceRow.owner_id !== userId) return jsonResponse({ error: "not_space_owner" }, 403);
+  if (!isStaff && !(await isSpaceOwnerOrCoOwner(supabaseAdmin, body.space_id, userId))) {
+    return jsonResponse({ error: "not_space_owner" }, 403);
   }
 
   const expiresAt = new Date(Date.now() + CODE_TTL_SECONDS * 1000).toISOString();

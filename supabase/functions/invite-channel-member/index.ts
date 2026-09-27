@@ -10,6 +10,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { findUserIdByEmail } from "../_shared/find-user.ts";
 import { pushNotificationToUsers } from "../_shared/push-users.ts";
+import { isSpaceOwnerOrCoOwner } from "../_shared/space-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -49,8 +50,9 @@ Deno.serve(async (req) => {
   const { data: channel } = await supabaseAdmin.from("channels").select("id, name, space_id").eq("id", body.channel_id).maybeSingle();
   if (!channel) return jsonResponse({ error: "channel_not_found" }, 404);
 
-  const { data: spaceRow } = await supabaseAdmin.from("spaces").select("owner_id").eq("id", channel.space_id).maybeSingle();
-  if (!isStaff && spaceRow?.owner_id !== userId) return jsonResponse({ error: "not_channel_sco" }, 403);
+  if (!isStaff && !(await isSpaceOwnerOrCoOwner(supabaseAdmin, channel.space_id, userId))) {
+    return jsonResponse({ error: "not_channel_sco" }, 403);
+  }
 
   const inviteeId = await findUserIdByEmail(supabaseAdmin, body.email);
   if (!inviteeId) return jsonResponse({ error: "user_not_found" }, 404);
