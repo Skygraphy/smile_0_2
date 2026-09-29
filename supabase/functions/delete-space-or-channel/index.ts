@@ -17,7 +17,7 @@
 //   line as "only the Administrator manages the co-owner list" (0037).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { isSpaceOwnerOrCoOwner } from "../_shared/space-access.ts";
+import { isSpaceOwnerOrCoOwner, resolveSpaceAccess } from "../_shared/space-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -59,9 +59,9 @@ Deno.serve(async (req) => {
     }
     channelIds = [channel.id as string];
   } else {
-    const { data: space } = await supabaseAdmin.from("spaces").select("id, owner_id").eq("id", body.id).maybeSingle();
-    if (!space) return jsonResponse({ error: "not_found" }, 404);
-    if (space.owner_id !== userId) return jsonResponse({ error: "only_administrator" }, 403);
+    const space = await resolveSpaceAccess(supabaseAdmin, body.id, userId);
+    if (!space.exists) return jsonResponse({ error: "not_found" }, 404);
+    if (!space.isAdmin) return jsonResponse({ error: "only_administrator" }, 403);
     const { data: channels } = await supabaseAdmin.from("channels").select("id").eq("space_id", body.id);
     channelIds = (channels ?? []).map((c: { id: string }) => c.id);
   }

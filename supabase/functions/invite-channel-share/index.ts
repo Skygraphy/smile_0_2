@@ -10,7 +10,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { findUserIdByEmail } from "../_shared/find-user.ts";
 import { pushNotificationToUsers } from "../_shared/push-users.ts";
-import { isSpaceOwnerOrCoOwner } from "../_shared/space-access.ts";
+import { isSpaceOwnerOrCoOwner, isStaff as checkStaff } from "../_shared/space-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -44,8 +44,7 @@ Deno.serve(async (req) => {
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-  const { data: staffRow } = await supabaseAdmin.from("staff_members").select("user_id").eq("user_id", userId).maybeSingle();
-  const isStaff = Boolean(staffRow);
+  const isStaff = await checkStaff(supabaseAdmin, userId);
 
   const { data: channel } = await supabaseAdmin.from("channels").select("id, name, space_id").eq("id", body.channel_id).maybeSingle();
   if (!channel) return jsonResponse({ error: "channel_not_found" }, 404);

@@ -6,6 +6,7 @@
 // or a channel shared (channel_shares, view-only) into a Space they own.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { visibleChannelIds } from "../_shared/channel-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -26,23 +27,15 @@ Deno.serve(async (req) => {
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-  const [{ data: memberships }, { data: ownedSpaces }] = await Promise.all([
-    supabaseAdmin.from("channel_members").select("channel_id").eq("user_id", userId),
-    supabaseAdmin.from("spaces").select("id").eq("owner_id", userId),
-  ]);
-
-  const memberChannelIds = (memberships ?? []).map((m) => m.channel_id as string);
-  const ownedSpaceIds = (ownedSpaces ?? []).map((s) => s.id as string);
-
-  const { data: sharedChannelLinks } =
-    ownedSpaceIds.length > 0
-      ? await supabaseAdmin.from("channel_shares").select("channel_id").in("space_id", ownedSpaceIds)
-      : { data: [] as { channel_id: string }[] };
-
-  const channelIds = [
-    ...new Set([...memberChannelIds, ...(sharedChannelLinks ?? []).map((c) => c.channel_id as string)]),
-  ];
+  // Everything this person can see -- own/co-owned Spaces' channels,
+  // channels they post in, channels shared into a Space they manage. The
+  // single source (migrations/0047); before, this list forgot co-owners.
+  const channelIds = await visibleChannelIds(supabaseAdmin, userId);
   if (channelIds.length === 0) return jsonResponse({ channels: [] });
+
+  // Only for the "nur ansehen" label -- posting rights are membership.
+  const { data: memberships } = await supabaseAdmin.from("channel_members").select("channel_id").eq("user_id", userId);
+  const memberChannelIds = (memberships ?? []).map((m) => m.channel_id as string);
 
   const [{ data: channels, error: channelsError }, { data: shareRows }] = await Promise.all([
     // The explicit `!channels_space_id_fkey` hint is required: PostgREST

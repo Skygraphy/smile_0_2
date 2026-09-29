@@ -4,7 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { fetchProfilesByUserId } from "../_shared/profiles.ts";
-import { isSpaceOwnerOrCoOwner } from "../_shared/space-access.ts";
+import { isSpaceOwnerOrCoOwner, isStaff as checkStaff } from "../_shared/space-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -37,8 +37,7 @@ Deno.serve(async (req) => {
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-  const { data: staffRow } = await supabaseAdmin.from("staff_members").select("user_id").eq("user_id", userId).maybeSingle();
-  const isStaff = Boolean(staffRow);
+  const isStaff = await checkStaff(supabaseAdmin, userId);
 
   const { data: space } = await supabaseAdmin.from("spaces").select("owner_id").eq("id", body.space_id).maybeSingle();
   if (!space) return jsonResponse({ error: "space_not_found" }, 404);

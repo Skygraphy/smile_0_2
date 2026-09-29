@@ -5,6 +5,7 @@
 // gets direct write access to the media-originals bucket.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { resolveChannelAccess } from "../_shared/channel-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -60,13 +61,10 @@ Deno.serve(async (req) => {
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-  const { data: membership } = await supabaseAdmin
-    .from("channel_members")
-    .select("user_id")
-    .eq("channel_id", body.channel_id)
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (!membership) {
+  // Posting rights = channel membership, the same rule media_items_insert's
+  // RLS applies (single source, migrations/0047).
+  const access = await resolveChannelAccess(supabaseAdmin, body.channel_id, userId);
+  if (!access.isMember) {
     return jsonResponse({ error: "not_a_channel_member" }, 403);
   }
 

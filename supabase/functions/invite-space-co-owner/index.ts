@@ -13,6 +13,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { findUserIdByEmail } from "../_shared/find-user.ts";
 import { pushNotificationToUsers } from "../_shared/push-users.ts";
+import { resolveSpaceAccess, isStaff as checkStaff } from "../_shared/space-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -46,14 +47,13 @@ Deno.serve(async (req) => {
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-  const { data: staffRow } = await supabaseAdmin.from("staff_members").select("user_id").eq("user_id", userId).maybeSingle();
-  const isStaff = Boolean(staffRow);
+  const isStaff = await checkStaff(supabaseAdmin, userId);
 
   const { data: space } = await supabaseAdmin.from("spaces").select("id, name, owner_id").eq("id", body.space_id).maybeSingle();
   if (!space) return jsonResponse({ error: "space_not_found" }, 404);
   // Only the founder may invite -- not a co-owner, see the migration's
   // header comment on space_co_owner_invites_founder_insert.
-  if (!isStaff && space.owner_id !== userId) return jsonResponse({ error: "not_space_founder" }, 403);
+  if (!isStaff && !(await resolveSpaceAccess(supabaseAdmin, body.space_id, userId)).isAdmin) return jsonResponse({ error: "not_space_founder" }, 403);
 
   const inviteeId = await findUserIdByEmail(supabaseAdmin, body.email);
   if (!inviteeId) return jsonResponse({ error: "user_not_found" }, 404);

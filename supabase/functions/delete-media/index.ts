@@ -28,6 +28,7 @@
 // so one denied item in a batch doesn't block the rest -- the response
 // reports per-item outcome instead of failing the whole call.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { resolveChannelAccess } from "../_shared/channel-access.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -78,42 +79,15 @@ Deno.serve(async (req) => {
     .in("id", body.media_item_ids);
   if (itemsError) return jsonResponse({ error: "fetch_failed" }, 500);
 
-  const { data: staffRow } = await supabaseAdmin.from("staff_members").select("user_id").eq("user_id", userId).maybeSingle();
-  const isStaff = Boolean(staffRow);
-
-  const channelIds = [...new Set((items ?? []).map((item) => item.channel_id))];
-
-  // "delete" is SCO-only (or staff/sender) -- the sole administrator of a
-  // channel, per migrations/0031_architecture_reset.sql, no delegated
-  // channel_admin role any more. "hide"/"unhide" is any member OR a
-  // shared-into Space's owner (view-only access still includes hiding a
-  // photo from your own view, same as any other viewer).
-  //
-  // "SCO" includes co-owners (migrations/0037_space_co_owners.sql) -- this
-  // function bypasses RLS, so it has to replicate that itself; before, a
-  // co-owner was wrongly refused deleting others' photos (and hiding in a
-  // channel shared into a Space they co-own).
-  const [{ data: channelRows }, { data: memberRows }, { data: ownedSpaces }, { data: coOwnedSpaces }] = await Promise.all([
-    supabaseAdmin.from("channels").select("id, space_id").in("id", channelIds),
-    supabaseAdmin.from("channel_members").select("channel_id").eq("user_id", userId).in("channel_id", channelIds),
-    supabaseAdmin.from("spaces").select("id").eq("owner_id", userId),
-    supabaseAdmin.from("space_co_owners").select("space_id").eq("user_id", userId),
-  ]);
-  const mySpaceIds = [
-    ...(ownedSpaces ?? []).map((s: { id: string }) => s.id),
-    ...(coOwnedSpaces ?? []).map((s: { space_id: string }) => s.space_id),
-  ];
-  const { data: shareRows } = mySpaceIds.length > 0
-    ? await supabaseAdmin.from("channel_shares").select("channel_id").in("space_id", mySpaceIds).in("channel_id", channelIds)
-    : { data: [] as { channel_id: string }[] };
-  const mySpaceIdSet = new Set(mySpaceIds);
-  const scoChannelIds = new Set(
-    (channelRows ?? []).filter((c) => mySpaceIdSet.has(c.space_id as string)).map((c) => c.id as string),
+  // Who may do what -- the same rules RLS applies (media_items_delete,
+  // can_view_channel), asked once per channel from the single source
+  // (migrations/0047): delete = the sender, a manager of the channel's
+  // home Space (Administrator/co-owner) or staff; hide/unhide = anyone who
+  // can view the channel.
+  const channelIds = [...new Set((items ?? []).map((item) => item.channel_id as string))];
+  const accessByChannel = new Map(
+    await Promise.all(channelIds.map(async (id) => [id, await resolveChannelAccess(supabaseAdmin, id, userId)] as const)),
   );
-  const memberChannelIds = new Set([
-    ...(memberRows ?? []).map((m) => m.channel_id as string),
-    ...(shareRows ?? []).map((s) => s.channel_id as string),
-  ]);
 
   const foundIds = new Set((items ?? []).map((item) => item.id));
   const applied: string[] = [];
@@ -122,9 +96,10 @@ Deno.serve(async (req) => {
 
   const allowedIds: string[] = [];
   for (const item of items ?? []) {
+    const access = accessByChannel.get(item.channel_id as string);
     const allowed = body.action === "delete"
-      ? item.sender_id === userId || scoChannelIds.has(item.channel_id) || isStaff
-      : memberChannelIds.has(item.channel_id) || scoChannelIds.has(item.channel_id);
+      ? item.sender_id === userId || Boolean(access?.isSco) || Boolean(access?.isStaff)
+      : Boolean(access?.canView);
     if (allowed) {
       allowedIds.push(item.id);
     } else {
