@@ -48,6 +48,7 @@ void main() {
     // Never resolves -- keeps SlideshowScreen in its initial "loading"
     // state deterministically, avoiding a real network call in the test.
     when(() => syncService.sync()).thenAnswer((_) => Completer<SyncResult>().future);
+    when(() => syncService.isOfflineExpired()).thenAnswer((_) async => false);
 
     await tester.pumpWidget(MaterialApp(
       home: StartupGate(credentialsStore: store, syncService: syncService, cacheStore: cacheStore),

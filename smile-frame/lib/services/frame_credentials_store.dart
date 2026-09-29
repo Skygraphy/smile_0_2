@@ -18,6 +18,7 @@ class FrameCredentialsStore {
   // Mode Frame -- sync() then just keeps taking the server's default,
   // exactly like before this existed.
   static const _keyPreferredChannelId = 'preferred_channel_id';
+  static const _keyLastSyncOkAt = 'last_sync_ok_at';
 
   Future<bool> isProvisioned() async {
     final frameId = await _storage.read(key: _keyFrameId);
@@ -76,6 +77,15 @@ class FrameCredentialsStore {
   /// assigned to this Frame (get-media-batch's "frame_not_assigned_to_
   /// channel") -- falls back to the server default on the next sync.
   Future<void> clearPreferredChannelId() => _storage.delete(key: _keyPreferredChannelId);
+
+  /// When the server last answered a sync -- the clock for the offline
+  /// limit (SyncService.maxOffline).
+  Future<DateTime?> get lastSyncOkAt async {
+    final raw = await _storage.read(key: _keyLastSyncOkAt);
+    return raw == null ? null : DateTime.tryParse(raw);
+  }
+
+  Future<void> saveLastSyncOkAt(DateTime at) => _storage.write(key: _keyLastSyncOkAt, value: at.toUtc().toIso8601String());
 
   Future<void> clear() => _storage.deleteAll();
 }

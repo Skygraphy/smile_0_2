@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -64,6 +63,12 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   // this just swaps the whole screen for a notice. Keeps syncing on the
   // usual timer/push, so "Wieder aktivieren" brings it straight back.
   bool _deactivated = false;
+  // No server contact for longer than SyncService.maxOffline: photos are
+  // wiped (see there); shown as a notice until the Frame is online again.
+  bool _offlineExpired = false;
+  // Decrypted photos (CacheCipher) -- a few kept in memory so paging back
+  // and forth and the grid don't decrypt the same file over and over.
+  final Map<String, Future<Uint8List?>> _decrypted = {};
   // Tile-grid overview toggle: reuses the same `_entries`/`_cacheDirPath`
   // this screen already syncs and caches, so it updates live the instant a
   // push-triggered `_sync()` lands -- no separate data path needed. Meant
@@ -117,6 +122,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   Future<void> _loadFromCacheImmediately() async {
     // Show whatever's already on disk before the first network round-trip
     // completes -- offline-first, no blank screen while waiting on sync.
+    if (await widget.syncService.isOfflineExpired()) {
+      if (mounted) setState(() => _offlineExpired = true);
+      return;
+    }
     final cached = await widget.cacheStore.readIndex();
     if (!mounted || cached.isEmpty) return;
     setState(() {
@@ -134,6 +143,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     }
     setState(() {
       _deactivated = result.deactivated;
+      _offlineExpired = result.offlineExpired;
       _entries = result.entries;
       _settings = result.settings;
       _loadedOnce = true;
@@ -229,6 +239,22 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       );
     }
 
+    if (_offlineExpired) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(32),
+            child: Text(
+              'Dieser Frame war zu lange ohne Verbindung.\nDie Fotos erscheinen wieder, sobald er online ist.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70, fontSize: 20),
+            ),
+          ),
+        ),
+      );
+    }
+
     if (_deactivated) {
       return const Scaffold(
         backgroundColor: Colors.black,
@@ -254,10 +280,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       body = _buildGrid();
     } else {
       final entry = _entries[_currentIndex % _entries.length];
-      final file = File('$_cacheDirPath/${entry.fileName}');
       body = GestureDetector(
         onTapDown: (details) => _handleTap(details, MediaQuery.of(context).size.width),
-        child: SizedBox.expand(child: Image.file(file, fit: BoxFit.contain)),
+        child: SizedBox.expand(child: _photo(entry, BoxFit.contain)),
       );
     }
 
@@ -273,6 +298,28 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     );
   }
 
+  Future<Uint8List?> _bytesFor(CachedMediaEntry entry) {
+    final existing = _decrypted.remove(entry.fileName);
+    final future = existing ?? widget.cacheStore.readMedia(entry.fileName);
+    _decrypted[entry.fileName] = future; // re-insert = most recently used
+    while (_decrypted.length > 40) {
+      _decrypted.remove(_decrypted.keys.first);
+    }
+    return future;
+  }
+
+  Widget _photo(CachedMediaEntry entry, BoxFit fit) {
+    return FutureBuilder<Uint8List?>(
+      key: ValueKey(entry.fileName),
+      future: _bytesFor(entry),
+      builder: (context, snapshot) {
+        final bytes = snapshot.data;
+        if (bytes == null) return const SizedBox.expand();
+        return Image.memory(bytes, fit: fit, gaplessPlayback: true);
+      },
+    );
+  }
+
   Widget _buildGrid() {
     return GridView.builder(
       padding: const EdgeInsets.all(12),
@@ -284,11 +331,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       itemCount: _entries.length,
       itemBuilder: (context, index) {
         final entry = _entries[index];
-        final file = File('$_cacheDirPath/${entry.fileName}');
         return GestureDetector(
           key: ValueKey(entry.mediaItemId),
           onTap: () => _openInSlideshow(index),
-          child: Image.file(file, fit: BoxFit.cover),
+          child: _photo(entry, BoxFit.cover),
         );
       },
     );

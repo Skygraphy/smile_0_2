@@ -52,6 +52,7 @@ class SyncResult {
     this.spaceName,
     this.deactivated = false,
     this.unpaired = false,
+    this.offlineExpired = false,
   });
 
   /// The server reports this Frame as revoked (frame_not_active) -- the
@@ -64,7 +65,8 @@ class SyncResult {
         assignedChannels = const [],
         spaceName = null,
         deactivated = true,
-        unpaired = false;
+        unpaired = false,
+        offlineExpired = false;
 
   /// The Frame record no longer exists (its Space was deleted) -- cache AND
   /// credentials are gone; the app has to go back to pairing.
@@ -75,7 +77,20 @@ class SyncResult {
         assignedChannels = const [],
         spaceName = null,
         deactivated = false,
-        unpaired = true;
+        unpaired = true,
+        offlineExpired = false;
+
+  /// No successful sync for longer than SyncService.maxOffline -- the
+  /// photos are wiped until the Frame reaches the server again.
+  SyncResult.offlineExpired()
+      : channelId = null,
+        entries = const [],
+        settings = null,
+        assignedChannels = const [],
+        spaceName = null,
+        deactivated = false,
+        unpaired = false,
+        offlineExpired = true;
 
   final String? channelId;
   final List<CachedMediaEntry> entries;
@@ -84,6 +99,7 @@ class SyncResult {
   final String? spaceName;
   final bool deactivated;
   final bool unpaired;
+  final bool offlineExpired;
 }
 
 /// Orchestrates one sync round: refresh the access token if it's close to
@@ -114,6 +130,28 @@ class SyncService {
   /// channel's content.
   Future<void> selectChannel(String channelId) => _credentialsStore.savePreferredChannelId(channelId);
 
+  /// How long a Frame keeps showing its photos without reaching the
+  /// server (architecture review 2026-09-29, weakness 7). Without this, a
+  /// revoked -- or stolen -- Frame kept offline showed them forever, since
+  /// it never heard that it was revoked. Long enough for a holiday-length
+  /// WLAN outage; the photos come back by themselves once it is online.
+  static const maxOffline = Duration(days: 7);
+
+  /// True once the offline limit has passed -- the screen then shows no
+  /// cached photos even before the first sync attempt of a session.
+  Future<bool> isOfflineExpired() async {
+    final lastOk = await _credentialsStore.lastSyncOkAt;
+    return lastOk != null && DateTime.now().difference(lastOk) > maxOffline;
+  }
+
+  Future<SyncResult> _offlineFallback(List<CachedMediaEntry> local) async {
+    if (await isOfflineExpired()) {
+      await _wipeCache();
+      return SyncResult.offlineExpired();
+    }
+    return SyncResult(channelId: null, entries: local, settings: null, assignedChannels: const []);
+  }
+
   Future<SyncResult> sync({String? fcmToken}) async {
     final refresh = await _refreshIfNeeded();
     if (refresh == _RefreshOutcome.frameNotFound) return _unpair();
@@ -121,9 +159,7 @@ class SyncService {
 
     final accessToken = await _credentialsStore.accessToken;
     final local = await _cacheStore.readIndex();
-    if (accessToken == null) {
-      return SyncResult(channelId: null, entries: local, settings: null, assignedChannels: const []);
-    }
+    if (accessToken == null) return _offlineFallback(local);
 
     final preferredChannelId = await _credentialsStore.preferredChannelId;
     var page = await _fetchAllPages(accessToken: accessToken, fcmToken: fcmToken, channelIdOverride: preferredChannelId);
@@ -136,9 +172,8 @@ class SyncService {
     }
     if (page.frameNotFound) return _unpair();
     if (page.frameNotActive) return _deactivate();
-    if (page.failed) {
-      return SyncResult(channelId: null, entries: local, settings: null, assignedChannels: const []);
-    }
+    if (page.failed) return _offlineFallback(local);
+    await _credentialsStore.saveLastSyncOkAt(DateTime.now());
     final data = page.firstPageData!;
     final remoteItems = page.items;
 
@@ -151,8 +186,7 @@ class SyncService {
         final downloadResponse = await _httpClient.get(Uri.parse(remote.displayUrl!));
         if (downloadResponse.statusCode != 200) continue;
         final fileName = '${remote.mediaItemId}.jpg';
-        final file = await _cacheStore.fileFor(fileName);
-        await file.writeAsBytes(downloadResponse.bodyBytes);
+        await _cacheStore.writeMedia(fileName, downloadResponse.bodyBytes);
         newEntries.add(CachedMediaEntry(
           mediaItemId: remote.mediaItemId,
           mediaType: remote.mediaType,

@@ -44,6 +44,8 @@ dependencies:
   firebase_messaging: ^15.1.6
   battery_plus: ^6.2.1
   device_info_plus: ^11.2.2
+  cryptography: ^2.9.0
+  cryptography_flutter: ^2.3.4
 
 dev_dependencies:
   flutter_test:
