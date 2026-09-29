@@ -14,6 +14,11 @@
 //   whole household, but its owner must learn who joins).
 // - share_ended {channel_id, space_id, actor_id}: tell the side that did
 //   NOT end it.
+// - request_decided {table, id, actor_id}: a membership request/invite, a
+//   share request/invite or a co-owner invite was accepted or declined --
+//   tell the other side (for an invite: everyone who manages the channel's
+//   Space, not only its Administrator). Raised by a trigger (0050), so it
+//   arrives even if the deciding app was closed right afterwards.
 // - trashed / restored {kind: channel|space, id, actor_id}: a Channel or a
 //   whole Space went into the 30-day trash (or came back) -- tell everyone
 //   who could see it (decision 2026-09-29: nothing vanishes unannounced).
@@ -48,6 +53,8 @@ Deno.serve(async (req) => {
   try {
     if (body.kind === "co_owner_added") {
       await coOwnerAdded(supabaseAdmin, body.payload.space_id!, body.payload.user_id!);
+    } else if (body.kind === "request_decided") {
+      await requestDecided(supabaseAdmin, body.payload.table!, body.payload.id!, body.payload.actor_id ?? null);
     } else if (body.kind === "trashed" || body.kind === "restored") {
       await trashChanged(
         supabaseAdmin,
@@ -184,4 +191,63 @@ async function trashChanged(
       body: `${actor} hat ${what} wiederhergestellt.`,
     };
   await pushNotificationToUsers(supabaseAdmin, [...recipients], notification, { type: `${kind}_${event}` });
+}
+
+function verbFor(status: string): string {
+  return status === "accepted" ? "angenommen" : "abgelehnt";
+}
+
+async function requestDecided(supabaseAdmin: Admin, table: string, id: string, actorId: string | null) {
+  if (table === "space_co_owner_invites") {
+    const { data: row } = await supabaseAdmin
+      .from("space_co_owner_invites").select("space_id, invitee_user_id, status").eq("id", id).maybeSingle();
+    if (!row || row.status === "pending") return;
+    const { data: space } = await supabaseAdmin.from("spaces").select("name, owner_id").eq("id", row.space_id).maybeSingle();
+    if (!space) return;
+    const name = await displayName(supabaseAdmin, row.invitee_user_id as string);
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      [space.owner_id as string].filter((u) => u !== actorId),
+      { title: "Einladung beantwortet", body: `${name} hat deine Einladung zur Verwaltung von „${space.name}“ ${verbFor(row.status)}.` },
+      { type: "space_co_owner_invite_decided", space_id: row.space_id as string, space_name: space.name as string },
+    );
+    return;
+  }
+
+  const isShare = table === "channel_share_requests";
+  const { data: row } = await supabaseAdmin
+    .from(table)
+    .select(isShare ? "channel_id, target_user_id, direction, status" : "channel_id, user_id, direction, status")
+    .eq("id", id)
+    .maybeSingle();
+  if (!row || row.status === "pending") return;
+  const personId = (isShare ? row.target_user_id : row.user_id) as string;
+  const { data: channel } = await supabaseAdmin.from("channels").select("name, space_id").eq("id", row.channel_id).maybeSingle();
+  if (!channel) return;
+  const verb = verbFor(row.status as string);
+  const data = { channel_id: row.channel_id as string, channel_name: channel.name as string };
+
+  if (row.direction === "invite") {
+    // The invited person decided -- tell everyone who manages the channel.
+    const name = await displayName(supabaseAdmin, personId);
+    const managers = (await spaceManagerIds(supabaseAdmin, channel.space_id as string)).filter((u) => u !== actorId);
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      managers,
+      isShare
+        ? { title: "Freigabe-Einladung beantwortet", body: `${name} hat die Freigabe-Einladung für „${channel.name}“ ${verb}.` }
+        : { title: "Einladung beantwortet", body: `${name} hat die Einladung zu „${channel.name}“ ${verb}.` },
+      { type: isShare ? "share_invite_decided" : "membership_invite_decided", ...data },
+    );
+  } else {
+    // A manager decided the person's own request -- tell that person.
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      [personId].filter((u) => u !== actorId),
+      isShare
+        ? { title: "Freigabe-Anfrage beantwortet", body: `Deine Freigabe-Anfrage für „${channel.name}“ wurde ${verb}.` }
+        : { title: "Beitrittsanfrage beantwortet", body: `Deine Anfrage für „${channel.name}“ wurde ${verb}.` },
+      { type: isShare ? "share_request_decided" : "membership_request_decided", ...data },
+    );
+  }
 }

@@ -68,7 +68,7 @@ AppLifecycleListener? _resumeListener;
 
 /// Routes a tapped notification -- see invite-channel-member,
 /// invite-channel-share, invite-space-co-owner, transfer-space-ownership,
-/// notify-request-decided, and _shared/media-fanout.ts for the
+/// notify-event, and _shared/media-fanout.ts for the
 /// `type`/`channel_id`+`channel_name`/`space_id`+`space_name` data shapes
 /// (a payload only ever carries the pair relevant to its own `type`, never
 /// both). Best-effort: an unrecognized/incomplete payload just does
