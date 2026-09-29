@@ -6,7 +6,7 @@
 // SCO (Space/Channel Owner -- its home Space's owner, the sole
 // administrator, see migrations/0031_architecture_reset.sql) or staff may
 // do it. Once confirmed it's an immediate, real delete -- the media_items
-// row (cascading to media_recipients and media_item_hides) and every
+// row (cascading to media_item_hides) and every
 // storage object (media-originals/media-display/media-thumbnails) are
 // removed outright. Gone from every Smile-App client, every Smile-Frame
 // (get-media-batch simply won't find it any more, and the frame's existing
@@ -131,8 +131,8 @@ Deno.serve(async (req) => {
       const { error: deleteError } = await supabaseAdmin.from("media_items").delete().in("id", allowedIds);
       if (deleteError) return jsonResponse({ error: "delete_failed", detail: deleteError.message }, 500);
       // Reaching the affected Frames (and every member's feed) is the
-      // sync_notify() trigger's job now -- the cascaded media_recipients
-      // delete pushes each Frame, see migrations/0041_fcm_sync.sql.
+      // sync_notify() trigger's job now -- the media_items delete itself
+      // pushes each Frame showing that channel (migrations/0041, 0049).
     } else if (body.action === "hide") {
       const { error: hideError } = await supabaseAdmin
         .from("media_item_hides")

@@ -154,9 +154,9 @@ class FrameService {
     return byId.values.toList();
   }
 
-  /// Edge-function-backed (not a bare insert) because assigning a Frame to
-  /// a channel that already has ready photos also has to backfill
-  /// media_recipients for them -- see assign-frame-channel/index.ts.
+  /// Edge-function-backed (not a bare insert) so the refusal comes with a
+  /// clear reason when the Frame's household can't see the channel -- see
+  /// assign-frame-channel/index.ts.
   Future<void> assignChannel({required String frameId, required String channelId}) async {
     final response = await supabase.functions.invoke('assign-frame-channel', body: {
       'frame_id': frameId,

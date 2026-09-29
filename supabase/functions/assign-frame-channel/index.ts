@@ -1,15 +1,8 @@
-// Called from smile-app's frame settings screen ("Channel zuweisen"). A
-// bare client-side insert into frame_channels was possible (RLS's
-// frame_channels_owner_write already allows exactly this), but that only
-// makes a Frame eligible to *see* a channel going forward --
-// media_recipients (the table get-media-batch actually reads, see
-// _shared/media-fanout.ts) is only ever populated at upload/processing-
-// ready time, for whichever Frames were *already* assigned then. A Frame
-// assigned to a channel with existing ready photos would therefore show
-// nothing until the next upload -- this function does the assignment AND
-// backfills media_recipients for that channel's existing ready items in
-// one step, mirroring fanOutToFrames' own sort_order convention (the
-// item's created_at, epoch ms).
+// Called from smile-app's frame settings screen ("Channel zuweisen"):
+// assigns a channel to a Frame after checking the Frame's HOUSEHOLD may
+// see it. The Frame shows the channel's existing ready photos right away
+// -- it computes its content live (migrations/0049), so nothing has to be
+// backfilled any more.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { spaceCanViewChannel } from "../_shared/channel-access.ts";
@@ -74,26 +67,14 @@ Deno.serve(async (req) => {
     );
   if (insertError) return jsonResponse({ error: "assign_failed", detail: insertError.message }, 500);
 
-  const { data: readyItems } = await supabaseAdmin
+  const { count: readyCount } = await supabaseAdmin
     .from("media_items")
-    .select("id, created_at")
+    .select("id", { count: "exact", head: true })
     .eq("channel_id", body.channel_id)
     .eq("processing_status", "ready");
-
-  if (readyItems && readyItems.length > 0) {
-    await supabaseAdmin.from("media_recipients").upsert(
-      readyItems.map((item) => ({
-        media_item_id: item.id,
-        frame_id: body.frame_id,
-        channel_id: body.channel_id,
-        sort_order: new Date(item.created_at).getTime(),
-      })),
-      { onConflict: "media_item_id,frame_id", ignoreDuplicates: true },
-    );
-  }
 
   // No explicit push needed: the frame_channels insert above fires
   // sync_notify(), which pushes this Frame (migrations/0041_fcm_sync.sql).
 
-  return jsonResponse({ status: "assigned", backfilled_items: readyItems?.length ?? 0 });
+  return jsonResponse({ status: "assigned", backfilled_items: readyCount ?? 0 });
 });

@@ -92,23 +92,17 @@ Deno.serve(async (req) => {
       .eq("id", claims.frame_id);
   }
 
-  const { data: assignedChannelsRaw } = await supabase
-    .from("frame_channels")
-    .select("channel_id, sort_order, channels(name, deleted_at, spaces!channels_space_id_fkey(deleted_at))")
-    .eq("frame_id", claims.frame_id)
-    .order("sort_order", { ascending: true });
-
-  // A channel in the trash (itself or with its home Space) is off every
-  // Frame until it is restored.
-  const assignedChannels = (assignedChannelsRaw ?? [])
-    // deno-lint-ignore no-explicit-any
-    .filter((a) => !(a.channels as any)?.deleted_at && !(a.channels as any)?.spaces?.deleted_at)
-    .map((a) => ({
-      channel_id: a.channel_id,
-      // deno-lint-ignore no-explicit-any
-      name: (a.channels as any)?.name ?? null,
-      sort_order: a.sort_order,
-    }));
+  // Computed live on every poll (migrations/0049) -- no stored per-Frame
+  // copy to keep in step: the assigned channels the household can see
+  // right now (trash, revoked shares and all, via the single source), and
+  // the ready photos in the chosen one.
+  const { data: visibleRows, error: visibleError } = await supabase.rpc("frame_visible_channels", { p_frame: claims.frame_id });
+  if (visibleError) return jsonResponse({ error: "fetch_failed" }, 500);
+  const assignedChannels = (visibleRows ?? []).map((r: { channel_id: string; name: string; sort_order: number }) => ({
+    channel_id: r.channel_id,
+    name: r.name,
+    sort_order: r.sort_order,
+  }));
 
   let channelId = body.channel_id;
   if (!channelId) channelId = assignedChannels[0]?.channel_id;
@@ -124,49 +118,32 @@ Deno.serve(async (req) => {
     });
   }
 
-  if (!assignedChannels.some((a) => a.channel_id === channelId)) {
+  if (!assignedChannels.some((a: { channel_id: string }) => a.channel_id === channelId)) {
     return jsonResponse({ error: "frame_not_assigned_to_channel" }, 403);
   }
 
   const limit = Math.min(Math.max(body.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
-
-  let recipientsQuery = supabase
-    .from("media_recipients")
-    .select("id, sort_order, media_items(id, media_type, processing_status, storage_path_display)")
-    .eq("frame_id", claims.frame_id)
-    .eq("channel_id", channelId)
-    .is("hidden_at", null)
-    .order("sort_order", { ascending: true })
-    .limit(limit);
-  if (body.cursor !== undefined) recipientsQuery = recipientsQuery.gt("sort_order", body.cursor);
-
-  const { data: recipients } = await recipientsQuery;
+  const { data: page, error: pageError } = await supabase.rpc("frame_media_page", {
+    p_channel: channelId,
+    p_after: body.cursor ?? null,
+    p_limit: limit,
+  });
+  if (pageError) return jsonResponse({ error: "fetch_failed" }, 500);
+  const rows = (page ?? []) as { media_item_id: string; media_type: string; storage_path_display: string; sort_key: number }[];
 
   const items = [];
-  for (const r of recipients ?? []) {
-    // deno-lint-ignore no-explicit-any
-    const mi = r.media_items as any;
-    // A "for everyone" delete (delete-media) removes the media_items row
-    // outright (cascading to media_recipients), so a deleted photo simply
-    // won't join here any more -- nothing extra to filter for it.
-    if (!mi || mi.processing_status !== "ready" || !mi.storage_path_display) continue;
+  for (const row of rows) {
     const { data: signed } = await supabase.storage
       .from("media-display")
-      .createSignedUrl(mi.storage_path_display, SIGNED_URL_TTL_SECONDS);
+      .createSignedUrl(row.storage_path_display, SIGNED_URL_TTL_SECONDS);
     items.push({
-      media_recipient_id: r.id,
-      media_item_id: mi.id,
-      media_type: mi.media_type,
-      sort_order: r.sort_order,
+      media_item_id: row.media_item_id,
+      media_type: row.media_type,
+      sort_order: row.sort_key,
       display_url: signed?.signedUrl ?? null,
     });
   }
-
-  // Based on the recipients page (not the post-filter items count): a full
-  // page of recipients can still yield fewer ready items, but there may
-  // still be more recipients beyond this page's cursor.
-  const recipientsCount = recipients?.length ?? 0;
-  const nextCursor = recipientsCount === limit ? recipients![recipientsCount - 1].sort_order : null;
+  const nextCursor = rows.length === limit ? rows[rows.length - 1].sort_key : null;
 
   return jsonResponse({
     channel_id: channelId,

@@ -1,44 +1,18 @@
-// Fans a newly-ready media_item out to media_recipients -- one row per
-// Frame assigned to the item's channel (frame_channels, see
-// migrations/0031_architecture_reset.sql). This has to run somewhere after
-// processing_status flips to 'ready' (get-media-batch only ever returns
-// ready items), and both completion paths -- the synchronous passthrough
-// fallback in complete-upload and the async media-processing-service
-// callback -- need it, so it lives here once rather than duplicated in
-// both. The media_recipients insert itself is what makes each Frame sync
-// immediately (sync_notify() trigger, migrations/0041_fcm_sync.sql); this
-// only adds the visible "new photo" notification for the channel's human
-// members.
+// Runs once a media_item turns 'ready' -- from both completion paths (the
+// synchronous passthrough fallback in complete-upload and the async
+// media-processing-service callback). Frames need nothing from here any
+// more: they compute their content live (migrations/0049) and the
+// media_items update itself wakes them (sync_notify). What remains is the
+// visible "new photo" notification for the channel's human members.
 import { pushNotificationToUsers } from "./push-users.ts";
 
 // deno-lint-ignore no-explicit-any
-export async function fanOutToFrames(supabaseAdmin: any, mediaItemId: string, channelId: string): Promise<void> {
+export async function announceReadyPhoto(supabaseAdmin: any, mediaItemId: string, channelId: string): Promise<void> {
   const { data: mediaItem } = await supabaseAdmin
     .from("media_items")
-    .select("created_at, sender_id")
+    .select("sender_id")
     .eq("id", mediaItemId)
     .maybeSingle();
-  const sortOrder = mediaItem ? new Date(mediaItem.created_at).getTime() : Date.now();
-
-  const { data: frameLinks } = await supabaseAdmin
-    .from("frame_channels")
-    .select("frame_id")
-    .eq("channel_id", channelId);
-
-  const frameIds = (frameLinks ?? []).map((l: { frame_id: string }) => l.frame_id);
-
-  if (frameIds.length > 0) {
-    await supabaseAdmin.from("media_recipients").upsert(
-      frameIds.map((frameId: string) => ({
-        media_item_id: mediaItemId,
-        frame_id: frameId,
-        channel_id: channelId,
-        sort_order: sortOrder,
-      })),
-      { onConflict: "media_item_id,frame_id", ignoreDuplicates: true },
-    );
-  }
-
   await notifyChannelMembersOfNewPhoto(supabaseAdmin, channelId, mediaItem?.sender_id ?? null);
 }
 
