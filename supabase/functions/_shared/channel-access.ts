@@ -8,10 +8,12 @@ export async function resolveChannelAccess(supabaseAdmin: any, channelId: string
   const { data, error } = await supabaseAdmin.rpc("access_channel", { p_user: userId, p_channel: channelId });
   if (error) throw new Error(`access_channel failed: ${error.message}`);
   if (!data?.exists) {
-    return { exists: false, canView: false, isMember: false, isSco: false, isAdmin: false, isStaff: false, homeSpaceId: null as string | null };
+    return { exists: false, active: false, canView: false, isMember: false, isSco: false, isAdmin: false, isStaff: false, homeSpaceId: null as string | null };
   }
   return {
     exists: true,
+    // false = in the trash, itself or with its Space (migrations/0048).
+    active: data.active as boolean,
     canView: data.can_view as boolean,
     // Posting rights = channel_members, exactly what media_items_insert's
     // RLS requires -- a manager who isn't a member doesn't post.

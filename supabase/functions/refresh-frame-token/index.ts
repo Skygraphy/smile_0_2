@@ -34,14 +34,15 @@ Deno.serve(async (req) => {
 
   const { data: frame } = await supabase
     .from("frames")
-    .select("id, space_id, lifecycle_state")
+    .select("id, space_id, lifecycle_state, spaces(deleted_at)")
     .eq("id", body.frame_id)
     .maybeSingle();
 
   // Deleted (its Space was deleted) vs. merely revoked: a deleted Frame
   // has to go back to pairing, a revoked one just waits to be reactivated.
   if (!frame) return jsonResponse({ error: "frame_not_found" }, 403);
-  if (frame.lifecycle_state !== "active") {
+  // deno-lint-ignore no-explicit-any
+  if (frame.lifecycle_state !== "active" || (frame.spaces as any)?.deleted_at) {
     return jsonResponse({ error: "frame_not_active" }, 403);
   }
 

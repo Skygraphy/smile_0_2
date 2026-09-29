@@ -159,8 +159,9 @@ Deno.test("a co-owner may delete someone else's photo", async () => {
   }
 });
 
-// delete-space-or-channel + get-media-batch's frame_not_found
-Deno.test("channel/Space deletion: who may, and a deleted Space's Frame learns it's gone", async () => {
+// delete-space-or-channel = 30-day trash (decision 2026-09-29, migrations/0048)
+// + restore-space-or-channel + list-trash + the Frame's reaction.
+Deno.test("delete moves to the trash: who may, invisible at once, restorable, Frame pauses", async () => {
   requireEnv();
   const admin = await createThrowawayUser("admin");
   const coOwner = await createThrowawayUser("coowner");
@@ -182,23 +183,44 @@ Deno.test("channel/Space deletion: who may, and a deleted Space's Frame learns i
     const strangerResp = await invoke("delete-space-or-channel", strangerToken, { kind: "channel", id: channelA });
     assertEquals(strangerResp.status, 403, JSON.stringify(strangerResp.body));
 
+    // Channel: a co-owner may trash it; gone for everyone, but still there.
     const coOwnerChannel = await invoke("delete-space-or-channel", coOwnerToken, { kind: "channel", id: channelA });
     assertEquals(coOwnerChannel.status, 200, JSON.stringify(coOwnerChannel.body));
-    const { body: channelGone } = await svc(`channels?id=eq.${channelA}`);
-    assertEquals(channelGone.length, 0);
+    const { body: adminSees } = await asUser(`channels?id=eq.${channelA}`, adminToken);
+    assertEquals(adminSees.length, 0, "a trashed channel is invisible, even to its Administrator");
+    const { body: stillStored } = await svc(`channels?id=eq.${channelA}&select=deleted_at`);
+    assert(stillStored[0].deleted_at, "trashing keeps the row for 30 days");
 
+    const trash = await invoke("list-trash", adminToken, {});
+    assertEquals((trash.body.channels as { id: string }[]).map((c) => c.id), [channelA]);
+    const restoreChannel = await invoke("restore-space-or-channel", adminToken, { kind: "channel", id: channelA });
+    assertEquals(restoreChannel.status, 200, JSON.stringify(restoreChannel.body));
+    const { body: back } = await asUser(`channels?id=eq.${channelA}`, adminToken);
+    assertEquals(back.length, 1, "restoring brings the channel back");
+
+    // Space: only the Administrator may trash or restore it.
     const coOwnerSpace = await invoke("delete-space-or-channel", coOwnerToken, { kind: "space", id: spaceId });
     assertEquals(coOwnerSpace.status, 403, "a co-owner manages the Space but must never end it");
-
     const adminSpace = await invoke("delete-space-or-channel", adminToken, { kind: "space", id: spaceId });
     assertEquals(adminSpace.status, 200, JSON.stringify(adminSpace.body));
-    const { body: spaceGone } = await svc(`spaces?id=eq.${spaceId}`);
-    assertEquals(spaceGone.length, 0);
-    spaceId = undefined;
 
-    const batchResp = await invoke("get-media-batch", "irrelevant-anon-call", { access_token: frameAccessToken });
-    assertEquals(batchResp.status, 403);
-    assertEquals(batchResp.body.error, "frame_not_found", "the Frame must be told to go back to pairing");
+    const paused = await invoke("get-media-batch", "irrelevant-anon-call", { access_token: frameAccessToken });
+    assertEquals(paused.status, 403);
+    assertEquals(paused.body.error, "frame_not_active", "a trashed Space's Frame pauses (and wipes its photos)");
+
+    const coOwnerRestore = await invoke("restore-space-or-channel", coOwnerToken, { kind: "space", id: spaceId });
+    assertEquals(coOwnerRestore.status, 403);
+    const adminRestore = await invoke("restore-space-or-channel", adminToken, { kind: "space", id: spaceId });
+    assertEquals(adminRestore.status, 200, JSON.stringify(adminRestore.body));
+    const resumed = await invoke("get-media-batch", "irrelevant-anon-call", { access_token: frameAccessToken });
+    assertEquals(resumed.status, 200, "after a restore the Frame just carries on, no re-pairing");
+
+    // Purged for good (what purge-trash ends with): the Frame goes back to pairing.
+    await deleteSpace(spaceId);
+    spaceId = undefined;
+    const gone = await invoke("get-media-batch", "irrelevant-anon-call", { access_token: frameAccessToken });
+    assertEquals(gone.status, 403);
+    assertEquals(gone.body.error, "frame_not_found", "the Frame must be told to go back to pairing");
   } finally {
     if (spaceId) await deleteSpace(spaceId);
     await deleteUser(admin.id);

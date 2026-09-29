@@ -73,15 +73,15 @@ class _ChannelListScreenState extends State<ChannelListScreen> with SyncReload {
       builder: (context) => AlertDialog(
         title: Text('Channel „$name“ löschen?'),
         content: const Text(
-          'Alle Fotos in diesem Channel werden für alle Mitglieder, alle verknüpften Spaces und auf allen Frames '
-          'endgültig gelöscht. Das kann nicht rückgängig gemacht werden.',
+          'Der Channel verschwindet mit allen Fotos sofort für alle Mitglieder, verknüpften Spaces und Frames; '
+          'alle werden benachrichtigt. 30 Tage lang kannst du ihn im Papierkorb wiederherstellen.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Abbrechen')),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
-            child: const Text('Endgültig löschen'),
+            child: const Text('Löschen'),
           ),
         ],
       ),
@@ -91,7 +91,7 @@ class _ChannelListScreenState extends State<ChannelListScreen> with SyncReload {
       await _channelService.deleteChannel(channel['id'] as String);
       await _load();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Channel „$name“ gelöscht.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Channel „$name“ ist im Papierkorb.')));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Löschen fehlgeschlagen: $e')));

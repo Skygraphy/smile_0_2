@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     // -- a shared channel shows both households' Space names, the same
     // reason WhatsApp shows every member of a group, not just the ones
     // you personally know.
-    supabaseAdmin.from("channel_shares").select("channel_id, spaces(id, name)").in("channel_id", channelIds),
+    supabaseAdmin.from("channel_shares").select("channel_id, spaces(id, name, deleted_at)").in("channel_id", channelIds),
   ]);
   if (channelsError) return jsonResponse({ error: "fetch_failed" }, 500);
 
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
   for (const row of shareRows ?? []) {
     // deno-lint-ignore no-explicit-any
     const space = row.spaces as any;
-    if (!space) continue;
+    if (!space || space.deleted_at) continue;
     const channelId = row.channel_id as string;
     const list = sharedSpacesByChannel.get(channelId) ?? [];
     list.push({ id: space.id, name: space.name });

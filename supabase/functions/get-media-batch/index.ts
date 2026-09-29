@@ -50,13 +50,16 @@ Deno.serve(async (req) => {
 
   const { data: frame } = await supabase
     .from("frames")
-    .select("id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, max_local_cache_gb, spaces(name)")
+    .select("id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, max_local_cache_gb, spaces(name, deleted_at)")
     .eq("id", claims.frame_id)
     .maybeSingle();
   // Deleted (its Space was deleted) vs. merely revoked: a deleted Frame
   // has to go back to pairing, a revoked one just waits to be reactivated.
   if (!frame) return jsonResponse({ error: "frame_not_found" }, 403);
-  if (frame.lifecycle_state !== "active") {
+  // Revoked, or its whole Space is in the trash (migrations/0048): the
+  // Frame wipes its photos and waits -- a restore brings it straight back.
+  // deno-lint-ignore no-explicit-any
+  if (frame.lifecycle_state !== "active" || (frame.spaces as any)?.deleted_at) {
     return jsonResponse({ error: "frame_not_active" }, 403);
   }
   // deno-lint-ignore no-explicit-any
@@ -91,16 +94,21 @@ Deno.serve(async (req) => {
 
   const { data: assignedChannelsRaw } = await supabase
     .from("frame_channels")
-    .select("channel_id, sort_order, channels(name)")
+    .select("channel_id, sort_order, channels(name, deleted_at, spaces!channels_space_id_fkey(deleted_at))")
     .eq("frame_id", claims.frame_id)
     .order("sort_order", { ascending: true });
 
-  const assignedChannels = (assignedChannelsRaw ?? []).map((a) => ({
-    channel_id: a.channel_id,
+  // A channel in the trash (itself or with its home Space) is off every
+  // Frame until it is restored.
+  const assignedChannels = (assignedChannelsRaw ?? [])
     // deno-lint-ignore no-explicit-any
-    name: (a.channels as any)?.name ?? null,
-    sort_order: a.sort_order,
-  }));
+    .filter((a) => !(a.channels as any)?.deleted_at && !(a.channels as any)?.spaces?.deleted_at)
+    .map((a) => ({
+      channel_id: a.channel_id,
+      // deno-lint-ignore no-explicit-any
+      name: (a.channels as any)?.name ?? null,
+      sort_order: a.sort_order,
+    }));
 
   let channelId = body.channel_id;
   if (!channelId) channelId = assignedChannels[0]?.channel_id;

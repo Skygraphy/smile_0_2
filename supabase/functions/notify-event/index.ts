@@ -14,11 +14,15 @@
 //   whole household, but its owner must learn who joins).
 // - share_ended {channel_id, space_id, actor_id}: tell the side that did
 //   NOT end it.
+// - trashed / restored {kind: channel|space, id, actor_id}: a Channel or a
+//   whole Space went into the 30-day trash (or came back) -- tell everyone
+//   who could see it (decision 2026-09-29: nothing vanishes unannounced).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse } from "../_shared/cors.ts";
 import { fetchProfilesByUserId } from "../_shared/profiles.ts";
 import { pushNotificationToUsers } from "../_shared/push-users.ts";
 import { spaceManagerIds } from "../_shared/space-access.ts";
+import { purgeAfter } from "../_shared/trash.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -44,6 +48,14 @@ Deno.serve(async (req) => {
   try {
     if (body.kind === "co_owner_added") {
       await coOwnerAdded(supabaseAdmin, body.payload.space_id!, body.payload.user_id!);
+    } else if (body.kind === "trashed" || body.kind === "restored") {
+      await trashChanged(
+        supabaseAdmin,
+        body.kind,
+        body.payload.kind as "channel" | "space",
+        body.payload.id!,
+        body.payload.actor_id ?? null,
+      );
     } else if (body.kind === "share_ended") {
       await shareEnded(supabaseAdmin, body.payload.channel_id!, body.payload.space_id!, body.payload.actor_id ?? null);
     } else {
@@ -117,4 +129,59 @@ async function shareEnded(supabaseAdmin: Admin, channelId: string, viewingSpaceI
       { type: "share_ended_for_owner", channel_id: channelId, channel_name: channel.name as string },
     );
   }
+}
+
+/** Everyone who can see this channel -- the same audience the silent sync uses (0041). */
+async function channelAudience(supabaseAdmin: Admin, channelId: string): Promise<string[]> {
+  const { data } = await supabaseAdmin.rpc("sync_channel_audience", { check_channel_id: channelId });
+  return (data ?? []) as string[];
+}
+
+function germanDate(iso: string): string {
+  const d = new Date(iso);
+  return `${String(d.getUTCDate()).padStart(2, "0")}.${String(d.getUTCMonth() + 1).padStart(2, "0")}.${d.getUTCFullYear()}`;
+}
+
+async function trashChanged(
+  supabaseAdmin: Admin,
+  event: "trashed" | "restored",
+  kind: "channel" | "space",
+  id: string,
+  actorId: string | null,
+) {
+  const actor = actorId ? await displayName(supabaseAdmin, actorId) : "Jemand";
+  let name: string;
+  let deletedAt: string | null;
+  const recipients = new Set<string>();
+
+  if (kind === "channel") {
+    const { data: channel } = await supabaseAdmin.from("channels").select("name, deleted_at").eq("id", id).maybeSingle();
+    if (!channel) return;
+    name = channel.name as string;
+    deletedAt = channel.deleted_at as string | null;
+    for (const u of await channelAudience(supabaseAdmin, id)) recipients.add(u);
+  } else {
+    const { data: space } = await supabaseAdmin.from("spaces").select("name, deleted_at").eq("id", id).maybeSingle();
+    if (!space) return;
+    name = space.name as string;
+    deletedAt = space.deleted_at as string | null;
+    for (const u of await spaceManagerIds(supabaseAdmin, id)) recipients.add(u);
+    const { data: channels } = await supabaseAdmin.from("channels").select("id").eq("space_id", id);
+    for (const c of channels ?? []) {
+      for (const u of await channelAudience(supabaseAdmin, c.id as string)) recipients.add(u);
+    }
+  }
+  if (actorId) recipients.delete(actorId);
+
+  const what = kind === "channel" ? `den Channel „${name}“` : `den Space „${name}“ mit allen Channels`;
+  const notification = event === "trashed"
+    ? {
+      title: kind === "channel" ? "Channel gelöscht" : "Space gelöscht",
+      body: `${actor} hat ${what} gelöscht. Bis ${deletedAt ? germanDate(purgeAfter(deletedAt)) : "in 30 Tagen"} kann das noch rückgängig gemacht werden.`,
+    }
+    : {
+      title: kind === "channel" ? "Channel wiederhergestellt" : "Space wiederhergestellt",
+      body: `${actor} hat ${what} wiederhergestellt.`,
+    };
+  await pushNotificationToUsers(supabaseAdmin, [...recipients], notification, { type: `${kind}_${event}` });
 }

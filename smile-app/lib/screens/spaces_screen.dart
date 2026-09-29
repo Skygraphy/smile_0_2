@@ -10,6 +10,7 @@ import 'frame_list_screen.dart';
 import 'my_invites_screen.dart';
 import 'space_co_owners_screen.dart';
 import 'space_shared_channels_screen.dart';
+import 'trash_screen.dart';
 
 /// "Meine Spaces" -- Space/Frame administration (create a Space, create a
 /// Frame, manage Frames, manage the shares this Space has received).
@@ -80,15 +81,15 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
       builder: (context) => AlertDialog(
         title: Text('Space „$name“ löschen?'),
         content: const Text(
-          'Alle Channels dieses Space mit allen Fotos, alle Frames und alle Freigaben werden für alle '
-          'endgültig gelöscht. Das kann nicht rückgängig gemacht werden.',
+          'Der Space verschwindet mit allen Channels, Fotos und Frames sofort für alle; alle Beteiligten '
+          'werden benachrichtigt. 30 Tage lang kannst du ihn im Papierkorb wiederherstellen, danach ist er endgültig weg.',
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Abbrechen')),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
-            child: const Text('Endgültig löschen'),
+            child: const Text('Löschen'),
           ),
         ],
       ),
@@ -98,7 +99,7 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
       await SpaceService().deleteSpace(space['id'] as String);
       await _loadSpaces();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Space „$name“ gelöscht.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Space „$name“ ist im Papierkorb.')));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Löschen fehlgeschlagen: $e')));
@@ -203,6 +204,12 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
                   },
                   icon: const Icon(Icons.mail_outline),
                   label: const Text('Meine Einladungen'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => TrashScreen())),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Papierkorb'),
                 ),
               ],
             ),

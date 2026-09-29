@@ -8,10 +8,12 @@ type Admin = any;
 
 export interface SpaceAccess {
   exists: boolean;
+  /** false = in the trash (migrations/0048). */
+  active: boolean;
   isStaff: boolean;
   /** Administrator or co-owner. */
   manages: boolean;
-  /** The Administrator (spaces.owner_id) only. */
+  /** The Administrator (spaces.owner_id) only -- also while in the trash (may restore). */
   isAdmin: boolean;
   adminId: string | null;
 }
@@ -19,9 +21,10 @@ export interface SpaceAccess {
 export async function resolveSpaceAccess(supabaseAdmin: Admin, spaceId: string, userId: string): Promise<SpaceAccess> {
   const { data, error } = await supabaseAdmin.rpc("access_space", { p_user: userId, p_space: spaceId });
   if (error) throw new Error(`access_space failed: ${error.message}`);
-  if (!data?.exists) return { exists: false, isStaff: false, manages: false, isAdmin: false, adminId: null };
+  if (!data?.exists) return { exists: false, active: false, isStaff: false, manages: false, isAdmin: false, adminId: null };
   return {
     exists: true,
+    active: data.active as boolean,
     isStaff: data.is_staff as boolean,
     manages: data.manages as boolean,
     isAdmin: data.is_admin as boolean,

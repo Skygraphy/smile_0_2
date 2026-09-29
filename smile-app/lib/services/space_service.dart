@@ -118,8 +118,8 @@ class MyCoOwnerInvite {
 /// migration's `handle_space_owner_removal`.
 class SpaceService {
   /// Administrator only (a co-owner may manage, never end the Space) --
-  /// permanent, for everyone: every channel, photo and Frame of it. Via
-  /// delete-space-or-channel/index.ts so the photo files go too.
+  /// into the 30-day trash with every channel, photo and Frame of it
+  /// (delete-space-or-channel); restorable via TrashService.
   Future<void> deleteSpace(String spaceId) async {
     await supabase.functions.invoke('delete-space-or-channel', body: {'kind': 'space', 'id': spaceId});
   }

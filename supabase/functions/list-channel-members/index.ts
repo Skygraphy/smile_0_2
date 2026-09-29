@@ -52,12 +52,13 @@ Deno.serve(async (req) => {
 
   const { data: shareRows } = await supabaseAdmin
     .from("channel_shares")
-    .select("space_id, spaces(id, name)")
+    .select("space_id, spaces(id, name, deleted_at)")
     .eq("channel_id", body.channel_id);
   const sharedSpaces = (shareRows ?? [])
     // deno-lint-ignore no-explicit-any
     .map((row) => row.spaces as any)
-    .filter(Boolean)
+    // A shared-in household in the trash (migrations/0048) sees nothing.
+    .filter((space) => space && !space.deleted_at)
     .map((s) => ({ id: s.id as string, name: s.name as string }));
 
   // The home Space's Administrator can't be removed by a co-owner

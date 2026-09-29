@@ -1,23 +1,20 @@
-// Deletes a whole Channel or a whole Space, permanently, for everyone.
-//
-// Why an Edge Function and not a plain RLS delete: the rows would cascade
-// away fine on their own (channels -> media_items/members/shares/requests/
-// frame_channels; spaces -> channels/frames/co-owners/...), but the photo
-// FILES in Storage don't -- they'd be orphaned forever. So this collects
-// every affected media_item's storage paths first, removes the files, and
-// only then deletes the row. Everyone affected (members, shared-in Spaces,
-// the Frames) learns about it through the ordinary sync_notify() triggers
-// the cascade fires (migrations/0041_fcm_sync.sql).
+// Moves a whole Channel or Space to the TRASH (decision 2026-09-29,
+// migrations/0048_trash.sql): invisible to everyone at once -- the access_*
+// functions treat trashed rows as not there -- but nothing is destroyed.
+// Everyone affected is notified (notify-event 'trashed'); the people who
+// manage it can undo it for 30 days (restore-space-or-channel); only then
+// does purge-trash delete it for good, photo files included.
 //
 // Who may:
 // - a Channel: its home Space's Administrator or a co-owner -- the same
 //   people who already manage everything else about it.
-// - a Space: ONLY its Administrator (spaces.owner_id). Co-owners are equal
-//   in what they can do inside the Space, but never get to end it -- same
-//   line as "only the Administrator manages the co-owner list" (0037).
+// - a Space: ONLY its Administrator. Co-owners are equal in what they can
+//   do inside the Space, but never get to end it.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { isSpaceOwnerOrCoOwner, resolveSpaceAccess } from "../_shared/space-access.ts";
+import { resolveChannelAccess } from "../_shared/channel-access.ts";
+import { resolveSpaceAccess } from "../_shared/space-access.ts";
+import { TRASH_DAYS } from "../_shared/trash.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -50,47 +47,29 @@ Deno.serve(async (req) => {
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-  let channelIds: string[];
   if (body.kind === "channel") {
-    const { data: channel } = await supabaseAdmin.from("channels").select("id, space_id").eq("id", body.id).maybeSingle();
-    if (!channel) return jsonResponse({ error: "not_found" }, 404);
-    if (!(await isSpaceOwnerOrCoOwner(supabaseAdmin, channel.space_id as string, userId))) {
-      return jsonResponse({ error: "forbidden" }, 403);
-    }
-    channelIds = [channel.id as string];
+    const access = await resolveChannelAccess(supabaseAdmin, body.id, userId);
+    if (!access.exists || !access.active) return jsonResponse({ error: "not_found" }, 404);
+    if (!access.isSco) return jsonResponse({ error: "forbidden" }, 403);
   } else {
     const space = await resolveSpaceAccess(supabaseAdmin, body.id, userId);
-    if (!space.exists) return jsonResponse({ error: "not_found" }, 404);
+    if (!space.exists || !space.active) return jsonResponse({ error: "not_found" }, 404);
     if (!space.isAdmin) return jsonResponse({ error: "only_administrator" }, 403);
-    const { data: channels } = await supabaseAdmin.from("channels").select("id").eq("space_id", body.id);
-    channelIds = (channels ?? []).map((c: { id: string }) => c.id);
   }
 
-  // Storage first, best-effort (same rule as delete-media): a file that's
-  // already missing must never block deleting the rows.
-  if (channelIds.length > 0) {
-    const { data: items } = await supabaseAdmin
-      .from("media_items")
-      .select("storage_path_original, storage_path_display, storage_path_thumbnail")
-      .in("channel_id", channelIds);
-    const byBucket: Record<string, string[]> = { "media-originals": [], "media-display": [], "media-thumbnails": [] };
-    for (const item of items ?? []) {
-      if (item.storage_path_original) byBucket["media-originals"].push(item.storage_path_original);
-      if (item.storage_path_display) byBucket["media-display"].push(item.storage_path_display);
-      if (item.storage_path_thumbnail) byBucket["media-thumbnails"].push(item.storage_path_thumbnail);
-    }
-    for (const [bucket, paths] of Object.entries(byBucket)) {
-      for (let i = 0; i < paths.length; i += 100) {
-        await supabaseAdmin.storage.from(bucket).remove(paths.slice(i, i + 100));
-      }
-    }
-  }
-
-  const { error: deleteError } = await supabaseAdmin
+  const deletedAt = new Date();
+  const { error: trashError } = await supabaseAdmin
     .from(body.kind === "channel" ? "channels" : "spaces")
-    .delete()
-    .eq("id", body.id);
-  if (deleteError) return jsonResponse({ error: "delete_failed", detail: deleteError.message }, 500);
+    .update({ deleted_at: deletedAt.toISOString(), deleted_by: userId })
+    .eq("id", body.id)
+    .is("deleted_at", null);
+  if (trashError) return jsonResponse({ error: "delete_failed", detail: trashError.message }, 500);
 
-  return jsonResponse({ status: "deleted" });
+  await supabaseAdmin.rpc("emit_event", {
+    kind: "trashed",
+    payload: { kind: body.kind, id: body.id, actor_id: userId },
+  });
+
+  const purgeAfter = new Date(deletedAt.getTime() + TRASH_DAYS * 24 * 3600 * 1000);
+  return jsonResponse({ status: "trashed", purge_after: purgeAfter.toISOString() });
 });
