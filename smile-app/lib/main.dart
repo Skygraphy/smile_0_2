@@ -103,6 +103,10 @@ void _openNotificationTarget(Map<String, dynamic> data) {
     case 'membership_request_decided':
     case 'share_invite_decided':
     case 'share_request_decided':
+    // notify-event: who sees the channel changed -- the roster is where
+    // the owner can end the share if they don't want that.
+    case 'share_audience_changed':
+    case 'share_ended_for_owner':
       // The outcome (who's now a member, what's now shared) shows up in
       // the roster -- more useful to land on than the feed itself.
       if (channelId == null) return;

@@ -104,6 +104,25 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> with SyncRe
     await _load();
   }
 
+  /// The channel's own side ending a share (decision 2026-09-29) -- the
+  /// viewing household is notified server-side (notify-event).
+  Future<void> _endShare(SharedSpaceRef space) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Freigabe für „${space.name}“ beenden?'),
+        content: Text('„${space.name}“ sieht „${widget.channelName}“ danach nicht mehr, auch nicht auf seinen Frames.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Abbrechen')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Beenden')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await widget.membershipService.revokeShare(channelId: widget.channelId, spaceId: space.id);
+    await _load();
+  }
+
   Future<void> _showInviteMemberDialog() async {
     final email = await showDialog<String>(
       context: context,
@@ -300,6 +319,13 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> with SyncRe
                     leading: const Icon(Icons.hub_outlined),
                     title: Text(space.name),
                     subtitle: const Text('Nur ansehen'),
+                    trailing: roster.callerIsSco
+                        ? IconButton(
+                            icon: const Icon(Icons.close),
+                            tooltip: 'Freigabe beenden',
+                            onPressed: () => _endShare(space),
+                          )
+                        : null,
                   ),
                 if (roster.callerIsSco && shareRequestsToDecide.isNotEmpty) ...[
                   const Divider(height: 32),

@@ -19,3 +19,15 @@ export async function isSpaceOwnerOrCoOwner(supabaseAdmin: any, spaceId: string,
     .maybeSingle();
   return Boolean(coOwnerRow);
 }
+
+/** Everyone who manages this Space: the Administrator plus every co-owner. */
+// deno-lint-ignore no-explicit-any
+export async function spaceManagerIds(supabaseAdmin: any, spaceId: string): Promise<string[]> {
+  const [{ data: spaceRow }, { data: coOwners }] = await Promise.all([
+    supabaseAdmin.from("spaces").select("owner_id").eq("id", spaceId).maybeSingle(),
+    supabaseAdmin.from("space_co_owners").select("user_id").eq("space_id", spaceId),
+  ]);
+  const ids = (coOwners ?? []).map((c: { user_id: string }) => c.user_id);
+  if (spaceRow?.owner_id) ids.unshift(spaceRow.owner_id as string);
+  return [...new Set(ids)];
+}

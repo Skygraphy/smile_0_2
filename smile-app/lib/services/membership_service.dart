@@ -269,9 +269,10 @@ class MembershipService {
     await supabase.from('channel_share_requests').delete().eq('id', requestId);
   }
 
-  /// The linked Space's owner unilaterally revoking their own share --
-  /// channel_shares_owner_delete's RLS never lets the channel's own SCO
-  /// block this.
+  /// Ending a share -- either side may, unilaterally: the linked Space's
+  /// owner walking away, or (since migrations/0046) the channel's own
+  /// Administrator/co-owners taking it back. The other side is notified
+  /// server-side (notify-event).
   Future<void> revokeShare({required String channelId, required String spaceId}) async {
     await supabase.from('channel_shares').delete().eq('channel_id', channelId).eq('space_id', spaceId);
   }
