@@ -12,6 +12,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { announceReadyPhoto } from "../_shared/media-fanout.ts";
 import { processedPaths } from "../_shared/media-paths.ts";
+import { pushNotificationToUsers } from "../_shared/push-users.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -92,11 +93,29 @@ Deno.serve(async (req) => {
     if (error) return jsonResponse({ error: "update_failed", detail: error.message }, 500);
     if (updated?.channel_id) await announceReadyPhoto(supabaseAdmin, body.media_item_id, updated.channel_id);
   } else {
-    const { error } = await supabaseAdmin
+    const { data: failed, error } = await supabaseAdmin
       .from("media_items")
       .update({ processing_status: "failed" })
-      .eq("id", body.media_item_id);
+      .eq("id", body.media_item_id)
+      .select("sender_id, media_type, channel_id, channels(name)")
+      .maybeSingle();
     if (error) return jsonResponse({ error: "update_failed", detail: error.message }, 500);
+    // A failed item is hidden from every feed -- without this the sender
+    // just saw their upload vanish without a word (found 2026-10-01 with an
+    // HDR phone video).
+    if (failed) {
+      // deno-lint-ignore no-explicit-any
+      const channelName = (failed.channels as any)?.name ?? "";
+      await pushNotificationToUsers(
+        supabaseAdmin,
+        [failed.sender_id as string],
+        {
+          title: "Hochladen fehlgeschlagen",
+          body: `Dein ${failed.media_type === "video" ? "Video" : "Foto"} in „${channelName}“ konnte nicht verarbeitet werden. Bitte versuche es noch einmal.`,
+        },
+        { type: "media_failed", channel_id: failed.channel_id as string, channel_name: channelName },
+      );
+    }
   }
 
   return jsonResponse({ ok: true });

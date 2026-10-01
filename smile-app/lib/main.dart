@@ -98,6 +98,7 @@ void _openNotificationTarget(Map<String, dynamic> data) {
       // itself before accepting, so this opens their invite inbox instead.
       navigator.push(MaterialPageRoute(builder: (_) => MyInvitesScreen()));
     case 'new_photo':
+    case 'media_failed':
       if (channelId == null) return;
       navigator.push(
         MaterialPageRoute(builder: (_) => ChannelFeedScreen(channelId: channelId, channelName: channelName)),

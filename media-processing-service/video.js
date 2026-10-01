@@ -22,15 +22,33 @@ function run(cmd, args) {
   });
 }
 
-// Conservative, widely playable profile: 720p max, H.264 main, AAC -- the
-// Frame caches every video for offline playback, so this also bounds its
-// storage (about 1 GB per hour). ffmpeg reads straight from the signed
-// download URL. Same profile as smile_0_1's proven transcode-service.
-export function transcode(inputUrl, outputPath) {
+// Conservative, widely playable profile: 720p max, H.264 main 8-bit, AAC --
+// the Frame caches every video for offline playback, so this also bounds
+// its storage (about 1 GB per hour). ffmpeg reads straight from the signed
+// download URL. Same base profile as smile_0_1's proven transcode-service.
+//
+// Phones record HDR by default now (found 2026-10-01: a Samsung clip was
+// HEVC Main 10, BT.2020, HLG) -- 10-bit input must be tone-mapped down to
+// SDR, or it either fails ("main profile doesn't support a bit depth of
+// 10") or looks washed out. So the input is probed first.
+export async function transcode(inputUrl, outputPath) {
+  const hdr = await isHdr(inputUrl);
+  const scale = "scale='min(1280,iw)':-2";
+  const filters = hdr
+    ? [
+        "zscale=t=linear:npl=100",
+        "format=gbrpf32le",
+        "zscale=p=bt709",
+        "tonemap=tonemap=hable:desat=0",
+        "zscale=t=bt709:m=bt709:r=tv",
+        scale,
+        "format=yuv420p",
+      ].join(",")
+    : `${scale},format=yuv420p`;
   return run("ffmpeg", [
     "-y",
     "-i", inputUrl,
-    "-vf", "scale='min(1280,iw)':-2",
+    "-vf", filters,
     "-c:v", "libx264",
     "-profile:v", "main",
     "-level", "4.0",
@@ -38,11 +56,27 @@ export function transcode(inputUrl, outputPath) {
     "-crf", "23",
     "-maxrate", "2M",
     "-bufsize", "4M",
+    "-colorspace", "bt709",
+    "-color_primaries", "bt709",
+    "-color_trc", "bt709",
     "-c:a", "aac",
     "-b:a", "128k",
     "-movflags", "+faststart",
     outputPath,
   ]);
+}
+
+/** HDR = PQ (smpte2084) or HLG (arib-std-b67) transfer, as phones record it. */
+export async function isHdr(inputUrl) {
+  const out = await run("ffprobe", [
+    "-v", "error",
+    "-select_streams", "v:0",
+    "-show_entries", "stream=color_transfer",
+    "-of", "json",
+    inputUrl,
+  ]);
+  const transfer = JSON.parse(out).streams?.[0]?.color_transfer ?? "";
+  return transfer === "smpte2084" || transfer === "arib-std-b67";
 }
 
 /** A poster frame for the feed: one second in (or the very first frame of a shorter clip). */
