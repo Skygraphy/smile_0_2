@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -14,6 +15,7 @@ import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/smile_avatar.dart';
 import 'channel_members_screen.dart';
+import 'video_player_screen.dart';
 
 /// A picked photo shown in the grid immediately, before the network upload
 /// (let alone server-side processing) has even started -- WhatsApp-style
@@ -21,8 +23,10 @@ import 'channel_members_screen.dart';
 /// upload loop can tell when the real, fully-processed item has taken its
 /// place in `_items` and this placeholder can be dropped.
 class _PendingUpload {
-  _PendingUpload(this.bytes, {this.aspectRatio});
-  final Uint8List bytes;
+  _PendingUpload(this.bytes, {this.aspectRatio, this.isVideo = false});
+  /// The photo itself, or for a video a frame taken from it on the phone.
+  final Uint8List? bytes;
+  final bool isVideo;
   String? mediaItemId;
   // Decoded once up front (see _pickAndUpload) so the placeholder shows
   // at the photo's real aspect ratio from the very first frame instead
@@ -290,7 +294,11 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
             break;
           }
         }
-        final url = readyItem?.thumbnailUrl ?? readyItem?.displayUrl;
+        final url = readyItem == null
+            ? null
+            : readyItem.isVideo
+                ? readyItem.thumbnailUrl // a video's display URL is the MP4 itself
+                : readyItem.thumbnailUrl ?? readyItem.displayUrl;
         if (url == null) continue;
         if (!mounted) return;
         await precacheImage(CachedNetworkImageProvider(url, cacheKey: '${readyItem!.id}_grid'), context);
@@ -328,51 +336,88 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     unawaited(_load());
   }
 
+  static const _videoExtensions = {'mp4', 'mov', 'm4v', '3gp', 'mkv', 'webm', 'avi'};
+
   Future<void> _pickAndUpload() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 90);
+    // Photo or video, one picker (decision 2026-10-01: videos of any length).
+    final picked = await ImagePicker().pickMedia(imageQuality: 90);
     if (picked == null) return;
-    final bytes = await picked.readAsBytes();
+    final extension = picked.path.split('.').last.toLowerCase();
+    final isVideo = _videoExtensions.contains(extension);
+
+    final Uint8List? previewBytes;
+    double? aspectRatio;
+    Uint8List? photoBytes;
+    if (isVideo) {
+      previewBytes = await MediaService.videoPosterBytes(File(picked.path));
+    } else {
+      photoBytes = await picked.readAsBytes();
+      previewBytes = photoBytes;
+    }
     // Decode before it's ever shown: Image.memory doesn't paint anything
     // for the frame or two it takes to decode a several-MB original, which
     // otherwise reads as a black flash the instant you tap upload.
-    if (mounted) await precacheImage(MemoryImage(bytes), context);
-    final aspectRatio = await _decodeAspectRatio(bytes);
-    // Show the picked photo in the grid *before* any network call -- the
-    // slow part (upload + server-side resize/thumbnail/dispatch) happens
-    // behind this placeholder instead of blocking what the user sees.
-    final pending = _PendingUpload(bytes, aspectRatio: aspectRatio);
+    if (previewBytes != null) {
+      if (mounted) await precacheImage(MemoryImage(previewBytes), context);
+      aspectRatio = await _decodeAspectRatio(previewBytes);
+    }
+    // Show the picked photo/video frame in the feed *before* any network
+    // call -- the slow part (upload + server-side processing) happens behind
+    // this placeholder instead of blocking what the user sees.
+    final pending = _PendingUpload(previewBytes, aspectRatio: aspectRatio, isVideo: isVideo);
     setState(() {
       _isUploading = true;
       _errorMessage = null;
       _statusMessage = null;
       _pendingUploads.insert(0, pending);
     });
+    // A dropped connection (e.g. switching WiFi networks mid-upload) is
+    // retried automatically -- this just keeps the user informed while it's
+    // happening instead of the tile silently sitting there.
+    void onRetrying(int attempt, int maxAttempts) {
+      if (!mounted) return;
+      setState(() => _statusMessage = 'Verbindung unterbrochen, versuche erneut ($attempt/$maxAttempts)…');
+    }
+
     try {
-      final extension = picked.path.split('.').last.toLowerCase();
-      final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
-      await widget.mediaService.uploadPhoto(
-        channelId: widget.channelId,
-        bytes: bytes,
-        fileExtension: extension,
-        mimeType: mimeType,
-        onMediaItemCreated: (id) => pending.mediaItemId = id,
-        // A dropped connection (e.g. switching WiFi networks mid-upload) is
-        // retried automatically -- this just keeps the user informed while
-        // it's happening instead of the tile silently sitting there.
-        onRetrying: (attempt, maxAttempts) {
-          if (!mounted) return;
-          setState(() => _statusMessage = 'Verbindung unterbrochen, versuche erneut ($attempt/$maxAttempts)…');
-        },
-      );
-      if (mounted) setState(() => _statusMessage = null);
-      // Processing (resize/thumbnail) happens asynchronously in the
-      // media-processing-service, so the real item may not be 'ready' yet
-      // right after upload -- give it a few short retries before giving up.
-      // The placeholder above is already covering this wait for the user.
-      for (var attempt = 0; attempt < 5; attempt++) {
+      if (isVideo) {
+        await widget.mediaService.uploadVideo(
+          channelId: widget.channelId,
+          file: File(picked.path),
+          fileExtension: extension,
+          mimeType: extension == 'mov' ? 'video/quicktime' : 'video/$extension',
+          onMediaItemCreated: (id) => pending.mediaItemId = id,
+          onRetrying: onRetrying,
+          onProgress: (sent, total) {
+            if (!mounted || total == 0) return;
+            setState(() => _statusMessage = 'Video wird hochgeladen: ${(sent * 100 / total).floor()} %');
+          },
+        );
+        if (mounted) setState(() => _statusMessage = 'Video wird verarbeitet …');
+        // Converting a long video takes a while -- no point waiting here.
+        // It shows up (with its preview frame) as processing, and becomes
+        // playable on its own once the media worker is done (sync push).
         await _load();
-        if (_items!.any((item) => item.id == pending.mediaItemId && item.isReady)) break;
-        await Future<void>.delayed(const Duration(seconds: 1));
+        if (mounted) setState(() => _statusMessage = null);
+      } else {
+        await widget.mediaService.uploadPhoto(
+          channelId: widget.channelId,
+          bytes: photoBytes!,
+          fileExtension: extension,
+          mimeType: extension == 'png' ? 'image/png' : 'image/jpeg',
+          onMediaItemCreated: (id) => pending.mediaItemId = id,
+          onRetrying: onRetrying,
+        );
+        if (mounted) setState(() => _statusMessage = null);
+        // Processing (resize/thumbnail) happens asynchronously in the
+        // media-processing-service, so the real item may not be 'ready' yet
+        // right after upload -- give it a few short retries before giving up.
+        // The placeholder above is already covering this wait for the user.
+        for (var attempt = 0; attempt < 5; attempt++) {
+          await _load();
+          if (_items!.any((item) => item.id == pending.mediaItemId && item.isReady)) break;
+          await Future<void>.delayed(const Duration(seconds: 1));
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -522,7 +567,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           isMine: true,
           showTail: isFirstInRun,
           aspectRatio: pending.aspectRatio,
-          photo: _PhotoTile(bytes: pending.bytes),
+          photo: pending.isVideo ? _VideoBadge(child: _PhotoTile(bytes: pending.bytes)) : _PhotoTile(bytes: pending.bytes),
         ));
       } else {
         final item = visibleItems[i - pendingCount];
@@ -535,7 +580,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           // instant preview, no local full-quality bytes for this viewer.
           tile = _PhotoTile(bytes: previewBytes);
         } else {
-          final imageUrl = item.thumbnailUrl ?? item.displayUrl;
+          // A video's display URL is the MP4 itself -- only its poster
+          // frame (thumbnail) is an image.
+          final imageUrl = item.isVideo ? item.thumbnailUrl : item.thumbnailUrl ?? item.displayUrl;
           tile = imageUrl != null
               ? CachedNetworkImage(
                   // The URL itself carries a short-lived signed token that
@@ -553,7 +600,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                       previewBytes != null ? Image.memory(previewBytes, fit: BoxFit.cover) : const ColoredBox(color: Colors.black12),
                   errorWidget: (context, url, error) => const ColoredBox(color: Colors.black12),
                 )
-              : const ColoredBox(color: Colors.black12);
+              : previewBytes != null
+                  ? Image.memory(previewBytes, fit: BoxFit.cover)
+                  : const ColoredBox(color: Colors.black12);
         }
 
         final isMine = item.senderId == myUserId;
@@ -575,8 +624,14 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           // Delete works the same way in both views -- a hidden photo can
           // be deleted directly here instead of having to unhide it first.
           onLongPress: () => _toggleSelected(item.id),
-          onTap: _selectionMode ? () => _toggleSelected(item.id) : null,
-          photo: tile,
+          onTap: _selectionMode
+              ? () => _toggleSelected(item.id)
+              : (item.isVideo && item.isReady && item.displayUrl != null)
+                  ? () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => VideoPlayerScreen(url: item.displayUrl!)),
+                      )
+                  : null,
+          photo: item.isVideo ? _VideoBadge(child: tile) : tile,
         ));
       }
 
@@ -809,6 +864,25 @@ class _PhotoTile extends StatelessWidget {
 /// same-sender run (decided by the caller, `_buildFeedRows`), same
 /// convention WhatsApp itself uses -- but the avatar gutter's width is
 /// always reserved so continuation bubbles still line up underneath.
+/// A play symbol over a video's poster frame -- videos are tiles like
+/// photos, tapping one plays it full-screen (VideoPlayerScreen).
+class _VideoBadge extends StatelessWidget {
+  const _VideoBadge({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        child,
+        const Center(child: Icon(Icons.play_circle_fill, size: 56, color: Colors.white70)),
+      ],
+    );
+  }
+}
+
 class _ChatRow extends StatelessWidget {
   const _ChatRow({
     super.key,

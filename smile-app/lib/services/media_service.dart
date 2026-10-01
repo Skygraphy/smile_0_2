@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:fc_native_video_thumbnail/fc_native_video_thumbnail.dart';
 
 import '../main.dart';
+import 'resumable_upload.dart';
 
 class MediaItem {
   MediaItem({
@@ -41,6 +44,7 @@ class MediaItem {
   final int? height;
 
   bool get isReady => processingStatus == 'ready';
+  bool get isVideo => mediaType == 'video';
 
   String get senderLabel => senderDisplayName ?? senderId;
 
@@ -213,8 +217,71 @@ class MediaService {
     }
   }
 
+  /// A video of any length (decision 2026-10-01): same two-step flow as
+  /// [uploadPhoto], but the bytes go up resumably in chunks straight from
+  /// disk (ResumableUpload) -- a multi-GB file is never held in memory, and
+  /// a dropped connection resumes instead of starting over. The feed
+  /// placeholder is a frame taken from the video on the phone itself.
+  Future<void> uploadVideo({
+    required String channelId,
+    required File file,
+    required String fileExtension,
+    required String mimeType,
+    void Function(String mediaItemId)? onMediaItemCreated,
+    void Function(int attempt, int maxAttempts)? onRetrying,
+    void Function(int sentBytes, int totalBytes)? onProgress,
+  }) async {
+    final frame = await videoPosterBytes(file);
+    final previewDataUrl = frame == null ? null : await _buildPreviewDataUrl(frame);
+
+    final createData = await _withRetry(
+      () => _createUpload(
+        channelId: channelId,
+        mediaType: 'video',
+        mimeType: mimeType,
+        fileExtension: fileExtension,
+        fileSizeBytes: file.lengthSync(),
+        previewDataUrl: previewDataUrl,
+      ),
+      onRetry: onRetrying,
+    );
+    final mediaItemId = createData['media_item_id'] as String;
+    onMediaItemCreated?.call(mediaItemId);
+
+    try {
+      await ResumableUpload().upload(
+        file: file,
+        bucket: 'media-originals',
+        objectName: createData['storage_path'] as String,
+        token: createData['token'] as String,
+        contentType: mimeType,
+        onProgress: onProgress,
+        onRetrying: onRetrying,
+      );
+      await _withRetry(() => _completeUpload(mediaItemId), onRetry: onRetrying);
+    } catch (e) {
+      // Same cleanup rule as uploadPhoto: never leave a ghost row behind.
+      try {
+        await _applyAction([mediaItemId], 'delete');
+      } catch (_) {}
+      rethrow;
+    }
+  }
+
+  /// A still frame from the start of a local video (JPEG bytes), for the
+  /// placeholder while it uploads. Best-effort: null if it can't be read.
+  static Future<Uint8List?> videoPosterBytes(File file) async {
+    try {
+      return await FcNativeVideoThumbnail()
+          .saveThumbnailToBytes(srcFile: file.path, width: 640, height: 640, format: 'jpeg', quality: 80);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>> _createUpload({
     required String channelId,
+    String mediaType = 'photo',
     required String mimeType,
     required String fileExtension,
     required int fileSizeBytes,
@@ -222,7 +289,7 @@ class MediaService {
   }) async {
     final response = await supabase.functions.invoke('create-upload', body: {
       'channel_id': channelId,
-      'media_type': 'photo',
+      'media_type': mediaType,
       'mime_type': mimeType,
       'file_extension': fileExtension,
       'file_size_bytes': fileSizeBytes,

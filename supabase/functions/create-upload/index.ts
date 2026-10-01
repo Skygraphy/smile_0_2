@@ -10,7 +10,11 @@ import { resolveChannelAccess } from "../_shared/channel-access.ts";
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // matches storage.file_size_limit in config.toml
+// Photos stay small; videos have no length limit (decision 2026-10-01) --
+// 50 GB is the project's Storage upload limit (Supabase Pro), i.e. hours
+// of phone video. Videos go up resumably (TUS) with the same signed token.
+const MAX_PHOTO_BYTES = 50 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024 * 1024;
 // Matches the `preview_data_url` check constraint in
 // migrations/0017_media_items_preview.sql -- this is a tiny blurry
 // placeholder, not a real thumbnail, so a generous-looking cap still keeps
@@ -52,7 +56,8 @@ Deno.serve(async (req) => {
   if (!["photo", "video"].includes(body.media_type)) {
     return jsonResponse({ error: "invalid_media_type" }, 400);
   }
-  if (body.file_size_bytes && body.file_size_bytes > MAX_FILE_SIZE_BYTES) {
+  const maxBytes = body.media_type === "video" ? MAX_VIDEO_BYTES : MAX_PHOTO_BYTES;
+  if (body.file_size_bytes && body.file_size_bytes > maxBytes) {
     return jsonResponse({ error: "file_too_large" }, 400);
   }
   if (body.preview_data_url && body.preview_data_url.length > MAX_PREVIEW_DATA_URL_LENGTH) {
