@@ -43,6 +43,7 @@ void main() {
     final cacheStore = MockMediaCacheStore();
     when(() => cacheStore.resolvedDirectoryPath()).thenAnswer((_) async => '/tmp/media_cache');
     when(() => cacheStore.readIndex()).thenAnswer((_) async => []);
+    when(() => cacheStore.clearPlaybackFiles()).thenAnswer((_) async {});
 
     final syncService = MockSyncService();
     // Never resolves -- keeps SlideshowScreen in its initial "loading"

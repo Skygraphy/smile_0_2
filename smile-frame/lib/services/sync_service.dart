@@ -152,7 +152,21 @@ class SyncService {
     return SyncResult(channelId: null, entries: local, settings: null, assignedChannels: const []);
   }
 
-  Future<SyncResult> sync({String? fcmToken}) async {
+  Future<void> _deleteEntryFiles(CachedMediaEntry entry) async {
+    await _cacheStore.deleteFile(entry.fileName);
+    if (entry.posterFileName != null) await _cacheStore.deleteFile(entry.posterFileName!);
+  }
+
+  Future<SyncResult>? _running;
+
+  /// One sync at a time: downloading a long video can take minutes, and a
+  /// timer tick or push arriving meanwhile must not start a second run
+  /// writing the same files -- it simply gets the running one's result.
+  Future<SyncResult> sync({String? fcmToken}) {
+    return _running ??= _sync(fcmToken: fcmToken).whenComplete(() => _running = null);
+  }
+
+  Future<SyncResult> _sync({String? fcmToken}) async {
     final refresh = await _refreshIfNeeded();
     if (refresh == _RefreshOutcome.frameNotFound) return _unpair();
     if (refresh == _RefreshOutcome.frameNotActive) return _deactivate();
@@ -183,17 +197,32 @@ class SyncService {
     for (final remote in diff.toDownload) {
       if (remote.displayUrl == null) continue;
       try {
-        final downloadResponse = await _httpClient.get(Uri.parse(remote.displayUrl!));
-        if (downloadResponse.statusCode != 200) continue;
-        final fileName = '${remote.mediaItemId}.jpg';
-        await _cacheStore.writeMedia(fileName, downloadResponse.bodyBytes);
+        // Streamed straight into the encrypted cache -- an hour-long video
+        // (decision 2026-10-01) never has to fit in memory.
+        final response = await _httpClient.send(http.Request('GET', Uri.parse(remote.displayUrl!)));
+        if (response.statusCode != 200) {
+          await response.stream.drain<void>();
+          continue;
+        }
+        final isVideo = remote.mediaType == 'video';
+        final fileName = '${remote.mediaItemId}.${isVideo ? 'mp4' : 'jpg'}';
+        final size = await _cacheStore.writeMediaStream(fileName, response.stream);
+        String? posterFileName;
+        if (isVideo && remote.posterUrl != null) {
+          final poster = await _httpClient.get(Uri.parse(remote.posterUrl!));
+          if (poster.statusCode == 200) {
+            posterFileName = '${remote.mediaItemId}_poster.jpg';
+            await _cacheStore.writeMedia(posterFileName, poster.bodyBytes);
+          }
+        }
         newEntries.add(CachedMediaEntry(
           mediaItemId: remote.mediaItemId,
           mediaType: remote.mediaType,
           sortOrder: remote.sortOrder,
           fileName: fileName,
-          fileSizeBytes: downloadResponse.bodyBytes.length,
+          fileSizeBytes: size,
           cachedAt: DateTime.now(),
+          posterFileName: posterFileName,
         ));
       } catch (_) {
         // Skip this item this round; it's retried on the next sync since
@@ -203,7 +232,7 @@ class SyncService {
 
     final deleteIds = diff.toDelete.map((e) => e.mediaItemId).toSet();
     for (final del in diff.toDelete) {
-      await _cacheStore.deleteFile(del.fileName);
+      await _deleteEntryFiles(del);
     }
 
     final remoteSortByMediaId = {for (final r in remoteItems) r.mediaItemId: r.sortOrder};
@@ -222,7 +251,7 @@ class SyncService {
     final toEvict = MediaCacheSync.entriesToEvictForCap(merged, maxBytes);
     final evictIds = toEvict.map((e) => e.mediaItemId).toSet();
     for (final e in toEvict) {
-      await _cacheStore.deleteFile(e.fileName);
+      await _deleteEntryFiles(e);
     }
     final finalEntries = merged.where((e) => !evictIds.contains(e.mediaItemId)).toList();
 
@@ -295,6 +324,7 @@ class SyncService {
               mediaType: e['media_type'] as String,
               sortOrder: e['sort_order'] as int,
               displayUrl: e['display_url'] as String?,
+              posterUrl: e['poster_url'] as String?,
             )),
       );
       cursor = data['next_cursor'] as int?;
@@ -321,7 +351,7 @@ class SyncService {
 
   Future<void> _wipeCache() async {
     for (final entry in await _cacheStore.readIndex()) {
-      await _cacheStore.deleteFile(entry.fileName);
+      await _deleteEntryFiles(entry);
     }
     await _cacheStore.writeIndex(const []);
   }

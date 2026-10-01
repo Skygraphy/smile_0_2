@@ -129,18 +129,34 @@ Deno.serve(async (req) => {
     p_limit: limit,
   });
   if (pageError) return jsonResponse({ error: "fetch_failed" }, 500);
-  const rows = (page ?? []) as { media_item_id: string; media_type: string; storage_path_display: string; sort_key: number }[];
+  const rows = (page ?? []) as {
+    media_item_id: string;
+    media_type: string;
+    storage_path_display: string;
+    storage_path_thumbnail: string | null;
+    sort_key: number;
+  }[];
 
   const items = [];
   for (const row of rows) {
     const { data: signed } = await supabase.storage
       .from("media-display")
       .createSignedUrl(row.storage_path_display, SIGNED_URL_TTL_SECONDS);
+    // A video's display file is the MP4; its poster frame is what the
+    // Frame's grid view shows (0054).
+    let posterUrl: string | null = null;
+    if (row.media_type === "video" && row.storage_path_thumbnail) {
+      const { data: poster } = await supabase.storage
+        .from("media-thumbnails")
+        .createSignedUrl(row.storage_path_thumbnail, SIGNED_URL_TTL_SECONDS);
+      posterUrl = poster?.signedUrl ?? null;
+    }
     items.push({
       media_item_id: row.media_item_id,
       media_type: row.media_type,
       sort_order: row.sort_key,
       display_url: signed?.signedUrl ?? null,
+      poster_url: posterUrl,
     });
   }
   const nextCursor = rows.length === limit ? rows[rows.length - 1].sort_key : null;

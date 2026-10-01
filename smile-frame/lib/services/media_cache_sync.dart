@@ -7,12 +7,16 @@ class RemoteMediaEntry {
     required this.mediaType,
     required this.sortOrder,
     required this.displayUrl,
+    this.posterUrl,
   });
 
   final String mediaItemId;
   final String mediaType;
   final int sortOrder;
   final String? displayUrl;
+
+  /// A video's poster frame (grid view); null for photos.
+  final String? posterUrl;
 }
 
 class CachedMediaEntry {
@@ -23,6 +27,7 @@ class CachedMediaEntry {
     required this.fileName,
     required this.fileSizeBytes,
     required this.cachedAt,
+    this.posterFileName,
   });
 
   final String mediaItemId;
@@ -32,6 +37,11 @@ class CachedMediaEntry {
   final int fileSizeBytes;
   final DateTime cachedAt;
 
+  /// A video's cached poster frame, if it has one.
+  final String? posterFileName;
+
+  bool get isVideo => mediaType == 'video';
+
   Map<String, dynamic> toJson() => {
         'media_item_id': mediaItemId,
         'media_type': mediaType,
@@ -39,6 +49,7 @@ class CachedMediaEntry {
         'file_name': fileName,
         'file_size_bytes': fileSizeBytes,
         'cached_at': cachedAt.toUtc().toIso8601String(),
+        'poster_file_name': posterFileName,
       };
 
   factory CachedMediaEntry.fromJson(Map<String, dynamic> json) => CachedMediaEntry(
@@ -48,6 +59,7 @@ class CachedMediaEntry {
         fileName: json['file_name'] as String,
         fileSizeBytes: json['file_size_bytes'] as int,
         cachedAt: DateTime.parse(json['cached_at'] as String),
+        posterFileName: json['poster_file_name'] as String?,
       );
 
   CachedMediaEntry copyWith({int? sortOrder}) => CachedMediaEntry(
@@ -57,6 +69,7 @@ class CachedMediaEntry {
         fileName: fileName,
         fileSizeBytes: fileSizeBytes,
         cachedAt: cachedAt,
+        posterFileName: posterFileName,
       );
 }
 

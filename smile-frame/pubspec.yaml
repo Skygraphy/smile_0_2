@@ -46,6 +46,7 @@ dependencies:
   device_info_plus: ^11.2.2
   cryptography: ^2.9.0
   cryptography_flutter: ^2.3.4
+  video_player: ^2.14.0
 
 dev_dependencies:
   flutter_test:

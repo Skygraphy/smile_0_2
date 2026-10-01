@@ -23,6 +23,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(Uri.parse('https://example.com'));
     registerFallbackValue(DateTime(2026));
+    registerFallbackValue(http.Request('GET', Uri.parse('https://example.com')));
   });
 
   late MockHttpClient httpClient;
@@ -52,6 +53,10 @@ void main() {
     when(() => credentialsStore.lastSyncOkAt).thenAnswer((_) async => null);
     when(() => credentialsStore.saveLastSyncOkAt(any())).thenAnswer((_) async {});
 
+    // Media downloads are streamed (videos of any length), posters are small gets.
+    when(() => httpClient.send(any())).thenAnswer(
+      (_) async => http.StreamedResponse(Stream.value([1, 2, 3]), 200),
+    );
     when(() => httpClient.get(any())).thenAnswer((_) async => http.Response.bytes([1, 2, 3], 200));
   });
 
@@ -162,5 +167,13 @@ void main() {
     expect(result.offlineExpired, isTrue);
     expect(await cacheStore.readIndex(), isEmpty);
     expect(await File('${tempDir.path}/old.jpg').exists(), isFalse);
+  });
+
+  test('a multi-block file (like a long video) round-trips and stays encrypted at rest', () async {
+    final plain = List<int>.generate(CacheCipher.blockSize * 2 + 4321, (i) => i % 251);
+    await cacheStore.writeMediaStream('clip.mp4', Stream.fromIterable([plain.sublist(0, 700000), plain.sublist(700000)]));
+    final onDisk = await File('${tempDir.path}/clip.mp4').readAsBytes();
+    expect(onDisk.length, plain.length + 3 * 28, reason: 'three sealed blocks');
+    expect(await cacheStore.readMedia('clip.mp4'), equals(plain));
   });
 }

@@ -10,6 +10,7 @@ import '../services/media_cache_sync.dart';
 import '../services/push_service.dart';
 import '../services/push_sync_signal.dart';
 import '../services/sync_service.dart';
+import 'video_slide.dart';
 
 /// The Frame's actual display: 'slideshow' mode auto-advances on a timer,
 /// 'manual' mode advances on tap -- driven entirely by the Frame's own
@@ -104,6 +105,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   Future<void> _init() async {
     _cacheDirPath = await widget.cacheStore.resolvedDirectoryPath();
+    // Decrypted playback copies left behind by a crash mid-video.
+    await widget.cacheStore.clearPlaybackFiles();
     _fcmToken = await widget.pushService.getToken();
     await _loadFromCacheImmediately();
     unawaited(_sync());
@@ -165,17 +168,35 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     unawaited(widget.heartbeatService.submitHeartbeat(fcmToken: _fcmToken));
   }
 
+  bool get _showingVideo => _entries.isNotEmpty && _entries[_currentIndex % _entries.length].isVideo;
+
   void _restartAdvanceTimerIfNeeded() {
     _advanceTimer?.cancel();
+    // A video plays to its end and moves on by itself (VideoSlide); the
+    // timer only paces photos.
+    if (_showingVideo) return;
     if (_settings?.displayMode != 'manual' && _entries.length > 1) {
       final seconds = _settings?.slideshowIntervalSeconds ?? 8;
       _advanceTimer = Timer.periodic(Duration(seconds: seconds), (_) => _advance(1));
     }
   }
 
+  // Bumped on every move, so even a single-video channel restarts its
+  // video (same index, new slide) instead of freezing on the last frame.
+  int _slideNumber = 0;
+
   void _advance(int delta) {
     if (_entries.isEmpty) return;
-    setState(() => _currentIndex = (_currentIndex + delta) % _entries.length);
+    setState(() {
+      _currentIndex = (_currentIndex + delta) % _entries.length;
+      _slideNumber++;
+    });
+    _restartAdvanceTimerIfNeeded();
+  }
+
+  void _onVideoFinished() {
+    if (_settings?.displayMode == 'manual') return; // stays until tapped
+    _advance(1);
   }
 
   void _handleTap(TapDownDetails details, double width) {
@@ -282,7 +303,16 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       final entry = _entries[_currentIndex % _entries.length];
       body = GestureDetector(
         onTapDown: (details) => _handleTap(details, MediaQuery.of(context).size.width),
-        child: SizedBox.expand(child: _photo(entry, BoxFit.contain)),
+        child: SizedBox.expand(
+          child: entry.isVideo
+              ? VideoSlide(
+                  key: ValueKey('${entry.fileName}#$_slideNumber'),
+                  entry: entry,
+                  cacheStore: widget.cacheStore,
+                  onFinished: _onVideoFinished,
+                )
+              : _photo(entry, BoxFit.contain),
+        ),
       );
     }
 
@@ -298,10 +328,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     );
   }
 
-  Future<Uint8List?> _bytesFor(CachedMediaEntry entry) {
-    final existing = _decrypted.remove(entry.fileName);
-    final future = existing ?? widget.cacheStore.readMedia(entry.fileName);
-    _decrypted[entry.fileName] = future; // re-insert = most recently used
+  Future<Uint8List?> _bytesFor(String fileName) {
+    final existing = _decrypted.remove(fileName);
+    final future = existing ?? widget.cacheStore.readMedia(fileName);
+    _decrypted[fileName] = future; // re-insert = most recently used
     while (_decrypted.length > 40) {
       _decrypted.remove(_decrypted.keys.first);
     }
@@ -309,9 +339,12 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   }
 
   Widget _photo(CachedMediaEntry entry, BoxFit fit) {
+    // A video shows its poster frame here (grid view); photos themselves.
+    final imageFile = entry.isVideo ? entry.posterFileName : entry.fileName;
+    if (imageFile == null) return const ColoredBox(color: Colors.black);
     return FutureBuilder<Uint8List?>(
-      key: ValueKey(entry.fileName),
-      future: _bytesFor(entry),
+      key: ValueKey(imageFile),
+      future: _bytesFor(imageFile),
       builder: (context, snapshot) {
         final bytes = snapshot.data;
         if (bytes == null) return const SizedBox.expand();
@@ -334,7 +367,15 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         return GestureDetector(
           key: ValueKey(entry.mediaItemId),
           onTap: () => _openInSlideshow(index),
-          child: _photo(entry, BoxFit.cover),
+          child: entry.isVideo
+              ? Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _photo(entry, BoxFit.cover),
+                    const Center(child: Icon(Icons.play_circle_fill, size: 40, color: Colors.white70)),
+                  ],
+                )
+              : _photo(entry, BoxFit.cover),
         );
       },
     );

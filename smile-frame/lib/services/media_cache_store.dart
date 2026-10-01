@@ -24,11 +24,14 @@ class MediaCacheStore {
     if (_cacheDirectoryOverride != null) return _cacheDirectoryOverride;
     if (_resolvedDirectory != null) return _resolvedDirectory!;
     final appDir = await getApplicationSupportDirectory();
-    // v2 = encrypted files. The old plain-JPEG cache is removed outright;
-    // the next sync simply downloads everything again, encrypted.
-    final legacy = Directory('${appDir.path}/media_cache');
-    if (await legacy.exists()) await legacy.delete(recursive: true);
-    final dir = Directory('${appDir.path}/media_cache_v2');
+    // v3 = encrypted in blocks (any size, incl. hour-long videos). Older
+    // caches (v1 plain JPEG, v2 one-piece encryption) are removed outright;
+    // the next sync simply downloads everything again.
+    for (final legacy in ['media_cache', 'media_cache_v2']) {
+      final old = Directory('${appDir.path}/$legacy');
+      if (await old.exists()) await old.delete(recursive: true);
+    }
+    final dir = Directory('${appDir.path}/media_cache_v3');
     if (!await dir.exists()) await dir.create(recursive: true);
     _resolvedDirectory = dir;
     return dir;
@@ -53,11 +56,14 @@ class MediaCacheStore {
     await file.writeAsString(jsonEncode(entries.map((e) => e.toJson()).toList()));
   }
 
-  /// Writes a downloaded photo, encrypted.
-  Future<void> writeMedia(String fileName, List<int> plainBytes) async {
-    final file = await fileFor(fileName);
-    await file.writeAsBytes(await _cipher.encrypt(plainBytes), flush: true);
-  }
+  /// Writes a photo/poster, encrypted. Returns its plaintext size.
+  Future<int> writeMedia(String fileName, List<int> plainBytes) async =>
+      _cipher.encryptBytesToFile(plainBytes, await fileFor(fileName));
+
+  /// Writes a download straight from the network, encrypted block by block
+  /// -- a video of any length never sits in memory. Returns its size.
+  Future<int> writeMediaStream(String fileName, Stream<List<int>> plain) async =>
+      _cipher.encryptStreamToFile(plain, await fileFor(fileName));
 
   /// Reads a cached photo back as plain image bytes (null if it's gone or
   /// can't be decrypted -- e.g. left over from before an un-pairing).
@@ -65,7 +71,7 @@ class MediaCacheStore {
     try {
       final file = await fileFor(fileName);
       if (!await file.exists()) return null;
-      return await _cipher.decrypt(await file.readAsBytes());
+      return await _cipher.decryptToBytes(file);
     } catch (_) {
       return null;
     }
@@ -80,6 +86,34 @@ class MediaCacheStore {
   /// afterward (e.g. in a widget build method), instead of re-resolving
   /// the platform directory on every rebuild.
   Future<String> resolvedDirectoryPath() async => (await _directory()).path;
+
+  /// Decrypts a cached video into a playable temporary file (video_player
+  /// needs a real file). Callers delete it again right after playback, and
+  /// [clearPlaybackFiles] removes any left over from a crash.
+  Future<File?> decryptVideoForPlayback(String fileName) async {
+    try {
+      final source = await fileFor(fileName);
+      if (!await source.exists()) return null;
+      final dir = await _playbackDirectory();
+      final out = File('${dir.path}/${DateTime.now().microsecondsSinceEpoch}.mp4');
+      await _cipher.decryptToFile(source, out);
+      return out;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Directory> _playbackDirectory() async {
+    final base = _cacheDirectoryOverride ?? await getTemporaryDirectory();
+    final dir = Directory('${base.path}/playback');
+    if (!await dir.exists()) await dir.create(recursive: true);
+    return dir;
+  }
+
+  Future<void> clearPlaybackFiles() async {
+    final dir = await _playbackDirectory();
+    if (await dir.exists()) await dir.delete(recursive: true);
+  }
 
   Future<void> deleteFile(String fileName) async {
     final file = await fileFor(fileName);
