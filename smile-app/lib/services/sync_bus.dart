@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
 
@@ -120,3 +121,39 @@ Future<bool> closeIfGone(BuildContext context, {required String table, required 
 }
 
 DateTime? _lastGoneNotice;
+
+/// The live channel (supabase/migrations/0053_live_sync_channel.sql): while
+/// the app is open, every sync signal also arrives here at once, over a
+/// private Realtime Broadcast channel per user -- needed because iOS
+/// throttles silent pushes even for a foreground app. Same payload as the
+/// FCM sync message, so it simply feeds the same SyncBus; arriving twice
+/// (push + live) just merges in SyncReload's debounce.
+class LiveSyncChannel {
+  LiveSyncChannel._();
+
+  static RealtimeChannel? _channel;
+  static String? _userId;
+
+  /// Follows the auth state: listens on the signed-in user's own channel,
+  /// switches on a user change, stops on sign-out. Call once at startup.
+  static void start() {
+    _follow(supabase.auth.currentUser?.id);
+    supabase.auth.onAuthStateChange.listen((state) => _follow(state.session?.user.id));
+  }
+
+  static void _follow(String? userId) {
+    if (userId == _userId) return;
+    final previous = _channel;
+    _channel = null;
+    _userId = userId;
+    if (previous != null) unawaited(supabase.removeChannel(previous));
+    if (userId == null) return;
+    _channel = supabase
+        .channel('sync:$userId', opts: const RealtimeChannelConfig(private: true))
+        .onBroadcast(
+          event: 'sync',
+          callback: (payload) => SyncBus.emit(SyncEvent.fromPush(payload)),
+        )
+        .subscribe();
+  }
+}

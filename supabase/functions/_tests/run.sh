@@ -17,7 +17,7 @@ export SUPABASE_SERVICE_ROLE_KEY="$(key service_role)"
 export SUPABASE_ANON_KEY="$(key anon)"
 
 if [ "$#" -gt 0 ]; then
-  deno test --allow-net --allow-env "$@"
+  deno test --node-modules-dir=none --allow-net --allow-env "$@"
 else
-  deno test --allow-net --allow-env supabase/functions/_tests/
+  deno test --node-modules-dir=none --allow-net --allow-env supabase/functions/_tests/
 fi

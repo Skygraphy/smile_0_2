@@ -1,6 +1,7 @@
 // Fixes from the 2026-09-29 architecture review (see the decisions in
 // migrations/0046 onwards) -- one test per fixed weakness.
 import { assert, assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
 import {
   requireEnv,
   svc,
@@ -244,5 +245,65 @@ Deno.test("Space managers are members of every channel of their Space", async ()
     if (spaceId) await deleteSpace(spaceId);
     await deleteUser(admin.id);
     await deleteUser(coOwner.id);
+  }
+});
+
+// migrations/0053 (decision 2026-10-01): every sync signal also goes out
+// live over a private Realtime channel per user -- and only that user may
+// listen on it.
+/** Subscribes [token]'s user to the private sync channel of [topicUserId] and records what happens. */
+async function openSyncListener(token: string, topicUserId: string) {
+  const { url, anonKey } = requireEnv();
+  const client = createClient(url, anonKey, { auth: { persistSession: false } });
+  await client.realtime.setAuth(token);
+  const state = { status: "", received: 0 };
+  const channel = client
+    .channel(`sync:${topicUserId}`, { config: { private: true } })
+    .on("broadcast", { event: "sync" }, () => {
+      state.received++;
+    });
+  channel.subscribe((status) => {
+    state.status = status;
+  });
+  return { state, close: () => client.removeChannel(channel) };
+}
+
+async function waitFor(check: () => boolean, ms: number): Promise<boolean> {
+  const deadline = Date.now() + ms;
+  while (Date.now() < deadline) {
+    if (check()) return true;
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  return check();
+}
+
+Deno.test("sync signals arrive live on the user's private channel, and only there", async () => {
+  requireEnv();
+  const aliceUser = await createThrowawayUser("alice");
+  const eveUser = await createThrowawayUser("eve");
+  let spaceId: string | undefined;
+  try {
+    await ensureProfile(aliceUser.id, "Test Alice");
+    await ensureProfile(eveUser.id, "Test Eve");
+    const { accessToken: aliceToken } = await accessTokenFor(aliceUser.email);
+    const { accessToken: eveToken } = await accessTokenFor(eveUser.email);
+
+    const alice = await openSyncListener(aliceToken, aliceUser.id);
+    const eve = await openSyncListener(eveToken, aliceUser.id);
+    try {
+      assert(await waitFor(() => alice.state.status === "SUBSCRIBED", 15000), `Alice joins her channel (${alice.state.status})`);
+      assert(await waitFor(() => eve.state.status === "CHANNEL_ERROR", 15000), `Eve is refused (${eve.state.status})`);
+
+      spaceId = await createSpace(aliceToken, "Live Space"); // -> sync_notify -> realtime.send
+      assert(await waitFor(() => alice.state.received > 0, 15000), "Alice receives the sync signal live");
+      assertEquals(eve.state.received, 0, "nobody else receives Alice's signals");
+    } finally {
+      await alice.close();
+      await eve.close();
+    }
+  } finally {
+    if (spaceId) await deleteSpace(spaceId);
+    await deleteUser(aliceUser.id);
+    await deleteUser(eveUser.id);
   }
 });
