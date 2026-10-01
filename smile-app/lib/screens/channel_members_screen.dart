@@ -213,7 +213,10 @@ class _ChannelMembersScreenState extends State<ChannelMembersScreen> with SyncRe
       appBar: AppBar(
         title: Text('Mitglieder · ${widget.channelName}'),
         actions: [
-          if (isMember && !(roster?.callerIsSco ?? false))
+          // Managers too (decision 2026-10-01): they become members of every
+          // channel automatically (migrations/0052), so they must be able to
+          // leave one they don't want to post in.
+          if (isMember)
             IconButton(
               icon: const Icon(Icons.logout),
               tooltip: 'Channel verlassen',

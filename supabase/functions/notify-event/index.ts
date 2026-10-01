@@ -105,34 +105,36 @@ async function coOwnerAdded(supabaseAdmin: Admin, spaceId: string, userId: strin
 
 async function shareEnded(supabaseAdmin: Admin, channelId: string, viewingSpaceId: string, actorId: string | null) {
   const [{ data: channel }, { data: viewingSpace }] = await Promise.all([
-    supabaseAdmin.from("channels").select("name, space_id, spaces(name)").eq("id", channelId).maybeSingle(),
+    // The explicit FK hint is required: channels reaches spaces both
+    // directly and through channel_shares, and a bare spaces(...) embed is
+    // ambiguous (PGRST201) -- it failed silently here, so no "share ended"
+    // notification was ever sent (found in the 2026-10-01 live test).
+    supabaseAdmin.from("channels").select("name, space_id").eq("id", channelId).maybeSingle(),
     supabaseAdmin.from("spaces").select("name").eq("id", viewingSpaceId).maybeSingle(),
   ]);
   if (!channel || !viewingSpace) return;
-  // deno-lint-ignore no-explicit-any
-  const homeSpaceName = (channel.spaces as any)?.name ?? "";
   const homeManagers = await spaceManagerIds(supabaseAdmin, channel.space_id as string);
   const viewingManagers = await spaceManagerIds(supabaseAdmin, viewingSpaceId);
   const endedByHomeSide = actorId !== null && homeManagers.includes(actorId);
+  // Name the PERSON who ended it, not their household (user feedback).
+  const actor = actorId ? await displayName(supabaseAdmin, actorId) : "Jemand";
+  const notification = {
+    title: "Freigabe beendet",
+    body: `${actor} hat die Freigabe von „${channel.name}“ für „${viewingSpace.name}“ beendet.`,
+  };
 
   if (endedByHomeSide) {
     await pushNotificationToUsers(
       supabaseAdmin,
       viewingManagers.filter((id) => id !== actorId),
-      {
-        title: "Freigabe beendet",
-        body: `„${homeSpaceName}“ hat die Freigabe von „${channel.name}“ für „${viewingSpace.name}“ beendet.`,
-      },
+      notification,
       { type: "share_ended_for_viewer" },
     );
   } else {
     await pushNotificationToUsers(
       supabaseAdmin,
       homeManagers.filter((id) => id !== actorId),
-      {
-        title: "Freigabe beendet",
-        body: `„${viewingSpace.name}“ sieht „${channel.name}“ nicht mehr.`,
-      },
+      notification,
       { type: "share_ended_for_owner", channel_id: channelId, channel_name: channel.name as string },
     );
   }

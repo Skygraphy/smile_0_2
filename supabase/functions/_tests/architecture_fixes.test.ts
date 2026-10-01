@@ -206,3 +206,43 @@ Deno.test("deleting the Administrator's account hands the Space to a co-owner", 
     await deleteUser(coOwner.id);
   }
 });
+
+// migrations/0052 (decision 2026-10-01): everyone who manages a Space posts
+// in all of its channels -- existing ones when they become co-owner, new
+// ones whoever creates them.
+Deno.test("Space managers are members of every channel of their Space", async () => {
+  requireEnv();
+  const admin = await createThrowawayUser("admin");
+  const coOwner = await createThrowawayUser("coowner");
+  let spaceId: string | undefined;
+  try {
+    await ensureProfile(admin.id, "Test Admin");
+    await ensureProfile(coOwner.id, "Test CoOwner");
+    const { accessToken: adminToken } = await accessTokenFor(admin.email);
+    const { accessToken: coOwnerToken } = await accessTokenFor(coOwner.email);
+    spaceId = await createSpace(adminToken, "Managed Space");
+    const before = await createChannel(adminToken, spaceId, "Before");
+    await svc("space_co_owners", { method: "POST", body: JSON.stringify({ space_id: spaceId, user_id: coOwner.id }) });
+
+    const { body: joined } = await svc(`channel_members?channel_id=eq.${before}&user_id=eq.${coOwner.id}`);
+    assertEquals(joined.length, 1, "a new co-owner joins the existing channels");
+
+    const after = await createChannel(coOwnerToken, spaceId, "After");
+    const { body: members } = await svc(`channel_members?channel_id=eq.${after}&select=user_id`);
+    assertEquals(
+      (members as { user_id: string }[]).map((m) => m.user_id).sort(),
+      [admin.id, coOwner.id].sort(),
+      "a channel created by a co-owner includes the Administrator too",
+    );
+
+    const { status: leave } = await asUser(`channel_members?channel_id=eq.${before}&user_id=eq.${coOwner.id}`, coOwnerToken, {
+      method: "DELETE",
+    });
+    assertEquals(leave, 204, "a manager may still leave a channel");
+  } finally {
+    await svc(`space_co_owners?user_id=eq.${coOwner.id}`, { method: "DELETE" });
+    if (spaceId) await deleteSpace(spaceId);
+    await deleteUser(admin.id);
+    await deleteUser(coOwner.id);
+  }
+});
