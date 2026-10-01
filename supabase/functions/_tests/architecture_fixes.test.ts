@@ -179,3 +179,30 @@ Deno.test("a Frame only gets channels its household can see, not what one person
     await deleteUser(bob.id);
   }
 });
+
+// migrations/0051: deleting an account must work (it never did via the
+// Auth API) -- and when the Administrator's account goes, the
+// longest-standing co-owner takes over (0037's handover, untested until now).
+Deno.test("deleting the Administrator's account hands the Space to a co-owner", async () => {
+  requireEnv();
+  const admin = await createThrowawayUser("admin");
+  const coOwner = await createThrowawayUser("coowner");
+  let spaceId: string | undefined;
+  try {
+    await ensureProfile(admin.id, "Test Admin");
+    await ensureProfile(coOwner.id, "Test CoOwner");
+    const { accessToken: adminToken } = await accessTokenFor(admin.email);
+    spaceId = await createSpace(adminToken, "Handover Space");
+    await svc("space_co_owners", { method: "POST", body: JSON.stringify({ space_id: spaceId, user_id: coOwner.id }) });
+
+    await deleteUser(admin.id); // throws if the Auth API refuses
+
+    const { body: space } = await svc(`spaces?id=eq.${spaceId}&select=owner_id`);
+    assertEquals(space[0].owner_id, coOwner.id, "the co-owner is the new Administrator");
+    const { body: coOwners } = await svc(`space_co_owners?space_id=eq.${spaceId}`);
+    assertEquals(coOwners.length, 0, "and no longer listed as a co-owner");
+  } finally {
+    if (spaceId) await deleteSpace(spaceId);
+    await deleteUser(coOwner.id);
+  }
+});

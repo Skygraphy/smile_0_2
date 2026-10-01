@@ -411,3 +411,33 @@ enabled = true
 # declarative_schema_path = "./schemas"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# Edge Function gateway JWT check, per function -- the single place this is
+# decided, so a deploy to any project (live or the testsuite project) gets
+# the same setting without remembering --no-verify-jwt by hand.
+# false = the function authenticates its caller itself: a Frame's own token
+# (claim/refresh/get-media-batch/submit-heartbeat), the database's shared
+# secret (sync-fanout, notify-event, purge-trash), the media service's token
+# (media-processed-callback), or it resolves the user from the header itself.
+[functions.claim-frame-pairing]
+verify_jwt = false
+[functions.get-media-batch]
+verify_jwt = false
+[functions.get-signed-media-urls]
+verify_jwt = false
+[functions.list-channel-members]
+verify_jwt = false
+[functions.list-my-channels]
+verify_jwt = false
+[functions.media-processed-callback]
+verify_jwt = false
+[functions.notify-event]
+verify_jwt = false
+[functions.purge-trash]
+verify_jwt = false
+[functions.refresh-frame-token]
+verify_jwt = false
+[functions.submit-heartbeat]
+verify_jwt = false
+[functions.sync-fanout]
+verify_jwt = false

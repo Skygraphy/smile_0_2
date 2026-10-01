@@ -10,10 +10,21 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
 
+// The live project, where real families' data lives. The suite has its own
+// project now (smile_0_2_testsuite, see README.md) and refuses to run here
+// unless explicitly told to.
+const LIVE_PROJECT_REF = "wxuipqaozvgzthlgnbgz";
+
 export function requireEnv(): { url: string; serviceKey: string; anonKey: string } {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !ANON_KEY) {
     throw new Error(
       "Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY / SUPABASE_ANON_KEY -- see supabase/functions/_tests/README.md",
+    );
+  }
+  if (SUPABASE_URL.includes(LIVE_PROJECT_REF) && Deno.env.get("SMILE_ALLOW_LIVE_TESTS") !== "1") {
+    throw new Error(
+      "Refusing to run against the LIVE project -- use the testsuite project (run.sh), " +
+        "or set SMILE_ALLOW_LIVE_TESTS=1 if you really mean it.",
     );
   }
   return { url: SUPABASE_URL, serviceKey: SERVICE_ROLE_KEY, anonKey: ANON_KEY };
@@ -75,7 +86,10 @@ export async function createThrowawayUser(prefix: string): Promise<{ id: string;
 
 export async function deleteUser(userId: string): Promise<void> {
   const { url } = requireEnv();
-  await req(`${url}/auth/v1/admin/users/${userId}`, asService({ method: "DELETE" }));
+  const { status, body } = await req(`${url}/auth/v1/admin/users/${userId}`, asService({ method: "DELETE" }));
+  // Never ignore this again: a failing delete went unnoticed for weeks and
+  // hid a real bug (migrations/0051) while 145 test users piled up.
+  if (status !== 200) throw new Error(`deleteUser(${userId}) failed: ${status} ${JSON.stringify(body)}`);
 }
 
 /**

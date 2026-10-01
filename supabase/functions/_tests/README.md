@@ -1,48 +1,57 @@
 # Edge function regression suite
 
-Real, repeatable tests replacing the throwaway `.mjs` verification scripts
-used earlier this session. There is no local Supabase/Postgres stack
-available in this environment (Docker isn't running), so these tests run
-against the **actual linked project** instead of a local sandbox --
-every test creates its own throwaway auth user(s)/rows via the admin API
-and tears them down in a `finally` block, so running the suite is safe
-against real data. Do not hardcode secrets here -- everything comes from
-environment variables.
+Real, repeatable tests against a real Supabase project. They run against
+their **own project, `smile_0_2_testsuite`** (ref `ohcrvjvhglrxxrkyrnhr`) --
+never against the live one (`wxuipqaozvgzthlgnbgz`), where real families'
+data lives. `helpers.ts` refuses to start against the live project unless
+`SMILE_ALLOW_LIVE_TESTS=1` is set.
+
+Every test creates its own throwaway users (`…@example.com`) and rows and
+removes them in a `finally`. `deleteUser` fails loudly if the Auth API
+refuses -- it used to ignore the answer, which hid a real bug
+(migrations/0051) while test users piled up.
 
 ## Running
 
 ```sh
-export SUPABASE_URL="https://wxuipqaozvgzthlgnbgz.supabase.co"
-export SUPABASE_SERVICE_ROLE_KEY="..."   # from: npx supabase projects api-keys --project-ref <ref>
-export SUPABASE_ANON_KEY="..."           # same command, the "anon" row
-
-deno test --allow-net --allow-env supabase/functions/_tests/
+supabase/functions/_tests/run.sh                      # whole suite
+supabase/functions/_tests/run.sh supabase/functions/_tests/architecture_fixes.test.ts
 ```
 
-`helpers.ts`'s `FIXTURES` only names two real, pre-existing project
-accounts (`TEST_ADMIN_EMAIL` / `TEST_ERNST_EMAIL`) -- override if those
-ever change. Everything else (Spaces, Channels, Frames) is created and
-torn down per-test: the architecture reset
-(migrations/0031_architecture_reset.sql) wiped every row, so there are no
-more fixed Space/Channel ids to point at.
+`run.sh` fetches the testsuite project's API keys through the Supabase CLI
+(`npx supabase login` once); nothing secret lives in the repo.
 
-## What's covered vs. not
+## Keeping the testsuite project in step with live
 
-- `architecture_reset.test.ts` -- the Phase 2 (Edge Functions) suite for
-  the User/Space/Channel/Frame model: channel creation auto-joins its SCO
-  and hides the channel from a stranger; a channel-membership invite is
-  invisible to the invitee until accepted (`list-my-invites` resolves the
-  channel name for them) and grants posting rights once accepted; a
-  channel-share invite grants a linked Space's owner view access but a
-  verified hard `403` on any write, and is unilaterally revocable; a Frame
-  created via `create-frame` can be claimed via `claim-frame-pairing`, and
-  `assign-frame-channel` backfills `media_recipients` for a channel's
-  already-`ready` photos so `get-media-batch`'s very first poll sees them.
+Schema and functions must match what's deployed live, or the tests prove
+nothing. After a change:
 
-Not yet covered (candidates for the next addition, not because they're
-low-risk, just not ported yet): the real upload pipeline end-to-end
-(`create-upload` → real bytes PUT to the signed URL → `complete-upload` →
-`fanOutToFrames`) -- `architecture_reset.test.ts` seeds an already-`ready`
-media_items row directly instead, to test the assignment/backfill/poll
-path without needing real storage bytes; `delete-media` (delete/hide/
-unhide) against the new schema; `refresh-frame-token`'s rotation.
+```sh
+# migrations -- the DB password is in the Supabase dashboard / password manager
+npx supabase db push --db-url "postgresql://postgres.ohcrvjvhglrxxrkyrnhr:<db-password>@aws-1-eu-west-1.pooler.supabase.com:5432/postgres"
+
+# functions -- verify_jwt per function comes from supabase/config.toml
+npx supabase functions deploy <name> --project-ref ohcrvjvhglrxxrkyrnhr
+```
+
+One-time setup the project already has (only needed again for a fresh
+project): secrets `SYNC_FANOUT_SECRET` and `DEVICE_JWT_SECRET`
+(`npx supabase secrets set --project-ref …`), and the Vault entries
+`sync_fanout_url` / `sync_fanout_secret` (see migrations/0041_fcm_sync.sql).
+No FCM credentials on purpose: test users have no devices, and every push
+helper is best-effort.
+
+## What's covered
+
+- `architecture_reset.test.ts` -- the core model: channel creation, member
+  invites, view-only shares, Frame pairing and assignment.
+- `walkthrough_sept27.test.ts` -- fixes from the 2026-09-27 walkthrough:
+  share revoke clears Frames, Administrator protected from co-owners,
+  co-owners may delete photos, delete = trash/restore/Frame pause.
+- `architecture_fixes.test.ts` -- the 2026-09-29 architecture review:
+  owner ends a share, single-source authorization, a Frame only gets what
+  its household sees, account deletion + co-owner handover.
+
+Not yet covered: the real upload pipeline end-to-end (create-upload → real
+bytes → complete-upload); refresh-frame-token's rotation; the outbox retry
+(verified manually: a 404 call was retried after a minute).
