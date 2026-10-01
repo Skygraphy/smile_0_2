@@ -1,4 +1,5 @@
-// Media processing service: resizes photos and transcodes videos dispatched by
+// Media processing service: resizes photos itself and hands every video to its
+// own Fargate task (worker.js) -- both dispatched by
 // the `complete-upload` Edge Function, then reports the result back to
 // `media-processed-callback`. Nothing here ever sees the Supabase
 // service-role key -- complete-upload does all the privileged DB writes
@@ -6,8 +7,8 @@
 // service calling back with only scoped signed upload tokens and a shared
 // callback secret).
 import express from "express";
+import { ECSClient, RunTaskCommand } from "@aws-sdk/client-ecs";
 import sharp from "sharp";
-import { spawn } from "child_process";
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
@@ -39,20 +40,58 @@ app.post("/process", (req, res) => {
   const validationError = validateJob(job);
   if (validationError) return res.status(400).json(validationError);
 
-  // Accept immediately and do the actual work in the background -- a real
-  // transcode can easily take longer than a typical request timeout (App
-  // Runner's default is 100 seconds), and the caller (complete-upload) isn't
-  // waiting synchronously for this to finish anyway.
+  // Videos of any length run in their own Fargate task (worker.js): App
+  // Runner throttles this instance's CPU once the request is answered and
+  // has 2 GB of RAM -- fine for resizing a photo, not for converting an
+  // hour of video. Starting the task takes a second; if it can't start,
+  // complete-upload hears so and marks the item failed.
+  if (job.media_type === "video") {
+    launchVideoTask(job)
+      .then(() => res.status(202).json({ accepted: true, runner: "fargate" }))
+      .catch((err) => {
+        console.error(`[${job.media_item_id}] could not start video task:`, err);
+        res.status(502).json({ error: "video_task_start_failed" });
+      });
+    return;
+  }
+
+  // Photos: accept immediately, resize in the background (a few seconds).
   res.status(202).json({ accepted: true });
   runJob(job).catch((err) => {
     console.error(`[${job.media_item_id}] unhandled job error:`, err);
   });
 });
 
+const ecs = new ECSClient({});
+
+async function launchVideoTask(job) {
+  const result = await ecs.send(
+    new RunTaskCommand({
+      cluster: process.env.VIDEO_TASK_CLUSTER,
+      taskDefinition: process.env.VIDEO_TASK_DEFINITION,
+      launchType: "FARGATE",
+      count: 1,
+      networkConfiguration: {
+        awsvpcConfiguration: {
+          subnets: (process.env.VIDEO_TASK_SUBNETS ?? "").split(",").filter(Boolean),
+          securityGroups: (process.env.VIDEO_TASK_SECURITY_GROUPS ?? "").split(",").filter(Boolean),
+          assignPublicIp: "ENABLED",
+        },
+      },
+      overrides: {
+        containerOverrides: [{ name: "video-worker", environment: [{ name: "JOB", value: JSON.stringify(job) }] }],
+      },
+    }),
+  );
+  if (!result.tasks?.length) {
+    throw new Error(`RunTask started nothing: ${JSON.stringify(result.failures ?? [])}`);
+  }
+}
+
 async function runJob(job) {
   const workDir = await fs.mkdtemp(path.join(os.tmpdir(), "media-"));
   try {
-    const result = job.media_type === "photo" ? await processPhoto(job) : await processVideo(job, workDir);
+    const result = await processPhoto(job);
     await reportResult(job, { status: "ready", ...result });
     console.log(`[${job.media_item_id}] processing complete`);
   } catch (err) {
@@ -102,50 +141,6 @@ async function processPhoto(job) {
     width: displayMeta.width,
     height: displayMeta.height,
   };
-}
-
-async function processVideo(job, workDir) {
-  const outputPath = path.join(workDir, "display.mp4");
-  await transcode(job.download_url, outputPath);
-  const fileBuffer = await fs.readFile(outputPath);
-  await uploadResult(job, "media-display", job.display_path, job.display_upload_token, fileBuffer, "video/mp4");
-  return { display_path: job.display_path };
-}
-
-// Conservative, guaranteed-widely-playable profile (per the plan: this caps
-// both device compatibility risk and, since the kiosk caches every video
-// fully for offline viewing, local storage use). ffmpeg reads straight from
-// the signed download URL -- no separate download step. Same profile as
-// smile_0_1's proven transcode-service.
-function transcode(inputUrl, outputPath) {
-  return new Promise((resolve, reject) => {
-    const args = [
-      "-y",
-      "-i", inputUrl,
-      "-vf", "scale='min(1280,iw)':-2",
-      "-c:v", "libx264",
-      "-profile:v", "main",
-      "-level", "4.0",
-      "-preset", "veryfast",
-      "-crf", "23",
-      "-maxrate", "2M",
-      "-bufsize", "4M",
-      "-c:a", "aac",
-      "-b:a", "128k",
-      "-movflags", "+faststart",
-      outputPath,
-    ];
-    const ffmpeg = spawn("ffmpeg", args);
-    let stderr = "";
-    ffmpeg.stderr.on("data", (chunk) => {
-      stderr += chunk.toString();
-    });
-    ffmpeg.on("error", reject);
-    ffmpeg.on("close", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`ffmpeg exited with code ${code}: ${stderr.slice(-2000)}`));
-    });
-  });
 }
 
 async function uploadResult(job, bucket, destPath, token, buffer, contentType) {

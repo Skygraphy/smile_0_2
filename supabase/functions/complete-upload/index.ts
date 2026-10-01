@@ -9,6 +9,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { announceReadyPhoto } from "../_shared/media-fanout.ts";
+import { processedPaths } from "../_shared/media-paths.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -84,17 +85,14 @@ Deno.serve(async (req) => {
 
   const { data: downloadData, error: downloadError } = await supabaseAdmin.storage
     .from("media-originals")
-    .createSignedUrl(mediaItem.storage_path_original, 60 * 60); // 1h -- plenty for a processing job
+    // A photo job takes seconds; a video of any length (decision
+    // 2026-10-01) can take hours to convert, so its worker gets a day.
+    .createSignedUrl(mediaItem.storage_path_original, mediaItem.media_type === "video" ? 24 * 60 * 60 : 60 * 60);
   if (downloadError || !downloadData) return jsonResponse({ error: "download_url_failed" }, 500);
 
-  const extMatch = mediaItem.storage_path_original.match(/\.[^./]+$/);
-  const originalExt = extMatch ? extMatch[0] : "";
-  const basePath = mediaItem.storage_path_original.slice(
-    0,
-    mediaItem.storage_path_original.length - originalExt.length,
-  );
-  const displayPath = `${basePath}_display${mediaItem.media_type === "video" ? ".mp4" : originalExt || ".jpg"}`;
-  const thumbnailPath = mediaItem.media_type === "photo" ? `${basePath}_thumb${originalExt || ".jpg"}` : null;
+  // Videos get a poster frame as their thumbnail too (the media worker
+  // extracts it), so every ready item has an image for the feed.
+  const { displayPath, thumbnailPath } = processedPaths(mediaItem.media_type, mediaItem.storage_path_original);
 
   const { data: displayUpload, error: displayUploadError } = await supabaseAdmin.storage
     .from("media-display")

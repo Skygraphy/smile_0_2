@@ -11,6 +11,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { announceReadyPhoto } from "../_shared/media-fanout.ts";
+import { processedPaths } from "../_shared/media-paths.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -18,7 +19,10 @@ const callbackToken = Deno.env.get("MEDIA_PROCESSING_CALLBACK_TOKEN") ?? "";
 
 interface CallbackBody {
   media_item_id: string;
-  status: "ready" | "failed";
+  /** "upload_tokens": a long-running video worker asking for fresh tokens (below). */
+  action?: "upload_tokens";
+  status?: "ready" | "failed";
+  duration_seconds?: number;
   display_path?: string;
   thumbnail_path?: string;
   width?: number;
@@ -39,9 +43,36 @@ Deno.serve(async (req) => {
   } catch {
     return jsonResponse({ error: "invalid_json" }, 400);
   }
-  if (!body.media_item_id || !body.status) return jsonResponse({ error: "missing_fields" }, 400);
+  if (!body.media_item_id || (!body.status && body.action !== "upload_tokens")) {
+    return jsonResponse({ error: "missing_fields" }, 400);
+  }
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+  // A video of any length can take hours to convert -- far longer than the
+  // 2 hours a signed upload token from complete-upload stays valid. So the
+  // video worker asks here, right before uploading, for fresh ones (upsert:
+  // a retried job may overwrite its own earlier partial result).
+  if (body.action === "upload_tokens") {
+    const { data: item } = await supabaseAdmin
+      .from("media_items")
+      .select("media_type, storage_path_original")
+      .eq("id", body.media_item_id)
+      .maybeSingle();
+    if (!item) return jsonResponse({ error: "not_found" }, 404);
+    const { displayPath, thumbnailPath } = processedPaths(item.media_type as string, item.storage_path_original as string);
+    const [{ data: display, error: dErr }, { data: thumb, error: tErr }] = await Promise.all([
+      supabaseAdmin.storage.from("media-display").createSignedUploadUrl(displayPath, { upsert: true }),
+      supabaseAdmin.storage.from("media-thumbnails").createSignedUploadUrl(thumbnailPath, { upsert: true }),
+    ]);
+    if (dErr || tErr || !display || !thumb) return jsonResponse({ error: "upload_url_failed" }, 500);
+    return jsonResponse({
+      display_path: displayPath,
+      display_upload_token: display.token,
+      thumbnail_path: thumbnailPath,
+      thumbnail_upload_token: thumb.token,
+    });
+  }
 
   if (body.status === "ready") {
     if (!body.display_path) return jsonResponse({ error: "display_path_required" }, 400);
@@ -52,6 +83,7 @@ Deno.serve(async (req) => {
         ...(body.thumbnail_path ? { storage_path_thumbnail: body.thumbnail_path } : {}),
         ...(body.width !== undefined ? { width: body.width } : {}),
         ...(body.height !== undefined ? { height: body.height } : {}),
+        ...(body.duration_seconds !== undefined ? { duration_seconds: body.duration_seconds } : {}),
         processing_status: "ready",
       })
       .eq("id", body.media_item_id)
