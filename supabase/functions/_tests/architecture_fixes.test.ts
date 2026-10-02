@@ -166,13 +166,29 @@ Deno.test("a Frame only gets channels its household can see, not what one person
     const viaFunction = await invoke("assign-frame-channel", aliceToken, { frame_id: frameId, channel_id: bobChannel });
     assertEquals(viaFunction.status, 400, JSON.stringify(viaFunction.body));
 
-    const { status: viaRls } = await asUser("frame_channels", aliceToken, {
+    const { status: viaRls, body: viaRlsBody } = await asUser("frame_channels", aliceToken, {
       method: "POST",
       body: JSON.stringify({ frame_id: frameId, channel_id: bobChannel }),
     });
-    assert(viaRls >= 400, `direct insert must be refused too, got ${viaRls}`);
-    const { body: assigned } = await svc(`frame_channels?frame_id=eq.${frameId}`);
-    assertEquals(assigned.length, 0);
+    // Refused BY THE RULE -- not by a broken policy (0055: a policy calling
+    // a service_role-only function failed every request, and this assert
+    // used to pass on that error too).
+    assertEquals(viaRls, 403, JSON.stringify(viaRlsBody));
+    assert(
+      String(viaRlsBody?.message).includes("row-level security"),
+      `expected an RLS refusal, got ${JSON.stringify(viaRlsBody)}`,
+    );
+
+    // Her own household's channel she may assign directly, and read back.
+    const ownChannel = await createChannel(aliceToken, aliceSpace, "Alice Channel");
+    const { status: okInsert, body: okBody } = await asUser("frame_channels", aliceToken, {
+      method: "POST",
+      body: JSON.stringify({ frame_id: frameId, channel_id: ownChannel }),
+    });
+    assertEquals(okInsert, 201, JSON.stringify(okBody));
+    const { status: readStatus, body: readBack } = await asUser(`frame_channels?frame_id=eq.${frameId}`, aliceToken);
+    assertEquals(readStatus, 200, JSON.stringify(readBack));
+    assertEquals((readBack as { channel_id: string }[]).map((r) => r.channel_id), [ownChannel]);
   } finally {
     if (aliceSpace) await deleteSpace(aliceSpace);
     if (bobSpace) await deleteSpace(bobSpace);
