@@ -33,7 +33,9 @@ function run(cmd, args) {
 // 10") or looks washed out. So the input is probed first.
 export async function transcode(inputUrl, outputPath) {
   const hdr = await isHdr(inputUrl);
-  const scale = "scale='min(1280,iw)':-2";
+  // The LONGER edge is capped at 1280, so portrait phone videos (1080x1920)
+  // shrink too -- capping only the width left them at full size.
+  const scale = "scale=w=1280:h=1280:force_original_aspect_ratio=decrease:force_divisible_by=2";
   const filters = hdr
     ? [
         "zscale=t=linear:npl=100",
