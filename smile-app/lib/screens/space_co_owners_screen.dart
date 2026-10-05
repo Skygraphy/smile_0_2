@@ -104,7 +104,7 @@ class _SpaceCoOwnersScreenState extends State<SpaceCoOwnersScreen> with SyncRelo
     await widget.spaceService.removeCoOwner(spaceId: widget.spaceId, userId: coOwner.userId);
     // Removing yourself means the very next load of this screen would just
     // 403 (space_co_owners_select's RLS no longer includes you) -- same
-    // reasoning as channel_members_screen.dart's _leaveChannel: leave the
+    // reasoning as album_info_screen.dart's _leaveChannel: leave the
     // screen instead of reloading it into a permission error.
     if (isSelf) {
       if (mounted) Navigator.of(context).pop();

@@ -14,7 +14,7 @@ import '../services/media_service.dart';
 import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
 import 'package:smile_design_system/smile_design_system.dart';
-import 'channel_members_screen.dart';
+import 'album_info_screen.dart';
 import 'video_player_screen.dart';
 
 /// A picked photo shown in the grid immediately, before the network upload
@@ -74,6 +74,7 @@ class ChannelFeedScreen extends StatefulWidget {
 
 class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   List<MediaItem>? _items;
+  late String _channelName = widget.channelName;
   final List<_PendingUpload> _pendingUploads = [];
   bool _isUploading = false;
   String? _errorMessage;
@@ -131,7 +132,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// Pull-to-refresh's own handler: also re-checks membership status, not
   /// just the feed itself -- nothing else notices when the channel's SCO
   /// decides a pending request/invite on their own device (same gap
-  /// channel_members_screen.dart and my_invites_screen.dart have), so
+  /// album_info_screen.dart and my_invites_screen.dart have), so
   /// without this the FAB stays stuck on "Anfrage gesendet" forever even
   /// after being approved.
   Future<void> _refreshAll() => Future.wait([_load(), _loadMyStatus()]);
@@ -688,9 +689,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                       borderRadius: BorderRadius.circular(SmileRadius.m),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => ChannelMembersScreen(
+                          builder: (_) => AlbumInfoScreen(
                             channelId: widget.channelId,
-                            channelName: widget.channelName,
+                            channelName: _channelName,
+                            onRenamed: (name) => setState(() => _channelName = name),
                           ),
                         ),
                       ),
@@ -700,7 +702,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                           children: [
                             const SmileObjectIcon(icon: SmileIcons.album, size: 36),
                             const SizedBox(width: SmileSpacing.m),
-                            Expanded(child: Text(widget.channelName, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            Expanded(child: Text(_channelName, maxLines: 1, overflow: TextOverflow.ellipsis)),
                           ],
                         ),
                       ),
@@ -732,7 +734,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                   // Only a Space-shared viewer (never a plain member, that
                   // branch above already covers them) ever lands here --
                   // requesting posting rights for themselves, the other
-                  // symmetric half of channel_members_screen.dart's
+                  // symmetric half of album_info_screen.dart's
                   // "Person einladen".
                   onPressed: _isRequestingMembership
                       ? null

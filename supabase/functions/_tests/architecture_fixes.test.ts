@@ -109,6 +109,10 @@ Deno.test("co-owners get the same access everywhere (single source)", async () =
     // Edge Functions used to know only a shared-in Space's Administrator.
     const roster = await invoke("list-channel-members", viewerCoToken, { channel_id: sharedChannel });
     assertEquals(roster.status, 200, `co-owner of the viewing Space must see the roster: ${JSON.stringify(roster.body)}`);
+    // Album info page: home Space name + its Co-Admins, resolved server-side
+    // because a viewer cannot read the home Space through RLS.
+    assertEquals(roster.body.home_space_name, "Owner Space");
+    assertEquals(roster.body.co_admin_user_ids, []);
 
     // The home screen list used to forget a co-owner's own Space's channels
     // and channels shared into it.

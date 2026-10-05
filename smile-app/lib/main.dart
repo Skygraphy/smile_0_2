@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
 import 'screens/channel_feed_screen.dart';
-import 'screens/channel_members_screen.dart';
+import 'screens/album_info_screen.dart';
 import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
 import 'screens/my_invites_screen.dart';
@@ -115,7 +115,7 @@ void _openNotificationTarget(Map<String, dynamic> data) {
       // the roster -- more useful to land on than the feed itself.
       if (channelId == null) return;
       navigator.push(
-        MaterialPageRoute(builder: (_) => ChannelMembersScreen(channelId: channelId, channelName: channelName)),
+        MaterialPageRoute(builder: (_) => AlbumInfoScreen(channelId: channelId, channelName: channelName)),
       );
     case 'space_ownership_transferred':
       navigator.push(MaterialPageRoute(builder: (_) => SpacesScreen()));

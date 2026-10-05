@@ -69,6 +69,9 @@ class SmileIcons {
   static const IconData camera = IconData(0xe10e, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData close = IconData(0xe4f6, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 
+  /// Accept a request / invitation.
+  static const IconData accept = IconData(0xe182, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
   /// Personal hide/unhide of a photo (Ausblenden / Einblenden) and the
   /// "Ausgeblendete Fotos" view.
   static const IconData hide = IconData(0xe224, fontFamily: 'PhosphorRegular', fontPackage: _pkg);

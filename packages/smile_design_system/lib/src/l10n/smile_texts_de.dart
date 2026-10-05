@@ -224,4 +224,122 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get sendToNoAlbum =>
       'Du bist noch in keinem Album, in dem du Fotos teilen kannst.';
+
+  @override
+  String albumInSpace(String space) {
+    return 'Album in $space';
+  }
+
+  @override
+  String get rename => 'Umbenennen';
+
+  @override
+  String get renameAlbum => 'Album umbenennen';
+
+  @override
+  String get name => 'Name';
+
+  @override
+  String get save => 'Speichern';
+
+  @override
+  String get inviteToAlbum => 'Person einladen';
+
+  @override
+  String get inviteToAlbumHint =>
+      'Die Person braucht bereits einen Smile-Account. Sie kann die Einladung annehmen oder ablehnen.';
+
+  @override
+  String get shareWithSpace => 'Mit einem Space teilen';
+
+  @override
+  String get shareWithSpaceHint =>
+      'Ein Admin des anderen Space kann annehmen. Dessen Personen und Frames sehen das Album dann, tragen aber nichts bei.';
+
+  @override
+  String get emailOfAdmin => 'E-Mail-Adresse';
+
+  @override
+  String get invitedWaiting => 'Eingeladen · Annahme ausstehend';
+
+  @override
+  String get wantsToJoin => 'Möchte Member werden';
+
+  @override
+  String get wantsToShare => 'Möchte das Album mit dem eigenen Space sehen';
+
+  @override
+  String get sharedViewOnly => 'Sieht das Album, trägt nichts bei';
+
+  @override
+  String get notSharedYet => 'Noch mit keinem anderen Space geteilt';
+
+  @override
+  String get showsOn => 'Läuft auf';
+
+  @override
+  String get notOnAnyFrame => 'Noch auf keinem Frame';
+
+  @override
+  String get removeFromAlbum => 'Aus dem Album entfernen';
+
+  @override
+  String removePersonTitle(String name) {
+    return '$name entfernen?';
+  }
+
+  @override
+  String get removePersonMessage =>
+      'Die Person verliert den Zugriff auf dieses Album.';
+
+  @override
+  String get endShare => 'Freigabe beenden';
+
+  @override
+  String endShareTitle(String space) {
+    return 'Freigabe für „$space“ beenden?';
+  }
+
+  @override
+  String endShareMessage(String space, String album) {
+    return '„$space“ sieht „$album“ danach nicht mehr, auch nicht auf seinen Frames.';
+  }
+
+  @override
+  String get leaveAlbum => 'Album verlassen';
+
+  @override
+  String get leaveAlbumMessage =>
+      'Du siehst die Fotos dieses Albums danach nicht mehr.';
+
+  @override
+  String get deleteAlbum => 'Album löschen';
+
+  @override
+  String deleteAlbumTitle(String album) {
+    return 'Album „$album“ löschen?';
+  }
+
+  @override
+  String get deleteAlbumMessage =>
+      'Das Album verschwindet mit allen Fotos sofort für alle Personen und von allen Frames. 30 Tage lang kannst du es im Papierkorb wiederherstellen.';
+
+  @override
+  String albumInfoLoadError(String error) {
+    return 'Album-Infos konnten nicht geladen werden: $error';
+  }
+
+  @override
+  String actionFailed(String error) {
+    return 'Aktion fehlgeschlagen: $error';
+  }
+
+  @override
+  String get actionAccept => 'Annehmen';
+
+  @override
+  String get actionDecline => 'Ablehnen';
+
+  @override
+  String get actionWithdraw => 'Zurückziehen';
 }

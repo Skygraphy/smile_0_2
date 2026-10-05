@@ -31,7 +31,14 @@ class SharedSpaceRef {
 }
 
 class ChannelRoster {
-  ChannelRoster({required this.members, required this.sharedSpaces, required this.callerIsSco, this.administratorUserId});
+  ChannelRoster({
+    required this.members,
+    required this.sharedSpaces,
+    required this.callerIsSco,
+    this.administratorUserId,
+    this.homeSpaceName,
+    this.coAdminUserIds = const {},
+  });
 
   final List<ChannelMember> members;
   final List<SharedSpaceRef> sharedSpaces;
@@ -40,6 +47,12 @@ class ChannelRoster {
   /// The home Space's Administrator -- shown as such, and never removable
   /// by anyone else (a co-owner included).
   final String? administratorUserId;
+
+  /// "Album in `home Space`" on the info page.
+  final String? homeSpaceName;
+
+  /// The home Space's Co-Admins (space_co_owners), for role badges.
+  final Set<String> coAdminUserIds;
 }
 
 enum RequestKind { membership, share }
@@ -143,6 +156,8 @@ class MembershipService {
       sharedSpaces: sharedSpaces.map(SharedSpaceRef.fromJson).toList(),
       callerIsSco: data['caller_is_sco'] as bool,
       administratorUserId: data['administrator_user_id'] as String?,
+      homeSpaceName: data['home_space_name'] as String?,
+      coAdminUserIds: ((data['co_admin_user_ids'] as List?) ?? const []).cast<String>().toSet(),
     );
   }
 

@@ -66,9 +66,17 @@ Deno.serve(async (req) => {
   // remove button for them.
   const { data: homeSpace } = await supabaseAdmin
     .from("spaces")
-    .select("owner_id")
+    .select("owner_id, name")
     .eq("id", access.homeSpaceId)
     .maybeSingle();
+
+  // For the album info page: the home Space's name ("Album in Bergoma")
+  // and its Co-Admins (role badges next to members). A viewer can't read
+  // the home Space via RLS, hence resolved here.
+  const { data: coOwnerRows } = await supabaseAdmin
+    .from("space_co_owners")
+    .select("user_id")
+    .eq("space_id", access.homeSpaceId);
 
   const profilesByUserId = await fetchProfilesByUserId(supabaseAdmin, (memberships ?? []).map((m) => m.user_id as string));
 
@@ -87,5 +95,7 @@ Deno.serve(async (req) => {
     shared_spaces: sharedSpaces,
     caller_is_sco: access.isSco,
     administrator_user_id: homeSpace?.owner_id ?? null,
+    home_space_name: homeSpace?.name ?? null,
+    co_admin_user_ids: (coOwnerRows ?? []).map((r) => r.user_id as string),
   });
 });

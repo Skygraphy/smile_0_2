@@ -441,6 +441,204 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Du bist noch in keinem Album, in dem du Fotos teilen kannst.'**
   String get sendToNoAlbum;
+
+  /// No description provided for @albumInSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Album in {space}'**
+  String albumInSpace(String space);
+
+  /// No description provided for @rename.
+  ///
+  /// In de, this message translates to:
+  /// **'Umbenennen'**
+  String get rename;
+
+  /// No description provided for @renameAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Album umbenennen'**
+  String get renameAlbum;
+
+  /// No description provided for @name.
+  ///
+  /// In de, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @save.
+  ///
+  /// In de, this message translates to:
+  /// **'Speichern'**
+  String get save;
+
+  /// No description provided for @inviteToAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Person einladen'**
+  String get inviteToAlbum;
+
+  /// No description provided for @inviteToAlbumHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Person braucht bereits einen Smile-Account. Sie kann die Einladung annehmen oder ablehnen.'**
+  String get inviteToAlbumHint;
+
+  /// No description provided for @shareWithSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit einem Space teilen'**
+  String get shareWithSpace;
+
+  /// No description provided for @shareWithSpaceHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Admin des anderen Space kann annehmen. Dessen Personen und Frames sehen das Album dann, tragen aber nichts bei.'**
+  String get shareWithSpaceHint;
+
+  /// No description provided for @emailOfAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'E-Mail-Adresse'**
+  String get emailOfAdmin;
+
+  /// No description provided for @invitedWaiting.
+  ///
+  /// In de, this message translates to:
+  /// **'Eingeladen · Annahme ausstehend'**
+  String get invitedWaiting;
+
+  /// No description provided for @wantsToJoin.
+  ///
+  /// In de, this message translates to:
+  /// **'Möchte Member werden'**
+  String get wantsToJoin;
+
+  /// No description provided for @wantsToShare.
+  ///
+  /// In de, this message translates to:
+  /// **'Möchte das Album mit dem eigenen Space sehen'**
+  String get wantsToShare;
+
+  /// No description provided for @sharedViewOnly.
+  ///
+  /// In de, this message translates to:
+  /// **'Sieht das Album, trägt nichts bei'**
+  String get sharedViewOnly;
+
+  /// No description provided for @notSharedYet.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch mit keinem anderen Space geteilt'**
+  String get notSharedYet;
+
+  /// No description provided for @showsOn.
+  ///
+  /// In de, this message translates to:
+  /// **'Läuft auf'**
+  String get showsOn;
+
+  /// No description provided for @notOnAnyFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch auf keinem Frame'**
+  String get notOnAnyFrame;
+
+  /// No description provided for @removeFromAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Aus dem Album entfernen'**
+  String get removeFromAlbum;
+
+  /// No description provided for @removePersonTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} entfernen?'**
+  String removePersonTitle(String name);
+
+  /// No description provided for @removePersonMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Person verliert den Zugriff auf dieses Album.'**
+  String get removePersonMessage;
+
+  /// No description provided for @endShare.
+  ///
+  /// In de, this message translates to:
+  /// **'Freigabe beenden'**
+  String get endShare;
+
+  /// No description provided for @endShareTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Freigabe für „{space}“ beenden?'**
+  String endShareTitle(String space);
+
+  /// No description provided for @endShareMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'„{space}“ sieht „{album}“ danach nicht mehr, auch nicht auf seinen Frames.'**
+  String endShareMessage(String space, String album);
+
+  /// No description provided for @leaveAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Album verlassen'**
+  String get leaveAlbum;
+
+  /// No description provided for @leaveAlbumMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Du siehst die Fotos dieses Albums danach nicht mehr.'**
+  String get leaveAlbumMessage;
+
+  /// No description provided for @deleteAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Album löschen'**
+  String get deleteAlbum;
+
+  /// No description provided for @deleteAlbumTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Album „{album}“ löschen?'**
+  String deleteAlbumTitle(String album);
+
+  /// No description provided for @deleteAlbumMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Album verschwindet mit allen Fotos sofort für alle Personen und von allen Frames. 30 Tage lang kannst du es im Papierkorb wiederherstellen.'**
+  String get deleteAlbumMessage;
+
+  /// No description provided for @albumInfoLoadError.
+  ///
+  /// In de, this message translates to:
+  /// **'Album-Infos konnten nicht geladen werden: {error}'**
+  String albumInfoLoadError(String error);
+
+  /// No description provided for @actionFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Aktion fehlgeschlagen: {error}'**
+  String actionFailed(String error);
+
+  /// No description provided for @actionAccept.
+  ///
+  /// In de, this message translates to:
+  /// **'Annehmen'**
+  String get actionAccept;
+
+  /// No description provided for @actionDecline.
+  ///
+  /// In de, this message translates to:
+  /// **'Ablehnen'**
+  String get actionDecline;
+
+  /// No description provided for @actionWithdraw.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurückziehen'**
+  String get actionWithdraw;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {
