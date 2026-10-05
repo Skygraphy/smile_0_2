@@ -65,6 +65,12 @@ Deno.serve(async (req) => {
       );
     } else if (body.kind === "share_ended") {
       await shareEnded(supabaseAdmin, body.payload.channel_id!, body.payload.space_id!, body.payload.actor_id ?? null);
+    } else if (body.kind === "request_created") {
+      await requestCreated(supabaseAdmin, body.payload.table!, body.payload.id!);
+    } else if (body.kind === "member_removed") {
+      await memberRemoved(supabaseAdmin, body.payload.channel_id!, body.payload.user_id!, body.payload.actor_id ?? null);
+    } else if (body.kind === "co_admin_removed") {
+      await coAdminRemoved(supabaseAdmin, body.payload.space_id!, body.payload.user_id!, body.payload.actor_id ?? null);
     } else {
       return jsonResponse({ error: "unknown_kind" }, 400);
     }
@@ -250,6 +256,84 @@ async function requestDecided(supabaseAdmin: Admin, table: string, id: string, a
         ? { title: "Anfrage beantwortet", body: `Deine Anfrage, das Album „${channel.name}“ mit deinem Space zu sehen, wurde ${verb}.` }
         : { title: "Anfrage beantwortet", body: `Deine Anfrage, Member im Album „${channel.name}“ zu werden, wurde ${verb}.` },
       { type: isShare ? "share_request_decided" : "membership_request_decided", ...data },
+    );
+  }
+}
+
+/** Someone asked to join an album, or to see it with their own Space
+ * (migrations/0057) -- everyone who can decide it hears about it. */
+async function requestCreated(supabaseAdmin: Admin, table: string, id: string) {
+  const isShare = table === "channel_share_requests";
+  const { data: row } = await supabaseAdmin
+    .from(table)
+    .select(isShare ? "channel_id, target_user_id, status" : "channel_id, user_id, status")
+    .eq("id", id)
+    .maybeSingle();
+  if (!row || row.status !== "pending") return;
+  const requesterId = (isShare ? row.target_user_id : row.user_id) as string;
+  const { data: channel } = await supabaseAdmin.from("channels").select("name, space_id").eq("id", row.channel_id).maybeSingle();
+  if (!channel) return;
+  const name = await displayName(supabaseAdmin, requesterId);
+  const managers = (await spaceManagerIds(supabaseAdmin, channel.space_id as string)).filter((u) => u !== requesterId);
+  await pushNotificationToUsers(
+    supabaseAdmin,
+    managers,
+    isShare
+      ? { title: "Neue Anfrage", body: `${name} möchte das Album „${channel.name}“ mit dem eigenen Space sehen. Antworten unter Neuigkeiten.` }
+      : { title: "Neue Anfrage", body: `${name} möchte Member im Album „${channel.name}“ werden. Antworten unter Neuigkeiten.` },
+    { type: "request_created", channel_id: row.channel_id as string, channel_name: channel.name as string },
+  );
+}
+
+/** A person is no longer a member of an album (migrations/0057): left on
+ * their own -> the managers hear it; removed by a manager -> they do. */
+async function memberRemoved(supabaseAdmin: Admin, channelId: string, userId: string, actorId: string | null) {
+  const { data: channel } = await supabaseAdmin.from("channels").select("name, space_id").eq("id", channelId).maybeSingle();
+  if (!channel) return;
+  const data = { channel_id: channelId, channel_name: channel.name as string };
+  if (actorId === userId) {
+    const name = await displayName(supabaseAdmin, userId);
+    const managers = (await spaceManagerIds(supabaseAdmin, channel.space_id as string)).filter((u) => u !== userId);
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      managers,
+      { title: "Album verlassen", body: `${name} hat das Album „${channel.name}“ verlassen.` },
+      { type: "member_left", ...data },
+    );
+  } else {
+    const actor = actorId ? await displayName(supabaseAdmin, actorId) : "Jemand";
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      [userId],
+      { title: "Nicht mehr im Album", body: `${actor} hat dich aus dem Album „${channel.name}“ entfernt.` },
+      { type: "member_removed" },
+    );
+  }
+}
+
+/** A Co-Admin is gone (migrations/0057): stepped down -> the Admin hears
+ * it; removed by the Admin -> that person does. A handover makes the
+ * Co-Admin the new Admin, which also deletes their Co-Admin row -- that is
+ * not a removal, "Du bist jetzt Admin" already tells them. */
+async function coAdminRemoved(supabaseAdmin: Admin, spaceId: string, userId: string, actorId: string | null) {
+  const { data: space } = await supabaseAdmin.from("spaces").select("name, owner_id").eq("id", spaceId).maybeSingle();
+  if (!space || space.owner_id === userId) return;
+  const data = { space_id: spaceId, space_name: space.name as string };
+  if (actorId === userId) {
+    const name = await displayName(supabaseAdmin, userId);
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      [space.owner_id as string],
+      { title: "Co-Admin-Rolle abgegeben", body: `${name} verwaltet den Space „${space.name}“ nicht mehr mit.` },
+      { type: "co_admin_stepped_down", ...data },
+    );
+  } else {
+    const actor = actorId ? await displayName(supabaseAdmin, actorId) : "Jemand";
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      [userId],
+      { title: "Nicht mehr Co-Admin", body: `${actor} hat dich als Co-Admin von „${space.name}“ entfernt.` },
+      { type: "co_admin_removed" },
     );
   }
 }

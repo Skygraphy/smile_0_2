@@ -92,6 +92,8 @@ void _openNotificationTarget(Map<String, dynamic> data) {
     case 'channel_membership_invite':
     case 'channel_share_invite':
     case 'space_co_owner_invite':
+    // migrations/0057: someone asks to join / see an album -- decided there.
+    case 'request_created':
       // The recipient isn't a channel member (or hasn't linked their Space,
       // or accepted the co-owner invite) yet -- can't view the target
       // itself before accepting, so this opens their invite inbox instead.
@@ -110,6 +112,7 @@ void _openNotificationTarget(Map<String, dynamic> data) {
     // the owner can end the share if they don't want that.
     case 'share_audience_changed':
     case 'share_ended_for_owner':
+    case 'member_left':
       // The outcome (who's now a member, what's now shared) shows up in
       // the roster -- more useful to land on than the feed itself.
       if (channelId == null) return;
@@ -120,6 +123,7 @@ void _openNotificationTarget(Map<String, dynamic> data) {
       if (spaceId == null) return;
       navigator.push(MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: spaceId, spaceName: spaceName)));
     case 'space_co_owner_invite_decided':
+    case 'co_admin_stepped_down':
       if (spaceId == null) return;
       navigator.push(
         MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: spaceId, spaceName: spaceName)),
