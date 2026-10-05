@@ -34,6 +34,8 @@
   "@sharedWithSpace": {"placeholders": {"space": {"type": "String"}}},
 
   "news": "Neuigkeiten",
+  "newsWaiting": "Neuigkeiten, es wartet etwas auf dich",
+  "actionSendPhoto": "Foto senden",
 
   "actionInvite": "Einladen",
   "actionShare": "Mit Space teilen",

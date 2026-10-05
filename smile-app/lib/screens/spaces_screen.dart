@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 import '../main.dart';
 import '../services/membership_service.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
+import '../widgets/top_bar_actions.dart';
 import 'channel_list_screen.dart';
 import 'create_frame_screen.dart';
 import 'frame_list_screen.dart';
-import 'my_invites_screen.dart';
 import 'space_co_owners_screen.dart';
 import 'space_shared_channels_screen.dart';
 import 'trash_screen.dart';
 
-/// "Meine Spaces" -- Space/Frame administration (create a Space, create a
+/// The Spaces tab -- Space/Frame administration (create a Space, create a
 /// Frame, manage Frames, manage the shares this Space has received).
-/// Demoted from the app's landing screen to a secondary area reachable
-/// from channels_home_screen.dart's overflow menu once the home screen
-/// became a flat, recency-sorted Channel list -- see
-/// project_ui-redesign-concepts memory for the reasoning behind this.
+/// Second tab of HomeShell (Alben / Spaces / Profil); invitations moved
+/// behind the Neuigkeiten icon in the top bar.
 class SpacesScreen extends StatefulWidget {
   const SpacesScreen({super.key});
 
@@ -110,7 +109,8 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Meine Spaces'),
+        title: Text(SmileTexts.of(context).spaces),
+        actions: smileTopBarActions(),
       ),
       body: _spaces == null
           ? const Center(child: CircularProgressIndicator())
@@ -193,17 +193,6 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
                   onPressed: _isCreating ? null : _createSpace,
                   icon: const Icon(Icons.add),
                   label: const Text('Space erstellen'),
-                ),
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => MyInvitesScreen()),
-                    );
-                    await _loadSpaces();
-                  },
-                  icon: const Icon(Icons.mail_outline),
-                  label: const Text('Meine Einladungen'),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(

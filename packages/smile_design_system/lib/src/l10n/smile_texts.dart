@@ -226,6 +226,18 @@ abstract class SmileTexts {
   /// **'Neuigkeiten'**
   String get news;
 
+  /// No description provided for @newsWaiting.
+  ///
+  /// In de, this message translates to:
+  /// **'Neuigkeiten, es wartet etwas auf dich'**
+  String get newsWaiting;
+
+  /// No description provided for @actionSendPhoto.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto senden'**
+  String get actionSendPhoto;
+
   /// No description provided for @actionInvite.
   ///
   /// In de, this message translates to:

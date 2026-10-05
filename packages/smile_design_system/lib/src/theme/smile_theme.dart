@@ -68,12 +68,34 @@ class SmileTheme {
 
   static ThemeData get themeData {
     final scheme = colorScheme;
+    final textTheme = GoogleFonts.interTextTheme(ThemeData.dark().textTheme);
     return ThemeData(
       brightness: Brightness.dark,
       colorScheme: scheme,
       scaffoldBackgroundColor: scheme.surface,
-      textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+      textTheme: textTheme,
       useMaterial3: true,
+      // Bottom bar (Alben / Spaces / Profil): the selected tab gets a soft
+      // coral pill and a coral filled icon, everything else stays neutral.
+      navigationBarTheme: NavigationBarThemeData(
+        height: 64,
+        backgroundColor: surfaceContainerLow,
+        indicatorColor: primary.withValues(alpha: 0.14),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            size: 24,
+            color: states.contains(WidgetState.selected) ? primary : onSurfaceVariant,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => textTheme.labelMedium?.copyWith(
+            fontSize: 12,
+            fontWeight: states.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w400,
+            color: states.contains(WidgetState.selected) ? onSurface : onSurfaceVariant,
+          ),
+        ),
+      ),
       inputDecorationTheme: const InputDecorationTheme(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(8)),

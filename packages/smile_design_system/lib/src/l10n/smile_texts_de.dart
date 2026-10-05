@@ -110,6 +110,12 @@ class SmileTextsDe extends SmileTexts {
   String get news => 'Neuigkeiten';
 
   @override
+  String get newsWaiting => 'Neuigkeiten, es wartet etwas auf dich';
+
+  @override
+  String get actionSendPhoto => 'Foto senden';
+
+  @override
   String get actionInvite => 'Einladen';
 
   @override

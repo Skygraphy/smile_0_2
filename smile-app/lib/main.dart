@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/supabase_config.dart';
 import 'screens/channel_feed_screen.dart';
 import 'screens/channel_members_screen.dart';
-import 'screens/channels_home_screen.dart';
+import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
 import 'screens/my_invites_screen.dart';
 import 'screens/profile_setup_screen.dart';
@@ -256,6 +256,6 @@ class _ProfileGateState extends State<_ProfileGate> {
         onDone: () => setState(() => _hasProfile = true),
       );
     }
-    return ChannelsHomeScreen();
+    return const HomeShell();
   }
 }
