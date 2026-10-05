@@ -67,4 +67,17 @@ class SmileIcons {
   static const IconData handOver = IconData(0xe0a0, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData inviteCode = IconData(0xe3e6, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData camera = IconData(0xe10e, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  static const IconData close = IconData(0xe4f6, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
+  /// Personal hide/unhide of a photo (Ausblenden / Einblenden) and the
+  /// "Ausgeblendete Fotos" view.
+  static const IconData hide = IconData(0xe224, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  static const IconData unhide = IconData(0xe220, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
+  /// Waiting for someone else (a sent request).
+  static const IconData pending = IconData(0xe2b8, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
+  // --- Media overlays (filled, drawn on top of photos) -----------------
+  static const IconData play = IconData(0xe3d2, fontFamily: 'PhosphorFill', fontPackage: _pkg);
+  static const IconData selected = IconData(0xe184, fontFamily: 'PhosphorFill', fontPackage: _pkg);
 }

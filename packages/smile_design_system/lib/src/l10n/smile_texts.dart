@@ -339,6 +339,108 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Space für dein Zuhause oder deinen Betrieb anlegen'**
   String get firstStepsSetupHint;
+
+  /// No description provided for @albumsLoadError.
+  ///
+  /// In de, this message translates to:
+  /// **'Alben konnten nicht geladen werden: {error}'**
+  String albumsLoadError(String error);
+
+  /// No description provided for @albumsEmptyTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Alben'**
+  String get albumsEmptyTitle;
+
+  /// No description provided for @albumsEmptyMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Lege einen Space an oder nimm eine Einladung an.'**
+  String get albumsEmptyMessage;
+
+  /// No description provided for @openSpaces.
+  ///
+  /// In de, this message translates to:
+  /// **'Spaces öffnen'**
+  String get openSpaces;
+
+  /// No description provided for @albumInfo.
+  ///
+  /// In de, this message translates to:
+  /// **'Infos zum Album'**
+  String get albumInfo;
+
+  /// No description provided for @addMedia.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto oder Video teilen'**
+  String get addMedia;
+
+  /// No description provided for @feedEmptyTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Fotos'**
+  String get feedEmptyTitle;
+
+  /// No description provided for @feedEmptyMemberHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippe auf +, um das erste Foto oder Video zu teilen.'**
+  String get feedEmptyMemberHint;
+
+  /// No description provided for @hiddenPhotos.
+  ///
+  /// In de, this message translates to:
+  /// **'Ausgeblendete Fotos'**
+  String get hiddenPhotos;
+
+  /// No description provided for @hiddenPhotosEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine ausgeblendeten Fotos'**
+  String get hiddenPhotosEmpty;
+
+  /// No description provided for @actionHide.
+  ///
+  /// In de, this message translates to:
+  /// **'Ausblenden'**
+  String get actionHide;
+
+  /// No description provided for @actionUnhide.
+  ///
+  /// In de, this message translates to:
+  /// **'Einblenden'**
+  String get actionUnhide;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} ausgewählt'**
+  String selectedCount(int count);
+
+  /// No description provided for @requestMembership.
+  ///
+  /// In de, this message translates to:
+  /// **'Member werden'**
+  String get requestMembership;
+
+  /// No description provided for @requestSent.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfrage gesendet'**
+  String get requestSent;
+
+  /// No description provided for @sendTo.
+  ///
+  /// In de, this message translates to:
+  /// **'Senden an …'**
+  String get sendTo;
+
+  /// No description provided for @sendToNoAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Du bist noch in keinem Album, in dem du Fotos teilen kannst.'**
+  String get sendToNoAlbum;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

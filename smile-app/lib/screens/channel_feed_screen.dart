@@ -472,17 +472,14 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       return;
     }
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('${deletableIds.length} Foto(s) endgültig löschen?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Abbrechen')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Löschen')),
-        ],
-      ),
+    final confirmed = await showSmileConfirmDialog(
+      context,
+      title: '${deletableIds.length} Foto(s) endgültig löschen?',
+      message: 'Sie verschwinden für alle Personen im Album und auf allen Frames.',
+      confirmLabel: SmileTexts.of(context).actionDelete,
+      destructive: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     final ids = deletableIds;
     _clearSelection();
@@ -651,18 +648,23 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
 
   @override
   Widget build(BuildContext context) {
+    final t = SmileTexts.of(context);
     return Scaffold(
       appBar: _selectionMode
           ? AppBar(
-              leading: IconButton(icon: const Icon(Icons.close), onPressed: _clearSelection),
-              title: Text('${_selectedIds.length} ausgewählt'),
+              leading: IconButton(icon: const Icon(SmileIcons.close), onPressed: _clearSelection),
+              title: Text(t.selectedCount(_selectedIds.length)),
               actions: [
                 IconButton(
-                  icon: Icon(_showingHidden ? Icons.visibility : Icons.visibility_off),
-                  tooltip: _showingHidden ? 'Einblenden' : 'Ausblenden',
+                  icon: Icon(_showingHidden ? SmileIcons.unhide : SmileIcons.hide),
+                  tooltip: _showingHidden ? t.actionUnhide : t.actionHide,
                   onPressed: _applyHideToggleToSelection,
                 ),
-                IconButton(icon: const Icon(Icons.delete_outline), onPressed: _confirmAndDeleteSelection),
+                IconButton(
+                  icon: const Icon(SmileIcons.delete),
+                  tooltip: t.actionDelete,
+                  onPressed: _confirmAndDeleteSelection,
+                ),
               ],
             )
           : _showingHidden
@@ -672,16 +674,19 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                   // it no longer shares the eye icon with the per-tile
                   // hide/unhide action, which was confusing (same icon,
                   // opposite meaning in each context).
-                  leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: _toggleHiddenView),
-                  title: const Text('Ausgeblendete Fotos'),
+                  leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: _toggleHiddenView),
+                  title: Text(t.hiddenPhotos),
                 )
               : AppBar(
-                  title: Text(widget.channelName),
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.group),
-                      tooltip: 'Mitglieder',
-                      onPressed: () => Navigator.of(context).push(
+                  leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).maybePop()),
+                  titleSpacing: 0,
+                  // WhatsApp pattern: tapping the album's icon + name opens
+                  // its info page (people, shares, frames).
+                  title: Tooltip(
+                    message: t.albumInfo,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(SmileRadius.m),
+                      onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => ChannelMembersScreen(
                             channelId: widget.channelId,
@@ -689,10 +694,22 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                           ),
                         ),
                       ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                        child: Row(
+                          children: [
+                            const SmileObjectIcon(icon: SmileIcons.album, size: 36),
+                            const SizedBox(width: SmileSpacing.m),
+                            Expanded(child: Text(widget.channelName, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                          ],
+                        ),
+                      ),
                     ),
+                  ),
+                  actions: [
                     IconButton(
-                      icon: const Icon(Icons.hide_image_outlined),
-                      tooltip: 'Ausgeblendete Fotos',
+                      icon: const Icon(SmileIcons.hide),
+                      tooltip: t.hiddenPhotos,
                       onPressed: _toggleHiddenView,
                     ),
                   ],
@@ -701,6 +718,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           ? null
           : _myStatus!.isMember
               ? FloatingActionButton(
+                  tooltip: t.addMedia,
                   onPressed: _isUploading ? null : _pickAndUpload,
                   child: _isUploading
                       ? const SizedBox(
@@ -708,7 +726,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : const Icon(Icons.add_a_photo),
+                      : const Icon(SmileIcons.add),
                 )
               : FloatingActionButton.extended(
                   // Only a Space-shared viewer (never a plain member, that
@@ -721,8 +739,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                       : (_myStatus!.pendingRequestId != null ? _withdrawMembershipRequest : _requestMembership),
                   icon: _isRequestingMembership
                       ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                      : Icon(_myStatus!.pendingRequestId != null ? Icons.hourglass_top : Icons.person_add),
-                  label: Text(_myStatus!.pendingRequestId != null ? 'Anfrage gesendet' : 'Beitritt anfragen'),
+                      : Icon(_myStatus!.pendingRequestId != null ? SmileIcons.pending : SmileIcons.invite),
+                  label: Text(_myStatus!.pendingRequestId != null ? t.requestSent : t.requestMembership),
                 ),
       body: _items == null
           ? const Center(child: CircularProgressIndicator())
@@ -758,9 +776,11 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                         onRefresh: _refreshAll,
                         child: ListView(
                           children: [
-                            const SizedBox(height: 200),
-                            Center(
-                              child: Text(_showingHidden ? 'Keine ausgeblendeten Fotos' : 'Noch keine Fotos'),
+                            const SizedBox(height: 160),
+                            SmileEmptyState(
+                              icon: _showingHidden ? SmileIcons.hide : SmileIcons.album,
+                              title: _showingHidden ? t.hiddenPhotosEmpty : t.feedEmptyTitle,
+                              message: !_showingHidden && (_myStatus?.isMember ?? false) ? t.feedEmptyMemberHint : null,
                             ),
                           ],
                         ),
@@ -877,7 +897,7 @@ class _VideoBadge extends StatelessWidget {
       fit: StackFit.passthrough,
       children: [
         child,
-        const Center(child: Icon(Icons.play_circle_fill, size: 56, color: Colors.white70)),
+        const Center(child: Icon(SmileIcons.play, size: 56, color: Colors.white70)),
       ],
     );
   }
@@ -1005,7 +1025,7 @@ class _ChatRow extends StatelessWidget {
                       color: Colors.black45,
                       alignment: Alignment.topRight,
                       padding: const EdgeInsets.all(4),
-                      child: const Icon(Icons.check_circle, color: Colors.white),
+                      child: const Icon(SmileIcons.selected, color: Colors.white),
                     ),
                 ],
               ),

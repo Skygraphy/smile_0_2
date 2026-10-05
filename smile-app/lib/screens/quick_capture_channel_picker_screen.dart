@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/channel_picker_service.dart';
 import '../services/media_service.dart';
@@ -60,7 +61,7 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
       if (!mounted) return;
       setState(() {
         _channels ??= const [];
-        _errorMessage = 'Channels konnten nicht geladen werden: $e';
+        _errorMessage = SmileTexts.of(context).albumsLoadError('$e');
       });
     }
   }
@@ -96,7 +97,7 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
   Widget build(BuildContext context) {
     final channels = _channels;
     return Scaffold(
-      appBar: AppBar(title: const Text('Senden an…')),
+      appBar: AppBar(title: Text(SmileTexts.of(context).sendTo)),
       body: Column(
         children: [
           AspectRatio(
@@ -118,19 +119,15 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
             child: channels == null
                 ? const Center(child: CircularProgressIndicator())
                 : channels.isEmpty
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Text('Du bist noch in keinem Channel, in dem du Fotos teilen kannst.'),
-                        ),
-                      )
+                    ? SmileEmptyState(icon: SmileIcons.album, title: SmileTexts.of(context).sendToNoAlbum)
                     : ListView(
                         children: [
                           for (final channel in channels)
-                            ListTile(
-                              leading: const Icon(Icons.photo_library_outlined),
-                              title: Text(channel.channelName),
-                              subtitle: Text(channel.spaceName),
+                            SmileObjectTile(
+                              leading: const SmileObjectIcon(icon: SmileIcons.album),
+                              title: channel.channelName,
+                              subtitleIcon: SmileIcons.space,
+                              subtitle: channel.spaceName,
                               trailing: _uploadingTo == channel
                                   ? const SizedBox(
                                       width: 20,

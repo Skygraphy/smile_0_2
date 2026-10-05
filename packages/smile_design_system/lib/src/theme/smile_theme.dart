@@ -75,6 +75,12 @@ class SmileTheme {
       scaffoldBackgroundColor: scheme.surface,
       textTheme: textTheme,
       useMaterial3: true,
+      // Coral is the action color -- M3's default FAB would use the dark
+      // brownish primaryContainer instead.
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: primary,
+        foregroundColor: onPrimary,
+      ),
       // Bottom bar (Alben / Spaces / Profil): the selected tab gets a soft
       // coral pill and a coral filled icon, everything else stays neutral.
       navigationBarTheme: NavigationBarThemeData(

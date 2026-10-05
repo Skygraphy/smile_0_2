@@ -5,7 +5,6 @@ import '../services/channel_picker_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/top_bar_actions.dart';
 import 'channel_feed_screen.dart';
-import 'my_invites_screen.dart';
 import 'spaces_screen.dart';
 
 /// The app's new landing screen. WhatsApp's chat list shows conversations
@@ -56,15 +55,11 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
       if (!mounted) return;
       setState(() {
         _channels ??= const [];
-        _errorMessage = 'Channels konnten nicht geladen werden: $e';
+        _errorMessage = SmileTexts.of(context).albumsLoadError('$e');
       });
     }
   }
 
-  Future<void> _openMyInvites() async {
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => MyInvitesScreen()));
-    await _load();
-  }
 
   Future<void> _openMySpaces() async {
     final onOpenSpaces = widget.onOpenSpaces;
@@ -102,7 +97,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
       body: channels == null
           ? const Center(child: CircularProgressIndicator())
           : channels.isEmpty
-              ? _EmptyState(errorMessage: _errorMessage, onOpenSpaces: _openMySpaces, onOpenMyInvites: _openMyInvites)
+              ? _EmptyState(errorMessage: _errorMessage, onOpenSpaces: _openMySpaces)
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView(
@@ -113,13 +108,18 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
                           child: Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                         ),
                       for (final channel in channels)
-                        ListTile(
-                          leading: SmileAvatar(name: channel.channelName),
-                          title: Text(channel.channelName),
-                          subtitle: Text(channel.isMember ? channel.spaceLabel : '${channel.spaceLabel} · nur ansehen'),
+                        SmileObjectTile(
+                          leading: const SmileObjectIcon(icon: SmileIcons.album),
+                          title: channel.channelName,
+                          // Role icon first: pencil = Member (may post),
+                          // binoculars = Viewer (sees it via a share).
+                          subtitleIcon: channel.isMember ? SmileRole.member.icon : SmileRole.viewer.icon,
+                          subtitle: channel.spaceLabel,
                           trailing: Text(
                             _relativeTime(channel.lastActivityAt),
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
                           ),
                           onTap: () async {
                             await Navigator.of(context).push(
@@ -140,44 +140,36 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   }
 }
 
+/// Interim empty state -- the "Zwei Wege" first-start screen (decision 6)
+/// replaces it in a later stage. Invitations are reachable through the
+/// Neuigkeiten icon in the top bar.
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.errorMessage, required this.onOpenSpaces, required this.onOpenMyInvites});
+  const _EmptyState({required this.errorMessage, required this.onOpenSpaces});
 
   final String? errorMessage;
   final VoidCallback onOpenSpaces;
-  final VoidCallback onOpenMyInvites;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (errorMessage != null) ...[
-              Text(errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
-              const SizedBox(height: 16),
-            ],
-            const Text(
-              'Noch keine Channels. Lege einen Space an oder nimm eine Einladung an.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: onOpenSpaces,
-              icon: const Icon(Icons.workspaces_outlined),
-              label: const Text('Meine Spaces öffnen'),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: onOpenMyInvites,
-              icon: const Icon(Icons.mail_outline),
-              label: const Text('Meine Einladungen'),
-            ),
-          ],
+    final t = SmileTexts.of(context);
+    return Column(
+      children: [
+        if (errorMessage != null)
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ),
+        Expanded(
+          child: SmileEmptyState(
+            icon: SmileIcons.album,
+            title: t.albumsEmptyTitle,
+            message: t.albumsEmptyMessage,
+            actionLabel: t.openSpaces,
+            actionIcon: SmileIcons.space,
+            onAction: onOpenSpaces,
+          ),
         ),
-      ),
+      ],
     );
   }
 }

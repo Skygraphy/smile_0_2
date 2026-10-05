@@ -54,5 +54,25 @@
   "firstStepsInvited": "Ich wurde eingeladen",
   "firstStepsInvitedHint": "Code eingeben oder QR-Code scannen",
   "firstStepsSetup": "Ich richte Smile ein",
-  "firstStepsSetupHint": "Space für dein Zuhause oder deinen Betrieb anlegen"
+  "firstStepsSetupHint": "Space für dein Zuhause oder deinen Betrieb anlegen",
+
+  "albumsLoadError": "Alben konnten nicht geladen werden: {error}",
+  "@albumsLoadError": {"placeholders": {"error": {"type": "String"}}},
+  "albumsEmptyTitle": "Noch keine Alben",
+  "albumsEmptyMessage": "Lege einen Space an oder nimm eine Einladung an.",
+  "openSpaces": "Spaces öffnen",
+  "albumInfo": "Infos zum Album",
+  "addMedia": "Foto oder Video teilen",
+  "feedEmptyTitle": "Noch keine Fotos",
+  "feedEmptyMemberHint": "Tippe auf +, um das erste Foto oder Video zu teilen.",
+  "hiddenPhotos": "Ausgeblendete Fotos",
+  "hiddenPhotosEmpty": "Keine ausgeblendeten Fotos",
+  "actionHide": "Ausblenden",
+  "actionUnhide": "Einblenden",
+  "selectedCount": "{count} ausgewählt",
+  "@selectedCount": {"placeholders": {"count": {"type": "int"}}},
+  "requestMembership": "Member werden",
+  "requestSent": "Anfrage gesendet",
+  "sendTo": "Senden an …",
+  "sendToNoAlbum": "Du bist noch in keinem Album, in dem du Fotos teilen kannst."
 }

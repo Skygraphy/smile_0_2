@@ -166,4 +166,62 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get firstStepsSetupHint =>
       'Space für dein Zuhause oder deinen Betrieb anlegen';
+
+  @override
+  String albumsLoadError(String error) {
+    return 'Alben konnten nicht geladen werden: $error';
+  }
+
+  @override
+  String get albumsEmptyTitle => 'Noch keine Alben';
+
+  @override
+  String get albumsEmptyMessage =>
+      'Lege einen Space an oder nimm eine Einladung an.';
+
+  @override
+  String get openSpaces => 'Spaces öffnen';
+
+  @override
+  String get albumInfo => 'Infos zum Album';
+
+  @override
+  String get addMedia => 'Foto oder Video teilen';
+
+  @override
+  String get feedEmptyTitle => 'Noch keine Fotos';
+
+  @override
+  String get feedEmptyMemberHint =>
+      'Tippe auf +, um das erste Foto oder Video zu teilen.';
+
+  @override
+  String get hiddenPhotos => 'Ausgeblendete Fotos';
+
+  @override
+  String get hiddenPhotosEmpty => 'Keine ausgeblendeten Fotos';
+
+  @override
+  String get actionHide => 'Ausblenden';
+
+  @override
+  String get actionUnhide => 'Einblenden';
+
+  @override
+  String selectedCount(int count) {
+    return '$count ausgewählt';
+  }
+
+  @override
+  String get requestMembership => 'Member werden';
+
+  @override
+  String get requestSent => 'Anfrage gesendet';
+
+  @override
+  String get sendTo => 'Senden an …';
+
+  @override
+  String get sendToNoAlbum =>
+      'Du bist noch in keinem Album, in dem du Fotos teilen kannst.';
 }

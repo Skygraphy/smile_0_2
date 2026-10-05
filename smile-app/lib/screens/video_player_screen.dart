@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 import 'package:video_player/video_player.dart';
 
 /// Full-screen playback of one video, streamed straight from its signed
@@ -61,7 +62,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                         AspectRatio(aspectRatio: value.aspectRatio, child: VideoPlayer(_controller)),
                         if (!value.isPlaying)
                           const Positioned.fill(
-                            child: Center(child: Icon(Icons.play_circle_fill, size: 72, color: Colors.white70)),
+                            child: Center(child: Icon(SmileIcons.play, size: 72, color: Colors.white70)),
                           ),
                         VideoProgressIndicator(_controller, allowScrubbing: true),
                       ],
