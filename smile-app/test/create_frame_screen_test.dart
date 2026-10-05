@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:smile_app/screens/create_frame_screen.dart';
 import 'package:smile_app/services/frame_service.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 class MockFrameService extends Mock implements FrameService {}
 
@@ -25,6 +26,9 @@ void main() {
     );
 
     await tester.pumpWidget(MaterialApp(
+      locale: const Locale('de'),
+      localizationsDelegates: SmileTexts.localizationsDelegates,
+      supportedLocales: SmileTexts.supportedLocales,
       home: CreateFrameScreen(spaceId: 'space-1', frameService: service),
     ));
 
@@ -43,6 +47,9 @@ void main() {
         .thenThrow(FrameServiceException('unknown_error'));
 
     await tester.pumpWidget(MaterialApp(
+      locale: const Locale('de'),
+      localizationsDelegates: SmileTexts.localizationsDelegates,
+      supportedLocales: SmileTexts.supportedLocales,
       home: CreateFrameScreen(spaceId: 'space-1', frameService: service),
     ));
 
