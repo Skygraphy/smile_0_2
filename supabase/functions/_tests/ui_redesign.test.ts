@@ -156,3 +156,61 @@ Deno.test("requests, leaving, removals and Co-Admin changes raise push events", 
     await deleteUser(admin.id);
   }
 });
+
+// Album list line (TODO from stage 3, done 2026-10-05): who posted last and
+// how many in a row -- hidden items of the caller don't count.
+Deno.test("the album list knows who posted last and how many in a row", async () => {
+  requireEnv();
+  const admin = await createThrowawayUser("ladmin");
+  const roman = await createThrowawayUser("lroman");
+  let space: string | undefined;
+  try {
+    await ensureProfile(admin.id, "List Admin");
+    await ensureProfile(roman.id, "List Roman");
+    const { accessToken: adminToken } = await accessTokenFor(admin.email);
+    space = await createSpace(adminToken, "List Space");
+    const album = await createChannel(adminToken, space, "List Album");
+    await svc("channel_members", { method: "POST", body: JSON.stringify({ channel_id: album, user_id: roman.id }) });
+
+    const post = async (sender: string, type: "photo" | "video", minutesAgo: number) => {
+      const { status, body } = await svc("media_items", {
+        method: "POST",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify({
+          channel_id: album,
+          sender_id: sender,
+          media_type: type,
+          storage_path_original: `test/${crypto.randomUUID()}`,
+          processing_status: "ready",
+          created_at: new Date(Date.now() - minutesAgo * 60_000).toISOString(),
+        }),
+      });
+      assertEquals(status, 201, JSON.stringify(body));
+      return body[0].id as string;
+    };
+    await post(admin.id, "photo", 10);
+    await post(roman.id, "photo", 3);
+    await post(roman.id, "video", 2);
+    const newest = await post(roman.id, "photo", 1);
+
+    type Row = { channel_id: string; last_post: { sender_id: string; sender_name: string; photos: number; videos: number } };
+    const lastPostOf = async () => {
+      const list = await invoke("list-my-channels", adminToken, {});
+      assertEquals(list.status, 200, JSON.stringify(list.body));
+      return (list.body.channels as Row[]).find((c) => c.channel_id === album)!.last_post;
+    };
+    const before = await lastPostOf();
+    assertEquals(before.sender_id, roman.id);
+    assertEquals(before.sender_name, "List Roman");
+    assertEquals([before.photos, before.videos], [2, 1]);
+
+    // Hiding the newest photo for yourself drops it from your own list line.
+    await svc("media_item_hides", { method: "POST", body: JSON.stringify({ media_item_id: newest, user_id: admin.id }) });
+    const after = await lastPostOf();
+    assertEquals([after.photos, after.videos], [1, 1]);
+  } finally {
+    if (space) await deleteSpace(space);
+    await deleteUser(roman.id);
+    await deleteUser(admin.id);
+  }
+});

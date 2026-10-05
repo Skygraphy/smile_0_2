@@ -771,4 +771,37 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get chooseAlbum => 'Album wählen';
+
+  @override
+  String postPhotos(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Fotos',
+      one: 'Foto',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String postVideos(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Videos',
+      one: 'Video',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastPostBy(String name, String what) {
+    return '$name: $what';
+  }
+
+  @override
+  String get someone => 'Jemand';
+
+  @override
+  String get noPostsYet => 'Noch keine Fotos';
 }

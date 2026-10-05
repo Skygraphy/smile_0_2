@@ -22,6 +22,24 @@ class UploadableChannel {
   final String spaceName;
 }
 
+/// The newest run of posts in an album by one person ("Roman: 4 Fotos"),
+/// as list-my-channels computes it -- the caller's hidden items excluded.
+class LastPost {
+  LastPost({required this.senderId, required this.senderName, required this.photos, required this.videos});
+
+  final String senderId;
+  final String? senderName;
+  final int photos;
+  final int videos;
+
+  factory LastPost.fromJson(Map<String, dynamic> json) => LastPost(
+        senderId: json['sender_id'] as String,
+        senderName: json['sender_name'] as String?,
+        photos: json['photos'] as int,
+        videos: json['videos'] as int,
+      );
+}
+
 class ChannelWithActivity {
   ChannelWithActivity({
     required this.channelId,
@@ -29,6 +47,7 @@ class ChannelWithActivity {
     required this.spaces,
     required this.isMember,
     required this.lastActivityAt,
+    this.lastPost,
   });
 
   final String channelId;
@@ -39,6 +58,9 @@ class ChannelWithActivity {
   final bool isMember;
   final DateTime lastActivityAt;
 
+  /// Null for an album without posts yet.
+  final LastPost? lastPost;
+
   String get spaceLabel => spaces.map((s) => s.name).join(', ');
 
   factory ChannelWithActivity.fromJson(Map<String, dynamic> json) => ChannelWithActivity(
@@ -47,6 +69,7 @@ class ChannelWithActivity {
         spaces: (json['spaces'] as List).cast<Map<String, dynamic>>().map(SpaceRef.fromJson).toList(),
         isMember: json['is_member'] as bool,
         lastActivityAt: DateTime.parse(json['last_activity_at'] as String),
+        lastPost: json['last_post'] == null ? null : LastPost.fromJson(json['last_post'] as Map<String, dynamic>),
       );
 }
 

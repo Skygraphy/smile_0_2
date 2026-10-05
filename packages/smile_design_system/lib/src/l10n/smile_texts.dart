@@ -1347,6 +1347,36 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Album wählen'**
   String get chooseAlbum;
+
+  /// No description provided for @postPhotos.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{Foto} other{{count} Fotos}}'**
+  String postPhotos(int count);
+
+  /// No description provided for @postVideos.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{Video} other{{count} Videos}}'**
+  String postVideos(int count);
+
+  /// No description provided for @lastPostBy.
+  ///
+  /// In de, this message translates to:
+  /// **'{name}: {what}'**
+  String lastPostBy(String name, String what);
+
+  /// No description provided for @someone.
+  ///
+  /// In de, this message translates to:
+  /// **'Jemand'**
+  String get someone;
+
+  /// No description provided for @noPostsYet.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Fotos'**
+  String get noPostsYet;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

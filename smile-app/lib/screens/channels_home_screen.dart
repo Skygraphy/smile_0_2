@@ -85,6 +85,19 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   }
 
 
+  /// "Roman: 4 Fotos", "Du: Video", "Anna: 2 Fotos, 1 Video".
+  String _lastPostLine(BuildContext context, ChannelWithActivity channel) {
+    final t = SmileTexts.of(context);
+    final post = channel.lastPost;
+    if (post == null) return t.noPostsYet;
+    final who = post.senderId == supabase.auth.currentUser?.id ? t.you : (post.senderName ?? t.someone);
+    final what = [
+      if (post.photos > 0) t.postPhotos(post.photos),
+      if (post.videos > 0) t.postVideos(post.videos),
+    ].join(', ');
+    return t.lastPostBy(who, what);
+  }
+
   String _relativeTime(DateTime time) {
     final now = DateTime.now();
     final local = time.toLocal();
@@ -129,9 +142,10 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
                           leading: const SmileObjectIcon(icon: SmileIcons.album),
                           title: channel.channelName,
                           // Role icon first: pencil = Member (may post),
-                          // binoculars = Viewer (sees it via a share).
+                          // binoculars = Viewer (sees it via a share); then
+                          // the newest post, WhatsApp chat-list style.
                           subtitleIcon: channel.isMember ? SmileRole.member.icon : SmileRole.viewer.icon,
-                          subtitle: channel.spaceLabel,
+                          subtitle: _lastPostLine(context, channel),
                           trailing: Text(
                             _relativeTime(channel.lastActivityAt),
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(

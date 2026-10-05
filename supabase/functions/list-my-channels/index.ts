@@ -7,6 +7,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { visibleChannelIds } from "../_shared/channel-access.ts";
+import { fetchProfilesByUserId } from "../_shared/profiles.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -71,21 +72,44 @@ Deno.serve(async (req) => {
   // Cheap two-column fetch across every candidate channel, not paged --
   // reducing to "latest per channel_id" client-side (below) is only
   // correct if this isn't silently truncated by a default row limit.
-  const { data: mediaRows } = await supabaseAdmin
-    .from("media_items")
-    .select("channel_id, created_at")
-    .in("channel_id", channelIds)
-    .eq("processing_status", "ready")
-    .order("created_at", { ascending: false })
-    .limit(20000);
+  const [{ data: mediaRows }, { data: hideRows }] = await Promise.all([
+    supabaseAdmin
+      .from("media_items")
+      .select("id, channel_id, created_at, sender_id, media_type")
+      .in("channel_id", channelIds)
+      .eq("processing_status", "ready")
+      .order("created_at", { ascending: false })
+      .limit(20000),
+    // Photos the caller hid for themselves don't count, like a WhatsApp
+    // message deleted "for me" no longer shows in the chat list.
+    supabaseAdmin.from("media_item_hides").select("media_item_id").eq("user_id", userId),
+  ]);
+  const hidden = new Set((hideRows ?? []).map((r) => r.media_item_id as string));
 
-  const lastActivityByChannel = new Map<string, string>();
+  // The chat-list line ("Roman: 4 Fotos"): who posted last, and how many
+  // items in a row they posted (the newest run of one sender), split into
+  // photos and videos so the app can word it.
+  type LastActivity = { at: string; senderId: string; photos: number; videos: number; open: boolean };
+  const lastByChannel = new Map<string, LastActivity>();
   for (const row of mediaRows ?? []) {
+    if (hidden.has(row.id as string)) continue;
     const channelId = row.channel_id as string;
-    if (!lastActivityByChannel.has(channelId)) {
-      lastActivityByChannel.set(channelId, row.created_at as string);
+    const sender = row.sender_id as string;
+    const isVideo = row.media_type === "video";
+    const last = lastByChannel.get(channelId);
+    if (!last) {
+      lastByChannel.set(channelId, { at: row.created_at as string, senderId: sender, photos: isVideo ? 0 : 1, videos: isVideo ? 1 : 0, open: true });
+    } else if (last.open && last.senderId === sender) {
+      if (isVideo) last.videos++;
+      else last.photos++;
+    } else {
+      last.open = false;
     }
   }
+  const senderProfiles = await fetchProfilesByUserId(
+    supabaseAdmin,
+    [...new Set([...lastByChannel.values()].map((l) => l.senderId))],
+  );
 
   const resolved = (channels ?? []).map((c) => {
     // deno-lint-ignore no-explicit-any
@@ -102,7 +126,17 @@ Deno.serve(async (req) => {
       // No photo yet -> sort by the channel's own creation time, so a
       // brand-new empty channel still shows up in a sensible spot instead
       // of falling to the very bottom indefinitely.
-      last_activity_at: lastActivityByChannel.get(c.id as string) ?? c.created_at,
+      last_activity_at: lastByChannel.get(c.id as string)?.at ?? c.created_at,
+      last_post: (() => {
+        const last = lastByChannel.get(c.id as string);
+        if (!last) return null;
+        return {
+          sender_id: last.senderId,
+          sender_name: senderProfiles.get(last.senderId)?.display_name ?? null,
+          photos: last.photos,
+          videos: last.videos,
+        };
+      })(),
     };
   });
 

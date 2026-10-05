@@ -499,5 +499,34 @@
   "frameOfflineTooLong": "Dieser Frame war zu lange ohne Verbindung.\nDie Fotos erscheinen wieder, sobald er online ist.",
   "frameRevokedScreen": "Dieser Frame wurde widerrufen.\nEin Admin des Space kann ihn in der Smile-App wieder aktivieren.",
   "frameNoPhotos": "Noch keine Fotos",
-  "chooseAlbum": "Album wählen"
+  "chooseAlbum": "Album wählen",
+  "postPhotos": "{count, plural, =1{Foto} other{{count} Fotos}}",
+  "@postPhotos": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "postVideos": "{count, plural, =1{Video} other{{count} Videos}}",
+  "@postVideos": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastPostBy": "{name}: {what}",
+  "@lastPostBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "someone": "Jemand",
+  "noPostsYet": "Noch keine Fotos"
 }
