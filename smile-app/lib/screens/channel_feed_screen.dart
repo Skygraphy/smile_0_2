@@ -15,6 +15,7 @@ import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/channel_service.dart';
+import '../services/foreground_notifications.dart';
 import 'album_info_screen.dart';
 import 'video_player_screen.dart';
 
@@ -110,6 +111,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   @override
   void initState() {
     super.initState();
+    // Photos arriving in this album need no notification while it is open.
+    ForegroundNotifications.openAlbumId = widget.channelId;
     _loadFromCacheThenRefresh();
     unawaited(_loadMyStatus());
     _scrollController.addListener(_updateStickyDate);
@@ -242,6 +245,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
 
   @override
   void dispose() {
+    // Only clear it if no other feed took over in the meantime.
+    if (ForegroundNotifications.openAlbumId == widget.channelId) ForegroundNotifications.openAlbumId = null;
     _scrollController.dispose();
     super.dispose();
   }

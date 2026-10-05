@@ -14,15 +14,14 @@ import 'screens/news_screen.dart';
 import 'screens/profile_setup_screen.dart';
 import 'screens/space_info_screen.dart';
 import 'services/profile_service.dart';
+import 'services/foreground_notifications.dart';
 import 'services/push_service.dart';
 import 'services/sync_bus.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 final supabase = Supabase.instance.client;
 
-/// Lets a foreground push notification (join request/approval/new photo)
-/// show as a SnackBar -- FCM's own notification payload is only ever
-/// auto-displayed by the OS while the app is backgrounded/killed.
+/// App-wide SnackBars (screens without their own ScaffoldMessenger context).
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 /// Lets tap-to-navigate push outside any widget's own BuildContext (a
@@ -37,6 +36,7 @@ Future<void> main() async {
     publishableKey: SupabaseConfig.publishableKey,
   );
   await Firebase.initializeApp();
+  await ForegroundNotifications.init(onTap: _openNotificationTarget);
   FirebaseMessaging.onMessage.listen((message) {
     // Silent cross-device sync (sync-fanout) -- never shown, just reloads
     // whatever is on screen.
@@ -44,11 +44,9 @@ Future<void> main() async {
       SyncBus.emit(SyncEvent.fromPush(message.data));
       return;
     }
-    final notification = message.notification;
-    if (notification == null) return;
-    scaffoldMessengerKey.currentState?.showSnackBar(
-      SnackBar(content: Text('${notification.title}: ${notification.body}')),
-    );
+    // FCM only displays notifications itself while the app is in the
+    // background -- while it is open, show the same as a real one.
+    unawaited(ForegroundNotifications.show(message));
   });
   // Tapped while the app was backgrounded (not killed).
   FirebaseMessaging.onMessageOpenedApp.listen((message) => _openNotificationTarget(message.data));
