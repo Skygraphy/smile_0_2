@@ -1,30 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 enum AvatarSource { camera, gallery, url }
 
 /// Bottom sheet offering the three ways to set an avatar -- shared by the
-/// user (profile_setup_screen.dart) and group (group_detail_screen.dart)
-/// avatar pickers so the choice always looks and behaves the same.
+/// first-start profile setup (profile_setup_screen.dart) and the Profil tab
+/// (settings_screen.dart) so the choice always looks and behaves the same.
 Future<AvatarSource?> showAvatarSourceSheet(BuildContext context) {
+  final t = SmileTexts.of(context);
   return showModalBottomSheet<AvatarSource>(
     context: context,
+    showDragHandle: true,
     builder: (context) => SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(Icons.photo_camera_outlined),
-            title: const Text('Foto aufnehmen'),
+            leading: const Icon(SmileIcons.camera),
+            title: Text(t.takePhoto),
             onTap: () => Navigator.of(context).pop(AvatarSource.camera),
           ),
           ListTile(
-            leading: const Icon(Icons.photo_library_outlined),
-            title: const Text('Vorhandenes Bild wählen'),
+            leading: const Icon(SmileIcons.picture),
+            title: Text(t.choosePicture),
             onTap: () => Navigator.of(context).pop(AvatarSource.gallery),
           ),
           ListTile(
-            leading: const Icon(Icons.link),
-            title: const Text('Von einer Internetadresse laden'),
+            leading: const Icon(SmileIcons.web),
+            title: Text(t.pictureFromWeb),
             onTap: () => Navigator.of(context).pop(AvatarSource.url),
           ),
         ],
@@ -36,11 +39,12 @@ Future<AvatarSource?> showAvatarSourceSheet(BuildContext context) {
 /// Follow-up prompt for [AvatarSource.url] -- returns the entered URL, or
 /// null if cancelled/left empty.
 Future<String?> showAvatarUrlDialog(BuildContext context) {
+  final t = SmileTexts.of(context);
   final controller = TextEditingController();
   return showDialog<String>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Bild-URL'),
+      title: Text(t.pictureUrl),
       content: TextField(
         controller: controller,
         autofocus: true,
@@ -49,8 +53,8 @@ Future<String?> showAvatarUrlDialog(BuildContext context) {
         onSubmitted: (value) => Navigator.of(context).pop(value),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Abbrechen')),
-        TextButton(onPressed: () => Navigator.of(context).pop(controller.text), child: const Text('Laden')),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.actionCancel)),
+        TextButton(onPressed: () => Navigator.of(context).pop(controller.text), child: Text(t.load)),
       ],
     ),
   );

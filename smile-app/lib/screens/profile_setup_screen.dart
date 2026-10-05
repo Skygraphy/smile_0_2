@@ -112,7 +112,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                           const Center(child: SmileWordmark(fontSize: 24)),
                           const SizedBox(height: 24),
                           Text(
-                            'Wie sollen wir dich nennen?',
+                            SmileTexts.of(context).profileSetupQuestion,
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
@@ -146,7 +146,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                               ),
                                             )
                                           : Icon(
-                                              Icons.camera_alt,
+                                              SmileIcons.camera,
                                               size: 16,
                                               color: Theme.of(context).colorScheme.onPrimary,
                                             ),
@@ -161,7 +161,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                             controller: _nameController,
                             autofocus: true,
                             textCapitalization: TextCapitalization.words,
-                            decoration: const InputDecoration(labelText: 'Name'),
+                            decoration: InputDecoration(labelText: SmileTexts.of(context).name),
                             onSubmitted: (_) => _save(),
                           ),
                           if (_errorMessage != null) ...[
@@ -181,7 +181,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                     height: 20,
                                     child: CircularProgressIndicator(strokeWidth: 2),
                                   )
-                                : const Text('Weiter'),
+                                : Text(SmileTexts.of(context).next),
                           ),
                         ],
                       ),

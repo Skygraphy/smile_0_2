@@ -1167,6 +1167,114 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'„{name}“ ist wiederhergestellt.'**
   String restored(String name);
+
+  /// No description provided for @profileLoadError.
+  ///
+  /// In de, this message translates to:
+  /// **'Profil konnte nicht geladen werden: {error}'**
+  String profileLoadError(String error);
+
+  /// No description provided for @retry.
+  ///
+  /// In de, this message translates to:
+  /// **'Erneut versuchen'**
+  String get retry;
+
+  /// No description provided for @changeName.
+  ///
+  /// In de, this message translates to:
+  /// **'Name ändern'**
+  String get changeName;
+
+  /// No description provided for @nameSaveError.
+  ///
+  /// In de, this message translates to:
+  /// **'Name konnte nicht gespeichert werden: {error}'**
+  String nameSaveError(String error);
+
+  /// No description provided for @avatarUploadError.
+  ///
+  /// In de, this message translates to:
+  /// **'Bild konnte nicht hochgeladen werden: {error}'**
+  String avatarUploadError(String error);
+
+  /// No description provided for @changePicture.
+  ///
+  /// In de, this message translates to:
+  /// **'Profilbild ändern'**
+  String get changePicture;
+
+  /// No description provided for @viewPicture.
+  ///
+  /// In de, this message translates to:
+  /// **'Profilbild ansehen'**
+  String get viewPicture;
+
+  /// No description provided for @takePhoto.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto aufnehmen'**
+  String get takePhoto;
+
+  /// No description provided for @choosePicture.
+  ///
+  /// In de, this message translates to:
+  /// **'Vorhandenes Bild wählen'**
+  String get choosePicture;
+
+  /// No description provided for @pictureFromWeb.
+  ///
+  /// In de, this message translates to:
+  /// **'Von einer Internetadresse laden'**
+  String get pictureFromWeb;
+
+  /// No description provided for @pictureUrl.
+  ///
+  /// In de, this message translates to:
+  /// **'Bild-URL'**
+  String get pictureUrl;
+
+  /// No description provided for @load.
+  ///
+  /// In de, this message translates to:
+  /// **'Laden'**
+  String get load;
+
+  /// No description provided for @account.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto'**
+  String get account;
+
+  /// No description provided for @emailAddress.
+  ///
+  /// In de, this message translates to:
+  /// **'E-Mail-Adresse'**
+  String get emailAddress;
+
+  /// No description provided for @signOut.
+  ///
+  /// In de, this message translates to:
+  /// **'Abmelden'**
+  String get signOut;
+
+  /// No description provided for @signOutQuestion.
+  ///
+  /// In de, this message translates to:
+  /// **'Möchtest du dich wirklich abmelden?'**
+  String get signOutQuestion;
+
+  /// No description provided for @profileSetupQuestion.
+  ///
+  /// In de, this message translates to:
+  /// **'Wie sollen wir dich nennen?'**
+  String get profileSetupQuestion;
+
+  /// No description provided for @next.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiter'**
+  String get next;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

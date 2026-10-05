@@ -16,10 +16,9 @@ import 'avatar_viewer_screen.dart';
 /// per the user's explicit request):
 /// - tapping the avatar photo itself -> full-screen view (AvatarViewerScreen)
 /// - tapping the small camera badge -> change the picture (camera/gallery/URL)
-/// - tapping the name -> rename
-/// Reached from spaces_screen.dart's overflow menu ("Einstellungen"), not
-/// shown inline on the main Spaces list -- WhatsApp doesn't show your own
-/// profile on its main chat list either.
+/// - tapping the name -> rename (no pencil: the pencil is the Member badge)
+/// The third tab of HomeShell ("Profil"); below the header sit the
+/// account details and Abmelden.
 class SettingsScreen extends StatefulWidget {
   SettingsScreen({super.key, ProfileService? profileService}) : profileService = profileService ?? ProfileService();
 
@@ -54,7 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _errorMessage = 'Profil konnte nicht geladen werden: $e');
+      setState(() => _errorMessage = SmileTexts.of(context).profileLoadError('$e'));
     }
   }
 
@@ -83,7 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
       } on AvatarUrlException catch (e) {
         if (mounted) setState(() => _errorMessage = e.message);
       } catch (e) {
-        if (mounted) setState(() => _errorMessage = 'Bild konnte nicht hochgeladen werden: $e');
+        if (mounted) setState(() => _errorMessage = SmileTexts.of(context).avatarUploadError('$e'));
       }
     } else {
       setState(() => _isPickingAvatar = true);
@@ -92,7 +91,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
             ? await widget.profileService.uploadMyAvatarFromCamera()
             : await widget.profileService.uploadMyAvatarFromGallery();
       } catch (e) {
-        if (mounted) setState(() => _errorMessage = 'Bild konnte nicht hochgeladen werden: $e');
+        if (mounted) setState(() => _errorMessage = SmileTexts.of(context).avatarUploadError('$e'));
       }
     }
     if (!mounted) return;
@@ -107,36 +106,20 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
   Future<void> _editName() async {
     final profile = _profile;
     if (profile == null) return;
-    final controller = TextEditingController(text: profile.displayName);
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Name ändern'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(labelText: 'Name'),
-          onSubmitted: (value) => Navigator.of(context).pop(value),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Abbrechen')),
-          TextButton(onPressed: () => Navigator.of(context).pop(controller.text), child: const Text('Speichern')),
-        ],
-      ),
-    );
-    final trimmed = newName?.trim();
-    if (trimmed == null || trimmed.isEmpty || trimmed == profile.displayName) return;
+    final t = SmileTexts.of(context);
+    final newName =
+        await showSmileNameDialog(context, title: t.changeName, confirmLabel: t.save, initialValue: profile.displayName);
+    if (newName == null) return;
     try {
-      await widget.profileService.setDisplayName(trimmed);
+      await widget.profileService.setDisplayName(newName);
       if (!mounted) return;
-      setState(() => _profile = SmileProfile(userId: profile.userId, displayName: trimmed, avatarUrl: profile.avatarUrl));
+      setState(() => _profile = SmileProfile(userId: profile.userId, displayName: newName, avatarUrl: profile.avatarUrl));
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'Name konnte nicht gespeichert werden: $e');
+      if (mounted) setState(() => _errorMessage = t.nameSaveError('$e'));
     }
   }
 
-  /// Moved here from spaces_screen.dart's overflow menu -- a rare,
+  /// At the bottom of the Profil tab -- a rare,
   /// consequential action belongs at the bottom of Settings, not the
   /// top-level quick menu (still discoverable, unlike WhatsApp which
   /// hides it entirely behind account deletion/re-registration -- Smile's
@@ -148,23 +131,17 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
   /// keep getting the previous account's notifications until FCM
   /// eventually reports the token dead on its own.
   Future<void> _confirmSignOut() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Abmelden'),
-        content: const Text('Möchtest du dich wirklich abmelden?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Abbrechen')),
-          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Abmelden')),
-        ],
-      ),
+    final t = SmileTexts.of(context);
+    final confirmed = await showSmileConfirmDialog(
+      context,
+      title: t.signOut,
+      message: t.signOutQuestion,
+      confirmLabel: t.signOut,
+      destructive: true,
     );
-    if (confirmed != true || !mounted) return;
-    // This screen is pushed on top of Spaces, not the root itself (unlike
-    // where this button used to live) -- pop back to the root route
-    // first, so main.dart's AuthGate swapping to LoginScreen underneath
-    // is actually what the user sees, instead of being left stranded on
-    // this now-defunct Settings screen.
+    if (!confirmed || !mounted) return;
+    // Pop anything pushed on top of the shell first, so main.dart's
+    // AuthGate swapping to LoginScreen underneath is what the user sees.
     Navigator.of(context).popUntil((route) => route.isFirst);
     await _signOut();
   }
@@ -183,9 +160,12 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
 
   @override
   Widget build(BuildContext context) {
+    final t = SmileTexts.of(context);
     final profile = _profile;
+    final scheme = Theme.of(context).colorScheme;
+    final email = supabase.auth.currentUser?.email;
     return Scaffold(
-      appBar: AppBar(title: Text(SmileTexts.of(context).profile), actions: smileTopBarActions()),
+      appBar: AppBar(title: Text(t.profile), actions: smileTopBarActions()),
       body: profile == null
           ? Center(
               child: _errorMessage != null
@@ -196,88 +176,87 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                         children: [
                           Text(_errorMessage!, textAlign: TextAlign.center),
                           const SizedBox(height: 16),
-                          ElevatedButton(onPressed: _load, child: const Text('Erneut versuchen')),
+                          FilledButton(onPressed: _load, child: Text(t.retry)),
                         ],
                       ),
                     )
                   : const CircularProgressIndicator(),
             )
           : ListView(
-              padding: const EdgeInsets.symmetric(vertical: 32),
+              padding: const EdgeInsets.only(top: SmileSpacing.xl, bottom: SmileSpacing.xl),
               children: [
                 Center(
                   child: Stack(
                     children: [
-                      GestureDetector(
-                        onTap: _viewAvatarFullScreen,
-                        child: SmileAvatar(name: profile.displayName, avatarUrl: profile.avatarUrl, size: 140),
+                      Tooltip(
+                        message: t.viewPicture,
+                        child: GestureDetector(
+                          onTap: _viewAvatarFullScreen,
+                          child: SmileAvatar(name: profile.displayName, avatarUrl: profile.avatarUrl, size: 128),
+                        ),
                       ),
                       Positioned(
                         bottom: 0,
                         right: 0,
-                        child: GestureDetector(
-                          onTap: _isPickingAvatar ? null : _changeAvatar,
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                            child: _isPickingAvatar
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation(Colors.white),
-                                    ),
-                                  )
-                                : Icon(Icons.camera_alt, color: Theme.of(context).colorScheme.onPrimary),
+                        child: Tooltip(
+                          message: t.changePicture,
+                          child: GestureDetector(
+                            onTap: _isPickingAvatar ? null : _changeAvatar,
+                            child: CircleAvatar(
+                              radius: 20,
+                              backgroundColor: scheme.primary,
+                              child: _isPickingAvatar
+                                  ? SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation(scheme.onPrimary),
+                                      ),
+                                    )
+                                  : Icon(SmileIcons.camera, size: 20, color: scheme.onPrimary),
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                InkWell(
-                  onTap: _editName,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(profile.displayName, style: Theme.of(context).textTheme.titleLarge),
-                        const SizedBox(width: 8),
-                        Icon(Icons.edit, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                      ],
+                const SizedBox(height: SmileSpacing.m),
+                // Rename = tap the name (decision 5), like Album and Space.
+                Center(
+                  child: Tooltip(
+                    message: t.changeName,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(SmileRadius.s),
+                      onTap: _editName,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        child: Text(
+                          profile.displayName,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 12),
+                if (_errorMessage != null)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(
-                      _errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
-                    ),
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                    child: Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(color: scheme.error)),
                   ),
-                ],
-                const SizedBox(height: 64),
-                Center(
-                  child: TextButton(
-                    onPressed: _confirmSignOut,
-                    // Buried by position (bottom of the screen), not by
-                    // legibility -- a smaller font here would read as
-                    // deliberately obscuring a real action, not just
-                    // deprioritizing it. Same size as normal body text.
-                    child: Text(
-                      'Abmelden',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyLarge
-                          ?.copyWith(color: Theme.of(context).colorScheme.error),
-                    ),
-                  ),
+                const SizedBox(height: SmileSpacing.l),
+                SmileInfoSection(
+                  title: t.account,
+                  children: [
+                    if (email != null)
+                      SmileObjectTile(
+                        leading: Icon(SmileIcons.email, color: scheme.onSurfaceVariant),
+                        title: email,
+                        subtitle: t.emailAddress,
+                      ),
+                    SmileActionRow(icon: SmileIcons.leave, label: t.signOut, destructive: true, onTap: _confirmSignOut),
+                  ],
                 ),
               ],
             ),

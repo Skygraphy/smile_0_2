@@ -448,5 +448,44 @@
         "type": "String"
       }
     }
-  }
+  },
+  "profileLoadError": "Profil konnte nicht geladen werden: {error}",
+  "@profileLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "retry": "Erneut versuchen",
+  "changeName": "Name ändern",
+  "nameSaveError": "Name konnte nicht gespeichert werden: {error}",
+  "@nameSaveError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "avatarUploadError": "Bild konnte nicht hochgeladen werden: {error}",
+  "@avatarUploadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "changePicture": "Profilbild ändern",
+  "viewPicture": "Profilbild ansehen",
+  "takePhoto": "Foto aufnehmen",
+  "choosePicture": "Vorhandenes Bild wählen",
+  "pictureFromWeb": "Von einer Internetadresse laden",
+  "pictureUrl": "Bild-URL",
+  "load": "Laden",
+  "account": "Konto",
+  "emailAddress": "E-Mail-Adresse",
+  "signOut": "Abmelden",
+  "signOutQuestion": "Möchtest du dich wirklich abmelden?",
+  "profileSetupQuestion": "Wie sollen wir dich nennen?",
+  "next": "Weiter"
 }

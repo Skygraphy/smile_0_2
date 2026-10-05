@@ -670,4 +670,64 @@ class SmileTextsDe extends SmileTexts {
   String restored(String name) {
     return '„$name“ ist wiederhergestellt.';
   }
+
+  @override
+  String profileLoadError(String error) {
+    return 'Profil konnte nicht geladen werden: $error';
+  }
+
+  @override
+  String get retry => 'Erneut versuchen';
+
+  @override
+  String get changeName => 'Name ändern';
+
+  @override
+  String nameSaveError(String error) {
+    return 'Name konnte nicht gespeichert werden: $error';
+  }
+
+  @override
+  String avatarUploadError(String error) {
+    return 'Bild konnte nicht hochgeladen werden: $error';
+  }
+
+  @override
+  String get changePicture => 'Profilbild ändern';
+
+  @override
+  String get viewPicture => 'Profilbild ansehen';
+
+  @override
+  String get takePhoto => 'Foto aufnehmen';
+
+  @override
+  String get choosePicture => 'Vorhandenes Bild wählen';
+
+  @override
+  String get pictureFromWeb => 'Von einer Internetadresse laden';
+
+  @override
+  String get pictureUrl => 'Bild-URL';
+
+  @override
+  String get load => 'Laden';
+
+  @override
+  String get account => 'Konto';
+
+  @override
+  String get emailAddress => 'E-Mail-Adresse';
+
+  @override
+  String get signOut => 'Abmelden';
+
+  @override
+  String get signOutQuestion => 'Möchtest du dich wirklich abmelden?';
+
+  @override
+  String get profileSetupQuestion => 'Wie sollen wir dich nennen?';
+
+  @override
+  String get next => 'Weiter';
 }

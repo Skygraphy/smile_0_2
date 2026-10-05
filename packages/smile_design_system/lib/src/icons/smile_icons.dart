@@ -67,6 +67,14 @@ class SmileIcons {
   static const IconData handOver = IconData(0xe0a0, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData inviteCode = IconData(0xe3e6, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData camera = IconData(0xe10e, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// Pick an existing picture (avatar from the gallery) -- deliberately
+  /// not the album icon, which means "a Smile album".
+  static const IconData picture = IconData(0xe2ca, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
+  /// Load a picture from a web address -- not the link icon, which means
+  /// "Shared with".
+  static const IconData web = IconData(0xe288, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  static const IconData email = IconData(0xe218, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData close = IconData(0xe4f6, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 
   /// Accept a request / invitation.
