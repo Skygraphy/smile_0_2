@@ -342,4 +342,220 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get actionWithdraw => 'Zurückziehen';
+
+  @override
+  String spacesLoadError(String error) {
+    return 'Spaces konnten nicht geladen werden: $error';
+  }
+
+  @override
+  String get spacesEmptyTitle => 'Noch kein eigener Space';
+
+  @override
+  String get spacesEmptyMessage =>
+      'Einen Space brauchst du nur, wenn du selbst Frames aufstellst oder Alben verwaltest, für dein Zuhause oder deinen Betrieb.';
+
+  @override
+  String get createSpace => 'Space anlegen';
+
+  @override
+  String get createSpaceHint =>
+      'Name, z. B. „Familie Müller“ oder „Hotel Sacher“';
+
+  @override
+  String get create => 'Anlegen';
+
+  @override
+  String get youAreAdmin => 'Du bist Admin';
+
+  @override
+  String get youAreCoAdmin => 'Du bist Co-Admin';
+
+  @override
+  String get renameSpace => 'Space umbenennen';
+
+  @override
+  String spaceInfoLoadError(String error) {
+    return 'Space-Infos konnten nicht geladen werden: $error';
+  }
+
+  @override
+  String get createAlbum => 'Album anlegen';
+
+  @override
+  String get createAlbumHint => 'Name, z. B. „Enkelkinder“ oder „Lobby“';
+
+  @override
+  String get noAlbumYet => 'Noch kein Album';
+
+  @override
+  String get sharedIntoSpace => 'Mit diesem Space geteilt';
+
+  @override
+  String get sharedIntoSpaceHint =>
+      'Alben anderer Spaces, die hier nur angesehen werden';
+
+  @override
+  String get stopShowing => 'Nicht mehr anzeigen';
+
+  @override
+  String stopShowingTitle(String album) {
+    return '„$album“ nicht mehr anzeigen?';
+  }
+
+  @override
+  String get stopShowingMessage =>
+      'Dieser Space und seine Frames sehen das Album danach nicht mehr.';
+
+  @override
+  String get noFrameYet => 'Noch kein Frame';
+
+  @override
+  String get connectFrame => 'Frame verbinden';
+
+  @override
+  String get frameActive => 'Aktiv';
+
+  @override
+  String get framePending => 'Wartet auf Kopplung';
+
+  @override
+  String get frameRevoked => 'Widerrufen';
+
+  @override
+  String get inviteCoAdmin => 'Co-Admin einladen';
+
+  @override
+  String get inviteCoAdminHint =>
+      'Die Person braucht bereits einen Smile-Account. Nimmt sie an, verwaltet sie diesen Space mit allen Rechten außer Löschen.';
+
+  @override
+  String get makeAdmin => 'Zum Admin machen';
+
+  @override
+  String makeAdminTitle(String name) {
+    return '$name zum Admin machen?';
+  }
+
+  @override
+  String get makeAdminMessage =>
+      'Diese Person wird Admin dieses Space. Du bleibst Co-Admin mit allen Rechten, entscheidest aber nicht mehr allein, wer mitverwaltet.';
+
+  @override
+  String get chooseNewAdmin => 'Wer soll Admin werden?';
+
+  @override
+  String get removeCoAdmin => 'Als Co-Admin entfernen';
+
+  @override
+  String removeCoAdminTitle(String name) {
+    return '$name als Co-Admin entfernen?';
+  }
+
+  @override
+  String get removeCoAdminMessage =>
+      'Die Person verliert die Verwaltungsrechte über diesen Space.';
+
+  @override
+  String get stepDown => 'Co-Admin-Rolle abgeben';
+
+  @override
+  String get stepDownMessage =>
+      'Du verlierst deine Verwaltungsrechte über diesen Space.';
+
+  @override
+  String get trashTitle => 'Papierkorb';
+
+  @override
+  String get deleteSpace => 'Space löschen';
+
+  @override
+  String deleteSpaceTitle(String space) {
+    return 'Space „$space“ löschen?';
+  }
+
+  @override
+  String get deleteSpaceMessage =>
+      'Der Space verschwindet mit allen Alben, Fotos und Frames sofort für alle; alle Beteiligten werden benachrichtigt. 30 Tage lang kannst du ihn im Papierkorb wiederherstellen.';
+
+  @override
+  String inTrash(String name) {
+    return '„$name“ ist im Papierkorb.';
+  }
+
+  @override
+  String frameInfoLoadError(String error) {
+    return 'Frame-Infos konnten nicht geladen werden: $error';
+  }
+
+  @override
+  String frameInSpace(String space) {
+    return 'Frame in $space';
+  }
+
+  @override
+  String get renameFrame => 'Frame umbenennen';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get device => 'Gerät';
+
+  @override
+  String get lastSeen => 'Zuletzt gesehen';
+
+  @override
+  String get appVersion => 'App-Version';
+
+  @override
+  String get battery => 'Akku';
+
+  @override
+  String get charging => 'lädt';
+
+  @override
+  String get settings => 'Einstellungen';
+
+  @override
+  String get videoSound => 'Videos mit Ton';
+
+  @override
+  String get videoSoundHint => 'Aus: Videos laufen auf diesem Frame stumm.';
+
+  @override
+  String get albumSwitch => 'Album-Wechsel erlauben';
+
+  @override
+  String get albumSwitchHint =>
+      'Wer vor dem Frame steht, kann selbst zwischen den Alben wechseln.';
+
+  @override
+  String get showsAlbums => 'Zeigt';
+
+  @override
+  String get noAlbumAssigned => 'Noch kein Album zugewiesen';
+
+  @override
+  String get addAlbumToFrame => 'Album hinzufügen';
+
+  @override
+  String get noMoreAlbums =>
+      'Es gibt keine weiteren Alben, die dieser Space sehen kann.';
+
+  @override
+  String get close => 'Schließen';
+
+  @override
+  String get removeFromFrame => 'Vom Frame entfernen';
+
+  @override
+  String get revokeFrame => 'Frame widerrufen';
+
+  @override
+  String get revokeFrameMessage =>
+      'Der Frame verliert sofort jeden Zugriff und löscht seine Fotos. Du kannst ihn jederzeit wieder aktivieren.';
+
+  @override
+  String get reactivateFrame => 'Frame wieder aktivieren';
 }

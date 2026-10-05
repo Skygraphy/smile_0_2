@@ -6,6 +6,7 @@ class SmileFrame {
     required this.name,
     required this.lifecycleState,
     required this.channelSwitchEnabled,
+    this.videoSound = true,
     this.pairingCode,
     this.pairingCodeExpiresAt,
     this.currentAppVersion,
@@ -19,6 +20,9 @@ class SmileFrame {
   final String name;
   final String lifecycleState; // 'pending' | 'active' | 'revoked'
   final bool channelSwitchEnabled;
+
+  /// Play videos with sound on this Frame (migrations/0056).
+  final bool videoSound;
   final String? pairingCode;
   final DateTime? pairingCodeExpiresAt;
   final String? currentAppVersion;
@@ -31,6 +35,21 @@ class SmileFrame {
   final String? deviceModel;
 
   bool get isRevoked => lifecycleState == 'revoked';
+
+  SmileFrame copyWith({bool? channelSwitchEnabled, bool? videoSound}) => SmileFrame(
+        id: id,
+        name: name,
+        lifecycleState: lifecycleState,
+        channelSwitchEnabled: channelSwitchEnabled ?? this.channelSwitchEnabled,
+        videoSound: videoSound ?? this.videoSound,
+        pairingCode: pairingCode,
+        pairingCodeExpiresAt: pairingCodeExpiresAt,
+        currentAppVersion: currentAppVersion,
+        lastSeenAt: lastSeenAt,
+        batteryLevel: batteryLevel,
+        isCharging: isCharging,
+        deviceModel: deviceModel,
+      );
   bool get isPending => lifecycleState == 'pending';
 
   factory SmileFrame.fromJson(Map<String, dynamic> json) => SmileFrame(
@@ -38,6 +57,7 @@ class SmileFrame {
         name: json['name'] as String,
         lifecycleState: json['lifecycle_state'] as String,
         channelSwitchEnabled: json['channel_switch_enabled'] as bool? ?? false,
+        videoSound: json['video_sound'] as bool? ?? true,
         pairingCode: json['pairing_code'] as String?,
         pairingCodeExpiresAt:
             json['pairing_code_expires_at'] != null ? DateTime.parse(json['pairing_code_expires_at'] as String) : null,
@@ -63,7 +83,7 @@ class AssignableChannel {
   final String channelName;
 }
 
-/// Backs frame_list_screen.dart / frame_settings_screen.dart. A Frame is
+/// Backs space_info_screen.dart / frame_settings_screen.dart. A Frame is
 /// created here (named, like a Channel) and generates a pairing code the
 /// physical Smile-Frame hardware later consumes itself
 /// (claim-frame-pairing) -- reversed order from the pre-reset schema, see
@@ -72,7 +92,7 @@ class AssignableChannel {
 /// telemetry (last_seen/battery/app_version) and the channel-switch
 /// display setting remain.
 class FrameService {
-  static const _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, pairing_code, '
+  static const _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, video_sound, pairing_code, '
       'pairing_code_expires_at, current_app_version, last_seen_at, battery_level, is_charging, device_model';
 
   Future<List<SmileFrame>> listFrames(String spaceId) async {
@@ -111,6 +131,10 @@ class FrameService {
 
   Future<void> setChannelSwitchEnabled({required String frameId, required bool enabled}) async {
     await supabase.from('frames').update({'channel_switch_enabled': enabled}).eq('id', frameId);
+  }
+
+  Future<void> setVideoSound({required String frameId, required bool enabled}) async {
+    await supabase.from('frames').update({'video_sound': enabled}).eq('id', frameId);
   }
 
   Future<List<FrameChannelAssignment>> listAssignedChannels(String frameId) async {

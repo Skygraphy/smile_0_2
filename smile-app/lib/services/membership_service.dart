@@ -339,7 +339,7 @@ class ChannelRequestException implements Exception {
 
   String get message => switch (code) {
         'user_not_found' => 'Diese Person hat noch keinen Smile-Account.',
-        'not_channel_sco' => 'Du bist nicht berechtigt, diesen Channel zu verwalten.',
+        'not_channel_sco' => 'Du bist nicht berechtigt, dieses Album zu verwalten.',
         'request_already_pending' => 'Es gibt bereits eine offene Einladung/Anfrage.',
         _ => 'Aktion fehlgeschlagen.',
       };

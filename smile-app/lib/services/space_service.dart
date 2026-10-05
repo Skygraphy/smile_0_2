@@ -24,7 +24,7 @@ class SpaceCoOwner {
 }
 
 /// A not-yet-answered co-owner invite, from the founder's own point of
-/// view (who did I invite, and when) -- see space_co_owners_screen.dart's
+/// view (who did I invite, and when) -- see space_info_screen.dart's Admins section,
 /// "Ausstehende Einladungen".
 class PendingCoOwnerInvite {
   PendingCoOwnerInvite({
@@ -115,6 +115,15 @@ class MyCoOwnerInvite {
 /// handled automatically by a DB trigger, not from here -- see the
 /// migration's `handle_space_owner_removal`.
 class SpaceService {
+  /// Admin and Co-Admins (RLS spaces_update since migrations/0047).
+  Future<void> renameSpace({required String spaceId, required String name}) async {
+    await supabase.from('spaces').update({'name': name}).eq('id', spaceId);
+  }
+
+  Future<void> createSpace(String name) async {
+    await supabase.from('spaces').insert({'name': name});
+  }
+
   /// Administrator only (a co-owner may manage, never end the Space) --
   /// into the 30-day trash with every channel, photo and Frame of it
   /// (delete-space-or-channel); restorable via TrashService.
@@ -220,11 +229,11 @@ class SpaceServiceException implements Exception {
 
   String get message => switch (code) {
         'user_not_found' => 'Diese Person hat noch keinen Smile-Account.',
-        'not_space_founder' => 'Nur der Administrator kann das tun.',
-        'already_founder' => 'Diese Person ist bereits der Administrator.',
-        'already_co_owner' => 'Diese Person ist bereits Co-Owner.',
+        'not_space_founder' => 'Nur der Admin kann das tun.',
+        'already_founder' => 'Diese Person ist bereits Admin.',
+        'already_co_owner' => 'Diese Person ist bereits Co-Admin.',
         'invite_already_pending' => 'Es gibt bereits eine offene Einladung.',
-        'not_a_co_owner' => 'Diese Person ist kein Co-Owner.',
+        'not_a_co_owner' => 'Diese Person ist kein Co-Admin.',
         _ => 'Aktion fehlgeschlagen.',
       };
 

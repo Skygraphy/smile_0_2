@@ -12,8 +12,7 @@ import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
 import 'screens/my_invites_screen.dart';
 import 'screens/profile_setup_screen.dart';
-import 'screens/space_co_owners_screen.dart';
-import 'screens/spaces_screen.dart';
+import 'screens/space_info_screen.dart';
 import 'services/profile_service.dart';
 import 'services/push_service.dart';
 import 'services/sync_bus.dart';
@@ -118,11 +117,12 @@ void _openNotificationTarget(Map<String, dynamic> data) {
         MaterialPageRoute(builder: (_) => AlbumInfoScreen(channelId: channelId, channelName: channelName)),
       );
     case 'space_ownership_transferred':
-      navigator.push(MaterialPageRoute(builder: (_) => SpacesScreen()));
+      if (spaceId == null) return;
+      navigator.push(MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: spaceId, spaceName: spaceName)));
     case 'space_co_owner_invite_decided':
       if (spaceId == null) return;
       navigator.push(
-        MaterialPageRoute(builder: (_) => SpaceCoOwnersScreen(spaceId: spaceId, spaceName: spaceName)),
+        MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: spaceId, spaceName: spaceName)),
       );
   }
 }

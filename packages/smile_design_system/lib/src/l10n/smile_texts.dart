@@ -639,6 +639,378 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Zurückziehen'**
   String get actionWithdraw;
+
+  /// No description provided for @spacesLoadError.
+  ///
+  /// In de, this message translates to:
+  /// **'Spaces konnten nicht geladen werden: {error}'**
+  String spacesLoadError(String error);
+
+  /// No description provided for @spacesEmptyTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch kein eigener Space'**
+  String get spacesEmptyTitle;
+
+  /// No description provided for @spacesEmptyMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Einen Space brauchst du nur, wenn du selbst Frames aufstellst oder Alben verwaltest, für dein Zuhause oder deinen Betrieb.'**
+  String get spacesEmptyMessage;
+
+  /// No description provided for @createSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Space anlegen'**
+  String get createSpace;
+
+  /// No description provided for @createSpaceHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Name, z. B. „Familie Müller“ oder „Hotel Sacher“'**
+  String get createSpaceHint;
+
+  /// No description provided for @create.
+  ///
+  /// In de, this message translates to:
+  /// **'Anlegen'**
+  String get create;
+
+  /// No description provided for @youAreAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Du bist Admin'**
+  String get youAreAdmin;
+
+  /// No description provided for @youAreCoAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Du bist Co-Admin'**
+  String get youAreCoAdmin;
+
+  /// No description provided for @renameSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Space umbenennen'**
+  String get renameSpace;
+
+  /// No description provided for @spaceInfoLoadError.
+  ///
+  /// In de, this message translates to:
+  /// **'Space-Infos konnten nicht geladen werden: {error}'**
+  String spaceInfoLoadError(String error);
+
+  /// No description provided for @createAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Album anlegen'**
+  String get createAlbum;
+
+  /// No description provided for @createAlbumHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Name, z. B. „Enkelkinder“ oder „Lobby“'**
+  String get createAlbumHint;
+
+  /// No description provided for @noAlbumYet.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch kein Album'**
+  String get noAlbumYet;
+
+  /// No description provided for @sharedIntoSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit diesem Space geteilt'**
+  String get sharedIntoSpace;
+
+  /// No description provided for @sharedIntoSpaceHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Alben anderer Spaces, die hier nur angesehen werden'**
+  String get sharedIntoSpaceHint;
+
+  /// No description provided for @stopShowing.
+  ///
+  /// In de, this message translates to:
+  /// **'Nicht mehr anzeigen'**
+  String get stopShowing;
+
+  /// No description provided for @stopShowingTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'„{album}“ nicht mehr anzeigen?'**
+  String stopShowingTitle(String album);
+
+  /// No description provided for @stopShowingMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieser Space und seine Frames sehen das Album danach nicht mehr.'**
+  String get stopShowingMessage;
+
+  /// No description provided for @noFrameYet.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch kein Frame'**
+  String get noFrameYet;
+
+  /// No description provided for @connectFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame verbinden'**
+  String get connectFrame;
+
+  /// No description provided for @frameActive.
+  ///
+  /// In de, this message translates to:
+  /// **'Aktiv'**
+  String get frameActive;
+
+  /// No description provided for @framePending.
+  ///
+  /// In de, this message translates to:
+  /// **'Wartet auf Kopplung'**
+  String get framePending;
+
+  /// No description provided for @frameRevoked.
+  ///
+  /// In de, this message translates to:
+  /// **'Widerrufen'**
+  String get frameRevoked;
+
+  /// No description provided for @inviteCoAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Co-Admin einladen'**
+  String get inviteCoAdmin;
+
+  /// No description provided for @inviteCoAdminHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Person braucht bereits einen Smile-Account. Nimmt sie an, verwaltet sie diesen Space mit allen Rechten außer Löschen.'**
+  String get inviteCoAdminHint;
+
+  /// No description provided for @makeAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Zum Admin machen'**
+  String get makeAdmin;
+
+  /// No description provided for @makeAdminTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} zum Admin machen?'**
+  String makeAdminTitle(String name);
+
+  /// No description provided for @makeAdminMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Diese Person wird Admin dieses Space. Du bleibst Co-Admin mit allen Rechten, entscheidest aber nicht mehr allein, wer mitverwaltet.'**
+  String get makeAdminMessage;
+
+  /// No description provided for @chooseNewAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Wer soll Admin werden?'**
+  String get chooseNewAdmin;
+
+  /// No description provided for @removeCoAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Als Co-Admin entfernen'**
+  String get removeCoAdmin;
+
+  /// No description provided for @removeCoAdminTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} als Co-Admin entfernen?'**
+  String removeCoAdminTitle(String name);
+
+  /// No description provided for @removeCoAdminMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Person verliert die Verwaltungsrechte über diesen Space.'**
+  String get removeCoAdminMessage;
+
+  /// No description provided for @stepDown.
+  ///
+  /// In de, this message translates to:
+  /// **'Co-Admin-Rolle abgeben'**
+  String get stepDown;
+
+  /// No description provided for @stepDownMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Du verlierst deine Verwaltungsrechte über diesen Space.'**
+  String get stepDownMessage;
+
+  /// No description provided for @trashTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Papierkorb'**
+  String get trashTitle;
+
+  /// No description provided for @deleteSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Space löschen'**
+  String get deleteSpace;
+
+  /// No description provided for @deleteSpaceTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Space „{space}“ löschen?'**
+  String deleteSpaceTitle(String space);
+
+  /// No description provided for @deleteSpaceMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Space verschwindet mit allen Alben, Fotos und Frames sofort für alle; alle Beteiligten werden benachrichtigt. 30 Tage lang kannst du ihn im Papierkorb wiederherstellen.'**
+  String get deleteSpaceMessage;
+
+  /// No description provided for @inTrash.
+  ///
+  /// In de, this message translates to:
+  /// **'„{name}“ ist im Papierkorb.'**
+  String inTrash(String name);
+
+  /// No description provided for @frameInfoLoadError.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame-Infos konnten nicht geladen werden: {error}'**
+  String frameInfoLoadError(String error);
+
+  /// No description provided for @frameInSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame in {space}'**
+  String frameInSpace(String space);
+
+  /// No description provided for @renameFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame umbenennen'**
+  String get renameFrame;
+
+  /// No description provided for @status.
+  ///
+  /// In de, this message translates to:
+  /// **'Status'**
+  String get status;
+
+  /// No description provided for @device.
+  ///
+  /// In de, this message translates to:
+  /// **'Gerät'**
+  String get device;
+
+  /// No description provided for @lastSeen.
+  ///
+  /// In de, this message translates to:
+  /// **'Zuletzt gesehen'**
+  String get lastSeen;
+
+  /// No description provided for @appVersion.
+  ///
+  /// In de, this message translates to:
+  /// **'App-Version'**
+  String get appVersion;
+
+  /// No description provided for @battery.
+  ///
+  /// In de, this message translates to:
+  /// **'Akku'**
+  String get battery;
+
+  /// No description provided for @charging.
+  ///
+  /// In de, this message translates to:
+  /// **'lädt'**
+  String get charging;
+
+  /// No description provided for @settings.
+  ///
+  /// In de, this message translates to:
+  /// **'Einstellungen'**
+  String get settings;
+
+  /// No description provided for @videoSound.
+  ///
+  /// In de, this message translates to:
+  /// **'Videos mit Ton'**
+  String get videoSound;
+
+  /// No description provided for @videoSoundHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Aus: Videos laufen auf diesem Frame stumm.'**
+  String get videoSoundHint;
+
+  /// No description provided for @albumSwitch.
+  ///
+  /// In de, this message translates to:
+  /// **'Album-Wechsel erlauben'**
+  String get albumSwitch;
+
+  /// No description provided for @albumSwitchHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Wer vor dem Frame steht, kann selbst zwischen den Alben wechseln.'**
+  String get albumSwitchHint;
+
+  /// No description provided for @showsAlbums.
+  ///
+  /// In de, this message translates to:
+  /// **'Zeigt'**
+  String get showsAlbums;
+
+  /// No description provided for @noAlbumAssigned.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch kein Album zugewiesen'**
+  String get noAlbumAssigned;
+
+  /// No description provided for @addAlbumToFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Album hinzufügen'**
+  String get addAlbumToFrame;
+
+  /// No description provided for @noMoreAlbums.
+  ///
+  /// In de, this message translates to:
+  /// **'Es gibt keine weiteren Alben, die dieser Space sehen kann.'**
+  String get noMoreAlbums;
+
+  /// No description provided for @close.
+  ///
+  /// In de, this message translates to:
+  /// **'Schließen'**
+  String get close;
+
+  /// No description provided for @removeFromFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Vom Frame entfernen'**
+  String get removeFromFrame;
+
+  /// No description provided for @revokeFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame widerrufen'**
+  String get revokeFrame;
+
+  /// No description provided for @revokeFrameMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Frame verliert sofort jeden Zugriff und löscht seine Fotos. Du kannst ihn jederzeit wieder aktivieren.'**
+  String get revokeFrameMessage;
+
+  /// No description provided for @reactivateFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame wieder aktivieren'**
+  String get reactivateFrame;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

@@ -13,18 +13,24 @@ class FrameSettingsInfo {
     required this.displayMode,
     required this.slideshowIntervalSeconds,
     required this.channelSwitchEnabled,
+    this.videoSound = true,
     this.maxLocalCacheGb,
   });
 
   final String displayMode; // 'slideshow' | 'manual'
   final int slideshowIntervalSeconds;
   final bool channelSwitchEnabled;
+
+  /// Play videos with sound (per-Frame setting, migrations/0056). Absent
+  /// from an older server response = true, the behavior before it existed.
+  final bool videoSound;
   final double? maxLocalCacheGb;
 
   factory FrameSettingsInfo.fromJson(Map<String, dynamic> json) => FrameSettingsInfo(
         displayMode: json['display_mode'] as String? ?? 'slideshow',
         slideshowIntervalSeconds: json['slideshow_interval_seconds'] as int? ?? 8,
         channelSwitchEnabled: json['channel_switch_enabled'] as bool? ?? false,
+        videoSound: json['video_sound'] as bool? ?? true,
         maxLocalCacheGb: (json['max_local_cache_gb'] as num?)?.toDouble(),
       );
 }

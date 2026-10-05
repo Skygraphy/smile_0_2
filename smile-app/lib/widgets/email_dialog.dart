@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// A plain "enter someone's email" prompt -- shared by every flow that
 /// looks a person up by email server-side (album_info_screen.dart's
-/// "Person einladen"/"Space einladen", space_co_owners_screen.dart's
+/// "Person einladen"/"Space einladen", space_info_screen.dart's
 /// "Co-Owner hinzufügen"). Returns the entered email, or null if cancelled.
 class EmailDialog extends StatefulWidget {
   const EmailDialog({super.key, required this.title, required this.explanation, required this.confirmLabel});

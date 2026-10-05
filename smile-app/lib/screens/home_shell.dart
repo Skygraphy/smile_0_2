@@ -33,7 +33,7 @@ class _HomeShellState extends State<HomeShell> {
         index: _index,
         children: [
           ChannelsHomeScreen(onOpenSpaces: () => _select(_spaces)),
-          const SpacesScreen(),
+          SpacesScreen(),
           SettingsScreen(),
         ],
       ),

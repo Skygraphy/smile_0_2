@@ -99,30 +99,12 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
 
   Future<void> _rename() async {
     final t = SmileTexts.of(context);
-    final controller = TextEditingController(text: _name);
-    final name = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.renameAlbum),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(labelText: t.name),
-          onSubmitted: (value) => Navigator.of(context).pop(value),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.actionCancel)),
-          TextButton(onPressed: () => Navigator.of(context).pop(controller.text), child: Text(t.save)),
-        ],
-      ),
-    );
-    controller.dispose();
-    final trimmed = name?.trim() ?? '';
-    if (trimmed.isEmpty || trimmed == _name) return;
-    await _run(() => widget.channelService.renameChannel(channelId: widget.channelId, name: trimmed));
+    final name = await showSmileNameDialog(context, title: t.renameAlbum, confirmLabel: t.save, initialValue: _name);
+    if (name == null) return;
+    await _run(() => widget.channelService.renameChannel(channelId: widget.channelId, name: name));
     if (!mounted) return;
-    setState(() => _name = trimmed);
-    widget.onRenamed?.call(trimmed);
+    setState(() => _name = name);
+    widget.onRenamed?.call(name);
   }
 
   Future<void> _inviteMember() async {

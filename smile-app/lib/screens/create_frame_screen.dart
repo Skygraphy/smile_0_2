@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../services/frame_service.dart';
@@ -55,7 +56,7 @@ class _CreateFrameScreenState extends State<CreateFrameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Frame erstellen')),
+      appBar: AppBar(title: Text(SmileTexts.of(context).connectFrame)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -71,7 +72,7 @@ class _CreateFrameScreenState extends State<CreateFrameScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.check_circle, size: 48, color: Colors.green),
+          Icon(SmileIcons.selected, size: 48, color: Theme.of(context).colorScheme.primary),
           const SizedBox(height: 16),
           Text('"${frame.name}" wurde angelegt.', textAlign: TextAlign.center),
           const SizedBox(height: 8),
@@ -101,7 +102,7 @@ class _CreateFrameScreenState extends State<CreateFrameScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Wie soll das neue Frame heißen (z.B. "Küche")?'),
+        const Text('Wie soll der neue Frame heißen (z.B. "Küche")?'),
         const SizedBox(height: 24),
         TextField(
           controller: _nameController,

@@ -16,11 +16,20 @@ import '../services/media_cache_sync.dart';
 /// slideshow moves on then, instead of on its usual timer -- or right away
 /// if the video can't be played, so a broken file never stalls the Frame.
 class VideoSlide extends StatefulWidget {
-  const VideoSlide({super.key, required this.entry, required this.cacheStore, required this.onFinished});
+  const VideoSlide({
+    super.key,
+    required this.entry,
+    required this.cacheStore,
+    required this.onFinished,
+    this.withSound = true,
+  });
 
   final CachedMediaEntry entry;
   final MediaCacheStore cacheStore;
   final VoidCallback onFinished;
+
+  /// The Frame's video-sound setting; false plays muted.
+  final bool withSound;
 
   @override
   State<VideoSlide> createState() => _VideoSlideState();
@@ -35,6 +44,15 @@ class _VideoSlideState extends State<VideoSlide> {
   void initState() {
     super.initState();
     _start();
+  }
+
+  @override
+  void didUpdateWidget(VideoSlide oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // The setting can change while a video plays (pushed via sync).
+    if (oldWidget.withSound != widget.withSound) {
+      _controller?.setVolume(widget.withSound ? 1 : 0);
+    }
   }
 
   Future<void> _start() async {
@@ -64,6 +82,7 @@ class _VideoSlideState extends State<VideoSlide> {
       if (value.hasError) _finish();
     });
     setState(() => _controller = controller);
+    await controller.setVolume(widget.withSound ? 1 : 0);
     await controller.play();
   }
 

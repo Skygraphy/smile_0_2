@@ -64,7 +64,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   Future<void> _openMySpaces() async {
     final onOpenSpaces = widget.onOpenSpaces;
     if (onOpenSpaces != null) return onOpenSpaces();
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SpacesScreen()));
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => SpacesScreen()));
     await _load();
   }
 

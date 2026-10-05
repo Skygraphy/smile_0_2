@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
 
   const { data: frame } = await supabase
     .from("frames")
-    .select("id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, max_local_cache_gb, spaces(name, deleted_at)")
+    .select("id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, max_local_cache_gb, spaces(name, deleted_at)")
     .eq("id", claims.frame_id)
     .maybeSingle();
   // Deleted (its Space was deleted) vs. merely revoked: a deleted Frame
@@ -68,6 +68,7 @@ Deno.serve(async (req) => {
     display_mode: frame.display_mode,
     slideshow_interval_seconds: frame.slideshow_interval_seconds,
     channel_switch_enabled: frame.channel_switch_enabled,
+    video_sound: frame.video_sound,
     max_local_cache_gb: frame.max_local_cache_gb,
   };
 

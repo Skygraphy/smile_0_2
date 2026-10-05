@@ -310,6 +310,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                   entry: entry,
                   cacheStore: widget.cacheStore,
                   onFinished: _onVideoFinished,
+                  withSound: _settings?.videoSound ?? true,
                 )
               : _photo(entry, BoxFit.contain),
         ),
