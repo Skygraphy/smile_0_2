@@ -325,7 +325,7 @@ abstract class SmileTexts {
   /// No description provided for @firstStepsInvitedHint.
   ///
   /// In de, this message translates to:
-  /// **'Code eingeben oder QR-Code scannen'**
+  /// **'Deine Einladung findest du unter Neuigkeiten'**
   String get firstStepsInvitedHint;
 
   /// No description provided for @firstStepsSetup.
@@ -339,6 +339,18 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Space für dein Zuhause oder deinen Betrieb anlegen'**
   String get firstStepsSetupHint;
+
+  /// No description provided for @firstStepsQuestion.
+  ///
+  /// In de, this message translates to:
+  /// **'Hier erscheinen deine Alben. Wie möchtest du anfangen?'**
+  String get firstStepsQuestion;
+
+  /// No description provided for @firstStepsYourEmail.
+  ///
+  /// In de, this message translates to:
+  /// **'Eingeladen wirst du über deine E-Mail-Adresse {email}'**
+  String firstStepsYourEmail(String email);
 
   /// No description provided for @albumsLoadError.
   ///

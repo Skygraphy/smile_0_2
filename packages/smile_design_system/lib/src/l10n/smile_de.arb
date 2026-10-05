@@ -1,29 +1,48 @@
 {
   "@@locale": "de",
   "@@x-comment": "Single source for every user-visible Smile term (decided 2026-10-05). Code/DB keep their own names: channel = Album, user = Person, space owner = Admin, co-owner = Co-Admin.",
-
   "space": "Space",
   "spaces": "Spaces",
   "spaceCount": "{count, plural, =1{1 Space} other{{count} Spaces}}",
-  "@spaceCount": {"placeholders": {"count": {"type": "int"}}},
-
+  "@spaceCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "album": "Album",
   "albums": "Alben",
   "albumCount": "{count, plural, =1{1 Album} other{{count} Alben}}",
-  "@albumCount": {"placeholders": {"count": {"type": "int"}}},
-
+  "@albumCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "frame": "Frame",
   "frames": "Frames",
   "frameCount": "{count, plural, =1{1 Frame} other{{count} Frames}}",
-  "@frameCount": {"placeholders": {"count": {"type": "int"}}},
-
+  "@frameCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "person": "Person",
   "persons": "Personen",
   "personCount": "{count, plural, =1{1 Person} other{{count} Personen}}",
-  "@personCount": {"placeholders": {"count": {"type": "int"}}},
+  "@personCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "profile": "Profil",
   "you": "Du",
-
   "roleAdmin": "Admin",
   "roleCoAdmin": "Co-Admin",
   "roleMember": "Member",
@@ -31,12 +50,16 @@
   "admins": "Admins",
   "sharedWith": "Shared with",
   "sharedWithSpace": "Shared with {space}",
-  "@sharedWithSpace": {"placeholders": {"space": {"type": "String"}}},
-
+  "@sharedWithSpace": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
   "news": "Neuigkeiten",
   "newsWaiting": "Neuigkeiten, es wartet etwas auf dich",
   "actionSendPhoto": "Foto senden",
-
   "actionInvite": "Einladen",
   "actionShare": "Mit Space teilen",
   "actionAdd": "Neu anlegen",
@@ -49,15 +72,28 @@
   "actionConnect": "Verbinden",
   "actionCancel": "Abbrechen",
   "actionConfirm": "OK",
-
   "firstStepsWelcome": "Willkommen bei Smile",
   "firstStepsInvited": "Ich wurde eingeladen",
-  "firstStepsInvitedHint": "Code eingeben oder QR-Code scannen",
+  "firstStepsInvitedHint": "Deine Einladung findest du unter Neuigkeiten",
   "firstStepsSetup": "Ich richte Smile ein",
   "firstStepsSetupHint": "Space für dein Zuhause oder deinen Betrieb anlegen",
-
+  "firstStepsQuestion": "Hier erscheinen deine Alben. Wie möchtest du anfangen?",
+  "firstStepsYourEmail": "Eingeladen wirst du über deine E-Mail-Adresse {email}",
+  "@firstStepsYourEmail": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
   "albumsLoadError": "Alben konnten nicht geladen werden: {error}",
-  "@albumsLoadError": {"placeholders": {"error": {"type": "String"}}},
+  "@albumsLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "albumsEmptyTitle": "Noch keine Alben",
   "albumsEmptyMessage": "Lege einen Space an oder nimm eine Einladung an.",
   "openSpaces": "Spaces öffnen",
@@ -70,14 +106,25 @@
   "actionHide": "Ausblenden",
   "actionUnhide": "Einblenden",
   "selectedCount": "{count} ausgewählt",
-  "@selectedCount": {"placeholders": {"count": {"type": "int"}}},
+  "@selectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "requestMembership": "Member werden",
   "requestSent": "Anfrage gesendet",
   "sendTo": "Senden an …",
   "sendToNoAlbum": "Du bist noch in keinem Album, in dem du Fotos teilen kannst.",
-
   "albumInSpace": "Album in {space}",
-  "@albumInSpace": {"placeholders": {"space": {"type": "String"}}},
+  "@albumInSpace": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
   "rename": "Umbenennen",
   "renameAlbum": "Album umbenennen",
   "name": "Name",
@@ -96,29 +143,73 @@
   "notOnAnyFrame": "Noch auf keinem Frame",
   "removeFromAlbum": "Aus dem Album entfernen",
   "removePersonTitle": "{name} entfernen?",
-  "@removePersonTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@removePersonTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "removePersonMessage": "Die Person verliert den Zugriff auf dieses Album.",
   "endShare": "Freigabe beenden",
   "endShareTitle": "Freigabe für „{space}“ beenden?",
-  "@endShareTitle": {"placeholders": {"space": {"type": "String"}}},
+  "@endShareTitle": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
   "endShareMessage": "„{space}“ sieht „{album}“ danach nicht mehr, auch nicht auf seinen Frames.",
-  "@endShareMessage": {"placeholders": {"space": {"type": "String"}, "album": {"type": "String"}}},
+  "@endShareMessage": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      },
+      "album": {
+        "type": "String"
+      }
+    }
+  },
   "leaveAlbum": "Album verlassen",
   "leaveAlbumMessage": "Du siehst die Fotos dieses Albums danach nicht mehr.",
   "deleteAlbum": "Album löschen",
   "deleteAlbumTitle": "Album „{album}“ löschen?",
-  "@deleteAlbumTitle": {"placeholders": {"album": {"type": "String"}}},
+  "@deleteAlbumTitle": {
+    "placeholders": {
+      "album": {
+        "type": "String"
+      }
+    }
+  },
   "deleteAlbumMessage": "Das Album verschwindet mit allen Fotos sofort für alle Personen und von allen Frames. 30 Tage lang kannst du es im Papierkorb wiederherstellen.",
   "albumInfoLoadError": "Album-Infos konnten nicht geladen werden: {error}",
-  "@albumInfoLoadError": {"placeholders": {"error": {"type": "String"}}},
+  "@albumInfoLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "actionFailed": "Aktion fehlgeschlagen: {error}",
-  "@actionFailed": {"placeholders": {"error": {"type": "String"}}},
+  "@actionFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "actionAccept": "Annehmen",
   "actionDecline": "Ablehnen",
   "actionWithdraw": "Zurückziehen",
-
   "spacesLoadError": "Spaces konnten nicht geladen werden: {error}",
-  "@spacesLoadError": {"placeholders": {"error": {"type": "String"}}},
+  "@spacesLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "spacesEmptyTitle": "Noch kein eigener Space",
   "spacesEmptyMessage": "Einen Space brauchst du nur, wenn du selbst Frames aufstellst oder Alben verwaltest, für dein Zuhause oder deinen Betrieb.",
   "createSpace": "Space anlegen",
@@ -128,7 +219,13 @@
   "youAreCoAdmin": "Du bist Co-Admin",
   "renameSpace": "Space umbenennen",
   "spaceInfoLoadError": "Space-Infos konnten nicht geladen werden: {error}",
-  "@spaceInfoLoadError": {"placeholders": {"error": {"type": "String"}}},
+  "@spaceInfoLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "createAlbum": "Album anlegen",
   "createAlbumHint": "Name, z. B. „Enkelkinder“ oder „Lobby“",
   "noAlbumYet": "Noch kein Album",
@@ -136,7 +233,13 @@
   "sharedIntoSpaceHint": "Alben anderer Spaces, die hier nur angesehen werden",
   "stopShowing": "Nicht mehr anzeigen",
   "stopShowingTitle": "„{album}“ nicht mehr anzeigen?",
-  "@stopShowingTitle": {"placeholders": {"album": {"type": "String"}}},
+  "@stopShowingTitle": {
+    "placeholders": {
+      "album": {
+        "type": "String"
+      }
+    }
+  },
   "stopShowingMessage": "Dieser Space und seine Frames sehen das Album danach nicht mehr.",
   "noFrameYet": "Noch kein Frame",
   "connectFrame": "Frame verbinden",
@@ -147,26 +250,62 @@
   "inviteCoAdminHint": "Die Person braucht bereits einen Smile-Account. Nimmt sie an, verwaltet sie diesen Space mit allen Rechten außer Löschen.",
   "makeAdmin": "Zum Admin machen",
   "makeAdminTitle": "{name} zum Admin machen?",
-  "@makeAdminTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@makeAdminTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "makeAdminMessage": "Diese Person wird Admin dieses Space. Du bleibst Co-Admin mit allen Rechten, entscheidest aber nicht mehr allein, wer mitverwaltet.",
   "chooseNewAdmin": "Wer soll Admin werden?",
   "removeCoAdmin": "Als Co-Admin entfernen",
   "removeCoAdminTitle": "{name} als Co-Admin entfernen?",
-  "@removeCoAdminTitle": {"placeholders": {"name": {"type": "String"}}},
+  "@removeCoAdminTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "removeCoAdminMessage": "Die Person verliert die Verwaltungsrechte über diesen Space.",
   "stepDown": "Co-Admin-Rolle abgeben",
   "stepDownMessage": "Du verlierst deine Verwaltungsrechte über diesen Space.",
   "trashTitle": "Papierkorb",
   "deleteSpace": "Space löschen",
   "deleteSpaceTitle": "Space „{space}“ löschen?",
-  "@deleteSpaceTitle": {"placeholders": {"space": {"type": "String"}}},
+  "@deleteSpaceTitle": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
   "deleteSpaceMessage": "Der Space verschwindet mit allen Alben, Fotos und Frames sofort für alle; alle Beteiligten werden benachrichtigt. 30 Tage lang kannst du ihn im Papierkorb wiederherstellen.",
   "inTrash": "„{name}“ ist im Papierkorb.",
-  "@inTrash": {"placeholders": {"name": {"type": "String"}}},
+  "@inTrash": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "frameInfoLoadError": "Frame-Infos konnten nicht geladen werden: {error}",
-  "@frameInfoLoadError": {"placeholders": {"error": {"type": "String"}}},
+  "@frameInfoLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "frameInSpace": "Frame in {space}",
-  "@frameInSpace": {"placeholders": {"space": {"type": "String"}}},
+  "@frameInSpace": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
   "renameFrame": "Frame umbenennen",
   "status": "Status",
   "device": "Gerät",
@@ -188,43 +327,126 @@
   "revokeFrame": "Frame widerrufen",
   "revokeFrameMessage": "Der Frame verliert sofort jeden Zugriff und löscht seine Fotos. Du kannst ihn jederzeit wieder aktivieren.",
   "reactivateFrame": "Frame wieder aktivieren",
-
   "newsEmptyTitle": "Keine Neuigkeiten",
   "newsEmptyMessage": "Hier erscheinen Einladungen, Anfragen und gelöschte Alben oder Spaces.",
   "newsLoadError": "Neuigkeiten konnten nicht geladen werden: {error}",
-  "@newsLoadError": {"placeholders": {"error": {"type": "String"}}},
+  "@newsLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "invitations": "Einladungen",
   "requests": "Anfragen",
   "myRequests": "Eigene Anfragen",
   "inviteCoAdminFrom": "{name} lädt dich als Co-Admin ein",
-  "@inviteCoAdminFrom": {"placeholders": {"name": {"type": "String"}}},
+  "@inviteCoAdminFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "inviteMemberFrom": "{name} lädt dich als Member ein",
-  "@inviteMemberFrom": {"placeholders": {"name": {"type": "String"}}},
+  "@inviteMemberFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "inviteShareFrom": "{name} möchte das Album mit deinem Space teilen",
-  "@inviteShareFrom": {"placeholders": {"name": {"type": "String"}}},
+  "@inviteShareFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "requestMemberFrom": "{name} möchte Member werden",
-  "@requestMemberFrom": {"placeholders": {"name": {"type": "String"}}},
+  "@requestMemberFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "requestShareFrom": "{name} möchte das Album mit dem eigenen Space sehen",
-  "@requestShareFrom": {"placeholders": {"name": {"type": "String"}}},
+  "@requestShareFrom": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "waitingForAnswer": "Wartet auf Antwort",
   "acceptedCoAdmin": "Du verwaltest jetzt „{space}“ mit.",
-  "@acceptedCoAdmin": {"placeholders": {"space": {"type": "String"}}},
+  "@acceptedCoAdmin": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
   "acceptedAlbum": "„{album}“ ist jetzt in deinen Alben.",
-  "@acceptedAlbum": {"placeholders": {"album": {"type": "String"}}},
+  "@acceptedAlbum": {
+    "placeholders": {
+      "album": {
+        "type": "String"
+      }
+    }
+  },
   "acceptedShare": "„{album}“ ist jetzt mit deinem Space geteilt.",
-  "@acceptedShare": {"placeholders": {"album": {"type": "String"}}},
+  "@acceptedShare": {
+    "placeholders": {
+      "album": {
+        "type": "String"
+      }
+    }
+  },
   "requestAccepted": "Anfrage angenommen.",
   "needOwnSpace": "Du brauchst zuerst einen eigenen Space, um ein geteiltes Album anzunehmen.",
   "chooseSpace": "Mit welchem Space?",
   "trashEmpty": "Der Papierkorb ist leer.",
   "trashLoadError": "Papierkorb konnte nicht geladen werden: {error}",
-  "@trashLoadError": {"placeholders": {"error": {"type": "String"}}},
+  "@trashLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "trashSpaceIn": "in {space}",
-  "@trashSpaceIn": {"placeholders": {"space": {"type": "String"}}},
+  "@trashSpaceIn": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
   "trashDeletedBy": "gelöscht von {name}",
-  "@trashDeletedBy": {"placeholders": {"name": {"type": "String"}}},
+  "@trashDeletedBy": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "trashGoneOn": "endgültig weg am {date}",
-  "@trashGoneOn": {"placeholders": {"date": {"type": "String"}}},
+  "@trashGoneOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "restored": "„{name}“ ist wiederhergestellt.",
-  "@restored": {"placeholders": {"name": {"type": "String"}}}
+  "@restored": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

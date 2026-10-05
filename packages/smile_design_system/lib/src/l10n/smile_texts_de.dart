@@ -158,7 +158,8 @@ class SmileTextsDe extends SmileTexts {
   String get firstStepsInvited => 'Ich wurde eingeladen';
 
   @override
-  String get firstStepsInvitedHint => 'Code eingeben oder QR-Code scannen';
+  String get firstStepsInvitedHint =>
+      'Deine Einladung findest du unter Neuigkeiten';
 
   @override
   String get firstStepsSetup => 'Ich richte Smile ein';
@@ -166,6 +167,15 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get firstStepsSetupHint =>
       'Space für dein Zuhause oder deinen Betrieb anlegen';
+
+  @override
+  String get firstStepsQuestion =>
+      'Hier erscheinen deine Alben. Wie möchtest du anfangen?';
+
+  @override
+  String firstStepsYourEmail(String email) {
+    return 'Eingeladen wirst du über deine E-Mail-Adresse $email';
+  }
 
   @override
   String albumsLoadError(String error) {

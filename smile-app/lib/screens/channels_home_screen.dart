@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
+import '../main.dart';
 import '../services/channel_picker_service.dart';
+import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/top_bar_actions.dart';
 import 'channel_feed_screen.dart';
-import 'spaces_screen.dart';
+import 'news_screen.dart';
+import 'space_info_screen.dart';
 
 /// The app's new landing screen. WhatsApp's chat list shows conversations
 /// sorted by recency, not a device/contact hierarchy first -- Spaces and
@@ -17,14 +20,11 @@ import 'spaces_screen.dart';
 /// most recent activity -- see project_ui-redesign-concepts memory for
 /// the reasoning behind this.
 class ChannelsHomeScreen extends StatefulWidget {
-  ChannelsHomeScreen({super.key, ChannelPickerService? channelPickerService, this.onOpenSpaces})
+  ChannelsHomeScreen({super.key, ChannelPickerService? channelPickerService})
       : channelPickerService = channelPickerService ?? ChannelPickerService();
 
   final ChannelPickerService channelPickerService;
 
-  /// Switches to the Spaces tab when hosted in HomeShell; without it the
-  /// Spaces screen is pushed instead.
-  final VoidCallback? onOpenSpaces;
 
   @override
   State<ChannelsHomeScreen> createState() => _ChannelsHomeScreenState();
@@ -61,12 +61,29 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   }
 
 
-  Future<void> _openMySpaces() async {
-    final onOpenSpaces = widget.onOpenSpaces;
-    if (onOpenSpaces != null) return onOpenSpaces();
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => SpacesScreen()));
+  /// "Ich wurde eingeladen": invitations arrive by email address and wait
+  /// in Neuigkeiten -- there is no invite code to type in.
+  Future<void> _openNews() async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => NewsScreen()));
     await _load();
   }
+
+  /// "Ich richte Smile ein": name a Space, then land on its info page,
+  /// whose empty sections offer the next steps (album, Frame).
+  Future<void> _setUpSpace() async {
+    final t = SmileTexts.of(context);
+    final navigator = Navigator.of(context);
+    final name = await showSmileNameDialog(context, title: t.createSpace, confirmLabel: t.create, hint: t.createSpaceHint);
+    if (name == null) return;
+    try {
+      final spaceId = await SpaceService().createSpace(name);
+      await navigator.push(MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: spaceId, spaceName: name)));
+      await _load();
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+    }
+  }
+
 
   String _relativeTime(DateTime time) {
     final now = DateTime.now();
@@ -97,7 +114,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
       body: channels == null
           ? const Center(child: CircularProgressIndicator())
           : channels.isEmpty
-              ? _EmptyState(errorMessage: _errorMessage, onOpenSpaces: _openMySpaces)
+              ? _FirstSteps(errorMessage: _errorMessage, onInvited: _openNews, onSetUp: _setUpSpace)
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView(
@@ -140,35 +157,55 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   }
 }
 
-/// Interim empty state -- the "Zwei Wege" first-start screen (decision 6)
-/// replaces it in a later stage. Invitations are reachable through the
-/// Neuigkeiten icon in the top bar.
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.errorMessage, required this.onOpenSpaces});
+/// First start, no albums yet (decision 6, "Zwei Wege", 2026-10-05):
+/// most people arrive through an invitation, a few set Smile up -- so the
+/// empty album list asks which of the two applies.
+class _FirstSteps extends StatelessWidget {
+  const _FirstSteps({required this.errorMessage, required this.onInvited, required this.onSetUp});
 
   final String? errorMessage;
-  final VoidCallback onOpenSpaces;
+  final VoidCallback onInvited;
+  final VoidCallback onSetUp;
 
   @override
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
-    return Column(
+    final theme = Theme.of(context);
+    final email = supabase.auth.currentUser?.email;
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.l),
       children: [
         if (errorMessage != null)
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            padding: const EdgeInsets.only(top: SmileSpacing.l),
+            child: Text(errorMessage!, style: TextStyle(color: theme.colorScheme.error)),
           ),
-        Expanded(
-          child: SmileEmptyState(
-            icon: SmileIcons.album,
-            title: t.albumsEmptyTitle,
-            message: t.albumsEmptyMessage,
-            actionLabel: t.openSpaces,
-            actionIcon: SmileIcons.space,
-            onAction: onOpenSpaces,
-          ),
+        const SizedBox(height: 64),
+        const Center(child: SmileObjectIcon(icon: SmileIcons.album, size: 72, iconSize: 34)),
+        const SizedBox(height: SmileSpacing.m),
+        Text(
+          t.firstStepsWelcome,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
+        const SizedBox(height: SmileSpacing.s),
+        Text(
+          t.firstStepsQuestion,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: SmileSpacing.xl),
+        SmileChoiceCard(icon: SmileIcons.news, title: t.firstStepsInvited, hint: t.firstStepsInvitedHint, onTap: onInvited),
+        const SizedBox(height: SmileSpacing.m),
+        SmileChoiceCard(icon: SmileIcons.space, title: t.firstStepsSetup, hint: t.firstStepsSetupHint, onTap: onSetUp),
+        if (email != null) ...[
+          const SizedBox(height: SmileSpacing.xl),
+          Text(
+            t.firstStepsYourEmail(email),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ],
       ],
     );
   }

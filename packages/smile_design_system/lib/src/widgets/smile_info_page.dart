@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../icons/smile_icons.dart';
 import '../theme/smile_tokens.dart';
 import 'smile_object_tile.dart';
 
@@ -229,6 +230,63 @@ class SmileSectionHint extends StatelessWidget {
           ],
           Expanded(child: Text(text, style: TextStyle(color: muted, fontSize: 13.5))),
         ],
+      ),
+    );
+  }
+}
+
+/// A big, tappable choice block -- coral icon tile, title, one-line hint,
+/// chevron. Used for the first-start "Zwei Wege" (decision 6).
+class SmileChoiceCard extends StatelessWidget {
+  const SmileChoiceCard({super.key, required this.icon, required this.title, this.hint, required this.onTap});
+
+  final IconData icon;
+  final String title;
+  final String? hint;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final text = hint;
+    return Material(
+      color: scheme.surfaceContainer,
+      borderRadius: BorderRadius.circular(SmileRadius.l),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(SmileRadius.l),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(SmileSpacing.l),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: scheme.primary.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(SmileRadius.m),
+                ),
+                alignment: Alignment.center,
+                child: Icon(icon, color: scheme.primary, size: 24),
+              ),
+              const SizedBox(width: SmileSpacing.m),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600, fontSize: 15)),
+                    if (text != null) ...[
+                      const SizedBox(height: 2),
+                      Text(text, style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant, fontSize: 13)),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
       ),
     );
   }

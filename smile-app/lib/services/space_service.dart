@@ -120,8 +120,10 @@ class SpaceService {
     await supabase.from('spaces').update({'name': name}).eq('id', spaceId);
   }
 
-  Future<void> createSpace(String name) async {
-    await supabase.from('spaces').insert({'name': name});
+  /// Returns the new Space's id.
+  Future<String> createSpace(String name) async {
+    final row = await supabase.from('spaces').insert({'name': name}).select('id').single();
+    return row['id'] as String;
   }
 
   /// Administrator only (a co-owner may manage, never end the Space) --

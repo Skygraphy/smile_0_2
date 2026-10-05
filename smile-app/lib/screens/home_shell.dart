@@ -19,7 +19,6 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   static const _albums = 0;
-  static const _spaces = 1;
 
   int _index = _albums;
 
@@ -32,7 +31,7 @@ class _HomeShellState extends State<HomeShell> {
       body: IndexedStack(
         index: _index,
         children: [
-          ChannelsHomeScreen(onOpenSpaces: () => _select(_spaces)),
+          ChannelsHomeScreen(),
           SpacesScreen(),
           SettingsScreen(),
         ],
