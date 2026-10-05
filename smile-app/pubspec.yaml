@@ -36,7 +36,6 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   supabase_flutter: ^2.8.0
-  google_fonts: ^8.2.1
   image_picker: ^1.1.2
   cached_network_image: ^3.4.1
   shared_preferences: ^2.3.2
@@ -47,6 +46,8 @@ dependencies:
   http: ^1.2.2
   video_player: ^2.14.0
   fc_native_video_thumbnail: ^3.0.1
+  smile_design_system:
+    path: ../packages/smile_design_system
 
 dev_dependencies:
   flutter_test:

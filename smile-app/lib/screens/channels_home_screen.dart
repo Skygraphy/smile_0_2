@@ -3,8 +3,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../services/channel_picker_service.dart';
 import '../services/sync_bus.dart';
-import '../widgets/smile_avatar.dart';
-import '../widgets/smile_wordmark.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 import 'channel_feed_screen.dart';
 import 'my_invites_screen.dart';
 import 'quick_capture_channel_picker_screen.dart';

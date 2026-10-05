@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/avatar_upload.dart';
 import '../services/profile_service.dart';
 import '../widgets/avatar_picker.dart';
-import '../widgets/smile_avatar.dart';
-import '../widgets/smile_wordmark.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 /// The mandatory first-login onboarding step -- main.dart's profile gate
 /// shows this whenever profiles.display_name doesn't exist yet for the

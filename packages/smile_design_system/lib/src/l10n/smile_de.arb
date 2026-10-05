@@ -1,0 +1,56 @@
+{
+  "@@locale": "de",
+  "@@x-comment": "Single source for every user-visible Smile term (decided 2026-10-05). Code/DB keep their own names: channel = Album, user = Person, space owner = Admin, co-owner = Co-Admin.",
+
+  "space": "Space",
+  "spaces": "Spaces",
+  "spaceCount": "{count, plural, =1{1 Space} other{{count} Spaces}}",
+  "@spaceCount": {"placeholders": {"count": {"type": "int"}}},
+
+  "album": "Album",
+  "albums": "Alben",
+  "albumCount": "{count, plural, =1{1 Album} other{{count} Alben}}",
+  "@albumCount": {"placeholders": {"count": {"type": "int"}}},
+
+  "frame": "Frame",
+  "frames": "Frames",
+  "frameCount": "{count, plural, =1{1 Frame} other{{count} Frames}}",
+  "@frameCount": {"placeholders": {"count": {"type": "int"}}},
+
+  "person": "Person",
+  "persons": "Personen",
+  "personCount": "{count, plural, =1{1 Person} other{{count} Personen}}",
+  "@personCount": {"placeholders": {"count": {"type": "int"}}},
+  "profile": "Profil",
+  "you": "Du",
+
+  "roleAdmin": "Admin",
+  "roleCoAdmin": "Co-Admin",
+  "roleMember": "Member",
+  "roleViewer": "Viewer",
+  "admins": "Admins",
+  "sharedWith": "Shared with",
+  "sharedWithSpace": "Shared with {space}",
+  "@sharedWithSpace": {"placeholders": {"space": {"type": "String"}}},
+
+  "news": "Neuigkeiten",
+
+  "actionInvite": "Einladen",
+  "actionShare": "Mit Space teilen",
+  "actionAdd": "Neu anlegen",
+  "actionRemove": "Entfernen",
+  "actionLeave": "Verlassen",
+  "actionDelete": "Löschen",
+  "actionRestore": "Wiederherstellen",
+  "actionHandOver": "Admin übergeben",
+  "actionInviteCode": "Einladungscode",
+  "actionConnect": "Verbinden",
+  "actionCancel": "Abbrechen",
+  "actionConfirm": "OK",
+
+  "firstStepsWelcome": "Willkommen bei Smile",
+  "firstStepsInvited": "Ich wurde eingeladen",
+  "firstStepsInvitedHint": "Code eingeben oder QR-Code scannen",
+  "firstStepsSetup": "Ich richte Smile ein",
+  "firstStepsSetupHint": "Space für dein Zuhause oder deinen Betrieb anlegen"
+}

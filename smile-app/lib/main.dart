@@ -17,7 +17,7 @@ import 'screens/spaces_screen.dart';
 import 'services/profile_service.dart';
 import 'services/push_service.dart';
 import 'services/sync_bus.dart';
-import 'theme/smile_theme.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 final supabase = Supabase.instance.client;
 
@@ -138,6 +138,11 @@ class SmileApp extends StatelessWidget {
       scaffoldMessengerKey: scaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: SmileTheme.themeData,
+      // German only for now; all Smile terms come from SmileTexts, and the
+      // Material/Cupertino delegates make built-in widgets German too.
+      locale: const Locale('de'),
+      localizationsDelegates: SmileTexts.localizationsDelegates,
+      supportedLocales: SmileTexts.supportedLocales,
       home: AuthGate(),
     );
   }

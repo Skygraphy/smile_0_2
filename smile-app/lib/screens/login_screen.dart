@@ -3,8 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
 import '../widgets/otp_code_field.dart';
-import '../widgets/smile_mark.dart';
-import '../widgets/smile_wordmark.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 /// Passwordless Email-OTP login (concept doc sect. 4): request a 6-digit
 /// code by email, then verify it. On success, AuthGate's own

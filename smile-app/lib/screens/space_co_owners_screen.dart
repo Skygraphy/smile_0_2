@@ -4,7 +4,7 @@ import '../main.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/email_dialog.dart';
-import '../widgets/smile_avatar.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 /// "Verwaltung teilen": who else has full SCO-equivalent power over this
 /// Space besides its founder (migrations/0037_space_co_owners.sql), plus

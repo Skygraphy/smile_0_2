@@ -6,7 +6,7 @@ import '../services/profile_service.dart';
 import '../services/push_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/avatar_picker.dart';
-import '../widgets/smile_avatar.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 import 'avatar_viewer_screen.dart';
 
 /// WhatsApp's own Settings screen layout: avatar with a small camera badge

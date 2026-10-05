@@ -1,6 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 import 'screens/pairing_screen.dart';
 import 'screens/slideshow_screen.dart';
@@ -10,9 +10,9 @@ import 'services/pairing_service.dart';
 import 'services/push_service.dart';
 import 'services/sync_service.dart';
 
-/// Same accent/typography as the Smile app (Living Coral, Inter) --
+/// Same theme as the Smile app (shared smile_design_system package) --
 /// Smile-Frame is a display for the same product, not a separate look.
-const smileAccentColor = Color(0xFFFF6F61);
+const smileAccentColor = SmileTheme.primary;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,19 +29,13 @@ class SmileFrameApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = GoogleFonts.interTextTheme(ThemeData.dark().textTheme);
     return MaterialApp(
       title: 'Smile-Frame',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: smileAccentColor,
-          brightness: Brightness.dark,
-        ),
-        textTheme: textTheme,
-        useMaterial3: true,
-      ),
+      theme: SmileTheme.themeData,
+      locale: const Locale('de'),
+      localizationsDelegates: SmileTexts.localizationsDelegates,
+      supportedLocales: SmileTexts.supportedLocales,
       home: StartupGate(),
     );
   }

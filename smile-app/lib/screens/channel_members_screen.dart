@@ -4,7 +4,7 @@ import '../main.dart';
 import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/email_dialog.dart';
-import '../widgets/smile_avatar.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 /// Channel roster + the two symmetric invite mechanisms (see
 /// migrations/0031_architecture_reset.sql): "Person einladen" grants

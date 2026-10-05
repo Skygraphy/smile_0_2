@@ -358,6 +358,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.0"
+  flutter_localizations:
+    dependency: transitive
+    description: flutter
+    source: sdk
+    version: "0.0.0"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -385,7 +390,7 @@ packages:
     source: hosted
     version: "2.7.1"
   google_fonts:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: google_fonts
       sha256: e3cb3ee6b47fd2472c23de6da5744796a4da195137759ddb3fbcc9467b7b3c7d
@@ -504,6 +509,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.2"
+  intl:
+    dependency: transitive
+    description:
+      name: intl
+      sha256: "1ca20c894b1717686a2319b8548763d812bc0aabdac580420a44c5178c57a867"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.20.3"
   jni:
     dependency: transitive
     description:
@@ -845,6 +858,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  smile_design_system:
+    dependency: "direct main"
+    description:
+      path: "../packages/smile_design_system"
+      relative: true
+    source: path
+    version: "1.0.0"
   source_span:
     dependency: transitive
     description:

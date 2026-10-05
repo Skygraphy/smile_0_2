@@ -1,0 +1,5 @@
+arb-dir: lib/src/l10n
+template-arb-file: smile_de.arb
+output-localization-file: smile_texts.dart
+output-class: SmileTexts
+nullable-getter: false

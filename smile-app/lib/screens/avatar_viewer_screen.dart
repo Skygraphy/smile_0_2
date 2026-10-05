@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../widgets/smile_avatar.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 /// Full-screen view opened by tapping the avatar image itself (not the
 /// camera badge) on SettingsScreen -- matches WhatsApp's own "tap your

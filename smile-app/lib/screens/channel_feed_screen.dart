@@ -13,7 +13,7 @@ import '../services/media_cache_service.dart';
 import '../services/media_service.dart';
 import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
-import '../widgets/smile_avatar.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 import 'channel_members_screen.dart';
 import 'video_player_screen.dart';
 

@@ -1,0 +1,36 @@
+name: smile_design_system
+description: "Shared design system for Smile-App and Smile-Frame: theme, icons, terms and building blocks."
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+  google_fonts: ^8.2.1
+  cached_network_image: ^3.4.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  generate: true
+  uses-material-design: true
+
+  # Phosphor Icons 2.1 (MIT, see fonts/PHOSPHOR_LICENSE), bundled directly:
+  # the phosphor_flutter package (last release 2.1.0, 2024) no longer
+  # compiles on current Flutter because IconData became a final class.
+  fonts:
+    - family: PhosphorRegular
+      fonts:
+        - asset: fonts/Phosphor-Regular.ttf
+    - family: PhosphorFill
+      fonts:
+        - asset: fonts/Phosphor-Fill.ttf
