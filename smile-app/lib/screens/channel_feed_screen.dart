@@ -132,7 +132,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// Pull-to-refresh's own handler: also re-checks membership status, not
   /// just the feed itself -- nothing else notices when the channel's SCO
   /// decides a pending request/invite on their own device (same gap
-  /// album_info_screen.dart and my_invites_screen.dart have), so
+  /// album_info_screen.dart and news_screen.dart have), so
   /// without this the FAB stays stuck on "Anfrage gesendet" forever even
   /// after being approved.
   Future<void> _refreshAll() => Future.wait([_load(), _loadMyStatus()]);

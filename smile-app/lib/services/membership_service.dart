@@ -129,10 +129,20 @@ class MyChannelMembershipStatus {
 }
 
 class MyInvitesInbox {
-  MyInvitesInbox({required this.membershipRequests, required this.shareRequests});
+  MyInvitesInbox({
+    required this.membershipRequests,
+    required this.shareRequests,
+    this.managedMembershipRequests = const [],
+    this.managedShareRequests = const [],
+  });
 
   final List<ChannelRequest> membershipRequests;
   final List<ChannelRequest> shareRequests;
+
+  /// Only with includeManaged: pending requests to albums in Spaces the
+  /// caller manages -- counterpart = the person who asked.
+  final List<ChannelRequest> managedMembershipRequests;
+  final List<ChannelRequest> managedShareRequests;
 
   bool get isEmpty => membershipRequests.isEmpty && shareRequests.isEmpty;
 }
@@ -303,8 +313,11 @@ class MembershipService {
   /// (the admin view). See list-my-invites/index.ts for why this has to be
   /// an Edge Function: an invitee can't see the channel's own name via
   /// plain RLS before accepting.
-  Future<MyInvitesInbox> listMyInvites({String? channelId}) async {
-    final response = await supabase.functions.invoke('list-my-invites', body: {'channel_id': ?channelId});
+  Future<MyInvitesInbox> listMyInvites({String? channelId, bool includeManaged = false}) async {
+    final response = await supabase.functions.invoke('list-my-invites', body: {
+      'channel_id': ?channelId,
+      if (includeManaged) 'include_managed': true,
+    });
     final data = response.data as Map<String, dynamic>;
     if (data['error'] != null) throw MembershipServiceException(data['error'] as String);
     final membershipRequests = (data['membership_requests'] as List).cast<Map<String, dynamic>>();
@@ -312,6 +325,14 @@ class MembershipService {
     return MyInvitesInbox(
       membershipRequests: membershipRequests.map((r) => ChannelRequest.fromJson(r, RequestKind.membership)).toList(),
       shareRequests: shareRequests.map((r) => ChannelRequest.fromJson(r, RequestKind.share)).toList(),
+      managedMembershipRequests: ((data['managed_membership_requests'] as List?) ?? const [])
+          .cast<Map<String, dynamic>>()
+          .map((r) => ChannelRequest.fromJson(r, RequestKind.membership))
+          .toList(),
+      managedShareRequests: ((data['managed_share_requests'] as List?) ?? const [])
+          .cast<Map<String, dynamic>>()
+          .map((r) => ChannelRequest.fromJson(r, RequestKind.share))
+          .toList(),
     );
   }
 }

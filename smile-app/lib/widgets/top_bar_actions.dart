@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
-import '../screens/my_invites_screen.dart';
+import '../screens/news_screen.dart';
 import '../screens/quick_capture_channel_picker_screen.dart';
 import '../services/news_service.dart';
 import '../services/sync_bus.dart';
@@ -81,7 +81,7 @@ class _NewsButtonState extends State<NewsButton> with SyncReload {
   }
 
   Future<void> _open() async {
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => MyInvitesScreen()));
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => NewsScreen()));
     await _check();
   }
 

@@ -37,6 +37,7 @@ class SmileObjectTile extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.subtitleIcon,
+    this.subtitleMaxLines = 1,
     this.trailing,
     this.onTap,
     this.onLongPress,
@@ -46,6 +47,7 @@ class SmileObjectTile extends StatelessWidget {
   final String title;
   final String? subtitle;
   final IconData? subtitleIcon;
+  final int subtitleMaxLines;
   final Widget? trailing;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
@@ -87,7 +89,7 @@ class SmileObjectTile extends StatelessWidget {
                           Expanded(
                             child: Text(
                               sub,
-                              maxLines: 1,
+                              maxLines: subtitleMaxLines,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodySmall?.copyWith(color: muted, fontSize: 13),
                             ),

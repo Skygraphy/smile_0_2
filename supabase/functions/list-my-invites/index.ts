@@ -26,6 +26,10 @@ const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 interface RequestBody {
   channel_id?: string;
+  /** Inbox mode only: also return pending *requests* (someone asking to
+   * join, or to see an album with their Space) for every album in a
+   * Space the caller manages -- the "Neuigkeiten" list (UI stage 6). */
+  include_managed?: boolean;
 }
 
 Deno.serve(async (req) => {
@@ -167,5 +171,67 @@ Deno.serve(async (req) => {
     };
   });
 
-  return jsonResponse({ membership_requests: membership, share_requests: shares });
+  if (!isMyInboxMode || !body.include_managed) {
+    return jsonResponse({ membership_requests: membership, share_requests: shares });
+  }
+
+  // --- Requests waiting on the caller as a manager (Admin/Co-Admin) ----
+  const [{ data: ownedSpaces }, { data: coOwnedSpaces }] = await Promise.all([
+    supabaseAdmin.from("spaces").select("id").eq("owner_id", userId).is("deleted_at", null),
+    supabaseAdmin.from("space_co_owners").select("space_id").eq("user_id", userId),
+  ]);
+  const managedSpaceIds = [
+    ...new Set([...(ownedSpaces ?? []).map((s) => s.id as string), ...(coOwnedSpaces ?? []).map((s) => s.space_id as string)]),
+  ];
+  const { data: managedChannels } = managedSpaceIds.length > 0
+    ? await supabaseAdmin.from("channels").select("id, name").in("space_id", managedSpaceIds).is("deleted_at", null)
+    : { data: [] as { id: string; name: string }[] };
+  const managedChannelName = new Map((managedChannels ?? []).map((c) => [c.id as string, c.name as string]));
+  const managedIds = [...managedChannelName.keys()];
+
+  const [{ data: managedMembership }, { data: managedShares }] = managedIds.length > 0
+    ? await Promise.all([
+      supabaseAdmin.from("channel_membership_requests")
+        .select("id, channel_id, user_id, direction, status, requested_at, decided_at")
+        .eq("status", "pending").eq("direction", "request").in("channel_id", managedIds)
+        .order("requested_at", { ascending: false }),
+      supabaseAdmin.from("channel_share_requests")
+        .select("id, channel_id, target_user_id, space_id, direction, status, requested_at, decided_at")
+        .eq("status", "pending").eq("direction", "request").in("channel_id", managedIds)
+        .order("requested_at", { ascending: false }),
+    ])
+    : [{ data: [] as Record<string, unknown>[] }, { data: [] as Record<string, unknown>[] }];
+
+  // Here the row's own user_id / target_user_id IS the other party: the
+  // person who asked.
+  const requesterProfiles = await fetchProfilesByUserId(supabaseAdmin, [
+    ...new Set([
+      ...(managedMembership ?? []).map((r) => r.user_id as string),
+      ...(managedShares ?? []).map((r) => r.target_user_id as string),
+    ]),
+  ]);
+  const managedRow = (r: Record<string, unknown>, kind: "membership" | "share", requester: string) => {
+    const profile = requesterProfiles.get(requester);
+    return {
+      id: r.id,
+      kind,
+      channel_id: r.channel_id,
+      channel_name: managedChannelName.get(r.channel_id as string) ?? null,
+      counterpart_user_id: requester,
+      counterpart_display_name: profile?.display_name ?? null,
+      counterpart_avatar_url: profile?.avatar_url ?? null,
+      ...(kind === "share" ? { space_id: r.space_id } : {}),
+      direction: r.direction,
+      status: r.status,
+      requested_at: r.requested_at,
+      decided_at: r.decided_at,
+    };
+  };
+
+  return jsonResponse({
+    membership_requests: membership,
+    share_requests: shares,
+    managed_membership_requests: (managedMembership ?? []).map((r) => managedRow(r, "membership", r.user_id as string)),
+    managed_share_requests: (managedShares ?? []).map((r) => managedRow(r, "share", r.target_user_id as string)),
+  });
 });

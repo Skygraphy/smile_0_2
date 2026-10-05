@@ -10,7 +10,7 @@ import 'screens/channel_feed_screen.dart';
 import 'screens/album_info_screen.dart';
 import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
-import 'screens/my_invites_screen.dart';
+import 'screens/news_screen.dart';
 import 'screens/profile_setup_screen.dart';
 import 'screens/space_info_screen.dart';
 import 'services/profile_service.dart';
@@ -95,7 +95,7 @@ void _openNotificationTarget(Map<String, dynamic> data) {
       // The recipient isn't a channel member (or hasn't linked their Space,
       // or accepted the co-owner invite) yet -- can't view the target
       // itself before accepting, so this opens their invite inbox instead.
-      navigator.push(MaterialPageRoute(builder: (_) => MyInvitesScreen()));
+      navigator.push(MaterialPageRoute(builder: (_) => NewsScreen()));
     case 'new_photo':
     case 'media_failed':
       if (channelId == null) return;

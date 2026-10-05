@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/sync_bus.dart';
 import '../services/trash_service.dart';
@@ -40,20 +41,20 @@ class _TrashScreenState extends State<TrashScreen> with SyncReload {
       if (!mounted) return;
       setState(() {
         _items ??= const [];
-        _errorMessage = 'Papierkorb konnte nicht geladen werden: $e';
+        _errorMessage = SmileTexts.of(context).trashLoadError('$e');
       });
     }
   }
 
   Future<void> _restore(TrashItem item) async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     try {
       await widget.trashService.restore(item);
       await _load();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('„${item.name}“ ist wiederhergestellt.')));
+      messenger.showSnackBar(SnackBar(content: Text(t.restored(item.name))));
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Wiederherstellen fehlgeschlagen: $e')));
+      messenger.showSnackBar(SnackBar(content: Text(t.actionFailed('$e'))));
     }
   }
 
@@ -62,33 +63,43 @@ class _TrashScreenState extends State<TrashScreen> with SyncReload {
 
   @override
   Widget build(BuildContext context) {
+    final t = SmileTexts.of(context);
     final items = _items;
     return Scaffold(
-      appBar: AppBar(title: const Text('Papierkorb')),
+      appBar: AppBar(
+        leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).maybePop()),
+        title: Text(t.trashTitle),
+      ),
       body: items == null
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView(
-                padding: const EdgeInsets.all(16),
                 children: [
                   if (_errorMessage != null)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(16),
                       child: Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
-                  if (items.isEmpty) const Text('Der Papierkorb ist leer.'),
+                  if (items.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 140),
+                      child: SmileEmptyState(icon: SmileIcons.trash, title: t.trashEmpty),
+                    ),
                   for (final item in items)
-                    Card(
-                      child: ListTile(
-                        leading: Icon(item.isSpace ? Icons.home_outlined : Icons.photo_library_outlined),
-                        title: Text(item.isSpace ? 'Space „${item.name}“' : 'Channel „${item.name}“'),
-                        subtitle: Text([
-                          if (item.spaceName != null) 'in ${item.spaceName}',
-                          if (item.deletedByName != null) 'gelöscht von ${item.deletedByName}',
-                          'endgültig weg am ${_date(item.purgeAfter)}',
-                        ].join(' · ')),
-                        trailing: TextButton(onPressed: () => _restore(item), child: const Text('Wiederherstellen')),
+                    SmileObjectTile(
+                      leading: SmileObjectIcon(icon: item.isSpace ? SmileIcons.space : SmileIcons.album),
+                      title: item.name,
+                      subtitle: [
+                        if (item.spaceName != null) t.trashSpaceIn(item.spaceName!),
+                        if (item.deletedByName != null) t.trashDeletedBy(item.deletedByName!),
+                        t.trashGoneOn(_date(item.purgeAfter)),
+                      ].join(' · '),
+                  subtitleMaxLines: 2,
+                      trailing: IconButton(
+                        icon: Icon(SmileIcons.restore, color: Theme.of(context).colorScheme.primary),
+                        tooltip: t.actionRestore,
+                        onPressed: () => _restore(item),
                       ),
                     ),
                 ],

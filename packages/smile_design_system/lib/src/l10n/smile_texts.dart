@@ -1011,6 +1011,150 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Frame wieder aktivieren'**
   String get reactivateFrame;
+
+  /// No description provided for @newsEmptyTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Neuigkeiten'**
+  String get newsEmptyTitle;
+
+  /// No description provided for @newsEmptyMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Hier erscheinen Einladungen, Anfragen und gelöschte Alben oder Spaces.'**
+  String get newsEmptyMessage;
+
+  /// No description provided for @newsLoadError.
+  ///
+  /// In de, this message translates to:
+  /// **'Neuigkeiten konnten nicht geladen werden: {error}'**
+  String newsLoadError(String error);
+
+  /// No description provided for @invitations.
+  ///
+  /// In de, this message translates to:
+  /// **'Einladungen'**
+  String get invitations;
+
+  /// No description provided for @requests.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfragen'**
+  String get requests;
+
+  /// No description provided for @myRequests.
+  ///
+  /// In de, this message translates to:
+  /// **'Eigene Anfragen'**
+  String get myRequests;
+
+  /// No description provided for @inviteCoAdminFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} lädt dich als Co-Admin ein'**
+  String inviteCoAdminFrom(String name);
+
+  /// No description provided for @inviteMemberFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} lädt dich als Member ein'**
+  String inviteMemberFrom(String name);
+
+  /// No description provided for @inviteShareFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} möchte das Album mit deinem Space teilen'**
+  String inviteShareFrom(String name);
+
+  /// No description provided for @requestMemberFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} möchte Member werden'**
+  String requestMemberFrom(String name);
+
+  /// No description provided for @requestShareFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} möchte das Album mit dem eigenen Space sehen'**
+  String requestShareFrom(String name);
+
+  /// No description provided for @waitingForAnswer.
+  ///
+  /// In de, this message translates to:
+  /// **'Wartet auf Antwort'**
+  String get waitingForAnswer;
+
+  /// No description provided for @acceptedCoAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Du verwaltest jetzt „{space}“ mit.'**
+  String acceptedCoAdmin(String space);
+
+  /// No description provided for @acceptedAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'„{album}“ ist jetzt in deinen Alben.'**
+  String acceptedAlbum(String album);
+
+  /// No description provided for @acceptedShare.
+  ///
+  /// In de, this message translates to:
+  /// **'„{album}“ ist jetzt mit deinem Space geteilt.'**
+  String acceptedShare(String album);
+
+  /// No description provided for @requestAccepted.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfrage angenommen.'**
+  String get requestAccepted;
+
+  /// No description provided for @needOwnSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Du brauchst zuerst einen eigenen Space, um ein geteiltes Album anzunehmen.'**
+  String get needOwnSpace;
+
+  /// No description provided for @chooseSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit welchem Space?'**
+  String get chooseSpace;
+
+  /// No description provided for @trashEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Papierkorb ist leer.'**
+  String get trashEmpty;
+
+  /// No description provided for @trashLoadError.
+  ///
+  /// In de, this message translates to:
+  /// **'Papierkorb konnte nicht geladen werden: {error}'**
+  String trashLoadError(String error);
+
+  /// No description provided for @trashSpaceIn.
+  ///
+  /// In de, this message translates to:
+  /// **'in {space}'**
+  String trashSpaceIn(String space);
+
+  /// No description provided for @trashDeletedBy.
+  ///
+  /// In de, this message translates to:
+  /// **'gelöscht von {name}'**
+  String trashDeletedBy(String name);
+
+  /// No description provided for @trashGoneOn.
+  ///
+  /// In de, this message translates to:
+  /// **'endgültig weg am {date}'**
+  String trashGoneOn(String date);
+
+  /// No description provided for @restored.
+  ///
+  /// In de, this message translates to:
+  /// **'„{name}“ ist wiederhergestellt.'**
+  String restored(String name);
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

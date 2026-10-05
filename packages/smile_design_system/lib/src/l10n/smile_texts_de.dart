@@ -558,4 +558,106 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get reactivateFrame => 'Frame wieder aktivieren';
+
+  @override
+  String get newsEmptyTitle => 'Keine Neuigkeiten';
+
+  @override
+  String get newsEmptyMessage =>
+      'Hier erscheinen Einladungen, Anfragen und gelöschte Alben oder Spaces.';
+
+  @override
+  String newsLoadError(String error) {
+    return 'Neuigkeiten konnten nicht geladen werden: $error';
+  }
+
+  @override
+  String get invitations => 'Einladungen';
+
+  @override
+  String get requests => 'Anfragen';
+
+  @override
+  String get myRequests => 'Eigene Anfragen';
+
+  @override
+  String inviteCoAdminFrom(String name) {
+    return '$name lädt dich als Co-Admin ein';
+  }
+
+  @override
+  String inviteMemberFrom(String name) {
+    return '$name lädt dich als Member ein';
+  }
+
+  @override
+  String inviteShareFrom(String name) {
+    return '$name möchte das Album mit deinem Space teilen';
+  }
+
+  @override
+  String requestMemberFrom(String name) {
+    return '$name möchte Member werden';
+  }
+
+  @override
+  String requestShareFrom(String name) {
+    return '$name möchte das Album mit dem eigenen Space sehen';
+  }
+
+  @override
+  String get waitingForAnswer => 'Wartet auf Antwort';
+
+  @override
+  String acceptedCoAdmin(String space) {
+    return 'Du verwaltest jetzt „$space“ mit.';
+  }
+
+  @override
+  String acceptedAlbum(String album) {
+    return '„$album“ ist jetzt in deinen Alben.';
+  }
+
+  @override
+  String acceptedShare(String album) {
+    return '„$album“ ist jetzt mit deinem Space geteilt.';
+  }
+
+  @override
+  String get requestAccepted => 'Anfrage angenommen.';
+
+  @override
+  String get needOwnSpace =>
+      'Du brauchst zuerst einen eigenen Space, um ein geteiltes Album anzunehmen.';
+
+  @override
+  String get chooseSpace => 'Mit welchem Space?';
+
+  @override
+  String get trashEmpty => 'Der Papierkorb ist leer.';
+
+  @override
+  String trashLoadError(String error) {
+    return 'Papierkorb konnte nicht geladen werden: $error';
+  }
+
+  @override
+  String trashSpaceIn(String space) {
+    return 'in $space';
+  }
+
+  @override
+  String trashDeletedBy(String name) {
+    return 'gelöscht von $name';
+  }
+
+  @override
+  String trashGoneOn(String date) {
+    return 'endgültig weg am $date';
+  }
+
+  @override
+  String restored(String name) {
+    return '„$name“ ist wiederhergestellt.';
+  }
 }

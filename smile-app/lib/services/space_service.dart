@@ -76,7 +76,7 @@ class SpaceCoOwnership {
 
 /// An invite addressed to the caller themselves, inviting them to become a
 /// Space's co-owner -- migrations/0038_space_co_owner_invites.sql. Shown
-/// on my_invites_screen.dart alongside channel membership/share invites.
+/// on news_screen.dart alongside channel membership/share invites.
 class MyCoOwnerInvite {
   MyCoOwnerInvite({
     required this.id,
