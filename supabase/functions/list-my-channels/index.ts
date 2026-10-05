@@ -86,6 +86,24 @@ Deno.serve(async (req) => {
   ]);
   const hidden = new Set((hideRows ?? []).map((r) => r.media_item_id as string));
 
+  // Unread counter (migrations/0058): everything newer than the caller's
+  // "last opened" marker, except their own posts. No marker = they never
+  // opened the album since joining, so everything in it is new to them.
+  const { data: readRows } = await supabaseAdmin
+    .from("album_reads")
+    .select("channel_id, last_seen_at")
+    .eq("user_id", userId)
+    .in("channel_id", channelIds);
+  const lastSeen = new Map((readRows ?? []).map((r) => [r.channel_id as string, r.last_seen_at as string]));
+  const unreadByChannel = new Map<string, number>();
+  for (const row of mediaRows ?? []) {
+    if (hidden.has(row.id as string) || row.sender_id === userId) continue;
+    const channelId = row.channel_id as string;
+    const seen = lastSeen.get(channelId);
+    if (seen && (row.created_at as string) <= seen) continue;
+    unreadByChannel.set(channelId, (unreadByChannel.get(channelId) ?? 0) + 1);
+  }
+
   // The chat-list line ("Roman: 4 Fotos"): who posted last, and how many
   // items in a row they posted (the newest run of one sender), split into
   // photos and videos so the app can word it.
@@ -127,6 +145,7 @@ Deno.serve(async (req) => {
       // brand-new empty channel still shows up in a sensible spot instead
       // of falling to the very bottom indefinitely.
       last_activity_at: lastByChannel.get(c.id as string)?.at ?? c.created_at,
+      unread_count: unreadByChannel.get(c.id as string) ?? 0,
       last_post: (() => {
         const last = lastByChannel.get(c.id as string);
         if (!last) return null;

@@ -146,11 +146,9 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
                           // the newest post, WhatsApp chat-list style.
                           subtitleIcon: channel.isMember ? SmileRole.member.icon : SmileRole.viewer.icon,
                           subtitle: _lastPostLine(context, channel),
-                          trailing: Text(
-                            _relativeTime(channel.lastActivityAt),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                ),
+                          trailing: _ActivityMeta(
+                            time: _relativeTime(channel.lastActivityAt),
+                            unread: channel.unreadCount,
                           ),
                           onTap: () async {
                             await Navigator.of(context).push(
@@ -218,6 +216,47 @@ class _FirstSteps extends StatelessWidget {
             t.firstStepsYourEmail(email),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Right side of an album row, WhatsApp-style: the time, and below it a
+/// coral counter of others' posts not seen yet (the time turns coral too).
+class _ActivityMeta extends StatelessWidget {
+  const _ActivityMeta({required this.time, required this.unread});
+
+  final String time;
+  final int unread;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final hasUnread = unread > 0;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          time,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: hasUnread ? scheme.primary : scheme.onSurfaceVariant,
+                fontWeight: hasUnread ? FontWeight.w600 : null,
+              ),
+        ),
+        if (hasUnread) ...[
+          const SizedBox(height: 4),
+          Container(
+            constraints: const BoxConstraints(minWidth: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(color: scheme.primary, borderRadius: BorderRadius.circular(SmileRadius.pill)),
+            child: Text(
+              unread > 99 ? '99+' : '$unread',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: scheme.onPrimary, fontSize: 11, fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ],

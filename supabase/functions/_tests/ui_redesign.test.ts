@@ -214,3 +214,63 @@ Deno.test("the album list knows who posted last and how many in a row", async ()
     await deleteUser(admin.id);
   }
 });
+
+// Unread counter (migrations/0058): others' posts since you last opened the
+// album; opening it (mark_album_seen) clears it; a repeat call changes
+// nothing, so the open feed can call it after every reload without looping.
+Deno.test("unread counter counts others' new posts until the album is opened", async () => {
+  requireEnv();
+  const admin = await createThrowawayUser("uadmin");
+  const roman = await createThrowawayUser("uroman");
+  let space: string | undefined;
+  try {
+    await ensureProfile(admin.id, "Unread Admin");
+    await ensureProfile(roman.id, "Unread Roman");
+    const { accessToken: adminToken } = await accessTokenFor(admin.email);
+    space = await createSpace(adminToken, "Unread Space");
+    const album = await createChannel(adminToken, space, "Unread Album");
+    await svc("channel_members", { method: "POST", body: JSON.stringify({ channel_id: album, user_id: roman.id }) });
+
+    const post = async (sender: string) => {
+      const { status, body } = await svc("media_items", {
+        method: "POST",
+        body: JSON.stringify({
+          channel_id: album,
+          sender_id: sender,
+          media_type: "photo",
+          storage_path_original: `test/${crypto.randomUUID()}`,
+          processing_status: "ready",
+        }),
+      });
+      assertEquals(status, 201, JSON.stringify(body));
+    };
+    const unread = async () => {
+      const list = await invoke("list-my-channels", adminToken, {});
+      assertEquals(list.status, 200, JSON.stringify(list.body));
+      return (list.body.channels as { channel_id: string; unread_count: number }[])
+        .find((c) => c.channel_id === album)!.unread_count;
+    };
+    const markSeen = () =>
+      asUser("rpc/mark_album_seen", adminToken, { method: "POST", body: JSON.stringify({ p_channel: album }) });
+    const marker = async () =>
+      (await svc(`album_reads?user_id=eq.${admin.id}&channel_id=eq.${album}&select=last_seen_at`)).body[0]?.last_seen_at;
+
+    await post(admin.id); // own posts never count
+    await post(roman.id);
+    await post(roman.id);
+    assertEquals(await unread(), 2);
+
+    assertEquals((await markSeen()).status, 204);
+    assertEquals(await unread(), 0);
+    const first = await marker();
+    assertEquals((await markSeen()).status, 204);
+    assertEquals(await marker(), first, "a repeat call must not move the marker");
+
+    await post(roman.id);
+    assertEquals(await unread(), 1);
+  } finally {
+    if (space) await deleteSpace(space);
+    await deleteUser(roman.id);
+    await deleteUser(admin.id);
+  }
+});

@@ -48,6 +48,7 @@ class ChannelWithActivity {
     required this.isMember,
     required this.lastActivityAt,
     this.lastPost,
+    this.unreadCount = 0,
   });
 
   final String channelId;
@@ -61,6 +62,9 @@ class ChannelWithActivity {
   /// Null for an album without posts yet.
   final LastPost? lastPost;
 
+  /// Others' posts since the caller last opened the album (migrations/0058).
+  final int unreadCount;
+
   String get spaceLabel => spaces.map((s) => s.name).join(', ');
 
   factory ChannelWithActivity.fromJson(Map<String, dynamic> json) => ChannelWithActivity(
@@ -70,6 +74,7 @@ class ChannelWithActivity {
         isMember: json['is_member'] as bool,
         lastActivityAt: DateTime.parse(json['last_activity_at'] as String),
         lastPost: json['last_post'] == null ? null : LastPost.fromJson(json['last_post'] as Map<String, dynamic>),
+        unreadCount: json['unread_count'] as int? ?? 0,
       );
 }
 

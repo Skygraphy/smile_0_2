@@ -35,6 +35,13 @@ class ChannelService {
         .toList();
   }
 
+  /// "I opened this album" -- clears its unread counter on all of the
+  /// caller's devices (migrations/0058). A repeat call is a server-side
+  /// no-op, so calling it after every feed reload is fine.
+  Future<void> markAlbumSeen(String channelId) async {
+    await supabase.rpc('mark_album_seen', params: {'p_channel': channelId});
+  }
+
   /// Into the 30-day trash, for everyone at once (delete-space-or-channel);
   /// restorable via TrashService until purge-trash removes it for good.
   Future<void> deleteChannel(String channelId) async {

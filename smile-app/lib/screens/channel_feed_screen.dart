@@ -14,6 +14,7 @@ import '../services/media_service.dart';
 import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../services/channel_service.dart';
 import 'album_info_screen.dart';
 import 'video_player_screen.dart';
 
@@ -120,8 +121,14 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   // reload, so it only reacts to changes concerning this channel (or a
   // profile, which may be a sender's name/avatar shown here).
   @override
-  bool isSyncRelevant(SyncEvent event) =>
-      event.channelIds.contains(widget.channelId) || event.tables.contains('profiles') || event.tables.contains('media_item_hides');
+  bool isSyncRelevant(SyncEvent event) {
+    // Our own "seen" marker moving (album_reads, see markAlbumSeen) changes
+    // nothing on this screen -- only the album list's counter.
+    if (event.tables.length == 1 && event.tables.contains('album_reads')) return false;
+    return event.channelIds.contains(widget.channelId) ||
+        event.tables.contains('profiles') ||
+        event.tables.contains('media_item_hides');
+  }
 
   @override
   Future<void> onSync() async {
@@ -258,6 +265,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       items = _showingHidden
           ? await widget.mediaService.fetchHiddenMedia(widget.channelId)
           : await widget.mediaService.fetchReadyMedia(widget.channelId);
+      // Opening the album (and staying in it while new posts arrive)
+      // counts as seen -- clears the unread counter. Best-effort.
+      if (!_showingHidden) unawaited(ChannelService().markAlbumSeen(widget.channelId).catchError((_) {}));
     } catch (e) {
       if (!mounted) return;
       // Without this, a permission/network failure here left _items stuck
