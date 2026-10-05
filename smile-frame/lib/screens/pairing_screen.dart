@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/frame_credentials_store.dart';
 import '../services/pairing_service.dart';
@@ -57,21 +58,25 @@ class _PairingScreenState extends State<PairingScreen> {
     } on PairingException catch (e) {
       setState(() => _errorMessage = _messageFor(e.code));
     } catch (_) {
-      setState(() => _errorMessage = 'Verbindung fehlgeschlagen. Bitte erneut versuchen.');
+      setState(() => _errorMessage = SmileTexts.of(context).framePairNoConnection);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
-  String _messageFor(String code) => switch (code) {
-        'invalid_code' => 'Ungültiger Code.',
-        'code_expired' => 'Der Code ist abgelaufen -- in der Smile-App ein neues Frame erstellen.',
-        'frame_revoked' => 'Dieses Frame wurde widerrufen.',
-        _ => 'Koppeln fehlgeschlagen.',
-      };
+  String _messageFor(String code) {
+    final t = SmileTexts.of(context);
+    return switch (code) {
+      'invalid_code' => t.framePairInvalid,
+      'code_expired' => t.framePairExpired,
+      'frame_revoked' => t.framePairRevoked,
+      _ => t.framePairFailed,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
+    final t = SmileTexts.of(context);
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -82,11 +87,21 @@ class _PairingScreenState extends State<PairingScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Smile-Frame koppeln', style: TextStyle(fontSize: 24)),
+                  const SmileMark(size: 56),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Gib den Code ein, den die Smile-App beim Erstellen dieses Frames angezeigt hat.',
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(SmileIcons.frame, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 10),
+                      Text(t.framePairTitle, style: Theme.of(context).textTheme.headlineSmall),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    t.framePairHint,
                     textAlign: TextAlign.center,
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 32),
                   TextField(
@@ -99,15 +114,15 @@ class _PairingScreenState extends State<PairingScreen> {
                     onSubmitted: (_) => _submit(),
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(
+                  FilledButton(
                     onPressed: _isSubmitting ? null : _submit,
                     child: _isSubmitting
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Koppeln'),
+                        : Text(t.framePairButton),
                   ),
                   if (_errorMessage != null) ...[
                     const SizedBox(height: 16),
-                    Text(_errorMessage!, style: const TextStyle(color: Colors.orange), textAlign: TextAlign.center),
+                    Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error), textAlign: TextAlign.center),
                   ],
                 ],
               ),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 import 'package:smile_frame/main.dart';
 import 'package:smile_frame/screens/pairing_screen.dart';
 import 'package:smile_frame/screens/slideshow_screen.dart';
@@ -26,13 +27,16 @@ void main() {
     final pairingService = MockPairingService();
 
     await tester.pumpWidget(MaterialApp(
+      locale: const Locale('de'),
+      localizationsDelegates: SmileTexts.localizationsDelegates,
+      supportedLocales: SmileTexts.supportedLocales,
       home: StartupGate(credentialsStore: store, pairingService: pairingService),
     ));
     await tester.pump();
     await tester.pump();
 
     expect(find.byType(PairingScreen), findsOneWidget);
-    expect(find.text('Smile-Frame koppeln'), findsOneWidget);
+    expect(find.text('Frame verbinden'), findsOneWidget);
   });
 
   testWidgets('StartupGate shows SlideshowScreen when a frame_id is already stored', (tester) async {
@@ -52,6 +56,9 @@ void main() {
     when(() => syncService.isOfflineExpired()).thenAnswer((_) async => false);
 
     await tester.pumpWidget(MaterialApp(
+      locale: const Locale('de'),
+      localizationsDelegates: SmileTexts.localizationsDelegates,
+      supportedLocales: SmileTexts.supportedLocales,
       home: StartupGate(credentialsStore: store, syncService: syncService, cacheStore: cacheStore),
     ));
     await tester.pump();

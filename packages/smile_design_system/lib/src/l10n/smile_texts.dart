@@ -1275,6 +1275,78 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Weiter'**
   String get next;
+
+  /// No description provided for @framePairTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame verbinden'**
+  String get framePairTitle;
+
+  /// No description provided for @framePairHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Gib den Code ein, den die Smile-App beim Verbinden dieses Frames anzeigt.'**
+  String get framePairHint;
+
+  /// No description provided for @framePairButton.
+  ///
+  /// In de, this message translates to:
+  /// **'Verbinden'**
+  String get framePairButton;
+
+  /// No description provided for @framePairInvalid.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieser Code ist ungültig.'**
+  String get framePairInvalid;
+
+  /// No description provided for @framePairExpired.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Code ist abgelaufen. Lass dir in der Smile-App einen neuen anzeigen.'**
+  String get framePairExpired;
+
+  /// No description provided for @framePairRevoked.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieser Frame wurde widerrufen.'**
+  String get framePairRevoked;
+
+  /// No description provided for @framePairFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Verbinden fehlgeschlagen.'**
+  String get framePairFailed;
+
+  /// No description provided for @framePairNoConnection.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Verbindung zum Server. Bitte erneut versuchen.'**
+  String get framePairNoConnection;
+
+  /// No description provided for @frameOfflineTooLong.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieser Frame war zu lange ohne Verbindung.\nDie Fotos erscheinen wieder, sobald er online ist.'**
+  String get frameOfflineTooLong;
+
+  /// No description provided for @frameRevokedScreen.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieser Frame wurde widerrufen.\nEin Admin des Space kann ihn in der Smile-App wieder aktivieren.'**
+  String get frameRevokedScreen;
+
+  /// No description provided for @frameNoPhotos.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Fotos'**
+  String get frameNoPhotos;
+
+  /// No description provided for @chooseAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Album wählen'**
+  String get chooseAlbum;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

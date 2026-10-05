@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
-import '../main.dart';
 import '../services/heartbeat_service.dart';
 import '../services/media_cache_store.dart';
 import '../services/media_cache_sync.dart';
@@ -217,19 +217,24 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final sorted = [..._assignedChannels]..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));
     final picked = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: const Color(0xFF1C1C1E),
+      showDragHandle: true,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(SmileTexts.of(context).chooseAlbum, style: Theme.of(context).textTheme.titleMedium),
+              ),
+            ),
             for (final channel in sorted)
               ListTile(
-                title: Text(
-                  channel.name ?? channel.channelId,
-                  style: const TextStyle(color: Colors.white),
-                ),
+                leading: const SmileObjectIcon(icon: SmileIcons.album, size: 40),
+                title: Text(channel.name ?? channel.channelId, style: const TextStyle(fontSize: 18)),
                 trailing: channel.channelId == _currentChannelId
-                    ? const Icon(Icons.check, color: smileAccentColor)
+                    ? const Icon(SmileIcons.accept, color: SmileTheme.primary)
                     : null,
                 onTap: () => Navigator.of(context).pop(channel.channelId),
               ),
@@ -260,16 +265,17 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       );
     }
 
+    final t = SmileTexts.of(context);
     if (_offlineExpired) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Colors.black,
         body: Center(
           child: Padding(
-            padding: EdgeInsets.all(32),
+            padding: const EdgeInsets.all(32),
             child: Text(
-              'Dieser Frame war zu lange ohne Verbindung.\nDie Fotos erscheinen wieder, sobald er online ist.',
+              t.frameOfflineTooLong,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: 20),
+              style: const TextStyle(color: Colors.white70, fontSize: 20),
             ),
           ),
         ),
@@ -277,15 +283,15 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     }
 
     if (_deactivated) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Colors.black,
         body: Center(
           child: Padding(
-            padding: EdgeInsets.all(32),
+            padding: const EdgeInsets.all(32),
             child: Text(
-              'Dieser Frame wurde deaktiviert.\nBitte wende dich an den Administrator des Space.',
+              t.frameRevokedScreen,
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white70, fontSize: 20),
+              style: const TextStyle(color: Colors.white70, fontSize: 20),
             ),
           ),
         ),
@@ -294,9 +300,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
     final Widget body;
     if (_entries.isEmpty || _cacheDirPath == null) {
-      body = const Center(
-        child: Text('Noch keine Fotos', style: TextStyle(color: Colors.white70)),
-      );
+      body = SmileEmptyState(icon: SmileIcons.album, title: t.frameNoPhotos);
     } else if (_showGrid) {
       body = _buildGrid();
     } else {
@@ -373,7 +377,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                   fit: StackFit.expand,
                   children: [
                     _photo(entry, BoxFit.cover),
-                    const Center(child: Icon(Icons.play_circle_fill, size: 40, color: Colors.white70)),
+                    const Center(child: Icon(SmileIcons.play, size: 40, color: Colors.white70)),
                   ],
                 )
               : _photo(entry, BoxFit.cover),
@@ -394,9 +398,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.55),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: smileAccentColor, width: 1.5),
+              border: Border.all(color: SmileTheme.primary, width: 1.5),
             ),
-            child: Icon(_showGrid ? Icons.slideshow : Icons.grid_view, color: Colors.white70),
+            child: Icon(_showGrid ? SmileIcons.slideshow : SmileIcons.overview, color: Colors.white70),
           ),
         ),
       ),
@@ -417,7 +421,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.55),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: smileAccentColor, width: 1.5),
+              border: Border.all(color: SmileTheme.primary, width: 1.5),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -431,14 +435,14 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                       if (_channelName != null)
                         TextSpan(
                           text: _channelName,
-                          style: const TextStyle(color: smileAccentColor, fontWeight: FontWeight.w600),
+                          style: const TextStyle(color: SmileTheme.primary, fontWeight: FontWeight.w600),
                         ),
                     ],
                   ),
                 ),
                 if (switchable) ...[
                   const SizedBox(width: 6),
-                  const Icon(Icons.unfold_more, color: smileAccentColor, size: 20),
+                  const Icon(SmileIcons.switchAlbum, color: SmileTheme.primary, size: 20),
                 ],
               ],
             ),

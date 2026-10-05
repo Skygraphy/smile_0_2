@@ -730,4 +730,45 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get next => 'Weiter';
+
+  @override
+  String get framePairTitle => 'Frame verbinden';
+
+  @override
+  String get framePairHint =>
+      'Gib den Code ein, den die Smile-App beim Verbinden dieses Frames anzeigt.';
+
+  @override
+  String get framePairButton => 'Verbinden';
+
+  @override
+  String get framePairInvalid => 'Dieser Code ist ungültig.';
+
+  @override
+  String get framePairExpired =>
+      'Der Code ist abgelaufen. Lass dir in der Smile-App einen neuen anzeigen.';
+
+  @override
+  String get framePairRevoked => 'Dieser Frame wurde widerrufen.';
+
+  @override
+  String get framePairFailed => 'Verbinden fehlgeschlagen.';
+
+  @override
+  String get framePairNoConnection =>
+      'Keine Verbindung zum Server. Bitte erneut versuchen.';
+
+  @override
+  String get frameOfflineTooLong =>
+      'Dieser Frame war zu lange ohne Verbindung.\nDie Fotos erscheinen wieder, sobald er online ist.';
+
+  @override
+  String get frameRevokedScreen =>
+      'Dieser Frame wurde widerrufen.\nEin Admin des Space kann ihn in der Smile-App wieder aktivieren.';
+
+  @override
+  String get frameNoPhotos => 'Noch keine Fotos';
+
+  @override
+  String get chooseAlbum => 'Album wählen';
 }

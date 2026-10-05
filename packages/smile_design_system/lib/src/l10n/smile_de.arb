@@ -487,5 +487,17 @@
   "signOut": "Abmelden",
   "signOutQuestion": "Möchtest du dich wirklich abmelden?",
   "profileSetupQuestion": "Wie sollen wir dich nennen?",
-  "next": "Weiter"
+  "next": "Weiter",
+  "framePairTitle": "Frame verbinden",
+  "framePairHint": "Gib den Code ein, den die Smile-App beim Verbinden dieses Frames anzeigt.",
+  "framePairButton": "Verbinden",
+  "framePairInvalid": "Dieser Code ist ungültig.",
+  "framePairExpired": "Der Code ist abgelaufen. Lass dir in der Smile-App einen neuen anzeigen.",
+  "framePairRevoked": "Dieser Frame wurde widerrufen.",
+  "framePairFailed": "Verbinden fehlgeschlagen.",
+  "framePairNoConnection": "Keine Verbindung zum Server. Bitte erneut versuchen.",
+  "frameOfflineTooLong": "Dieser Frame war zu lange ohne Verbindung.\nDie Fotos erscheinen wieder, sobald er online ist.",
+  "frameRevokedScreen": "Dieser Frame wurde widerrufen.\nEin Admin des Space kann ihn in der Smile-App wieder aktivieren.",
+  "frameNoPhotos": "Noch keine Fotos",
+  "chooseAlbum": "Album wählen"
 }

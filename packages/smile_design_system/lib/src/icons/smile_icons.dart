@@ -88,6 +88,14 @@ class SmileIcons {
   /// Waiting for someone else (a sent request).
   static const IconData pending = IconData(0xe2b8, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 
+  // --- Smile-Frame -----------------------------------------------------
+  /// Switch the Frame between slideshow and the tile overview.
+  static const IconData overview = IconData(0xe1fc, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  static const IconData slideshow = IconData(0xe3d0, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
+  /// "More to choose from here" (the album switcher on the Frame).
+  static const IconData switchAlbum = IconData(0xe140, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
   // --- Media overlays (filled, drawn on top of photos) -----------------
   static const IconData play = IconData(0xe3d2, fontFamily: 'PhosphorFill', fontPackage: _pkg);
   static const IconData selected = IconData(0xe184, fontFamily: 'PhosphorFill', fontPackage: _pkg);

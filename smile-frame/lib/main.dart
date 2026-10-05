@@ -10,9 +10,6 @@ import 'services/pairing_service.dart';
 import 'services/push_service.dart';
 import 'services/sync_service.dart';
 
-/// Same theme as the Smile app (shared smile_design_system package) --
-/// Smile-Frame is a display for the same product, not a separate look.
-const smileAccentColor = SmileTheme.primary;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
