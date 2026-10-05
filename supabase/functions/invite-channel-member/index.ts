@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
   await pushNotificationToUsers(
     supabaseAdmin,
     [inviteeId],
-    { title: "Einladung zu einem Channel", body: `Du wurdest zu "${channel.name}" eingeladen.` },
+    { title: "Einladung ins Album", body: `Du wurdest als Member ins Album „${channel.name}“ eingeladen. Annehmen unter Neuigkeiten.` },
     { type: "channel_membership_invite", channel_id: body.channel_id, channel_name: channel.name },
   );
 

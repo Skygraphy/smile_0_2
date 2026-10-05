@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
   await pushNotificationToUsers(
     supabaseAdmin,
     [inviteeId],
-    { title: "Einladung zur Verwaltung", body: `Du wurdest eingeladen, den Space "${space.name}" mitzuverwalten.` },
+    { title: "Einladung als Co-Admin", body: `Du wurdest eingeladen, den Space „${space.name}“ als Co-Admin mitzuverwalten. Annehmen unter Neuigkeiten.` },
     { type: "space_co_owner_invite", space_id: body.space_id, space_name: space.name },
   );
 

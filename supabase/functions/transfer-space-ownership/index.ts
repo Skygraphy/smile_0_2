@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
   await pushNotificationToUsers(
     supabaseAdmin,
     [body.new_owner_user_id],
-    { title: "Neue Administrator-Rolle", body: `Du bist jetzt Administrator des Space "${space.name}".` },
+    { title: "Du bist jetzt Admin", body: `Du bist jetzt Admin des Space „${space.name}“.` },
     { type: "space_ownership_transferred", space_id: body.space_id, space_name: space.name },
   );
 

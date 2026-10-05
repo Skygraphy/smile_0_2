@@ -96,7 +96,7 @@ async function coOwnerAdded(supabaseAdmin: Admin, spaceId: string, userId: strin
       recipients,
       {
         title: `Neue Person sieht „${channel.name}“`,
-        body: `${name} ist jetzt Co-Owner von „${space.name}“ und sieht damit auch „${channel.name}“.`,
+        body: `${name} ist jetzt Co-Admin von „${space.name}“ und sieht damit auch das Album „${channel.name}“.`,
       },
       { type: "share_audience_changed", channel_id: share.channel_id as string, channel_name: channel.name as string },
     );
@@ -119,8 +119,8 @@ async function shareEnded(supabaseAdmin: Admin, channelId: string, viewingSpaceI
   // Name the PERSON who ended it, not their household (user feedback).
   const actor = actorId ? await displayName(supabaseAdmin, actorId) : "Jemand";
   const notification = {
-    title: "Freigabe beendet",
-    body: `${actor} hat die Freigabe von „${channel.name}“ für „${viewingSpace.name}“ beendet.`,
+    title: "Nicht mehr geteilt",
+    body: `${actor} teilt das Album „${channel.name}“ nicht mehr mit „${viewingSpace.name}“.`,
   };
 
   if (endedByHomeSide) {
@@ -182,14 +182,14 @@ async function trashChanged(
   }
   if (actorId) recipients.delete(actorId);
 
-  const what = kind === "channel" ? `den Channel „${name}“` : `den Space „${name}“ mit allen Channels`;
+  const what = kind === "channel" ? `das Album „${name}“` : `den Space „${name}“ mit allen Alben und Frames`;
   const notification = event === "trashed"
     ? {
-      title: kind === "channel" ? "Channel gelöscht" : "Space gelöscht",
+      title: kind === "channel" ? "Album gelöscht" : "Space gelöscht",
       body: `${actor} hat ${what} gelöscht. Bis ${deletedAt ? germanDate(purgeAfter(deletedAt)) : "in 30 Tagen"} kann das noch rückgängig gemacht werden.`,
     }
     : {
-      title: kind === "channel" ? "Channel wiederhergestellt" : "Space wiederhergestellt",
+      title: kind === "channel" ? "Album wiederhergestellt" : "Space wiederhergestellt",
       body: `${actor} hat ${what} wiederhergestellt.`,
     };
   await pushNotificationToUsers(supabaseAdmin, [...recipients], notification, { type: `${kind}_${event}` });
@@ -210,7 +210,7 @@ async function requestDecided(supabaseAdmin: Admin, table: string, id: string, a
     await pushNotificationToUsers(
       supabaseAdmin,
       [space.owner_id as string].filter((u) => u !== actorId),
-      { title: "Einladung beantwortet", body: `${name} hat deine Einladung zur Verwaltung von „${space.name}“ ${verbFor(row.status)}.` },
+      { title: "Einladung beantwortet", body: `${name} hat deine Einladung als Co-Admin von „${space.name}“ ${verbFor(row.status)}.` },
       { type: "space_co_owner_invite_decided", space_id: row.space_id as string, space_name: space.name as string },
     );
     return;
@@ -237,8 +237,8 @@ async function requestDecided(supabaseAdmin: Admin, table: string, id: string, a
       supabaseAdmin,
       managers,
       isShare
-        ? { title: "Freigabe-Einladung beantwortet", body: `${name} hat die Freigabe-Einladung für „${channel.name}“ ${verb}.` }
-        : { title: "Einladung beantwortet", body: `${name} hat die Einladung zu „${channel.name}“ ${verb}.` },
+        ? { title: "Einladung beantwortet", body: `${name} hat das Album „${channel.name}“ für den eigenen Space ${verb}.` }
+        : { title: "Einladung beantwortet", body: `${name} hat die Einladung ins Album „${channel.name}“ ${verb}.` },
       { type: isShare ? "share_invite_decided" : "membership_invite_decided", ...data },
     );
   } else {
@@ -247,8 +247,8 @@ async function requestDecided(supabaseAdmin: Admin, table: string, id: string, a
       supabaseAdmin,
       [personId].filter((u) => u !== actorId),
       isShare
-        ? { title: "Freigabe-Anfrage beantwortet", body: `Deine Freigabe-Anfrage für „${channel.name}“ wurde ${verb}.` }
-        : { title: "Beitrittsanfrage beantwortet", body: `Deine Anfrage für „${channel.name}“ wurde ${verb}.` },
+        ? { title: "Anfrage beantwortet", body: `Deine Anfrage, das Album „${channel.name}“ mit deinem Space zu sehen, wurde ${verb}.` }
+        : { title: "Anfrage beantwortet", body: `Deine Anfrage, Member im Album „${channel.name}“ zu werden, wurde ${verb}.` },
       { type: isShare ? "share_request_decided" : "membership_request_decided", ...data },
     );
   }
