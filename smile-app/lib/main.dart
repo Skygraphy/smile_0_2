@@ -97,6 +97,7 @@ void openNotificationTarget(Map<String, dynamic> data) {
       // itself before accepting, so this opens their invite inbox instead.
       navigator.push(MaterialPageRoute(builder: (_) => NewsScreen()));
     case 'new_photo':
+    case 'photo_deleted':
     case 'media_failed':
       if (channelId == null) return;
       navigator.push(
@@ -111,6 +112,8 @@ void openNotificationTarget(Map<String, dynamic> data) {
     case 'share_audience_changed':
     case 'share_ended_for_owner':
     case 'member_left':
+    case 'album_created':
+    case 'album_renamed':
     case 'request_expired':
       // The outcome (who's now a member, what's now shared) shows up in
       // the roster -- more useful to land on than the feed itself.
@@ -123,6 +126,7 @@ void openNotificationTarget(Map<String, dynamic> data) {
       navigator.push(MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: spaceId, spaceName: spaceName)));
     case 'space_co_owner_invite_decided':
     case 'co_admin_stepped_down':
+    case 'frame_changed':
     case 'co_admin_invite_expired':
       if (spaceId == null) return;
       navigator.push(

@@ -390,12 +390,17 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
     'share_ended_for_viewer' ||
     'own_request_expired' ||
     'space_deleted_with_account' ||
+    // Viewers of its albums get it too, but only managers may open a Space.
+    'space_renamed' ||
     null => false,
     _ => true,
   };
 
   IconData _historyIcon(String? type) => switch (type) {
-    'new_photo' => SmileIcons.album,
+    'new_photo' || 'album_created' || 'album_renamed' => SmileIcons.album,
+    'photo_deleted' => SmileIcons.delete,
+    'frame_changed' => SmileIcons.frame,
+    'space_renamed' => SmileIcons.space,
     'media_failed' => SmileIcons.close,
     'channel_trashed' || 'space_trashed' || 'space_deleted_with_account' => SmileIcons.trash,
     'request_expired' || 'own_request_expired' || 'co_admin_invite_expired' => SmileIcons.pending,

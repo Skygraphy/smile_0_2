@@ -30,6 +30,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { resolveChannelAccess } from "../_shared/channel-access.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { fetchProfilesByUserId } from "../_shared/profiles.ts";
+import { pushNotificationToUsers } from "../_shared/push-users.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -130,6 +132,35 @@ Deno.serve(async (req) => {
 
       const { error: deleteError } = await supabaseAdmin.from("media_items").delete().in("id", allowedIds);
       if (deleteError) return jsonResponse({ error: "delete_failed", detail: deleteError.message }, 500);
+
+      // Someone else (an album manager) deleted your photo -> you hear it
+      // (0064). One message per sender and album.
+      const bySenderAndAlbum = new Map<string, { sender: string; channel: string; count: number }>();
+      for (const id of allowedIds) {
+        const item = allowedItemsById.get(id)!;
+        if (item.sender_id === userId) continue;
+        const key = `${item.sender_id}|${item.channel_id}`;
+        const entry = bySenderAndAlbum.get(key) ?? { sender: item.sender_id as string, channel: item.channel_id as string, count: 0 };
+        entry.count++;
+        bySenderAndAlbum.set(key, entry);
+      }
+      if (bySenderAndAlbum.size > 0) {
+        const actorName = (await fetchProfilesByUserId(supabaseAdmin, [userId])).get(userId)?.display_name ?? "Jemand";
+        for (const e of bySenderAndAlbum.values()) {
+          const { data: ch } = await supabaseAdmin.from("channels").select("name").eq("id", e.channel).maybeSingle();
+          await pushNotificationToUsers(
+            supabaseAdmin,
+            [e.sender],
+            {
+              title: "Foto gelöscht",
+              body: e.count === 1
+                ? `${actorName} hat dein Foto aus „${ch?.name ?? ""}“ gelöscht.`
+                : `${actorName} hat ${e.count} deiner Fotos aus „${ch?.name ?? ""}“ gelöscht.`,
+            },
+            { type: "photo_deleted", channel_id: e.channel, channel_name: ch?.name ?? "" },
+          );
+        }
+      }
       // Reaching the affected Frames (and every member's feed) is the
       // sync_notify() trigger's job now -- the media_items delete itself
       // pushes each Frame showing that channel (migrations/0041, 0049).

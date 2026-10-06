@@ -10,7 +10,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { generatePairingCode } from "../_shared/device-secret.ts";
-import { isSpaceOwnerOrCoOwner, isStaff as checkStaff } from "../_shared/space-access.ts";
+import { isSpaceOwnerOrCoOwner, isStaff as checkStaff, spaceManagerIds } from "../_shared/space-access.ts";
+import { fetchProfilesByUserId } from "../_shared/profiles.ts";
+import { pushNotificationToUsers } from "../_shared/push-users.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -64,6 +66,23 @@ Deno.serve(async (req) => {
       .single();
 
     if (!insertError && frame) {
+      // "Alles komplett interaktiv" (0064): the Space's other managers hear
+      // about the new Frame.
+      const actorId = userData.user.id;
+      const [{ data: space }, profiles, managers] = await Promise.all([
+        supabaseAdmin.from("spaces").select("name").eq("id", body.space_id).maybeSingle(),
+        fetchProfilesByUserId(supabaseAdmin, [actorId]),
+        spaceManagerIds(supabaseAdmin, body.space_id),
+      ]);
+      await pushNotificationToUsers(
+        supabaseAdmin,
+        managers.filter((u) => u !== actorId),
+        {
+          title: "Neuer Frame",
+          body: `${profiles.get(actorId)?.display_name ?? "Jemand"} hat den Frame „${frame.name}“ in „${space?.name ?? ""}“ angelegt.`,
+        },
+        { type: "frame_changed", space_id: body.space_id, space_name: space?.name ?? "" },
+      );
       return jsonResponse({
         frame_id: frame.id,
         name: frame.name,

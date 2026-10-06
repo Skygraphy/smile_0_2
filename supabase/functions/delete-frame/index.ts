@@ -10,7 +10,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { sendDataMessage } from "../_shared/fcm.ts";
-import { isSpaceOwnerOrCoOwner } from "../_shared/space-access.ts";
+import { isSpaceOwnerOrCoOwner, spaceManagerIds } from "../_shared/space-access.ts";
+import { fetchProfilesByUserId } from "../_shared/profiles.ts";
+import { pushNotificationToUsers } from "../_shared/push-users.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -36,7 +38,7 @@ Deno.serve(async (req) => {
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
   const { data: frame } = await supabaseAdmin
     .from("frames")
-    .select("id, space_id, fcm_token")
+    .select("id, name, space_id, fcm_token, spaces(name)")
     .eq("id", body.frame_id)
     .maybeSingle();
   if (!frame) return jsonResponse({ error: "frame_not_found" }, 404);
@@ -46,6 +48,21 @@ Deno.serve(async (req) => {
 
   const { error } = await supabaseAdmin.from("frames").delete().eq("id", frame.id);
   if (error) return jsonResponse({ error: "delete_failed", detail: error.message }, 500);
+
+  // The Space's other managers hear about it (0064).
+  const actorId = userData.user.id;
+  // deno-lint-ignore no-explicit-any
+  const spaceName = (frame.spaces as any)?.name ?? "";
+  const profiles = await fetchProfilesByUserId(supabaseAdmin, [actorId]);
+  await pushNotificationToUsers(
+    supabaseAdmin,
+    (await spaceManagerIds(supabaseAdmin, frame.space_id as string)).filter((u) => u !== actorId),
+    {
+      title: "Frame gelöscht",
+      body: `${profiles.get(actorId)?.display_name ?? "Jemand"} hat den Frame „${frame.name}“ in „${spaceName}“ gelöscht.`,
+    },
+    { type: "frame_changed", space_id: frame.space_id as string, space_name: spaceName },
+  );
 
   if (frame.fcm_token) {
     try {

@@ -42,7 +42,8 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "unauthorized" }, 401);
   }
 
-  let body: { kind: string; payload: Record<string, string | null> };
+  // deno-lint-ignore no-explicit-any
+  let body: { kind: string; payload: Record<string, any> };
   try {
     body = await req.json();
   } catch {
@@ -71,6 +72,16 @@ Deno.serve(async (req) => {
       await memberRemoved(supabaseAdmin, body.payload.channel_id!, body.payload.user_id!, body.payload.actor_id ?? null);
     } else if (body.kind === "co_admin_removed") {
       await coAdminRemoved(supabaseAdmin, body.payload.space_id!, body.payload.user_id!, body.payload.actor_id ?? null);
+    } else if (body.kind === "frame_changed") {
+      await frameChanged(supabaseAdmin, body.payload);
+    } else if (body.kind === "frame_album_removed") {
+      await frameAlbumRemoved(supabaseAdmin, body.payload.frame_id!, body.payload.channel_id!, body.payload.actor_id ?? null);
+    } else if (body.kind === "album_created") {
+      await albumCreated(supabaseAdmin, body.payload.channel_id!, body.payload.actor_id ?? null);
+    } else if (body.kind === "album_renamed") {
+      await albumRenamed(supabaseAdmin, body.payload);
+    } else if (body.kind === "space_renamed") {
+      await spaceRenamed(supabaseAdmin, body.payload);
     } else {
       return jsonResponse({ error: "unknown_kind" }, 400);
     }
@@ -336,4 +347,107 @@ async function coAdminRemoved(supabaseAdmin: Admin, spaceId: string, userId: str
       { type: "co_admin_removed" },
     );
   }
+}
+
+// --- migrations/0064: the remaining silent changes ---------------------------
+
+/** A Frame was renamed, paired, revoked/reactivated or had a setting
+ * changed -> the Space's Admin and Co-Admins, except whoever did it. */
+// deno-lint-ignore no-explicit-any
+async function frameChanged(supabaseAdmin: Admin, p: Record<string, any>) {
+  const { data: frame } = await supabaseAdmin.from("frames").select("space_id, spaces(name)").eq("id", p.frame_id).maybeSingle();
+  if (!frame) return;
+  // deno-lint-ignore no-explicit-any
+  const spaceName = (frame.spaces as any)?.name ?? "";
+  const actorId = (p.actor_id ?? null) as string | null;
+  const actor = actorId ? await displayName(supabaseAdmin, actorId) : null;
+  const recipients = (await spaceManagerIds(supabaseAdmin, frame.space_id as string)).filter((u) => u !== actorId);
+  const data = { type: "frame_changed", space_id: frame.space_id as string, space_name: spaceName };
+
+  const messages: { title: string; body: string }[] = [];
+  if (p.old_state === "pending" && p.new_state === "active") {
+    messages.push({ title: "Frame verbunden", body: `Der Frame „${p.new_name}“ in „${spaceName}“ ist jetzt verbunden und zeigt Fotos.` });
+  } else if (p.old_state !== p.new_state && p.new_state === "revoked") {
+    messages.push({ title: "Frame widerrufen", body: `${actor ?? "Jemand"} hat den Frame „${p.new_name}“ in „${spaceName}“ widerrufen.` });
+  } else if (p.old_state === "revoked" && p.new_state === "active") {
+    messages.push({ title: "Frame wieder aktiv", body: `${actor ?? "Jemand"} hat den Frame „${p.new_name}“ in „${spaceName}“ wieder aktiviert.` });
+  }
+  if (p.old_name !== p.new_name) {
+    messages.push({ title: "Frame umbenannt", body: `${actor ?? "Jemand"} hat den Frame „${p.old_name}“ in „${p.new_name}“ umbenannt.` });
+  }
+  if (p.video_sound !== null && p.video_sound !== undefined) {
+    messages.push({
+      title: "Frame-Einstellung geändert",
+      body: `${actor ?? "Jemand"}: Am Frame „${p.new_name}“ laufen Videos jetzt ${p.video_sound ? "mit" : "ohne"} Ton.`,
+    });
+  }
+  if (p.channel_switch !== null && p.channel_switch !== undefined) {
+    messages.push({
+      title: "Frame-Einstellung geändert",
+      body: `${actor ?? "Jemand"}: Am Frame „${p.new_name}“ ist der Album-Wechsel jetzt ${p.channel_switch ? "erlaubt" : "aus"}.`,
+    });
+  }
+  for (const m of messages) await pushNotificationToUsers(supabaseAdmin, recipients, m, data);
+}
+
+async function frameAlbumRemoved(supabaseAdmin: Admin, frameId: string, channelId: string, actorId: string | null) {
+  const [{ data: frame }, { data: channel }] = await Promise.all([
+    supabaseAdmin.from("frames").select("name, space_id, spaces(name)").eq("id", frameId).maybeSingle(),
+    supabaseAdmin.from("channels").select("name").eq("id", channelId).maybeSingle(),
+  ]);
+  if (!frame || !channel) return;
+  // deno-lint-ignore no-explicit-any
+  const spaceName = (frame.spaces as any)?.name ?? "";
+  const actor = actorId ? await displayName(supabaseAdmin, actorId) : "Jemand";
+  const recipients = (await spaceManagerIds(supabaseAdmin, frame.space_id as string)).filter((u) => u !== actorId);
+  await pushNotificationToUsers(
+    supabaseAdmin,
+    recipients,
+    { title: "Frame zeigt Album nicht mehr", body: `${actor}: Der Frame „${frame.name}“ zeigt „${channel.name}“ nicht mehr.` },
+    { type: "frame_changed", space_id: frame.space_id as string, space_name: spaceName },
+  );
+}
+
+async function albumCreated(supabaseAdmin: Admin, channelId: string, actorId: string | null) {
+  const { data: channel } = await supabaseAdmin.from("channels").select("name, space_id").eq("id", channelId).maybeSingle();
+  if (!channel) return;
+  const { data: space } = await supabaseAdmin.from("spaces").select("name").eq("id", channel.space_id).maybeSingle();
+  const actor = actorId ? await displayName(supabaseAdmin, actorId) : "Jemand";
+  const recipients = (await spaceManagerIds(supabaseAdmin, channel.space_id as string)).filter((u) => u !== actorId);
+  await pushNotificationToUsers(
+    supabaseAdmin,
+    recipients,
+    { title: "Neues Album", body: `${actor} hat das Album „${channel.name}“ in „${space?.name ?? ""}“ angelegt.` },
+    { type: "album_created", channel_id: channelId, channel_name: channel.name as string },
+  );
+}
+
+// deno-lint-ignore no-explicit-any
+async function albumRenamed(supabaseAdmin: Admin, p: Record<string, any>) {
+  const actorId = (p.actor_id ?? null) as string | null;
+  const actor = actorId ? await displayName(supabaseAdmin, actorId) : "Jemand";
+  const recipients = (await channelAudience(supabaseAdmin, p.channel_id)).filter((u) => u !== actorId);
+  await pushNotificationToUsers(
+    supabaseAdmin,
+    recipients,
+    { title: "Album umbenannt", body: `${actor} hat das Album „${p.old_name}“ in „${p.new_name}“ umbenannt.` },
+    { type: "album_renamed", channel_id: p.channel_id, channel_name: p.new_name },
+  );
+}
+
+/** Everyone who sees the Space or any of its albums hears about it. */
+// deno-lint-ignore no-explicit-any
+async function spaceRenamed(supabaseAdmin: Admin, p: Record<string, any>) {
+  const actorId = (p.actor_id ?? null) as string | null;
+  const actor = actorId ? await displayName(supabaseAdmin, actorId) : "Jemand";
+  const people = new Set(await spaceManagerIds(supabaseAdmin, p.space_id));
+  const { data: channels } = await supabaseAdmin.from("channels").select("id").eq("space_id", p.space_id).is("deleted_at", null);
+  for (const c of channels ?? []) for (const u of await channelAudience(supabaseAdmin, c.id as string)) people.add(u);
+  if (actorId) people.delete(actorId);
+  await pushNotificationToUsers(
+    supabaseAdmin,
+    [...people],
+    { title: "Space umbenannt", body: `${actor} hat den Space „${p.old_name}“ in „${p.new_name}“ umbenannt.` },
+    { type: "space_renamed", space_id: p.space_id, space_name: p.new_name },
+  );
 }

@@ -6,7 +6,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { spaceCanViewChannel } from "../_shared/channel-access.ts";
-import { resolveSpaceAccess } from "../_shared/space-access.ts";
+import { resolveSpaceAccess, spaceManagerIds } from "../_shared/space-access.ts";
+import { fetchProfilesByUserId } from "../_shared/profiles.ts";
+import { pushNotificationToUsers } from "../_shared/push-users.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -53,11 +55,18 @@ Deno.serve(async (req) => {
   // the Administrator) can see personally: before 0047 this asked the
   // Administrator's own view, so a channel they merely post in elsewhere
   // could end up on the household Frame.
-  const { data: channel } = await supabaseAdmin.from("channels").select("id").eq("id", body.channel_id).maybeSingle();
+  const { data: channel } = await supabaseAdmin.from("channels").select("id, name").eq("id", body.channel_id).maybeSingle();
   if (!channel) return jsonResponse({ error: "channel_not_found" }, 404);
   if (!(await spaceCanViewChannel(supabaseAdmin, frame.space_id, body.channel_id))) {
     return jsonResponse({ error: "channel_not_visible_to_frame_space" }, 400);
   }
+
+  const { data: already } = await supabaseAdmin
+    .from("frame_channels")
+    .select("frame_id")
+    .eq("frame_id", body.frame_id)
+    .eq("channel_id", body.channel_id)
+    .maybeSingle();
 
   const { error: insertError } = await supabaseAdmin
     .from("frame_channels")
@@ -73,7 +82,26 @@ Deno.serve(async (req) => {
     .eq("channel_id", body.channel_id)
     .eq("processing_status", "ready");
 
-  // No explicit push needed: the frame_channels insert above fires
+  // The Space's other managers hear about it (0064) -- only when it is new.
+  if (!already) {
+    const [{ data: frameRow }, { data: spaceRow }, profiles, managers] = await Promise.all([
+      supabaseAdmin.from("frames").select("name").eq("id", body.frame_id).maybeSingle(),
+      supabaseAdmin.from("spaces").select("name").eq("id", frame.space_id).maybeSingle(),
+      fetchProfilesByUserId(supabaseAdmin, [userId]),
+      spaceManagerIds(supabaseAdmin, frame.space_id),
+    ]);
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      managers.filter((u) => u !== userId),
+      {
+        title: "Frame zeigt neues Album",
+        body: `${profiles.get(userId)?.display_name ?? "Jemand"}: Der Frame „${frameRow?.name ?? ""}“ zeigt jetzt auch „${channel.name}“.`,
+      },
+      { type: "frame_changed", space_id: frame.space_id, space_name: spaceRow?.name ?? "" },
+    );
+  }
+
+  // No explicit Frame push needed: the frame_channels insert above fires
   // sync_notify(), which pushes this Frame (migrations/0041_fcm_sync.sql).
 
   return jsonResponse({ status: "assigned", backfilled_items: readyCount ?? 0 });
