@@ -97,6 +97,24 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
     await _run(() => widget.frameService.setRevoked(frameId: _frame.id, revoked: revoking));
   }
 
+  Future<void> _delete() async {
+    final t = SmileTexts.of(context);
+    final confirmed = await showSmileConfirmDialog(
+      context,
+      title: t.deleteFrameTitle(_frame.name),
+      message: t.deleteFrameMessage,
+      confirmLabel: t.actionDelete,
+      destructive: true,
+    );
+    if (!confirmed) return;
+    try {
+      await widget.frameService.deleteFrame(_frame.id);
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+    }
+  }
+
   /// Optimistic: the switch moves at once, a failure reloads the truth.
   Future<void> _setAlbumSwitch(bool value) async {
     setState(() => _frame = _frame.copyWith(channelSwitchEnabled: value));
@@ -247,6 +265,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                         destructive: !_frame.isRevoked,
                         onTap: _toggleRevoked,
                       ),
+                      SmileActionRow(icon: SmileIcons.delete, label: t.deleteFrame, destructive: true, onTap: _delete),
                     ],
                   ),
                   const SizedBox(height: 24),

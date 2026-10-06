@@ -1401,6 +1401,48 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Entfernen'**
   String get removeEntry;
+
+  /// No description provided for @deleteFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame löschen'**
+  String get deleteFrame;
+
+  /// No description provided for @deleteFrameTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame „{name}“ löschen?'**
+  String deleteFrameTitle(String name);
+
+  /// No description provided for @deleteFrameMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Frame wird endgültig entfernt. Das Tablet löscht seine Fotos und zeigt wieder „Frame verbinden“. Zum Weiterverwenden einfach neu verbinden.'**
+  String get deleteFrameMessage;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto löschen'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto endgültig löschen?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Dein Profil, alle deine Fotos und Videos in allen Alben und alle deine Mitgliedschaften werden sofort und endgültig gelöscht. Spaces, in denen du Admin bist, übernimmt dein längster Co-Admin; ohne Co-Admin wird der Space mit allen Alben und Frames gelöscht. Das kann nicht rückgängig gemacht werden.'**
+  String get deleteAccountMessage;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In de, this message translates to:
+  /// **'Endgültig löschen'**
+  String get deleteAccountConfirm;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

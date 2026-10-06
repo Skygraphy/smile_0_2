@@ -111,6 +111,7 @@ void openNotificationTarget(Map<String, dynamic> data) {
     case 'share_audience_changed':
     case 'share_ended_for_owner':
     case 'member_left':
+    case 'request_expired':
       // The outcome (who's now a member, what's now shared) shows up in
       // the roster -- more useful to land on than the feed itself.
       if (channelId == null) return;
@@ -122,6 +123,7 @@ void openNotificationTarget(Map<String, dynamic> data) {
       navigator.push(MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: spaceId, spaceName: spaceName)));
     case 'space_co_owner_invite_decided':
     case 'co_admin_stepped_down':
+    case 'co_admin_invite_expired':
       if (spaceId == null) return;
       navigator.push(
         MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: spaceId, spaceName: spaceName)),

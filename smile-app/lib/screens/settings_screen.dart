@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show SignOutScope;
 
 import '../main.dart';
 import '../services/avatar_upload.dart';
@@ -146,6 +147,29 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
     await _signOut();
   }
 
+  /// Everything of this person goes (delete-account). Afterwards the
+  /// session is worthless -- sign out locally so AuthGate shows the login.
+  Future<void> _confirmDeleteAccount() async {
+    final t = SmileTexts.of(context);
+    final confirmed = await showSmileConfirmDialog(
+      context,
+      title: t.deleteAccountTitle,
+      message: t.deleteAccountMessage,
+      confirmLabel: t.deleteAccountConfirm,
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
+    try {
+      await widget.profileService.deleteMyAccount();
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+      return;
+    }
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    await supabase.auth.signOut(scope: SignOutScope.local);
+  }
+
   Future<void> _signOut() async {
     final token = await _pushService.getToken();
     if (token != null) {
@@ -256,6 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                         subtitle: t.emailAddress,
                       ),
                     SmileActionRow(icon: SmileIcons.leave, label: t.signOut, destructive: true, onTap: _confirmSignOut),
+                    SmileActionRow(icon: SmileIcons.delete, label: t.deleteAccount, destructive: true, onTap: _confirmDeleteAccount),
                   ],
                 ),
               ],

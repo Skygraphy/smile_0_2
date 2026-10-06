@@ -1,5 +1,6 @@
 import 'avatar_upload.dart';
 import '../main.dart';
+import 'edge_functions.dart';
 
 class SmileProfile {
   SmileProfile({required this.userId, required this.displayName, this.avatarUrl});
@@ -17,6 +18,14 @@ class SmileProfile {
 /// falls back to SmileAvatar's generated initials when avatar_path is
 /// null, so only the name is ever actually blocking).
 class ProfileService {
+  /// Deletes the caller's account and everything of it (delete-account,
+  /// decision 2026-10-06). Throws if the server refused.
+  Future<void> deleteMyAccount() async {
+    final response = await invokeEdge('delete-account', body: const {});
+    final data = response.data as Map<String, dynamic>?;
+    if (data?['status'] != 'deleted') throw Exception(data?['error'] ?? 'delete_failed');
+  }
+
   Future<SmileProfile?> getMyProfile() async {
     final userId = supabase.auth.currentUser!.id;
     final row = await supabase.from('profiles').select('display_name, avatar_path').eq('user_id', userId).maybeSingle();

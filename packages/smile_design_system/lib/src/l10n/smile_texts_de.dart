@@ -816,4 +816,29 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get removeEntry => 'Entfernen';
+
+  @override
+  String get deleteFrame => 'Frame löschen';
+
+  @override
+  String deleteFrameTitle(String name) {
+    return 'Frame „$name“ löschen?';
+  }
+
+  @override
+  String get deleteFrameMessage =>
+      'Der Frame wird endgültig entfernt. Das Tablet löscht seine Fotos und zeigt wieder „Frame verbinden“. Zum Weiterverwenden einfach neu verbinden.';
+
+  @override
+  String get deleteAccount => 'Konto löschen';
+
+  @override
+  String get deleteAccountTitle => 'Konto endgültig löschen?';
+
+  @override
+  String get deleteAccountMessage =>
+      'Dein Profil, alle deine Fotos und Videos in allen Alben und alle deine Mitgliedschaften werden sofort und endgültig gelöscht. Spaces, in denen du Admin bist, übernimmt dein längster Co-Admin; ohne Co-Admin wird der Space mit allen Alben und Frames gelöscht. Das kann nicht rückgängig gemacht werden.';
+
+  @override
+  String get deleteAccountConfirm => 'Endgültig löschen';
 }

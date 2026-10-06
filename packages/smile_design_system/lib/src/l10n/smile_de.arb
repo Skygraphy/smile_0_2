@@ -532,5 +532,19 @@
   "history": "Verlauf",
   "yesterday": "Gestern",
   "removeAll": "Alle entfernen",
-  "removeEntry": "Entfernen"
+  "removeEntry": "Entfernen",
+  "deleteFrame": "Frame löschen",
+  "deleteFrameTitle": "Frame „{name}“ löschen?",
+  "@deleteFrameTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteFrameMessage": "Der Frame wird endgültig entfernt. Das Tablet löscht seine Fotos und zeigt wieder „Frame verbinden“. Zum Weiterverwenden einfach neu verbinden.",
+  "deleteAccount": "Konto löschen",
+  "deleteAccountTitle": "Konto endgültig löschen?",
+  "deleteAccountMessage": "Dein Profil, alle deine Fotos und Videos in allen Alben und alle deine Mitgliedschaften werden sofort und endgültig gelöscht. Spaces, in denen du Admin bist, übernimmt dein längster Co-Admin; ohne Co-Admin wird der Space mit allen Alben und Frames gelöscht. Das kann nicht rückgängig gemacht werden.",
+  "deleteAccountConfirm": "Endgültig löschen"
 }

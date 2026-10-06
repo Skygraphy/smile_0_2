@@ -385,14 +385,20 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
   /// Same routing as tapping the push itself; some (e.g. "removed from an
   /// album") have nowhere left to go.
   bool _hasTarget(Map<String, dynamic> data) => switch (data['type']) {
-    'member_removed' || 'co_admin_removed' || 'share_ended_for_viewer' || null => false,
+    'member_removed' ||
+    'co_admin_removed' ||
+    'share_ended_for_viewer' ||
+    'own_request_expired' ||
+    'space_deleted_with_account' ||
+    null => false,
     _ => true,
   };
 
   IconData _historyIcon(String? type) => switch (type) {
     'new_photo' => SmileIcons.album,
     'media_failed' => SmileIcons.close,
-    'channel_trashed' || 'space_trashed' => SmileIcons.trash,
+    'channel_trashed' || 'space_trashed' || 'space_deleted_with_account' => SmileIcons.trash,
+    'request_expired' || 'own_request_expired' || 'co_admin_invite_expired' => SmileIcons.pending,
     'channel_restored' || 'space_restored' => SmileIcons.restore,
     'space_ownership_transferred' => SmileIcons.admin,
     'space_co_owner_invite' ||

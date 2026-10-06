@@ -134,6 +134,14 @@ class FrameService {
     await supabase.from('frames').update({'channel_switch_enabled': enabled}).eq('id', frameId);
   }
 
+  /// For good (delete-frame): the Frame's Space Admin or a Co-Admin. The
+  /// tablet is woken and drops back to the pairing screen.
+  Future<void> deleteFrame(String frameId) async {
+    final response = await invokeEdge('delete-frame', body: {'frame_id': frameId});
+    final data = response.data as Map<String, dynamic>?;
+    if (data?['status'] != 'deleted') throw FrameServiceException(data?['error'] as String? ?? 'unknown_error');
+  }
+
   Future<void> setVideoSound({required String frameId, required bool enabled}) async {
     await supabase.from('frames').update({'video_sound': enabled}).eq('id', frameId);
   }
