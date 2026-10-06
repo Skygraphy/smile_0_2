@@ -546,5 +546,22 @@
   "deleteAccount": "Konto löschen",
   "deleteAccountTitle": "Konto endgültig löschen?",
   "deleteAccountMessage": "Dein Profil, alle deine Fotos und Videos in allen Alben und alle deine Mitgliedschaften werden sofort und endgültig gelöscht. Spaces, in denen du Admin bist, übernimmt dein längster Co-Admin; ohne Co-Admin wird der Space mit allen Alben und Frames gelöscht. Das kann nicht rückgängig gemacht werden.",
-  "deleteAccountConfirm": "Endgültig löschen"
+  "deleteAccountConfirm": "Endgültig löschen",
+  "deleteAccountTitleNamed": "Konto von {name} löschen?",
+  "@deleteAccountTitleNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountWhich": "Gelöscht wird das Konto {email}, mit dem du gerade angemeldet bist.",
+  "@deleteAccountWhich": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccountTypeEmail": "Zum Bestätigen diese E-Mail-Adresse eintippen:"
 }

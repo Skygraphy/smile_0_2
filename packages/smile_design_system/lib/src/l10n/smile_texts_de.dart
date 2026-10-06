@@ -841,4 +841,18 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get deleteAccountConfirm => 'Endgültig löschen';
+
+  @override
+  String deleteAccountTitleNamed(String name) {
+    return 'Konto von $name löschen?';
+  }
+
+  @override
+  String deleteAccountWhich(String email) {
+    return 'Gelöscht wird das Konto $email, mit dem du gerade angemeldet bist.';
+  }
+
+  @override
+  String get deleteAccountTypeEmail =>
+      'Zum Bestätigen diese E-Mail-Adresse eintippen:';
 }

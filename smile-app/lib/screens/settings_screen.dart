@@ -151,14 +151,18 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
   /// session is worthless -- sign out locally so AuthGate shows the login.
   Future<void> _confirmDeleteAccount() async {
     final t = SmileTexts.of(context);
-    final confirmed = await showSmileConfirmDialog(
-      context,
-      title: t.deleteAccountTitle,
-      message: t.deleteAccountMessage,
-      confirmLabel: t.deleteAccountConfirm,
-      destructive: true,
+    final email = supabase.auth.currentUser?.email ?? '';
+    // Walkthrough 2026-10-06: an account was deleted on the wrong login
+    // (a shared test device). The dialog now names the account and only
+    // confirms once its e-mail address is typed in.
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => _DeleteAccountDialog(
+        name: _profile?.displayName ?? email,
+        email: email,
+      ),
     );
-    if (!confirmed || !mounted) return;
+    if (confirmed != true || !mounted) return;
     try {
       await widget.profileService.deleteMyAccount();
     } catch (e) {
@@ -285,6 +289,67 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                 ),
               ],
             ),
+    );
+  }
+}
+
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog({required this.name, required this.email});
+
+  final String name;
+  final String email;
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  bool get _matches =>
+      widget.email.isNotEmpty && _controller.text.trim().toLowerCase() == widget.email.toLowerCase();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = SmileTexts.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    return AlertDialog(
+      title: Text(t.deleteAccountTitleNamed(widget.name)),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(t.deleteAccountWhich(widget.email), style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: SmileSpacing.m),
+            Text(t.deleteAccountMessage),
+            const SizedBox(height: SmileSpacing.l),
+            Text(t.deleteAccountTypeEmail),
+            const SizedBox(height: SmileSpacing.s),
+            TextField(
+              controller: _controller,
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              decoration: InputDecoration(hintText: widget.email),
+              onChanged: (_) => setState(() {}),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.actionCancel)),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: scheme.error, foregroundColor: scheme.onError),
+          onPressed: _matches ? () => Navigator.of(context).pop(true) : null,
+          child: Text(t.deleteAccountConfirm),
+        ),
+      ],
     );
   }
 }

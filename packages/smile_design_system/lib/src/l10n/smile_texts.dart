@@ -1443,6 +1443,24 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Endgültig löschen'**
   String get deleteAccountConfirm;
+
+  /// No description provided for @deleteAccountTitleNamed.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto von {name} löschen?'**
+  String deleteAccountTitleNamed(String name);
+
+  /// No description provided for @deleteAccountWhich.
+  ///
+  /// In de, this message translates to:
+  /// **'Gelöscht wird das Konto {email}, mit dem du gerade angemeldet bist.'**
+  String deleteAccountWhich(String email);
+
+  /// No description provided for @deleteAccountTypeEmail.
+  ///
+  /// In de, this message translates to:
+  /// **'Zum Bestätigen diese E-Mail-Adresse eintippen:'**
+  String get deleteAccountTypeEmail;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {
