@@ -321,3 +321,35 @@ Deno.test("every push lands in the recipient's own notification history", async 
     await deleteUser(admin.id);
   }
 });
+
+// Walkthrough 2026-10-06 (migrations/0061): renaming a Space must wake its
+// Frames -- they show the Space name next to the album name.
+Deno.test("renaming a Space wakes its Frames", async () => {
+  requireEnv();
+  const admin = await createThrowawayUser("fadmin");
+  let space: string | undefined;
+  try {
+    await ensureProfile(admin.id, "Frame Admin");
+    const { accessToken: adminToken } = await accessTokenFor(admin.email);
+    space = await createSpace(adminToken, "Frame Space");
+    const frame = await invoke("create-frame", adminToken, { space_id: space, name: "Frame Test" });
+    assertEquals(frame.status, 200, JSON.stringify(frame.body));
+    const frameId = frame.body.frame_id as string;
+
+    const renamed = await asUser(`spaces?id=eq.${space}`, adminToken, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ name: "Frame Space renamed" }),
+    });
+    assertEquals(renamed.status, 204);
+
+    const { body } = await svc(
+      `internal_calls?fn=eq.sync-fanout&body->>table=eq.spaces&select=body&order=id.desc&limit=20`,
+    );
+    const woken = (body as { body: { frames: string[] } }[]).some((r) => r.body.frames.includes(frameId));
+    assertEquals(woken, true, "the Space rename must list the Frame among the devices to sync");
+  } finally {
+    if (space) await deleteSpace(space);
+    await deleteUser(admin.id);
+  }
+});
