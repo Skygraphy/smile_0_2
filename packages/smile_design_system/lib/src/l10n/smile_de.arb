@@ -563,5 +563,6 @@
       }
     }
   },
-  "deleteAccountTypeEmail": "Zum Bestätigen diese E-Mail-Adresse eintippen:"
+  "deleteAccountTypeEmail": "Zum Bestätigen diese E-Mail-Adresse eintippen:",
+  "newsUnseen": "Neuigkeiten, es gibt Neues"
 }

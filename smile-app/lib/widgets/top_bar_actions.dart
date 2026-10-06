@@ -59,7 +59,7 @@ class NewsButton extends StatefulWidget {
 }
 
 class _NewsButtonState extends State<NewsButton> with SyncReload {
-  bool _pending = false;
+  NewsStatus _status = const NewsStatus(needsAnswer: false, unseenNews: false);
 
   @override
   void initState() {
@@ -72,8 +72,11 @@ class _NewsButtonState extends State<NewsButton> with SyncReload {
 
   Future<void> _check() async {
     try {
-      final pending = await widget.newsService.hasPendingForMe();
-      if (mounted && pending != _pending) setState(() => _pending = pending);
+      final status = await widget.newsService.status();
+      if (!mounted) return;
+      if (status.needsAnswer != _status.needsAnswer || status.unseenNews != _status.unseenNews) {
+        setState(() => _status = status);
+      }
     } catch (_) {
       // Keep the last known state; a failed check must not make the
       // icon flicker or show an error in the top bar.
@@ -81,16 +84,30 @@ class _NewsButtonState extends State<NewsButton> with SyncReload {
   }
 
   Future<void> _open() async {
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => NewsScreen()));
+    final navigator = Navigator.of(context);
+    // Opening Neuigkeiten = seen; again on the way out, so what arrived
+    // while it was open doesn't bring the dot back.
+    setState(() => _status = NewsStatus(needsAnswer: _status.needsAnswer, unseenNews: false));
+    await widget.newsService.markSeen().catchError((_) {});
+    await navigator.push(MaterialPageRoute(builder: (_) => NewsScreen()));
+    await widget.newsService.markSeen().catchError((_) {});
     await _check();
   }
 
   @override
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
+    final coral = Theme.of(context).colorScheme.primary;
     return IconButton(
-      icon: Icon(SmileIcons.news, color: _pending ? Theme.of(context).colorScheme.primary : null),
-      tooltip: _pending ? t.newsWaiting : t.news,
+      // Coral icon = something waits for your answer; coral dot = news in
+      // the Verlauf you haven't seen yet (decision 2026-10-06).
+      icon: Badge(
+        isLabelVisible: _status.unseenNews,
+        smallSize: 9,
+        backgroundColor: coral,
+        child: Icon(SmileIcons.news, color: _status.needsAnswer ? coral : null),
+      ),
+      tooltip: _status.needsAnswer ? t.newsWaiting : (_status.unseenNews ? t.newsUnseen : t.news),
       onPressed: _open,
     );
   }

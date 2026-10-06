@@ -5,12 +5,16 @@ import 'package:smile_app/widgets/top_bar_actions.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 class _FakeNewsService implements NewsService {
-  _FakeNewsService(this.pending);
+  _FakeNewsService(this.pending, {this.unseen = false});
 
   final bool pending;
+  final bool unseen;
 
   @override
-  Future<bool> hasPendingForMe() async => pending;
+  Future<NewsStatus> status() async => NewsStatus(needsAnswer: pending, unseenNews: unseen);
+
+  @override
+  Future<void> markSeen() async {}
 }
 
 Widget _host(Widget child) => MaterialApp(
@@ -35,5 +39,13 @@ void main() {
     await tester.pump();
     expect(_newsIconColor(tester), isNull);
     expect(find.byTooltip('Neuigkeiten'), findsOneWidget);
+  });
+
+  testWidgets('a coral dot shows unseen news without anything to answer', (tester) async {
+    await tester.pumpWidget(_host(NewsButton(newsService: _FakeNewsService(false, unseen: true))));
+    await tester.pump();
+    expect(_newsIconColor(tester), isNull);
+    expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isTrue);
+    expect(find.byTooltip('Neuigkeiten, es gibt Neues'), findsOneWidget);
   });
 }

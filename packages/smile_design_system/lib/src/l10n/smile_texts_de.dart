@@ -855,4 +855,7 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get deleteAccountTypeEmail =>
       'Zum Bestätigen diese E-Mail-Adresse eintippen:';
+
+  @override
+  String get newsUnseen => 'Neuigkeiten, es gibt Neues';
 }

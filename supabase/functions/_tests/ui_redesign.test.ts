@@ -353,3 +353,21 @@ Deno.test("renaming a Space wakes its Frames", async () => {
     await deleteUser(admin.id);
   }
 });
+
+// Neuigkeiten dot (migrations/0063): opening Neuigkeiten stores the moment
+// on the server, for the caller only.
+Deno.test("opening Neuigkeiten marks the Verlauf as seen", async () => {
+  requireEnv();
+  const user = await createThrowawayUser("nsuser");
+  try {
+    const { accessToken } = await accessTokenFor(user.email);
+    const before = Date.now();
+    const marked = await asUser("rpc/mark_news_seen", accessToken, { method: "POST", body: "{}" });
+    assertEquals(marked.status, 204, JSON.stringify(marked.body));
+    const own = await asUser("news_reads?select=user_id,seen_at", accessToken);
+    assertEquals((own.body as unknown[]).length, 1);
+    assertEquals(new Date(own.body[0].seen_at).getTime() >= before - 60_000, true);
+  } finally {
+    await deleteUser(user.id);
+  }
+});

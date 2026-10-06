@@ -1461,6 +1461,12 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Zum Bestätigen diese E-Mail-Adresse eintippen:'**
   String get deleteAccountTypeEmail;
+
+  /// No description provided for @newsUnseen.
+  ///
+  /// In de, this message translates to:
+  /// **'Neuigkeiten, es gibt Neues'**
+  String get newsUnseen;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {
