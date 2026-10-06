@@ -1,4 +1,5 @@
 import '../main.dart';
+import 'edge_functions.dart';
 
 /// A Space linked to a channel, either as its home Space or via a
 /// view-only share (channel_shares).
@@ -109,7 +110,7 @@ class ChannelPickerService {
   /// sorted by most recent photo activity -- powers channels_home_screen.dart's
   /// WhatsApp-style flat "who did I last exchange photos with" landing list.
   Future<List<ChannelWithActivity>> listMyChannelsWithActivity() async {
-    final response = await supabase.functions.invoke('list-my-channels');
+    final response = await invokeEdge('list-my-channels');
     final data = response.data as Map<String, dynamic>;
     if (data['error'] != null) throw ChannelPickerException(data['error'] as String);
     final channels = (data['channels'] as List).cast<Map<String, dynamic>>();

@@ -1,4 +1,5 @@
 import '../main.dart';
+import 'edge_functions.dart';
 
 class ChannelMember {
   ChannelMember({required this.userId, required this.displayName, required this.avatarUrl, required this.createdAt});
@@ -156,7 +157,7 @@ class MyInvitesInbox {
 /// into another user's profile, requires one.
 class MembershipService {
   Future<ChannelRoster> listChannelMembers(String channelId) async {
-    final response = await supabase.functions.invoke('list-channel-members', body: {'channel_id': channelId});
+    final response = await invokeEdge('list-channel-members', body: {'channel_id': channelId});
     final data = response.data as Map<String, dynamic>;
     if (data['error'] != null) throw MembershipServiceException(data['error'] as String);
     final members = (data['members'] as List).cast<Map<String, dynamic>>();
@@ -184,7 +185,7 @@ class MembershipService {
 
   /// SCO invites a known person (by email) to become a posting member.
   Future<void> inviteMember({required String channelId, required String email}) async {
-    final response = await supabase.functions.invoke('invite-channel-member', body: {
+    final response = await invokeEdge('invite-channel-member', body: {
       'channel_id': channelId,
       'email': email,
     });
@@ -199,7 +200,7 @@ class MembershipService {
   /// one of their own Spaces (which one is chosen by the invitee at
   /// accept time).
   Future<void> inviteShare({required String channelId, required String email}) async {
-    final response = await supabase.functions.invoke('invite-channel-share', body: {
+    final response = await invokeEdge('invite-channel-share', body: {
       'channel_id': channelId,
       'email': email,
     });
@@ -314,7 +315,7 @@ class MembershipService {
   /// an Edge Function: an invitee can't see the channel's own name via
   /// plain RLS before accepting.
   Future<MyInvitesInbox> listMyInvites({String? channelId, bool includeManaged = false}) async {
-    final response = await supabase.functions.invoke('list-my-invites', body: {
+    final response = await invokeEdge('list-my-invites', body: {
       'channel_id': ?channelId,
       if (includeManaged) 'include_managed': true,
     });

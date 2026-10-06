@@ -1,4 +1,5 @@
 import '../main.dart';
+import 'edge_functions.dart';
 
 class SmileFrame {
   SmileFrame({
@@ -109,7 +110,7 @@ class FrameService {
   /// CSPRNG and collision retry, same reasoning as every other code-issuing
   /// flow in this codebase.
   Future<SmileFrame> createFrame({required String spaceId, required String name}) async {
-    final response = await supabase.functions.invoke('create-frame', body: {'space_id': spaceId, 'name': name});
+    final response = await invokeEdge('create-frame', body: {'space_id': spaceId, 'name': name});
     final data = response.data as Map<String, dynamic>?;
     if (data == null || data['frame_id'] == null) {
       throw FrameServiceException(data?['error'] as String? ?? 'unknown_error');
@@ -182,7 +183,7 @@ class FrameService {
   /// clear reason when the Frame's household can't see the channel -- see
   /// assign-frame-channel/index.ts.
   Future<void> assignChannel({required String frameId, required String channelId}) async {
-    final response = await supabase.functions.invoke('assign-frame-channel', body: {
+    final response = await invokeEdge('assign-frame-channel', body: {
       'frame_id': frameId,
       'channel_id': channelId,
     });

@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fc_native_video_thumbnail/fc_native_video_thumbnail.dart';
 
 import '../main.dart';
+import 'edge_functions.dart';
 import 'resumable_upload.dart';
 
 class MediaItem {
@@ -117,7 +118,7 @@ class MediaService {
     final items = <MediaItem>[];
     String? cursor;
     while (true) {
-      final response = await supabase.functions.invoke(
+      final response = await invokeEdge(
         'get-signed-media-urls',
         body: {
           'channel_id': channelId,
@@ -287,7 +288,7 @@ class MediaService {
     required int fileSizeBytes,
     String? previewDataUrl,
   }) async {
-    final response = await supabase.functions.invoke('create-upload', body: {
+    final response = await invokeEdge('create-upload', body: {
       'channel_id': channelId,
       'media_type': mediaType,
       'mime_type': mimeType,
@@ -301,7 +302,7 @@ class MediaService {
   }
 
   Future<void> _completeUpload(String mediaItemId) async {
-    final response = await supabase.functions.invoke('complete-upload', body: {'media_item_id': mediaItemId});
+    final response = await invokeEdge('complete-upload', body: {'media_item_id': mediaItemId});
     final data = response.data as Map<String, dynamic>;
     const acceptedStatuses = {'ready', 'pending_processing', 'processing'};
     if (!acceptedStatuses.contains(data['status'])) {
@@ -347,7 +348,7 @@ class MediaService {
   Future<MediaActionResult> unhidePhotos(List<String> mediaItemIds) => _applyAction(mediaItemIds, 'unhide');
 
   Future<MediaActionResult> _applyAction(List<String> mediaItemIds, String action) async {
-    final response = await supabase.functions.invoke('delete-media', body: {
+    final response = await invokeEdge('delete-media', body: {
       'media_item_ids': mediaItemIds,
       'action': action,
     });

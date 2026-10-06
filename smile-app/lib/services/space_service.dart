@@ -1,4 +1,5 @@
 import '../main.dart';
+import 'edge_functions.dart';
 
 /// A person with full, ongoing SCO-equivalent power over a Space, granted
 /// by its founder -- migrations/0037_space_co_owners.sql. Solves the gap a
@@ -140,7 +141,7 @@ class SpaceService {
   /// every not-yet-answered invite. An Edge Function because profiles has
   /// no cross-user RLS (see _shared/profiles.ts).
   Future<SpaceCoOwnership> listCoOwners(String spaceId) async {
-    final response = await supabase.functions.invoke('list-space-co-owners', body: {'space_id': spaceId});
+    final response = await invokeEdge('list-space-co-owners', body: {'space_id': spaceId});
     final data = response.data as Map<String, dynamic>;
     if (data['error'] != null) throw SpaceServiceException(data['error'] as String);
     return SpaceCoOwnership(
@@ -161,7 +162,7 @@ class SpaceService {
   /// method's short-lived predecessor (addCoOwner), which granted co-owner
   /// status directly with no say from the recipient.
   Future<void> inviteCoOwner({required String spaceId, required String email}) async {
-    final response = await supabase.functions.invoke('invite-space-co-owner', body: {
+    final response = await invokeEdge('invite-space-co-owner', body: {
       'space_id': spaceId,
       'email': email,
     });
@@ -184,7 +185,7 @@ class SpaceService {
   /// for the same reason: the invitee can't yet see the Space's name or
   /// the founder's profile via plain RLS.
   Future<List<MyCoOwnerInvite>> listMyCoOwnerInvites() async {
-    final response = await supabase.functions.invoke('list-my-space-co-owner-invites');
+    final response = await invokeEdge('list-my-space-co-owner-invites');
     final data = response.data as Map<String, dynamic>;
     if (data['error'] != null) throw SpaceServiceException(data['error'] as String);
     return (data['invites'] as List).cast<Map<String, dynamic>>().map(MyCoOwnerInvite.fromJson).toList();
@@ -213,7 +214,7 @@ class SpaceService {
   /// afterward instead of losing access, same as a WhatsApp admin who
   /// demotes themselves stays a member.
   Future<void> transferOwnership({required String spaceId, required String newOwnerUserId}) async {
-    final response = await supabase.functions.invoke('transfer-space-ownership', body: {
+    final response = await invokeEdge('transfer-space-ownership', body: {
       'space_id': spaceId,
       'new_owner_user_id': newOwnerUserId,
     });

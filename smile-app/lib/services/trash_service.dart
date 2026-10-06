@@ -1,4 +1,5 @@
 import '../main.dart';
+import 'edge_functions.dart';
 
 /// One Space or Channel in the 30-day trash (supabase/migrations/0048_trash.sql).
 class TrashItem {
@@ -35,7 +36,7 @@ class TrashService {
   /// What the caller may restore: Spaces they are Administrator of, Channels
   /// of Spaces they manage -- see list-trash/index.ts.
   Future<List<TrashItem>> listTrash() async {
-    final response = await supabase.functions.invoke('list-trash', body: const {});
+    final response = await invokeEdge('list-trash', body: const {});
     final data = response.data as Map<String, dynamic>;
     return [
       ...(data['spaces'] as List).cast<Map<String, dynamic>>().map((j) => TrashItem.fromJson('space', j)),
