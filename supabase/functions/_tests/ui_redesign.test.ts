@@ -303,6 +303,18 @@ Deno.test("every push lands in the recipient's own notification history", async 
     // Nobody else reads it (RLS): the admin sees none of the invitee's rows.
     const theirs = await asUser(`user_notifications?user_id=eq.${invitee.id}&select=id`, adminToken);
     assertEquals(theirs.body, []);
+
+    // Dismissing (migrations/0060): nobody else can remove it, its owner can.
+    const foreign = await asUser(`user_notifications?user_id=eq.${invitee.id}`, adminToken, {
+      method: "DELETE",
+      headers: { Prefer: "return=representation" },
+    });
+    assertEquals(foreign.body, []);
+    const own = await asUser(`user_notifications?user_id=eq.${invitee.id}`, inviteeToken, {
+      method: "DELETE",
+      headers: { Prefer: "return=representation" },
+    });
+    assertEquals((own.body as unknown[]).length, 1, JSON.stringify(own.body));
   } finally {
     if (space) await deleteSpace(space);
     await deleteUser(invitee.id);

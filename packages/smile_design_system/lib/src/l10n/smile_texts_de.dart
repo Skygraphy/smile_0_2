@@ -810,4 +810,10 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get yesterday => 'Gestern';
+
+  @override
+  String get removeAll => 'Alle entfernen';
+
+  @override
+  String get removeEntry => 'Entfernen';
 }

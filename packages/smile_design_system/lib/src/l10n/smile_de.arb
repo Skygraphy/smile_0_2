@@ -530,5 +530,7 @@
   "someone": "Jemand",
   "noPostsYet": "Noch keine Fotos",
   "history": "Verlauf",
-  "yesterday": "Gestern"
+  "yesterday": "Gestern",
+  "removeAll": "Alle entfernen",
+  "removeEntry": "Entfernen"
 }

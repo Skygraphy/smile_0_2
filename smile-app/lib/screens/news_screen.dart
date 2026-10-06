@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
@@ -19,14 +21,10 @@ import '../services/trash_service.dart';
 /// of migrations/0031 -- there is no shareable code, only a known person
 /// inviting another known person.
 class NewsScreen extends StatefulWidget {
-  NewsScreen({
-    super.key,
-    MembershipService? membershipService,
-    SpaceService? spaceService,
-    TrashService? trashService,
-  })  : membershipService = membershipService ?? MembershipService(),
-        spaceService = spaceService ?? SpaceService(),
-        trashService = trashService ?? TrashService();
+  NewsScreen({super.key, MembershipService? membershipService, SpaceService? spaceService, TrashService? trashService})
+    : membershipService = membershipService ?? MembershipService(),
+      spaceService = spaceService ?? SpaceService(),
+      trashService = trashService ?? TrashService();
 
   final MembershipService membershipService;
   final SpaceService spaceService;
@@ -168,7 +166,8 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
     final mySent = [...inbox.membershipRequests, ...inbox.shareRequests].where((r) => !isInvite(r)).toList();
     final managed = [...inbox.managedMembershipRequests, ...inbox.managedShareRequests];
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    final nothing = albumInvites.isEmpty &&
+    final nothing =
+        albumInvites.isEmpty &&
         _coAdminInvites.isEmpty &&
         managed.isEmpty &&
         mySent.isEmpty &&
@@ -209,7 +208,11 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                 ),
               for (final request in albumInvites)
                 SmileObjectTile(
-                  leading: SmileAvatar(name: request.counterpartLabel, avatarUrl: request.counterpartAvatarUrl, size: 40),
+                  leading: SmileAvatar(
+                    name: request.counterpartLabel,
+                    avatarUrl: request.counterpartAvatarUrl,
+                    size: 40,
+                  ),
                   title: request.channelName ?? request.channelId,
                   subtitleIcon: request.kind == RequestKind.membership ? SmileIcons.member : SmileIcons.shared,
                   subtitle: request.kind == RequestKind.membership
@@ -239,7 +242,11 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
             children: [
               for (final request in managed)
                 SmileObjectTile(
-                  leading: SmileAvatar(name: request.counterpartLabel, avatarUrl: request.counterpartAvatarUrl, size: 40),
+                  leading: SmileAvatar(
+                    name: request.counterpartLabel,
+                    avatarUrl: request.counterpartAvatarUrl,
+                    size: 40,
+                  ),
                   title: request.channelName ?? request.channelId,
                   subtitleIcon: request.kind == RequestKind.membership ? SmileIcons.member : SmileIcons.viewer,
                   subtitle: request.kind == RequestKind.membership
@@ -314,21 +321,40 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
             title: t.history,
             children: [
               for (final entry in _history)
-                Builder(builder: (context) {
-                  final data = Map<String, dynamic>.from((entry['data'] as Map?) ?? const {});
-                  final canOpen = _hasTarget(data);
-                  return SmileObjectTile(
-                    leading: SmileObjectIcon(icon: _historyIcon(data['type'] as String?), size: 40),
-                    title: entry['title'] as String,
-                    subtitle: entry['body'] as String,
-                    subtitleMaxLines: 3,
-                    trailing: Text(
-                      _when(t, DateTime.parse(entry['created_at'] as String).toLocal()),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted),
-                    ),
-                    onTap: canOpen ? () => openNotificationTarget(data) : null,
-                  );
-                }),
+                Builder(
+                  builder: (context) {
+                    final data = Map<String, dynamic>.from((entry['data'] as Map?) ?? const {});
+                    final canOpen = _hasTarget(data);
+                    final id = entry['id'] as String;
+                    // Dealt with = gone (decision 2026-10-06): swipe removes it
+                    // unopened, a tap opens its target and removes it.
+                    return Dismissible(
+                      key: ValueKey(id),
+                      background: _dismissBackground(context, Alignment.centerLeft),
+                      secondaryBackground: _dismissBackground(context, Alignment.centerRight),
+                      onDismissed: (_) => _dismiss([id]),
+                      child: SmileObjectTile(
+                        leading: SmileObjectIcon(icon: _historyIcon(data['type'] as String?), size: 40),
+                        title: entry['title'] as String,
+                        subtitle: entry['body'] as String,
+                        subtitleMaxLines: 3,
+                        trailing: Text(
+                          _when(t, DateTime.parse(entry['created_at'] as String).toLocal()),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted),
+                        ),
+                        onTap: () {
+                          unawaited(_dismiss([id]));
+                          if (canOpen) openNotificationTarget(data);
+                        },
+                      ),
+                    );
+                  },
+                ),
+              SmileActionRow(
+                icon: SmileIcons.delete,
+                label: t.removeAll,
+                onTap: () => _dismiss([for (final e in _history) e['id'] as String]),
+              ),
             ],
           ),
         const SizedBox(height: 24),
@@ -336,31 +362,52 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
     );
   }
 
+  /// Removes history entries -- from the screen at once, then for good.
+  Future<void> _dismiss(List<String> ids) async {
+    setState(() => _history = _history.where((e) => !ids.contains(e['id'])).toList());
+    try {
+      await supabase.from('user_notifications').delete().inFilter('id', ids);
+    } catch (_) {
+      await _load(); // put back what could not be removed
+    }
+  }
+
+  Widget _dismissBackground(BuildContext context, Alignment alignment) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      color: scheme.primary.withValues(alpha: 0.14),
+      alignment: alignment,
+      padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.xl),
+      child: Icon(SmileIcons.delete, color: scheme.primary),
+    );
+  }
+
   /// Same routing as tapping the push itself; some (e.g. "removed from an
   /// album") have nowhere left to go.
   bool _hasTarget(Map<String, dynamic> data) => switch (data['type']) {
-        'member_removed' || 'co_admin_removed' || 'share_ended_for_viewer' || null => false,
-        _ => true,
-      };
+    'member_removed' || 'co_admin_removed' || 'share_ended_for_viewer' || null => false,
+    _ => true,
+  };
 
   IconData _historyIcon(String? type) => switch (type) {
-        'new_photo' => SmileIcons.album,
-        'media_failed' => SmileIcons.close,
-        'channel_trashed' || 'space_trashed' => SmileIcons.trash,
-        'channel_restored' || 'space_restored' => SmileIcons.restore,
-        'space_ownership_transferred' => SmileIcons.admin,
-        'space_co_owner_invite' || 'space_co_owner_invite_decided' || 'co_admin_stepped_down' || 'co_admin_removed' =>
-          SmileIcons.coAdmin,
-        'member_left' || 'member_removed' => SmileIcons.leave,
-        'channel_share_invite' ||
-        'share_invite_decided' ||
-        'share_request_decided' ||
-        'share_audience_changed' ||
-        'share_ended_for_owner' ||
-        'share_ended_for_viewer' =>
-          SmileIcons.shared,
-        _ => SmileIcons.news,
-      };
+    'new_photo' => SmileIcons.album,
+    'media_failed' => SmileIcons.close,
+    'channel_trashed' || 'space_trashed' => SmileIcons.trash,
+    'channel_restored' || 'space_restored' => SmileIcons.restore,
+    'space_ownership_transferred' => SmileIcons.admin,
+    'space_co_owner_invite' ||
+    'space_co_owner_invite_decided' ||
+    'co_admin_stepped_down' ||
+    'co_admin_removed' => SmileIcons.coAdmin,
+    'member_left' || 'member_removed' => SmileIcons.leave,
+    'channel_share_invite' ||
+    'share_invite_decided' ||
+    'share_request_decided' ||
+    'share_audience_changed' ||
+    'share_ended_for_owner' ||
+    'share_ended_for_viewer' => SmileIcons.shared,
+    _ => SmileIcons.news,
+  };
 
   /// "14:05" today, "Gestern", else "03.10.".
   String _when(SmileTexts t, DateTime time) {

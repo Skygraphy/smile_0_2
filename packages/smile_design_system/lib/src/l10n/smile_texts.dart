@@ -1389,6 +1389,18 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Gestern'**
   String get yesterday;
+
+  /// No description provided for @removeAll.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle entfernen'**
+  String get removeAll;
+
+  /// No description provided for @removeEntry.
+  ///
+  /// In de, this message translates to:
+  /// **'Entfernen'**
+  String get removeEntry;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {
