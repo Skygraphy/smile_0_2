@@ -274,3 +274,38 @@ Deno.test("unread counter counts others' new posts until the album is opened", a
     await deleteUser(admin.id);
   }
 });
+
+// Notification history (migrations/0059): every visible push is also kept,
+// so Neuigkeiten can show it later -- readable only by its recipient.
+Deno.test("every push lands in the recipient's own notification history", async () => {
+  requireEnv();
+  const admin = await createThrowawayUser("hadmin");
+  const invitee = await createThrowawayUser("hinv");
+  let space: string | undefined;
+  try {
+    await ensureProfile(admin.id, "History Admin");
+    await ensureProfile(invitee.id, "History Invitee");
+    const { accessToken: adminToken } = await accessTokenFor(admin.email);
+    const { accessToken: inviteeToken } = await accessTokenFor(invitee.email);
+    space = await createSpace(adminToken, "History Space");
+    const album = await createChannel(adminToken, space, "History Album");
+
+    const invite = await invoke("invite-channel-member", adminToken, { channel_id: album, email: invitee.email });
+    assertEquals(invite.status, 200, JSON.stringify(invite.body));
+
+    const mine = await asUser("user_notifications?select=title,body,data", inviteeToken);
+    assertEquals(mine.status, 200, JSON.stringify(mine.body));
+    const rows = mine.body as { title: string; body: string; data: Record<string, string> }[];
+    assertEquals(rows.length, 1, JSON.stringify(rows));
+    assertEquals(rows[0].title, "Einladung ins Album");
+    assertEquals(rows[0].data.channel_id, album);
+
+    // Nobody else reads it (RLS): the admin sees none of the invitee's rows.
+    const theirs = await asUser(`user_notifications?user_id=eq.${invitee.id}&select=id`, adminToken);
+    assertEquals(theirs.body, []);
+  } finally {
+    if (space) await deleteSpace(space);
+    await deleteUser(invitee.id);
+    await deleteUser(admin.id);
+  }
+});

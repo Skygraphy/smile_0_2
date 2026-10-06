@@ -41,6 +41,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
   List<MyCoOwnerInvite> _coAdminInvites = const [];
   List<Map<String, dynamic>> _mySpaces = const [];
   List<TrashItem> _trash = const [];
+  List<Map<String, dynamic>> _history = const [];
   String? _errorMessage;
 
   @override
@@ -59,6 +60,12 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
         supabase.from('spaces').select('id, name').order('created_at'),
         widget.spaceService.listMyCoOwnerInvites(),
         widget.trashService.listTrash(),
+        // Every push of the last 30 days (migrations/0059), newest first.
+        supabase
+            .from('user_notifications')
+            .select('id, title, body, data, created_at')
+            .order('created_at', ascending: false)
+            .limit(100),
       ]);
       if (!mounted) return;
       setState(() {
@@ -66,6 +73,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
         _mySpaces = List<Map<String, dynamic>>.from(results[1] as List);
         _coAdminInvites = results[2] as List<MyCoOwnerInvite>;
         _trash = results[3] as List<TrashItem>;
+        _history = List<Map<String, dynamic>>.from(results[4] as List);
         _errorMessage = null;
       });
     } catch (e) {
@@ -160,7 +168,12 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
     final mySent = [...inbox.membershipRequests, ...inbox.shareRequests].where((r) => !isInvite(r)).toList();
     final managed = [...inbox.managedMembershipRequests, ...inbox.managedShareRequests];
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
-    final nothing = albumInvites.isEmpty && _coAdminInvites.isEmpty && managed.isEmpty && mySent.isEmpty && _trash.isEmpty;
+    final nothing = albumInvites.isEmpty &&
+        _coAdminInvites.isEmpty &&
+        managed.isEmpty &&
+        mySent.isEmpty &&
+        _trash.isEmpty &&
+        _history.isEmpty;
 
     return ListView(
       children: [
@@ -295,8 +308,69 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                 ),
             ],
           ),
+        // --- Verlauf (information only, never turns the icon coral) ----
+        if (_history.isNotEmpty)
+          SmileInfoSection(
+            title: t.history,
+            children: [
+              for (final entry in _history)
+                Builder(builder: (context) {
+                  final data = Map<String, dynamic>.from((entry['data'] as Map?) ?? const {});
+                  final canOpen = _hasTarget(data);
+                  return SmileObjectTile(
+                    leading: SmileObjectIcon(icon: _historyIcon(data['type'] as String?), size: 40),
+                    title: entry['title'] as String,
+                    subtitle: entry['body'] as String,
+                    subtitleMaxLines: 3,
+                    trailing: Text(
+                      _when(t, DateTime.parse(entry['created_at'] as String).toLocal()),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted),
+                    ),
+                    onTap: canOpen ? () => openNotificationTarget(data) : null,
+                  );
+                }),
+            ],
+          ),
         const SizedBox(height: 24),
       ],
     );
+  }
+
+  /// Same routing as tapping the push itself; some (e.g. "removed from an
+  /// album") have nowhere left to go.
+  bool _hasTarget(Map<String, dynamic> data) => switch (data['type']) {
+        'member_removed' || 'co_admin_removed' || 'share_ended_for_viewer' || null => false,
+        _ => true,
+      };
+
+  IconData _historyIcon(String? type) => switch (type) {
+        'new_photo' => SmileIcons.album,
+        'media_failed' => SmileIcons.close,
+        'channel_trashed' || 'space_trashed' => SmileIcons.trash,
+        'channel_restored' || 'space_restored' => SmileIcons.restore,
+        'space_ownership_transferred' => SmileIcons.admin,
+        'space_co_owner_invite' || 'space_co_owner_invite_decided' || 'co_admin_stepped_down' || 'co_admin_removed' =>
+          SmileIcons.coAdmin,
+        'member_left' || 'member_removed' => SmileIcons.leave,
+        'channel_share_invite' ||
+        'share_invite_decided' ||
+        'share_request_decided' ||
+        'share_audience_changed' ||
+        'share_ended_for_owner' ||
+        'share_ended_for_viewer' =>
+          SmileIcons.shared,
+        _ => SmileIcons.news,
+      };
+
+  /// "14:05" today, "Gestern", else "03.10.".
+  String _when(SmileTexts t, DateTime time) {
+    final now = DateTime.now();
+    String two(int n) => n.toString().padLeft(2, '0');
+    if (time.year == now.year && time.month == now.month && time.day == now.day) {
+      return '${two(time.hour)}:${two(time.minute)}';
+    }
+    final yesterday = now.subtract(const Duration(days: 1));
+    if (time.year == yesterday.year && time.month == yesterday.month && time.day == yesterday.day) return t.yesterday;
+    return '${two(time.day)}.${two(time.month)}.';
   }
 }

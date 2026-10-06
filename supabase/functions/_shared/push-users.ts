@@ -12,6 +12,23 @@ export async function pushNotificationToUsers(
   data?: Record<string, string>,
 ): Promise<void> {
   if (userIds.length === 0) return;
+
+  // Kept for 30 days as the "Verlauf" in Neuigkeiten (migrations/0059) --
+  // independent of whether the person has a device to push to right now.
+  // Best-effort: the push itself must not depend on it.
+  try {
+    await supabaseAdmin.from("user_notifications").insert(
+      [...new Set(userIds)].map((userId) => ({
+        user_id: userId,
+        title: notification.title,
+        body: notification.body,
+        data: data ?? {},
+      })),
+    );
+  } catch {
+    // ignore
+  }
+
   const { data: tokens } = await supabaseAdmin
     .from("user_push_tokens")
     .select("id, fcm_token")

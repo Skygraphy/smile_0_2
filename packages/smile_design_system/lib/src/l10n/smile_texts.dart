@@ -1377,6 +1377,18 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Noch keine Fotos'**
   String get noPostsYet;
+
+  /// No description provided for @history.
+  ///
+  /// In de, this message translates to:
+  /// **'Verlauf'**
+  String get history;
+
+  /// No description provided for @yesterday.
+  ///
+  /// In de, this message translates to:
+  /// **'Gestern'**
+  String get yesterday;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

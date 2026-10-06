@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import 'sync_bus.dart';
+
 /// Real system notifications while the app is OPEN -- FCM only shows its
 /// own notification payloads while the app is in the background or closed.
 /// "Alles komplett interaktiv" (decision 2026-10-05): an open app must not
@@ -47,6 +49,9 @@ class ForegroundNotifications {
     final notification = message.notification;
     if (notification == null) return;
     final data = message.data;
+    // The server kept a copy for the Neuigkeiten history (migrations/0059):
+    // an open Neuigkeiten picks it up right away.
+    SyncBus.emit(const SyncEvent(tables: {'user_notifications'}, channelIds: {}, spaceIds: {}));
     if (data['type'] == 'new_photo' && data['channel_id'] != null && data['channel_id'] == openAlbumId) return;
     await _plugin.show(
       id: message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch.remainder(1 << 31),

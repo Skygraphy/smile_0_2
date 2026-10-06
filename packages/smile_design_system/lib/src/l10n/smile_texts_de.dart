@@ -804,4 +804,10 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get noPostsYet => 'Noch keine Fotos';
+
+  @override
+  String get history => 'Verlauf';
+
+  @override
+  String get yesterday => 'Gestern';
 }

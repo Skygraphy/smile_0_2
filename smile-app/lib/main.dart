@@ -36,7 +36,7 @@ Future<void> main() async {
     publishableKey: SupabaseConfig.publishableKey,
   );
   await Firebase.initializeApp();
-  await ForegroundNotifications.init(onTap: _openNotificationTarget);
+  await ForegroundNotifications.init(onTap: openNotificationTarget);
   FirebaseMessaging.onMessage.listen((message) {
     // Silent cross-device sync (sync-fanout) -- never shown, just reloads
     // whatever is on screen.
@@ -49,11 +49,11 @@ Future<void> main() async {
     unawaited(ForegroundNotifications.show(message));
   });
   // Tapped while the app was backgrounded (not killed).
-  FirebaseMessaging.onMessageOpenedApp.listen((message) => _openNotificationTarget(message.data));
+  FirebaseMessaging.onMessageOpenedApp.listen((message) => openNotificationTarget(message.data));
   // Tapped while the app was fully killed -- the tap is what launched it,
   // so this has to be checked once explicitly rather than via a stream.
   final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-  if (initialMessage != null) _openNotificationTarget(initialMessage.data);
+  if (initialMessage != null) openNotificationTarget(initialMessage.data);
   // Silent sync pushes only reach onMessage while in the foreground --
   // anything that changed while backgrounded is caught up here instead.
   _resumeListener = AppLifecycleListener(onResume: () => SyncBus.emit(const SyncEvent.everything()));
@@ -75,7 +75,7 @@ AppLifecycleListener? _resumeListener;
 /// nothing rather than crashing whatever screen happens to be showing --
 /// each case below re-checks its own required field(s) instead of one
 /// blanket guard up front, since different types need different fields.
-void _openNotificationTarget(Map<String, dynamic> data) {
+void openNotificationTarget(Map<String, dynamic> data) {
   final type = data['type'] as String?;
   if (type == null) return;
   final navigator = navigatorKey.currentState;

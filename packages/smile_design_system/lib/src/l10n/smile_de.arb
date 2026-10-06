@@ -528,5 +528,7 @@
     }
   },
   "someone": "Jemand",
-  "noPostsYet": "Noch keine Fotos"
+  "noPostsYet": "Noch keine Fotos",
+  "history": "Verlauf",
+  "yesterday": "Gestern"
 }
