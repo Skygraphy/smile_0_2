@@ -56,7 +56,14 @@ Future<void> main() async {
   if (initialMessage != null) openNotificationTarget(initialMessage.data);
   // Silent sync pushes only reach onMessage while in the foreground --
   // anything that changed while backgrounded is caught up here instead.
-  _resumeListener = AppLifecycleListener(onResume: () => SyncBus.emit(const SyncEvent.everything()));
+  _resumeListener = AppLifecycleListener(
+    onResume: () {
+      SyncBus.emit(const SyncEvent.everything());
+      unawaited(ForegroundNotifications.clearAll());
+    },
+  );
+  // Opening the app counts as having seen its notifications (icon badge).
+  unawaited(ForegroundNotifications.clearAll());
   // While open: the same sync signals, live (works where silent pushes are
   // throttled -- iOS). Push above stays for when the app is closed.
   LiveSyncChannel.start();

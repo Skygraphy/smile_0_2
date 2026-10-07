@@ -45,6 +45,14 @@ class ForegroundNotifications {
         );
   }
 
+  /// Clears every Smile notification from the tray -- also the ones FCM
+  /// posted while the app was closed. Samsung (and other launchers) show
+  /// their count on the app icon, which stayed at e.g. "2" after everything
+  /// had been seen in the app (2026-10-07). Called whenever the app comes
+  /// to the foreground: from then on the unread counters, the coral dot
+  /// and the Verlauf inside the app carry the information.
+  static Future<void> clearAll() => _plugin.cancelAll();
+
   static Future<void> show(RemoteMessage message) async {
     final notification = message.notification;
     if (notification == null) return;
