@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
   const [{ data: mediaRows }, { data: hideRows }] = await Promise.all([
     supabaseAdmin
       .from("media_items")
-      .select("id, channel_id, created_at, sender_id, media_type")
+      .select("id, channel_id, created_at, sender_id, media_type, storage_path_thumbnail")
       .in("channel_id", channelIds)
       .eq("processing_status", "ready")
       .order("created_at", { ascending: false })
@@ -124,6 +124,23 @@ Deno.serve(async (req) => {
       last.open = false;
     }
   }
+  // Album cover (2026-10-07): the newest photo/video the caller can see in
+  // it -- the list shows it instead of the same album icon on every row.
+  const coverByChannel = new Map<string, { mediaId: string; path: string }>();
+  for (const row of mediaRows ?? []) {
+    if (hidden.has(row.id as string) || !row.storage_path_thumbnail) continue;
+    const channelId = row.channel_id as string;
+    if (!coverByChannel.has(channelId)) {
+      coverByChannel.set(channelId, { mediaId: row.id as string, path: row.storage_path_thumbnail as string });
+    }
+  }
+  const coverPaths = [...coverByChannel.values()].map((c) => c.path);
+  const coverUrlByPath = new Map<string, string>();
+  if (coverPaths.length > 0) {
+    const { data: signed } = await supabaseAdmin.storage.from("media-thumbnails").createSignedUrls(coverPaths, 3600);
+    for (const s of signed ?? []) if (s.path && s.signedUrl) coverUrlByPath.set(s.path, s.signedUrl);
+  }
+
   const senderProfiles = await fetchProfilesByUserId(
     supabaseAdmin,
     [...new Set([...lastByChannel.values()].map((l) => l.senderId))],
@@ -146,6 +163,11 @@ Deno.serve(async (req) => {
       // of falling to the very bottom indefinitely.
       last_activity_at: lastByChannel.get(c.id as string)?.at ?? c.created_at,
       unread_count: unreadByChannel.get(c.id as string) ?? 0,
+      cover: (() => {
+        const cover = coverByChannel.get(c.id as string);
+        const url = cover ? coverUrlByPath.get(cover.path) : undefined;
+        return cover && url ? { media_id: cover.mediaId, thumbnail_url: url } : null;
+      })(),
       last_post: (() => {
         const last = lastByChannel.get(c.id as string);
         if (!last) return null;

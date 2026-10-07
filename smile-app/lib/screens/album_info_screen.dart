@@ -239,7 +239,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(leading: const SmileObjectIcon(icon: SmileIcons.space, size: 36), title: Text(space.name)),
+            ListTile(leading: SmileInitialsTile(name: space.name, size: 36), title: Text(space.name)),
             SmileActionRow(
               icon: SmileIcons.shared,
               label: t.endShare,
@@ -381,7 +381,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                 SmileSectionHint(icon: SmileIcons.shared, text: t.notSharedYet),
               for (final space in roster.sharedSpaces)
                 SmileObjectTile(
-                  leading: const SmileObjectIcon(icon: SmileIcons.space, size: 40),
+                  leading: SmileInitialsTile(name: space.name, size: 40),
                   title: space.name,
                   subtitleIcon: SmileIcons.viewer,
                   subtitle: t.sharedViewOnly,
@@ -423,7 +423,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
               if (_frames.isEmpty) SmileSectionHint(icon: SmileIcons.frame, text: t.notOnAnyFrame),
               for (final frame in _frames)
                 SmileObjectTile(
-                  leading: const SmileObjectIcon(icon: SmileIcons.frame, size: 40),
+                  leading: SmileInitialsTile(name: frame.frameName, size: 40),
                   title: frame.frameName,
                 ),
             ],

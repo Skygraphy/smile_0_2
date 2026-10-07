@@ -107,4 +107,16 @@ void main() {
     expect(t.sharedWithSpace('Davidopa'), 'Shared with Davidopa');
     expect(t.news, 'Neuigkeiten');
   });
+
+  test("initials take the first two letters of the name", () {
+    expect(smileInitialsOf("Enkelkinder"), "EN");
+    expect(smileInitialsOf("Urlaub 2026"), "UR");
+    expect(smileInitialsOf("Live-Test"), "LI");
+    expect(smileInitialsOf("Küche"), "KÜ");
+  });
+
+  testWidgets("an album without a photo shows its initials", (tester) async {
+    await tester.pumpWidget(_host(const SmileAlbumCover(name: "Live-Test")));
+    expect(find.text("LI"), findsOneWidget);
+  });
 }

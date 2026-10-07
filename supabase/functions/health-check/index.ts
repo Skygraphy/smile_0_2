@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
       title: "Frame offline",
       body: `Der Frame „${f.name}“ in „${space.name}“ meldet sich seit ${hours} Stunden nicht (WLAN, Strom oder Tablet aus?).`,
       recipients: [...new Set([...managers, ...ops])],
-      data: { type: "frame_changed", space_id: f.space_id as string, space_name: space.name as string },
+      data: { type: "frame_changed", space_id: f.space_id as string, space_name: space.name as string, frame_name: f.name as string },
       solvedTitle: "Frame wieder online",
       solvedBody: `Der Frame „${f.name}“ in „${space.name}“ ist wieder online.`,
     });

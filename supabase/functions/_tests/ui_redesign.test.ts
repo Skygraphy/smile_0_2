@@ -199,6 +199,10 @@ Deno.test("the album list knows who posted last and how many in a row", async ()
       assertEquals(list.status, 200, JSON.stringify(list.body));
       return (list.body.channels as Row[]).find((c) => c.channel_id === album)!.last_post;
     };
+    // Cover (2026-10-07): the newest photo with a thumbnail. These test rows
+    // have no thumbnail, so there is none -- covered by the null case.
+    const list0 = await invoke("list-my-channels", adminToken, {});
+    assertEquals((list0.body.channels as { channel_id: string; cover: unknown }[]).find((c) => c.channel_id === album)!.cover, null);
     const before = await lastPostOf();
     assertEquals(before.sender_id, roman.id);
     assertEquals(before.sender_name, "List Roman");
@@ -369,5 +373,45 @@ Deno.test("opening Neuigkeiten marks the Verlauf as seen", async () => {
     assertEquals(new Date(own.body[0].seen_at).getTime() >= before - 60_000, true);
   } finally {
     await deleteUser(user.id);
+  }
+});
+
+// Album cover (2026-10-07): the newest visible photo's thumbnail, signed.
+Deno.test("the album list carries the newest photo as cover", async () => {
+  const { url, serviceKey } = requireEnv();
+  const admin = await createThrowawayUser("cvadmin");
+  let space: string | undefined;
+  const path = `test/${crypto.randomUUID()}_thumb.jpg`;
+  try {
+    await ensureProfile(admin.id, "CV Admin");
+    const { accessToken } = await accessTokenFor(admin.email);
+    space = await createSpace(accessToken, "CV Space");
+    const album = await createChannel(accessToken, space, "CV Album");
+    const upload = await fetch(`${url}/storage/v1/object/media-thumbnails/${path}`, {
+      method: "POST",
+      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, "Content-Type": "image/jpeg" },
+      body: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]),
+    });
+    assertEquals(upload.ok, true, await upload.text());
+    const { body } = await svc("media_items", {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({
+        channel_id: album,
+        sender_id: admin.id,
+        media_type: "photo",
+        storage_path_original: path,
+        storage_path_thumbnail: path,
+        processing_status: "ready",
+      }),
+    });
+    const list = await invoke("list-my-channels", accessToken, {});
+    const cover = (list.body.channels as { channel_id: string; cover: { media_id: string; thumbnail_url: string } | null }[])
+      .find((c) => c.channel_id === album)!.cover;
+    assertEquals(cover?.media_id, body[0].id);
+    assertEquals(cover?.thumbnail_url.includes("/media-thumbnails/"), true);
+  } finally {
+    if (space) await deleteSpace(space);
+    await deleteUser(admin.id);
   }
 });

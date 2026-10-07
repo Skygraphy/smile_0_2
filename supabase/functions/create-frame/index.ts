@@ -81,7 +81,7 @@ Deno.serve(async (req) => {
           title: "Neuer Frame",
           body: `${profiles.get(actorId)?.display_name ?? "Jemand"} hat den Frame „${frame.name}“ in „${space?.name ?? ""}“ angelegt.`,
         },
-        { type: "frame_changed", space_id: body.space_id, space_name: space?.name ?? "" },
+        { type: "frame_changed", space_id: body.space_id, space_name: space?.name ?? "", frame_name: frame.name as string },
       );
       return jsonResponse({
         frame_id: frame.id,

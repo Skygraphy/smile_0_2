@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
         title: "Frame zeigt neues Album",
         body: `${profiles.get(userId)?.display_name ?? "Jemand"}: Der Frame „${frameRow?.name ?? ""}“ zeigt jetzt auch „${channel.name}“.`,
       },
-      { type: "frame_changed", space_id: frame.space_id, space_name: spaceRow?.name ?? "" },
+      { type: "frame_changed", space_id: frame.space_id, space_name: spaceRow?.name ?? "", frame_name: frameRow?.name ?? "" },
     );
   }
 

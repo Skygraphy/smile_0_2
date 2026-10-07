@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/frame_service.dart';
+import '../services/channel_picker_service.dart';
+import '../widgets/album_covers.dart';
 import '../services/sync_bus.dart';
 
 /// A Frame's info page, same pattern as Album and Space: icon + name
@@ -30,6 +34,7 @@ class FrameSettingsScreen extends StatefulWidget {
 class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncReload {
   late SmileFrame _frame = widget.frame;
   List<FrameChannelAssignment>? _assignments;
+  Map<String, ChannelWithActivity> _covers = const {};
   String? _errorMessage;
 
   @override
@@ -45,6 +50,9 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
   }
 
   Future<void> _load() async {
+    unawaited(loadAlbumCovers().then((c) {
+      if (mounted) setState(() => _covers = c);
+    }));
     try {
       final results = await Future.wait<dynamic>([
         widget.frameService.getFrame(widget.frame.id),
@@ -151,7 +159,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
               onPressed: () => Navigator.of(context).pop(album),
               child: Row(
                 children: [
-                  const SmileObjectIcon(icon: SmileIcons.album, size: 32),
+                  albumCover(album.channelId, album.channelName, _covers, size: 32),
                   const SizedBox(width: SmileSpacing.m),
                   Expanded(child: Text(album.channelName)),
                 ],
@@ -244,7 +252,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                       if (assignments.isEmpty) SmileSectionHint(icon: SmileIcons.album, text: t.noAlbumAssigned),
                       for (final assignment in assignments)
                         SmileObjectTile(
-                          leading: const SmileObjectIcon(icon: SmileIcons.album, size: 40),
+                          leading: albumCover(assignment.channelId, assignment.channelName, _covers, size: 40),
                           title: assignment.channelName,
                           trailing: IconButton(
                             icon: Icon(SmileIcons.close, color: scheme.onSurfaceVariant),

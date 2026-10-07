@@ -37,6 +37,11 @@ class SmileFrame {
 
   bool get isRevoked => lifecycleState == 'revoked';
 
+  /// Frames report in at least every 2 minutes; 10 minutes of silence =
+  /// offline (the dot on the Frame's tile).
+  bool get isOnline =>
+      lifecycleState == 'active' && lastSeenAt != null && DateTime.now().difference(lastSeenAt!) < const Duration(minutes: 10);
+
   SmileFrame copyWith({bool? channelSwitchEnabled, bool? videoSound}) => SmileFrame(
         id: id,
         name: name,

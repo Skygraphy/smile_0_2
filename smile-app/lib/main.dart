@@ -144,6 +144,7 @@ void openNotificationTarget(Map<String, dynamic> data) {
     case 'space_co_owner_invite_decided':
     case 'co_admin_stepped_down':
     case 'frame_changed':
+    case 'frame_deleted':
     case 'co_admin_invite_expired':
       if (spaceId == null) return;
       navigator.push(

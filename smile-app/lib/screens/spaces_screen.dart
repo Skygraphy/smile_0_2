@@ -141,7 +141,7 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
                     ),
                   for (final space in spaces)
                     SmileObjectTile(
-                      leading: const SmileObjectIcon(icon: SmileIcons.space),
+                      leading: SmileInitialsTile(name: space.name),
                       title: space.name,
                       subtitleIcon: space.isAdmin ? SmileIcons.admin : SmileIcons.coAdmin,
                       subtitle: [

@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
       title: "Frame gelöscht",
       body: `${profiles.get(actorId)?.display_name ?? "Jemand"} hat den Frame „${frame.name}“ in „${spaceName}“ gelöscht.`,
     },
-    { type: "frame_changed", space_id: frame.space_id as string, space_name: spaceName },
+    { type: "frame_deleted", space_id: frame.space_id as string, space_name: spaceName, frame_name: frame.name as string },
   );
 
   if (frame.fcm_token) {

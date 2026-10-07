@@ -88,7 +88,10 @@ class _TrashScreenState extends State<TrashScreen> with SyncReload {
                     ),
                   for (final item in items)
                     SmileObjectTile(
-                      leading: SmileObjectIcon(icon: item.isSpace ? SmileIcons.space : SmileIcons.album),
+                      leading: SmileTypeBadge(
+                        icon: item.isSpace ? SmileIcons.space : SmileIcons.album,
+                        child: SmileInitialsTile(name: item.name),
+                      ),
                       title: item.name,
                       subtitle: [
                         if (item.spaceName != null) t.trashSpaceIn(item.spaceName!),

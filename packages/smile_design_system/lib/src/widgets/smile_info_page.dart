@@ -21,9 +21,13 @@ class SmileInfoHeader extends StatelessWidget {
     this.subtitleIcon,
     this.onRename,
     this.renameTooltip,
+    this.leading,
   });
 
   final IconData icon;
+
+  /// Replaces the big type icon, e.g. a Space's initials (80 px).
+  final Widget? leading;
   final String title;
   final String? subtitle;
   final IconData? subtitleIcon;
@@ -44,7 +48,7 @@ class SmileInfoHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.s, SmileSpacing.l, SmileSpacing.l),
       child: Column(
         children: [
-          SmileObjectIcon(icon: icon, size: 80, iconSize: SmileIconSize.hero),
+          leading ?? SmileObjectIcon(icon: icon, size: 80, iconSize: SmileIconSize.hero),
           const SizedBox(height: SmileSpacing.m),
           if (onRename == null)
             name

@@ -50,6 +50,8 @@ class ChannelWithActivity {
     required this.lastActivityAt,
     this.lastPost,
     this.unreadCount = 0,
+    this.coverMediaId,
+    this.coverUrl,
   });
 
   final String channelId;
@@ -66,6 +68,10 @@ class ChannelWithActivity {
   /// Others' posts since the caller last opened the album (migrations/0058).
   final int unreadCount;
 
+  /// The album's cover: its newest visible photo (list-my-channels).
+  final String? coverMediaId;
+  final String? coverUrl;
+
   String get spaceLabel => spaces.map((s) => s.name).join(', ');
 
   factory ChannelWithActivity.fromJson(Map<String, dynamic> json) => ChannelWithActivity(
@@ -76,6 +82,8 @@ class ChannelWithActivity {
         lastActivityAt: DateTime.parse(json['last_activity_at'] as String),
         lastPost: json['last_post'] == null ? null : LastPost.fromJson(json['last_post'] as Map<String, dynamic>),
         unreadCount: json['unread_count'] as int? ?? 0,
+        coverMediaId: (json['cover'] as Map<String, dynamic>?)?['media_id'] as String?,
+        coverUrl: (json['cover'] as Map<String, dynamic>?)?['thumbnail_url'] as String?,
       );
 }
 

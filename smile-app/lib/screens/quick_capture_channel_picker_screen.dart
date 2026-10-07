@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/album_covers.dart';
 
 import '../services/channel_picker_service.dart';
 import '../services/media_service.dart';
@@ -39,6 +40,7 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
   List<UploadableChannel>? _channels;
   String? _errorMessage;
   UploadableChannel? _uploadingTo;
+  Map<String, ChannelWithActivity> _covers = const {};
 
   @override
   void initState() {
@@ -50,6 +52,9 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
   Future<void> onSync() => _load();
 
   Future<void> _load() async {
+    loadAlbumCovers(widget.channelPickerService).then((c) {
+      if (mounted) setState(() => _covers = c);
+    });
     try {
       final channels = await widget.channelPickerService.listMyUploadableChannels();
       if (!mounted) return;
@@ -124,7 +129,7 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
                         children: [
                           for (final channel in channels)
                             SmileObjectTile(
-                              leading: const SmileObjectIcon(icon: SmileIcons.album),
+                              leading: albumCover(channel.channelId, channel.channelName, _covers),
                               title: channel.channelName,
                               subtitleIcon: SmileIcons.space,
                               subtitle: channel.spaceName,

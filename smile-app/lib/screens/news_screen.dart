@@ -8,6 +8,8 @@ import '../services/membership_service.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../services/trash_service.dart';
+import '../services/channel_picker_service.dart';
+import '../widgets/album_covers.dart';
 
 /// "Neuigkeiten" (navigation decision A, 2026-10-05): everything waiting
 /// for the caller in one place, opened from the top-bar icon --
@@ -40,6 +42,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
   List<Map<String, dynamic>> _mySpaces = const [];
   List<TrashItem> _trash = const [];
   List<Map<String, dynamic>> _history = const [];
+  Map<String, ChannelWithActivity> _covers = const {};
   String? _errorMessage;
 
   @override
@@ -52,6 +55,9 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
   Future<void> onSync() => _load();
 
   Future<void> _load() async {
+    unawaited(loadAlbumCovers().then((c) {
+      if (mounted) setState(() => _covers = c);
+    }));
     try {
       final results = await Future.wait<dynamic>([
         widget.membershipService.listMyInvites(includeManaged: true),
@@ -111,7 +117,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
               onPressed: () => Navigator.of(context).pop(space['id'] as String),
               child: Row(
                 children: [
-                  const SmileObjectIcon(icon: SmileIcons.space, size: 32),
+                  SmileInitialsTile(name: space['name'] as String, size: 32),
                   const SizedBox(width: SmileSpacing.m),
                   Expanded(child: Text(space['name'] as String)),
                 ],
@@ -276,7 +282,10 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
             children: [
               for (final request in mySent)
                 SmileObjectTile(
-                  leading: const SmileObjectIcon(icon: SmileIcons.album, size: 40),
+                  leading: SmileTypeBadge(
+                    icon: SmileIcons.album,
+                    child: SmileInitialsTile(name: request.channelName ?? '', size: 40),
+                  ),
                   title: request.channelName ?? request.channelId,
                   subtitleIcon: SmileIcons.pending,
                   subtitle: t.waitingForAnswer,
@@ -300,7 +309,10 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
             children: [
               for (final item in _trash)
                 SmileObjectTile(
-                  leading: SmileObjectIcon(icon: item.isSpace ? SmileIcons.space : SmileIcons.album, size: 40),
+                  leading: SmileTypeBadge(
+                    icon: item.isSpace ? SmileIcons.space : SmileIcons.album,
+                    child: SmileInitialsTile(name: item.name, size: 40),
+                  ),
                   title: item.name,
                   subtitle: [
                     if (item.spaceName != null) t.trashSpaceIn(item.spaceName!),
@@ -334,7 +346,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                       secondaryBackground: _dismissBackground(context, Alignment.centerRight),
                       onDismissed: (_) => _dismiss([id]),
                       child: SmileObjectTile(
-                        leading: SmileObjectIcon(icon: _historyIcon(data['type'] as String?), size: 40),
+                        leading: SmileTypeBadge(icon: _historyIcon(data['type'] as String?), child: _historyImage(data)),
                         title: entry['title'] as String,
                         subtitle: entry['body'] as String,
                         subtitleMaxLines: 3,
@@ -396,10 +408,25 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
     _ => true,
   };
 
+  /// The entry's own picture (2026-10-07): the album's cover, a Frame's or
+  /// Space's initials, or the person's avatar -- the type shows in the badge.
+  Widget _historyImage(Map<String, dynamic> data) {
+    final type = data['type'] as String?;
+    final person = data['person_name'] as String?;
+    final channelId = data['channel_id'] as String?;
+    final frame = data['frame_name'] as String?;
+    final space = data['space_name'] as String?;
+    if (person != null && person.isNotEmpty) return SmileAvatar(name: person, size: 40);
+    if (frame != null && frame.isNotEmpty) return SmileInitialsTile(name: frame, size: 40);
+    if (channelId != null) return albumCover(channelId, data['channel_name'] as String? ?? '', _covers, size: 40);
+    if (space != null && space.isNotEmpty) return SmileInitialsTile(name: space, size: 40);
+    return SmileObjectIcon(icon: _historyIcon(type), size: 40);
+  }
+
   IconData _historyIcon(String? type) => switch (type) {
     'new_photo' || 'album_created' || 'album_renamed' => SmileIcons.album,
     'photo_deleted' => SmileIcons.delete,
-    'frame_changed' => SmileIcons.frame,
+    'frame_changed' || 'frame_deleted' => SmileIcons.frame,
     'space_renamed' => SmileIcons.space,
     'media_failed' => SmileIcons.close,
     'channel_trashed' || 'space_trashed' || 'space_deleted_with_account' => SmileIcons.trash,

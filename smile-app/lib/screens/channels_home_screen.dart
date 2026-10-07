@@ -139,7 +139,11 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
                         ),
                       for (final channel in channels)
                         SmileObjectTile(
-                          leading: const SmileObjectIcon(icon: SmileIcons.album),
+                          leading: SmileAlbumCover(
+                            name: channel.channelName,
+                            imageUrl: channel.coverUrl,
+                            cacheKey: channel.coverMediaId == null ? null : 'cover_${channel.coverMediaId}',
+                          ),
                           title: channel.channelName,
                           // Role icon first: pencil = Member (may post),
                           // binoculars = Viewer (sees it via a share); then

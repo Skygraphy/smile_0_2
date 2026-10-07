@@ -228,7 +228,7 @@ async function requestDecided(supabaseAdmin: Admin, table: string, id: string, a
       supabaseAdmin,
       [space.owner_id as string].filter((u) => u !== actorId),
       { title: "Einladung beantwortet", body: `${name} hat deine Einladung als Co-Admin von „${space.name}“ ${verbFor(row.status)}.` },
-      { type: "space_co_owner_invite_decided", space_id: row.space_id as string, space_name: space.name as string },
+      { type: "space_co_owner_invite_decided", space_id: row.space_id as string, space_name: space.name as string, person_name: name },
     );
     return;
   }
@@ -256,7 +256,7 @@ async function requestDecided(supabaseAdmin: Admin, table: string, id: string, a
       isShare
         ? { title: "Einladung beantwortet", body: `${name} hat das Album „${channel.name}“ für den eigenen Space ${verb}.` }
         : { title: "Einladung beantwortet", body: `${name} hat die Einladung ins Album „${channel.name}“ ${verb}.` },
-      { type: isShare ? "share_invite_decided" : "membership_invite_decided", ...data },
+      { type: isShare ? "share_invite_decided" : "membership_invite_decided", ...data, person_name: name },
     );
   } else {
     // A manager decided the person's own request -- tell that person.
@@ -292,7 +292,7 @@ async function requestCreated(supabaseAdmin: Admin, table: string, id: string) {
     isShare
       ? { title: "Neue Anfrage", body: `${name} möchte das Album „${channel.name}“ mit dem eigenen Space sehen. Antworten unter Neuigkeiten.` }
       : { title: "Neue Anfrage", body: `${name} möchte Member im Album „${channel.name}“ werden. Antworten unter Neuigkeiten.` },
-    { type: "request_created", channel_id: row.channel_id as string, channel_name: channel.name as string },
+    { type: "request_created", channel_id: row.channel_id as string, channel_name: channel.name as string, person_name: name },
   );
 }
 
@@ -309,7 +309,7 @@ async function memberRemoved(supabaseAdmin: Admin, channelId: string, userId: st
       supabaseAdmin,
       managers,
       { title: "Album verlassen", body: `${name} hat das Album „${channel.name}“ verlassen.` },
-      { type: "member_left", ...data },
+      { type: "member_left", ...data, person_name: name },
     );
   } else {
     const actor = actorId ? await displayName(supabaseAdmin, actorId) : "Jemand";
@@ -336,7 +336,7 @@ async function coAdminRemoved(supabaseAdmin: Admin, spaceId: string, userId: str
       supabaseAdmin,
       [space.owner_id as string],
       { title: "Co-Admin-Rolle abgegeben", body: `${name} verwaltet den Space „${space.name}“ nicht mehr mit.` },
-      { type: "co_admin_stepped_down", ...data },
+      { type: "co_admin_stepped_down", ...data, person_name: name },
     );
   } else {
     const actor = actorId ? await displayName(supabaseAdmin, actorId) : "Jemand";
@@ -362,7 +362,7 @@ async function frameChanged(supabaseAdmin: Admin, p: Record<string, any>) {
   const actorId = (p.actor_id ?? null) as string | null;
   const actor = actorId ? await displayName(supabaseAdmin, actorId) : null;
   const recipients = (await spaceManagerIds(supabaseAdmin, frame.space_id as string)).filter((u) => u !== actorId);
-  const data = { type: "frame_changed", space_id: frame.space_id as string, space_name: spaceName };
+  const data = { type: "frame_changed", space_id: frame.space_id as string, space_name: spaceName, frame_name: p.new_name as string };
 
   const messages: { title: string; body: string }[] = [];
   if (p.old_state === "pending" && p.new_state === "active") {
@@ -404,7 +404,7 @@ async function frameAlbumRemoved(supabaseAdmin: Admin, frameId: string, channelI
     supabaseAdmin,
     recipients,
     { title: "Frame zeigt Album nicht mehr", body: `${actor}: Der Frame „${frame.name}“ zeigt „${channel.name}“ nicht mehr.` },
-    { type: "frame_changed", space_id: frame.space_id as string, space_name: spaceName },
+    { type: "frame_changed", space_id: frame.space_id as string, space_name: spaceName, frame_name: frame.name as string },
   );
 }
 

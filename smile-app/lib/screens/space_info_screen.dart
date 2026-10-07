@@ -1,13 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../main.dart';
 import '../services/channel_service.dart';
+import '../services/channel_picker_service.dart';
 import '../services/frame_service.dart';
 import '../services/membership_service.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/email_dialog.dart';
+import '../widgets/album_covers.dart';
 import 'channel_feed_screen.dart';
 import 'create_frame_screen.dart';
 import 'frame_settings_screen.dart';
@@ -55,6 +59,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
   List<SharedChannelSummary> _sharedIn = const [];
   List<SmileFrame> _frames = const [];
   SpaceCoOwnership? _admins;
+  Map<String, ChannelWithActivity> _covers = const {};
   String? _errorMessage;
 
   @override
@@ -70,6 +75,9 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
   }
 
   Future<void> _load() async {
+    unawaited(loadAlbumCovers().then((c) {
+      if (mounted) setState(() => _covers = c);
+    }));
     try {
       final results = await Future.wait<dynamic>([
         supabase.from('spaces').select('name').eq('id', widget.spaceId).maybeSingle(),
@@ -288,6 +296,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
       children: [
         SmileInfoHeader(
           icon: SmileIcons.space,
+          leading: SmileInitialsTile(name: _name, size: 80),
           title: _name,
           subtitleIcon: isAdmin ? SmileIcons.admin : SmileIcons.coAdmin,
           subtitle: admins == null ? null : (isAdmin ? t.youAreAdmin : t.youAreCoAdmin),
@@ -312,7 +321,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
             if (albums.isEmpty) SmileSectionHint(icon: SmileIcons.album, text: t.noAlbumYet),
             for (final album in albums)
               SmileObjectTile(
-                leading: const SmileObjectIcon(icon: SmileIcons.album, size: 40),
+                leading: albumCover(album['id'] as String, album['name'] as String, _covers, size: 40),
                 title: album['name'] as String,
                 trailing: Icon(SmileIcons.chevron, size: 16, color: muted),
                 onTap: () async {
@@ -338,13 +347,13 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
             children: [
               for (final album in _sharedIn)
                 SmileObjectTile(
-                  leading: const SmileObjectIcon(icon: SmileIcons.album, size: 40),
+                  leading: albumCover(album.channelId, album.channelName, _covers, size: 40),
                   title: album.channelName,
                   subtitleIcon: SmileIcons.viewer,
                   subtitle: t.roleViewer,
                   onTap: () => _sheet(
                     header: ListTile(
-                      leading: const SmileObjectIcon(icon: SmileIcons.album, size: 36),
+                      leading: albumCover(album.channelId, album.channelName, _covers, size: 36),
                       title: Text(album.channelName),
                     ),
                     actions: [
@@ -367,7 +376,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
             if (_frames.isEmpty) SmileSectionHint(icon: SmileIcons.frame, text: t.noFrameYet),
             for (final frame in _frames)
               SmileObjectTile(
-                leading: const SmileObjectIcon(icon: SmileIcons.frame, size: 40),
+                leading: SmileStatusDot(online: frame.isOnline, child: SmileInitialsTile(name: frame.name, size: 40)),
                 title: frame.name,
                 subtitle: _frameStatus(t, frame),
                 trailing: Icon(SmileIcons.chevron, size: 16, color: muted),
