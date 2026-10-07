@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
@@ -17,6 +21,14 @@ Future<void> main() async {
   // google-services.json (Android-only for now, matches the plan's
   // platform scope) via the Google Services Gradle plugin.
   await Firebase.initializeApp();
+  // Monitoring stage 2 (2026-10-07): crashes and uncaught errors reach
+  // Firebase Crashlytics, so we learn about them without anyone reporting.
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
+  unawaited(FirebaseCrashlytics.instance.setCustomKey('app', 'smile-frame'));
   await PushService().initialize();
   runApp(const SmileFrameApp());
 }

@@ -3,6 +3,8 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
+    // Crash reports (monitoring stage 2, 2026-10-07)
+    id("com.google.firebase.crashlytics")
 }
 
 android {

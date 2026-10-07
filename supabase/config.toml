@@ -445,3 +445,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.expire-requests]
 verify_jwt = false
+[functions.health-check]
+verify_jwt = false

@@ -86,6 +86,12 @@ async function getAccessToken(): Promise<string> {
 }
 
 /** Data-only push -- no notification payload, the app decides what to do. */
+/** Health check (health-check): can we still get an FCM access token?
+ * Throws if the service account is missing, malformed or rejected. */
+export async function checkPushAccess(): Promise<void> {
+  await getAccessToken();
+}
+
 export async function sendDataMessage(fcmToken: string, data: Record<string, string>): Promise<void> {
   const sa = getServiceAccount();
   const accessToken = await getAccessToken();

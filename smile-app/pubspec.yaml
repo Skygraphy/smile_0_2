@@ -49,6 +49,7 @@ dependencies:
   flutter_local_notifications: ^22.3.1
   smile_design_system:
     path: ../packages/smile_design_system
+  firebase_crashlytics: ^4.3.10
 
 dev_dependencies:
   flutter_test:

@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -36,6 +38,14 @@ Future<void> main() async {
     publishableKey: SupabaseConfig.publishableKey,
   );
   await Firebase.initializeApp();
+  // Monitoring stage 2 (2026-10-07): crashes and uncaught errors reach
+  // Firebase Crashlytics, so we learn about them without anyone reporting.
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
+  unawaited(FirebaseCrashlytics.instance.setCustomKey('app', 'smile-app'));
   await ForegroundNotifications.init(onTap: openNotificationTarget);
   FirebaseMessaging.onMessage.listen((message) {
     // Silent cross-device sync (sync-fanout) -- never shown, just reloads
