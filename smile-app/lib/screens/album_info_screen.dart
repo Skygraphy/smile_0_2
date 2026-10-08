@@ -7,6 +7,8 @@ import '../main.dart';
 import '../services/channel_service.dart';
 import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
+import '../services/frame_service.dart';
+import 'frame_settings_screen.dart';
 import '../widgets/email_dialog.dart';
 import '../services/avatar_upload.dart';
 import '../services/channel_picker_service.dart';
@@ -106,6 +108,76 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     } catch (e) {
       if (mounted) setState(() => _errorMessage = SmileTexts.of(context).actionFailed('$e'));
     }
+  }
+
+  Future<void> _showFrameActions(({String frameId, String frameName, String? avatarPath}) frame) async {
+    final t = SmileTexts.of(context);
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: SmileAlbumCover(name: frame.frameName, imageUrl: avatarPathToUrl(frame.avatarPath), size: 36),
+              title: Text(frame.frameName),
+            ),
+            SmileActionRow(
+              icon: SmileIcons.frame,
+              label: t.openFrame,
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _openFrame(frame.frameId);
+              },
+            ),
+            SmileActionRow(
+              icon: SmileIcons.close,
+              label: t.removeFromFrame,
+              destructive: true,
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _removeFromFrame(frame.frameId);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openFrame(String frameId) async {
+    final frameService = FrameService();
+    try {
+      final found = await frameService.getFrameWithSpace(frameId);
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => FrameSettingsScreen(
+            frame: found.frame,
+            spaceId: found.spaceId,
+            spaceName: found.spaceName,
+            frameService: frameService,
+          ),
+        ),
+      );
+      if (mounted) await _load();
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).actionFailed('$e'));
+    }
+  }
+
+  Future<void> _removeFromFrame(String frameId) async {
+    final t = SmileTexts.of(context);
+    final confirmed = await showSmileConfirmDialog(
+      context,
+      title: t.removeFromFrameTitle(_name),
+      message: t.removeFromFrameMessage,
+      confirmLabel: t.actionRemove,
+      destructive: true,
+    );
+    if (!confirmed) return;
+    await _run(() => FrameService().unassignChannel(frameId: frameId, channelId: widget.channelId));
   }
 
   Future<void> _rename() async {
@@ -452,6 +524,9 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                 SmileObjectTile(
                   leading: SmileAlbumCover(name: frame.frameName, imageUrl: avatarPathToUrl(frame.avatarPath), size: 40),
                   title: frame.frameName,
+                  // Same pattern as the albums on the Frame page (2026-10-08).
+                  trailing: Icon(SmileIcons.more, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  onTap: () => _showFrameActions(frame),
                 ),
             ],
           ),

@@ -117,6 +117,17 @@ class FrameService {
     return SmileFrame.fromJson(row);
   }
 
+  /// A Frame plus its Space -- for opening the Frame page from somewhere
+  /// other than its Space (the album page's "Läuft auf").
+  Future<({SmileFrame frame, String spaceId, String spaceName})> getFrameWithSpace(String frameId) async {
+    final row = await supabase.from('frames').select('$_frameColumns, space_id, spaces(name)').eq('id', frameId).single();
+    return (
+      frame: SmileFrame.fromJson(row),
+      spaceId: row['space_id'] as String,
+      spaceName: (row['spaces'] as Map)['name'] as String,
+    );
+  }
+
   /// Generates the pairing code server-side (create-frame) -- a real
   /// CSPRNG and collision retry, same reasoning as every other code-issuing
   /// flow in this codebase.

@@ -563,6 +563,9 @@ class SmileTextsDe extends SmileTexts {
   String get openAlbum => 'Album öffnen';
 
   @override
+  String get openFrame => 'Frame öffnen';
+
+  @override
   String removeFromFrameTitle(String album) {
     return '„$album“ vom Frame entfernen?';
   }

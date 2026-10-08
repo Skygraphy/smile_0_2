@@ -325,6 +325,7 @@
   "close": "Schließen",
   "removeFromFrame": "Vom Frame entfernen",
   "openAlbum": "Album öffnen",
+  "openFrame": "Frame öffnen",
   "removeFromFrameTitle": "„{album}“ vom Frame entfernen?",
   "@removeFromFrameTitle": {
     "placeholders": {

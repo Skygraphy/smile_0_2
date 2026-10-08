@@ -1012,6 +1012,12 @@ abstract class SmileTexts {
   /// **'Album öffnen'**
   String get openAlbum;
 
+  /// No description provided for @openFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame öffnen'**
+  String get openFrame;
+
   /// No description provided for @removeFromFrameTitle.
   ///
   /// In de, this message translates to:
