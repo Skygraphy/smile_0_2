@@ -324,6 +324,7 @@
   "noMoreAlbums": "Es gibt keine weiteren Alben, die dieser Space sehen kann.",
   "close": "Schließen",
   "removeFromFrame": "Vom Frame entfernen",
+  "openAlbum": "Album öffnen",
   "removeFromFrameTitle": "„{album}“ vom Frame entfernen?",
   "@removeFromFrameTitle": {
     "placeholders": {

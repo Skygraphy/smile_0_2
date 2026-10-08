@@ -10,6 +10,7 @@ import '../services/avatar_upload.dart';
 import '../services/object_picture_service.dart';
 import '../widgets/picture_sheet.dart';
 import '../services/sync_bus.dart';
+import 'channel_feed_screen.dart';
 
 /// A Frame's info page, same pattern as Album and Space: icon + name
 /// (tap to rename), status (device, last seen, app version, battery),
@@ -182,6 +183,59 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
     return '${two(local.day)}.${two(local.month)}.${local.year} ${two(local.hour)}:${two(local.minute)}';
   }
 
+  Future<void> _showAlbumActions(FrameChannelAssignment assignment) async {
+    final t = SmileTexts.of(context);
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: albumCover(assignment.channelId, assignment.channelName, _covers, size: 36),
+              title: Text(assignment.channelName),
+            ),
+            SmileActionRow(
+              icon: SmileIcons.album,
+              label: t.openAlbum,
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChannelFeedScreen(channelId: assignment.channelId, channelName: assignment.channelName),
+                  ),
+                );
+              },
+            ),
+            SmileActionRow(
+              icon: SmileIcons.close,
+              label: t.removeFromFrame,
+              destructive: true,
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                _removeAlbum(assignment);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _removeAlbum(FrameChannelAssignment assignment) async {
+    final t = SmileTexts.of(context);
+    final confirmed = await showSmileConfirmDialog(
+      context,
+      title: t.removeFromFrameTitle(assignment.channelName),
+      message: t.removeFromFrameMessage,
+      confirmLabel: t.actionRemove,
+      destructive: true,
+    );
+    if (!confirmed) return;
+    await _run(() => widget.frameService.unassignChannel(frameId: _frame.id, channelId: assignment.channelId));
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
@@ -274,23 +328,15 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                         SmileObjectTile(
                           leading: albumCover(assignment.channelId, assignment.channelName, _covers, size: 40),
                           title: assignment.channelName,
+                          // Three dots instead of a direct X (decided 2026-10-08):
+                          // removing is behind a menu + confirmation, like
+                          // people and shares on the album page.
                           trailing: IconButton(
-                            icon: Icon(SmileIcons.close, color: scheme.onSurfaceVariant),
+                            icon: Icon(SmileIcons.more, color: scheme.onSurfaceVariant),
                             tooltip: t.removeFromFrame,
-                            onPressed: () async {
-                              final confirmed = await showSmileConfirmDialog(
-                                context,
-                                title: t.removeFromFrameTitle(assignment.channelName),
-                                message: t.removeFromFrameMessage,
-                                confirmLabel: t.actionRemove,
-                                destructive: true,
-                              );
-                              if (!confirmed) return;
-                              await _run(
-                                () => widget.frameService.unassignChannel(frameId: _frame.id, channelId: assignment.channelId),
-                              );
-                            },
+                            onPressed: () => _showAlbumActions(assignment),
                           ),
+                          onTap: () => _showAlbumActions(assignment),
                         ),
                       SmileActionRow(icon: SmileIcons.add, label: t.addAlbumToFrame, onTap: _addAlbum),
                     ],
