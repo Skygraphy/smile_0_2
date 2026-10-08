@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../widgets/album_covers.dart';
 
@@ -10,7 +12,7 @@ import '../services/sync_bus.dart';
 import 'channel_feed_screen.dart';
 
 /// The step after the header camera icon (spaces_screen.dart) captures a
-/// photo -- mirrors WhatsApp's own "camera icon -> pick who to send it to"
+/// photo or video -- mirrors WhatsApp's own "camera icon -> pick who to send it to"
 /// flow. Uploads straight from here (no separate confirm/caption step, to
 /// keep this a true one-tap "quick share") and lands on that channel's
 /// feed so the sender sees their own photo land, same as WhatsApp opening
@@ -18,17 +20,15 @@ import 'channel_feed_screen.dart';
 class QuickCaptureChannelPickerScreen extends StatefulWidget {
   QuickCaptureChannelPickerScreen({
     super.key,
-    required this.bytes,
-    required this.fileExtension,
-    required this.mimeType,
+    required this.file,
+    required this.isVideo,
     ChannelPickerService? channelPickerService,
     MediaService? mediaService,
   })  : channelPickerService = channelPickerService ?? ChannelPickerService(),
         mediaService = mediaService ?? MediaService();
 
-  final Uint8List bytes;
-  final String fileExtension;
-  final String mimeType;
+  final XFile file;
+  final bool isVideo;
   final ChannelPickerService channelPickerService;
   final MediaService mediaService;
 
@@ -41,11 +41,17 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
   String? _errorMessage;
   UploadableChannel? _uploadingTo;
   Map<String, ChannelWithActivity> _covers = const {};
+  /// The photo itself, or a frame taken from the video.
+  Uint8List? _preview;
+  int? _videoPercent;
 
   @override
   void initState() {
     super.initState();
     _load();
+    (widget.isVideo ? MediaService.videoPosterBytes(File(widget.file.path)) : widget.file.readAsBytes()).then((bytes) {
+      if (mounted) setState(() => _preview = bytes);
+    });
   }
 
   @override
@@ -77,12 +83,25 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
       _errorMessage = null;
     });
     try {
-      await widget.mediaService.uploadPhoto(
-        channelId: channel.channelId,
-        bytes: widget.bytes,
-        fileExtension: widget.fileExtension,
-        mimeType: widget.mimeType,
-      );
+      final extension = widget.file.path.split(".").last.toLowerCase();
+      if (widget.isVideo) {
+        await widget.mediaService.uploadVideo(
+          channelId: channel.channelId,
+          file: File(widget.file.path),
+          fileExtension: extension,
+          mimeType: extension == "mov" ? "video/quicktime" : "video/$extension",
+          onProgress: (sent, total) {
+            if (mounted && total > 0) setState(() => _videoPercent = (sent * 100 / total).floor());
+          },
+        );
+      } else {
+        await widget.mediaService.uploadPhoto(
+          channelId: channel.channelId,
+          bytes: await widget.file.readAsBytes(),
+          fileExtension: extension,
+          mimeType: extension == "png" ? "image/png" : "image/jpeg",
+        );
+      }
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -93,6 +112,7 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
       if (!mounted) return;
       setState(() {
         _uploadingTo = null;
+        _videoPercent = null;
         _errorMessage = 'Senden fehlgeschlagen: $e';
       });
     }
@@ -111,7 +131,16 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
               padding: const EdgeInsets.all(16),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.memory(widget.bytes, fit: BoxFit.cover, width: double.infinity),
+                child: _preview == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.memory(_preview!, fit: BoxFit.cover, width: double.infinity),
+                          if (widget.isVideo)
+                            const Center(child: Icon(SmileIcons.play, size: 56, color: Colors.white70)),
+                        ],
+                      ),
               ),
             ),
           ),
@@ -134,11 +163,13 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
                               subtitleIcon: SmileIcons.space,
                               subtitle: channel.spaceName,
                               trailing: _uploadingTo == channel
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
-                                    )
+                                  ? (_videoPercent != null
+                                      ? Text("${_videoPercent!} %")
+                                      : const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        ))
                                   : null,
                               onTap: _uploadingTo != null ? null : () => _sendTo(channel),
                             ),

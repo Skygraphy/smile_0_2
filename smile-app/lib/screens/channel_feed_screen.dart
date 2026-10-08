@@ -19,6 +19,7 @@ import '../services/foreground_notifications.dart';
 import '../services/object_picture_service.dart';
 import 'album_info_screen.dart';
 import 'capture_preview_screen.dart';
+import '../widgets/capture_choice.dart';
 import 'video_player_screen.dart';
 
 /// A picked photo shown in the grid immediately, before the network upload
@@ -364,55 +365,26 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     await _uploadFiles(picked);
   }
 
-  /// Photo or video? A plain choice instead of WhatsApp's hold-to-record,
-  /// which only works with an own in-app camera (decided 2026-10-08).
+  /// The album's own camera (decided 2026-10-08): photo or video, then a
+  /// preview offers "Senden" or "Nochmal" before anything is uploaded.
   Future<void> _chooseCapture() async {
-    final t = SmileTexts.of(context);
-    final video = await showModalBottomSheet<bool>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(SmileIcons.camera),
-              title: Text(t.takePhoto),
-              onTap: () => Navigator.of(context).pop(false),
-            ),
-            ListTile(
-              leading: const Icon(SmileIcons.recordVideo),
-              title: Text(t.recordVideo),
-              onTap: () => Navigator.of(context).pop(true),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (video == null || !mounted) return;
-    await _captureAndUpload(video: video);
-  }
-
-  /// The album's own camera (the system camera app): a preview offers
-  /// "Senden" or "Nochmal" before anything is uploaded.
-  Future<void> _captureAndUpload({required bool video}) async {
-    final picker = ImagePicker();
-    while (true) {
-      final captured = video
-          ? await picker.pickVideo(source: ImageSource.camera)
-          : await picker.pickImage(source: ImageSource.camera, imageQuality: 90);
-      if (captured == null || !mounted) return;
+    var captured = await captureWithChoice(context);
+    while (captured != null) {
+      if (!mounted) return;
+      final (:file, :isVideo) = captured;
       final decision = await Navigator.of(context).push<CaptureDecision>(
         MaterialPageRoute(
-          builder: (_) => CapturePreviewScreen(file: File(captured.path), isVideo: video, albumName: _channelName),
+          builder: (_) => CapturePreviewScreen(file: File(file.path), isVideo: isVideo, albumName: _channelName),
         ),
       );
       if (!mounted) return;
       if (decision == CaptureDecision.send) {
-        await _uploadFiles([captured]);
+        await _uploadFiles([file]);
         return;
       }
       if (decision != CaptureDecision.retake) return;
+      final again = await capture(video: isVideo);
+      captured = again == null ? null : (file: again, isVideo: isVideo);
     }
   }
 

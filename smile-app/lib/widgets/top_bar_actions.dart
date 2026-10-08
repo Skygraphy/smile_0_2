@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../screens/news_screen.dart';
 import '../screens/quick_capture_channel_picker_screen.dart';
 import '../services/news_service.dart';
 import '../services/sync_bus.dart';
+import 'capture_choice.dart';
 
 /// Camera + Neuigkeiten: the two actions every tab's top bar carries
 /// (navigation decision A, 2026-10-05).
@@ -14,7 +14,7 @@ List<Widget> smileTopBarActions({VoidCallback? onPhotoSent}) => [
       NewsButton(),
     ];
 
-/// Take a photo right away, then pick the album to send it to.
+/// Take a photo or video right away, then pick the album to send it to.
 class QuickCaptureButton extends StatelessWidget {
   const QuickCaptureButton({super.key, this.onDone});
 
@@ -22,14 +22,11 @@ class QuickCaptureButton extends StatelessWidget {
 
   Future<void> _capture(BuildContext context) async {
     final navigator = Navigator.of(context);
-    final picked = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 90);
-    if (picked == null) return;
-    final bytes = await picked.readAsBytes();
-    final extension = picked.path.split('.').last.toLowerCase();
-    final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
+    final captured = await captureWithChoice(context);
+    if (captured == null) return;
     await navigator.push(
       MaterialPageRoute(
-        builder: (_) => QuickCaptureChannelPickerScreen(bytes: bytes, fileExtension: extension, mimeType: mimeType),
+        builder: (_) => QuickCaptureChannelPickerScreen(file: captured.file, isVideo: captured.isVideo),
       ),
     );
     onDone?.call();
@@ -39,7 +36,7 @@ class QuickCaptureButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       icon: const Icon(SmileIcons.camera),
-      tooltip: SmileTexts.of(context).actionSendPhoto,
+      tooltip: SmileTexts.of(context).captureInAlbum,
       onPressed: () => _capture(context),
     );
   }
