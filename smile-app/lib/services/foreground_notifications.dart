@@ -62,7 +62,11 @@ class ForegroundNotifications {
     SyncBus.emit(const SyncEvent(tables: {'user_notifications'}, channelIds: {}, spaceIds: {}));
     if (data['type'] == 'new_photo' && data['channel_id'] != null && data['channel_id'] == openAlbumId) return;
     await _plugin.show(
-      id: message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch.remainder(1 << 31),
+      // Same collapse key (a batch of photos) -> same id, so the newer
+      // notification replaces the older one, as FCM's tag does in the background.
+      id: (data['collapse_key'] as String?)?.hashCode ??
+          message.messageId?.hashCode ??
+          DateTime.now().millisecondsSinceEpoch.remainder(1 << 31),
       title: notification.title,
       body: notification.body,
       notificationDetails: const NotificationDetails(

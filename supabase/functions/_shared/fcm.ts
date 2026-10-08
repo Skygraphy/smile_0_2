@@ -125,6 +125,9 @@ export async function sendNotification(
   fcmToken: string,
   notification: { title: string; body: string },
   data?: Record<string, string>,
+  // Android replaces a notification with the same tag instead of stacking
+  // another one (several photos in one go -> one notification).
+  tag?: string,
 ): Promise<void> {
   const sa = getServiceAccount();
   const accessToken = await getAccessToken();
@@ -139,7 +142,7 @@ export async function sendNotification(
         token: fcmToken,
         notification,
         data: data ?? {},
-        android: { priority: "high" },
+        android: tag ? { priority: "high", notification: { tag } } : { priority: "high" },
       },
     }),
   });

@@ -356,97 +356,122 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   static const _videoExtensions = {'mp4', 'mov', 'm4v', '3gp', 'mkv', 'webm', 'avi'};
 
   Future<void> _pickAndUpload() async {
-    // Photo or video, one picker (decision 2026-10-01: videos of any length).
-    final picked = await ImagePicker().pickMedia(imageQuality: 90);
-    if (picked == null) return;
-    final extension = picked.path.split('.').last.toLowerCase();
-    final isVideo = _videoExtensions.contains(extension);
+    // Photos and videos, several at once, one picker (decisions 2026-10-01:
+    // videos of any length; 2026-10-08: multiple selection, mixed).
+    final picked = await ImagePicker().pickMultipleMedia(imageQuality: 90);
+    if (picked.isEmpty || !mounted) return;
 
-    final Uint8List? previewBytes;
-    double? aspectRatio;
-    Uint8List? photoBytes;
-    if (isVideo) {
-      previewBytes = await MediaService.videoPosterBytes(File(picked.path));
-    } else {
-      photoBytes = await picked.readAsBytes();
-      previewBytes = photoBytes;
-    }
-    // Decode before it's ever shown: Image.memory doesn't paint anything
-    // for the frame or two it takes to decode a several-MB original, which
-    // otherwise reads as a black flash the instant you tap upload.
-    if (previewBytes != null) {
-      if (mounted) await precacheImage(MemoryImage(previewBytes), context);
-      aspectRatio = await _decodeAspectRatio(previewBytes);
-    }
-    // Show the picked photo/video frame in the feed *before* any network
-    // call -- the slow part (upload + server-side processing) happens behind
-    // this placeholder instead of blocking what the user sees.
-    final pending = _PendingUpload(previewBytes, aspectRatio: aspectRatio, isVideo: isVideo);
     setState(() {
       _isUploading = true;
       _errorMessage = null;
       _statusMessage = null;
-      _pendingUploads.insert(0, pending);
     });
-    // A dropped connection (e.g. switching WiFi networks mid-upload) is
-    // retried automatically -- this just keeps the user informed while it's
-    // happening instead of the tile silently sitting there.
-    void onRetrying(int attempt, int maxAttempts) {
+
+    // Show every picked photo/video frame in the feed *before* any network
+    // call -- the slow part (upload + server-side processing) happens behind
+    // these placeholders instead of blocking what the user sees.
+    final batch = <({XFile file, String extension, bool isVideo, Uint8List? photoBytes, _PendingUpload pending})>[];
+    for (final (index, file) in picked.indexed) {
+      final extension = file.path.split('.').last.toLowerCase();
+      final isVideo = _videoExtensions.contains(extension);
+      final Uint8List? photoBytes = isVideo ? null : await file.readAsBytes();
+      final Uint8List? previewBytes = isVideo ? await MediaService.videoPosterBytes(File(file.path)) : photoBytes;
+      double? aspectRatio;
+      if (previewBytes != null) {
+        // Decode before it's ever shown: Image.memory doesn't paint anything
+        // for the frame or two it takes to decode a several-MB original,
+        // which otherwise reads as a black flash the instant you tap upload.
+        // Only the newest few are on screen right away -- decoding all of a
+        // big batch up front would just eat memory.
+        if (mounted && index >= picked.length - 3) await precacheImage(MemoryImage(previewBytes), context);
+        aspectRatio = await _decodeAspectRatio(previewBytes);
+      }
+      final pending = _PendingUpload(previewBytes, aspectRatio: aspectRatio, isVideo: isVideo);
+      batch.add((file: file, extension: extension, isVideo: isVideo, photoBytes: photoBytes, pending: pending));
       if (!mounted) return;
-      setState(() => _statusMessage = 'Verbindung unterbrochen, versuche erneut ($attempt/$maxAttempts)…');
+      setState(() => _pendingUploads.insert(0, pending));
     }
 
-    try {
-      if (isVideo) {
-        await widget.mediaService.uploadVideo(
-          channelId: widget.channelId,
-          file: File(picked.path),
-          fileExtension: extension,
-          mimeType: extension == 'mov' ? 'video/quicktime' : 'video/$extension',
-          onMediaItemCreated: (id) => pending.mediaItemId = id,
-          onRetrying: onRetrying,
-          onProgress: (sent, total) {
-            if (!mounted || total == 0) return;
-            setState(() => _statusMessage = 'Video wird hochgeladen: ${(sent * 100 / total).floor()} %');
-          },
-        );
-        if (mounted) setState(() => _statusMessage = 'Video wird verarbeitet …');
-        // Converting a long video takes a while -- no point waiting here.
-        // It shows up (with its preview frame) as processing, and becomes
-        // playable on its own once the media worker is done (sync push).
-        await _load();
-        if (mounted) setState(() => _statusMessage = null);
-      } else {
-        await widget.mediaService.uploadPhoto(
-          channelId: widget.channelId,
-          bytes: photoBytes!,
-          fileExtension: extension,
-          mimeType: extension == 'png' ? 'image/png' : 'image/jpeg',
-          onMediaItemCreated: (id) => pending.mediaItemId = id,
-          onRetrying: onRetrying,
-        );
-        if (mounted) setState(() => _statusMessage = null);
-        // Processing (resize/thumbnail) happens asynchronously in the
-        // media-processing-service, so the real item may not be 'ready' yet
-        // right after upload -- give it a few short retries before giving up.
-        // The placeholder above is already covering this wait for the user.
-        for (var attempt = 0; attempt < 5; attempt++) {
-          await _load();
-          if (_items!.any((item) => item.id == pending.mediaItemId && item.isReady)) break;
-          await Future<void>.delayed(const Duration(seconds: 1));
-        }
-      }
-    } catch (e) {
+    var failed = 0;
+    Object? lastError;
+    for (final (index, item) in batch.indexed) {
       if (!mounted) return;
-      setState(() {
-        _statusMessage = null;
-        _errorMessage = 'Upload fehlgeschlagen (auch nach mehreren Versuchen): $e';
-      });
+      final counter = batch.length > 1 ? ' (${index + 1}/${batch.length})' : '';
+      // A dropped connection (e.g. switching WiFi networks mid-upload) is
+      // retried automatically -- this just keeps the user informed while
+      // it's happening instead of the tile silently sitting there.
+      void onRetrying(int attempt, int maxAttempts) {
+        if (!mounted) return;
+        setState(() => _statusMessage = 'Verbindung unterbrochen, versuche erneut ($attempt/$maxAttempts)…$counter');
+      }
+
+      try {
+        if (item.isVideo) {
+          await widget.mediaService.uploadVideo(
+            channelId: widget.channelId,
+            file: File(item.file.path),
+            fileExtension: item.extension,
+            mimeType: item.extension == 'mov' ? 'video/quicktime' : 'video/${item.extension}',
+            onMediaItemCreated: (id) => item.pending.mediaItemId = id,
+            onRetrying: onRetrying,
+            onProgress: (sent, total) {
+              if (!mounted || total == 0) return;
+              setState(() => _statusMessage = 'Video wird hochgeladen: ${(sent * 100 / total).floor()} %$counter');
+            },
+          );
+          // Converting a long video takes a while -- no point waiting for
+          // it. It shows up (with its preview frame) as processing, and
+          // becomes playable on its own once the media worker is done.
+          if (mounted) setState(() => _pendingUploads.remove(item.pending));
+        } else {
+          if (batch.length > 1) setState(() => _statusMessage = 'Foto wird hochgeladen$counter');
+          await widget.mediaService.uploadPhoto(
+            channelId: widget.channelId,
+            bytes: item.photoBytes!,
+            fileExtension: item.extension,
+            mimeType: item.extension == 'png' ? 'image/png' : 'image/jpeg',
+            onMediaItemCreated: (id) => item.pending.mediaItemId = id,
+            onRetrying: onRetrying,
+          );
+        }
+      } catch (e) {
+        failed++;
+        lastError = e;
+        if (mounted) setState(() => _pendingUploads.remove(item.pending));
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _statusMessage = null;
+      if (failed > 0) {
+        _errorMessage = batch.length == 1
+            ? 'Upload fehlgeschlagen (auch nach mehreren Versuchen): $lastError'
+            : '$failed von ${batch.length} Uploads fehlgeschlagen (auch nach mehreren Versuchen): $lastError';
+      }
+    });
+
+    try {
+      // Processing (resize/thumbnail) happens asynchronously in the
+      // media-processing-service, so the real items may not be 'ready' yet
+      // right after upload -- give them a few short retries. `_load` drops
+      // each placeholder as soon as its real item is ready; the placeholders
+      // cover this wait for the user.
+      for (var attempt = 0; attempt < 8; attempt++) {
+        await _load();
+        if (!mounted) return;
+        final waiting = batch.where((b) => _pendingUploads.contains(b.pending)).toList();
+        if (waiting.isEmpty) break;
+        await Future<void>.delayed(const Duration(seconds: 1));
+      }
+    } catch (_) {
+      // The sync push brings the items in anyway.
     } finally {
       if (mounted) {
         setState(() {
           _isUploading = false;
-          _pendingUploads.remove(pending);
+          for (final b in batch) {
+            _pendingUploads.remove(b.pending);
+          }
         });
       }
     }

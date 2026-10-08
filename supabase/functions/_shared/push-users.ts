@@ -10,13 +10,28 @@ export async function pushNotificationToUsers(
   userIds: string[],
   notification: { title: string; body: string },
   data?: Record<string, string>,
+  // Several pushes about the same thing in a row (a batch of photos) show as
+  // ONE notification and ONE Verlauf entry that keeps being updated: with the
+  // same key, the newer one replaces the older one within the window.
+  options?: { collapseKey?: string; collapseWindowMinutes?: number },
 ): Promise<void> {
   if (userIds.length === 0) return;
+  const collapseKey = options?.collapseKey;
+  if (collapseKey) data = { ...(data ?? {}), collapse_key: collapseKey };
 
   // Kept for 30 days as the "Verlauf" in Neuigkeiten (migrations/0059) --
   // independent of whether the person has a device to push to right now.
   // Best-effort: the push itself must not depend on it.
   try {
+    if (collapseKey) {
+      const since = new Date(Date.now() - (options?.collapseWindowMinutes ?? 10) * 60_000).toISOString();
+      await supabaseAdmin
+        .from("user_notifications")
+        .delete()
+        .in("user_id", userIds)
+        .eq("data->>collapse_key", collapseKey)
+        .gte("created_at", since);
+    }
     await supabaseAdmin.from("user_notifications").insert(
       [...new Set(userIds)].map((userId) => ({
         user_id: userId,
@@ -37,7 +52,7 @@ export async function pushNotificationToUsers(
   await Promise.all(
     (tokens ?? []).map(async (t: { id: string; fcm_token: string }) => {
       try {
-        await sendNotification(t.fcm_token, notification, data);
+        await sendNotification(t.fcm_token, notification, data, collapseKey);
       } catch (err) {
         // Best-effort -- but a permanently dead
         // token (app uninstalled, token rotated) is worth pruning so it
