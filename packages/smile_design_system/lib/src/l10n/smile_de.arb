@@ -324,6 +324,13 @@
   "noMoreAlbums": "Es gibt keine weiteren Alben, die dieser Space sehen kann.",
   "close": "Schließen",
   "removeFromFrame": "Vom Frame entfernen",
+  "removeFromFrameTitle": "„{album}“ vom Frame entfernen?",
+  "@removeFromFrameTitle": {
+    "placeholders": {
+      "album": {"type": "String"}
+    }
+  },
+  "removeFromFrameMessage": "Der Frame zeigt die Fotos dieses Albums dann nicht mehr. Das Album und seine Fotos bleiben erhalten.",
   "revokeFrame": "Frame widerrufen",
   "revokeFrameMessage": "Der Frame verliert sofort jeden Zugriff und löscht seine Fotos. Du kannst ihn jederzeit wieder aktivieren.",
   "reactivateFrame": "Frame wieder aktivieren",

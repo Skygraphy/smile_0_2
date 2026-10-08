@@ -277,9 +277,19 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                           trailing: IconButton(
                             icon: Icon(SmileIcons.close, color: scheme.onSurfaceVariant),
                             tooltip: t.removeFromFrame,
-                            onPressed: () => _run(
-                              () => widget.frameService.unassignChannel(frameId: _frame.id, channelId: assignment.channelId),
-                            ),
+                            onPressed: () async {
+                              final confirmed = await showSmileConfirmDialog(
+                                context,
+                                title: t.removeFromFrameTitle(assignment.channelName),
+                                message: t.removeFromFrameMessage,
+                                confirmLabel: t.actionRemove,
+                                destructive: true,
+                              );
+                              if (!confirmed) return;
+                              await _run(
+                                () => widget.frameService.unassignChannel(frameId: _frame.id, channelId: assignment.channelId),
+                              );
+                            },
                           ),
                         ),
                       SmileActionRow(icon: SmileIcons.add, label: t.addAlbumToFrame, onTap: _addAlbum),

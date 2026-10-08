@@ -1006,6 +1006,18 @@ abstract class SmileTexts {
   /// **'Vom Frame entfernen'**
   String get removeFromFrame;
 
+  /// No description provided for @removeFromFrameTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'„{album}“ vom Frame entfernen?'**
+  String removeFromFrameTitle(String album);
+
+  /// No description provided for @removeFromFrameMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Frame zeigt die Fotos dieses Albums dann nicht mehr. Das Album und seine Fotos bleiben erhalten.'**
+  String get removeFromFrameMessage;
+
   /// No description provided for @revokeFrame.
   ///
   /// In de, this message translates to:
