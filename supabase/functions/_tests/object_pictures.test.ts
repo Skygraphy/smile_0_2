@@ -44,6 +44,21 @@ Deno.test("managers set pictures; others can't; changes notify and old files go"
       })).status;
     assertEquals(await putAs(adminToken, `spaces/${space}/a.jpg`), 200);
     assertEquals((await putAs(strangerToken, `spaces/${space}/b.jpg`)) >= 400, true);
+    // Same for albums and Frames (0068: the frames branch used to deny everyone).
+    assertEquals(await putAs(adminToken, `channels/${album}/a.jpg`), 200);
+    assertEquals((await putAs(strangerToken, `channels/${album}/b.jpg`)) >= 400, true);
+    const frameId = (await invoke("create-frame", adminToken, { space_id: space, name: "OP Frame" })).body.frame_id as string;
+    assertEquals(await putAs(adminToken, `frames/${frameId}/a.jpg`), 200);
+    assertEquals((await putAs(strangerToken, `frames/${frameId}/b.jpg`)) >= 400, true);
+    assertEquals(
+      (await asUser(`frames?id=eq.${frameId}`, adminToken, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ avatar_path: `frames/${frameId}/a.jpg` }),
+      })).status,
+      204,
+    );
+    assertEquals((await events("picture_changed")).some((p) => p.kind === "frame" && p.id === frameId), true);
 
     // Setting it notifies; replacing it queues the old file for removal.
     const patch = (path: string, data: unknown) =>
