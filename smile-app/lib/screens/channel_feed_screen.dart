@@ -364,9 +364,37 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     await _uploadFiles(picked);
   }
 
-  /// The album's own camera (decided 2026-10-08, WhatsApp-style): tap takes
-  /// a photo, long-press records a video; a preview offers "Senden" or
-  /// "Nochmal" before anything is uploaded.
+  /// Photo or video? A plain choice instead of WhatsApp's hold-to-record,
+  /// which only works with an own in-app camera (decided 2026-10-08).
+  Future<void> _chooseCapture() async {
+    final t = SmileTexts.of(context);
+    final video = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(SmileIcons.camera),
+              title: Text(t.takePhoto),
+              onTap: () => Navigator.of(context).pop(false),
+            ),
+            ListTile(
+              leading: const Icon(SmileIcons.recordVideo),
+              title: Text(t.recordVideo),
+              onTap: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (video == null || !mounted) return;
+    await _captureAndUpload(video: video);
+  }
+
+  /// The album's own camera (the system camera app): a preview offers
+  /// "Senden" or "Nochmal" before anything is uploaded.
   Future<void> _captureAndUpload({required bool video}) async {
     final picker = ImagePicker();
     while (true) {
@@ -819,19 +847,16 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    // Camera above "+" (decided 2026-10-08): tap = photo,
-                    // long-press = video. "+" stays the main button --
+                    // Camera above "+" (decided 2026-10-08): a short choice
+                    // between photo and video. "+" stays the main button --
                     // most photos for a Frame already exist.
-                    GestureDetector(
-                      onLongPress: _isUploading ? null : () => _captureAndUpload(video: true),
-                      child: FloatingActionButton.small(
-                        heroTag: "capture",
-                        tooltip: t.captureInAlbum,
-                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
-                        foregroundColor: Theme.of(context).colorScheme.onSurface,
-                        onPressed: _isUploading ? null : () => _captureAndUpload(video: false),
-                        child: const Icon(SmileIcons.camera),
-                      ),
+                    FloatingActionButton.small(
+                      heroTag: "capture",
+                      tooltip: t.captureInAlbum,
+                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                      foregroundColor: Theme.of(context).colorScheme.onSurface,
+                      onPressed: _isUploading ? null : _chooseCapture,
+                      child: const Icon(SmileIcons.camera),
                     ),
                     const SizedBox(height: 12),
                     FloatingActionButton(

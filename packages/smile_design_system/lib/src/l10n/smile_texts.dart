@@ -1531,8 +1531,14 @@ abstract class SmileTexts {
   /// No description provided for @captureInAlbum.
   ///
   /// In de, this message translates to:
-  /// **'Foto aufnehmen – gedrückt halten für Video'**
+  /// **'Aufnehmen'**
   String get captureInAlbum;
+
+  /// No description provided for @recordVideo.
+  ///
+  /// In de, this message translates to:
+  /// **'Video aufnehmen'**
+  String get recordVideo;
 
   /// No description provided for @captureSend.
   ///
