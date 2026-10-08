@@ -16,6 +16,7 @@ import '../services/sync_bus.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/channel_service.dart';
 import '../services/foreground_notifications.dart';
+import '../services/object_picture_service.dart';
 import 'album_info_screen.dart';
 import 'video_player_screen.dart';
 
@@ -459,6 +460,25 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
 
   void _clearSelection() => setState(_selectedIds.clear);
 
+  bool get _canSetCover {
+    if (_showingHidden || _selectedIds.length != 1 || !(_myStatus?.isSco ?? false)) return false;
+    final id = _selectedIds.first;
+    return (_items ?? const []).any((item) => item.id == id && item.isReady);
+  }
+
+  Future<void> _setSelectedAsCover() async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final mediaId = _selectedIds.first;
+    try {
+      await ObjectPictureService().setAlbumCoverPhoto(widget.channelId, mediaId);
+      _clearSelection();
+      messenger.showSnackBar(SnackBar(content: Text(t.coverSet(_channelName))));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(t.actionFailed('$e'))));
+    }
+  }
+
   /// Destructive and permanent: gone from the DB, every storage bucket,
   /// every other member's feed, and every Smile-Frame the moment it's
   /// confirmed (see supabase/functions/delete-media). No undo, no
@@ -671,6 +691,14 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
               leading: IconButton(icon: const Icon(SmileIcons.close), onPressed: _clearSelection),
               title: Text(t.selectedCount(_selectedIds.length)),
               actions: [
+                // "Als Titelbild" (2026-10-08): exactly one ready photo, and
+                // only for the album's managers (RLS checks it as well).
+                if (_canSetCover)
+                  TextButton.icon(
+                    onPressed: _setSelectedAsCover,
+                    icon: const Icon(SmileIcons.picture, size: 18),
+                    label: Text(t.setAsCover),
+                  ),
                 IconButton(
                   icon: Icon(_showingHidden ? SmileIcons.unhide : SmileIcons.hide),
                   tooltip: _showingHidden ? t.actionUnhide : t.actionHide,

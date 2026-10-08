@@ -52,6 +52,7 @@ class ChannelWithActivity {
     this.unreadCount = 0,
     this.coverMediaId,
     this.coverUrl,
+    this.coverCustom = false,
   });
 
   final String channelId;
@@ -72,6 +73,9 @@ class ChannelWithActivity {
   final String? coverMediaId;
   final String? coverUrl;
 
+  /// True when a manager chose the cover (own picture or "Als Titelbild").
+  final bool coverCustom;
+
   String get spaceLabel => spaces.map((s) => s.name).join(', ');
 
   factory ChannelWithActivity.fromJson(Map<String, dynamic> json) => ChannelWithActivity(
@@ -84,6 +88,7 @@ class ChannelWithActivity {
         unreadCount: json['unread_count'] as int? ?? 0,
         coverMediaId: (json['cover'] as Map<String, dynamic>?)?['media_id'] as String?,
         coverUrl: (json['cover'] as Map<String, dynamic>?)?['thumbnail_url'] as String?,
+        coverCustom: (json['cover'] as Map<String, dynamic>?)?['custom'] as bool? ?? false,
       );
 }
 

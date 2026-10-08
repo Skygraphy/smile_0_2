@@ -564,5 +564,36 @@
     }
   },
   "deleteAccountTypeEmail": "Zum Bestätigen diese E-Mail-Adresse eintippen:",
-  "newsUnseen": "Neuigkeiten, es gibt Neues"
+  "newsUnseen": "Neuigkeiten, es gibt Neues",
+  "pictureFor": "Bild für „{name}“",
+  "@pictureFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "coverFor": "Titelbild für „{name}“",
+  "@coverFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "pickFromAlbum": "Foto aus dem Album wählen",
+  "automaticCover": "Automatisch: neuestes Foto",
+  "removePicture": "Bild entfernen",
+  "changeObjectPicture": "Bild ändern",
+  "setAsCover": "Als Titelbild",
+  "coverSet": "„{name}“ hat ein neues Titelbild.",
+  "@coverSet": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "choosePhoto": "Foto wählen",
+  "noPhotosInAlbum": "In diesem Album gibt es noch keine Fotos."
 }

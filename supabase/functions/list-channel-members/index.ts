@@ -5,7 +5,7 @@
 // what the caller's own view already allows.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { fetchProfilesByUserId } from "../_shared/profiles.ts";
+import { avatarPublicUrl, fetchProfilesByUserId } from "../_shared/profiles.ts";
 import { resolveChannelAccess } from "../_shared/channel-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -52,14 +52,14 @@ Deno.serve(async (req) => {
 
   const { data: shareRows } = await supabaseAdmin
     .from("channel_shares")
-    .select("space_id, spaces(id, name, deleted_at)")
+    .select("space_id, spaces(id, name, deleted_at, avatar_path)")
     .eq("channel_id", body.channel_id);
   const sharedSpaces = (shareRows ?? [])
     // deno-lint-ignore no-explicit-any
     .map((row) => row.spaces as any)
     // A shared-in household in the trash (migrations/0048) sees nothing.
     .filter((space) => space && !space.deleted_at)
-    .map((s) => ({ id: s.id as string, name: s.name as string }));
+    .map((s) => ({ id: s.id as string, name: s.name as string, avatar_url: avatarPublicUrl(s.avatar_path) }));
 
   // The home Space's Administrator can't be removed by a co-owner
   // (migrations/0045) -- the client needs to know who that is to hide the

@@ -1467,6 +1467,66 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Neuigkeiten, es gibt Neues'**
   String get newsUnseen;
+
+  /// No description provided for @pictureFor.
+  ///
+  /// In de, this message translates to:
+  /// **'Bild für „{name}“'**
+  String pictureFor(String name);
+
+  /// No description provided for @coverFor.
+  ///
+  /// In de, this message translates to:
+  /// **'Titelbild für „{name}“'**
+  String coverFor(String name);
+
+  /// No description provided for @pickFromAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto aus dem Album wählen'**
+  String get pickFromAlbum;
+
+  /// No description provided for @automaticCover.
+  ///
+  /// In de, this message translates to:
+  /// **'Automatisch: neuestes Foto'**
+  String get automaticCover;
+
+  /// No description provided for @removePicture.
+  ///
+  /// In de, this message translates to:
+  /// **'Bild entfernen'**
+  String get removePicture;
+
+  /// No description provided for @changeObjectPicture.
+  ///
+  /// In de, this message translates to:
+  /// **'Bild ändern'**
+  String get changeObjectPicture;
+
+  /// No description provided for @setAsCover.
+  ///
+  /// In de, this message translates to:
+  /// **'Als Titelbild'**
+  String get setAsCover;
+
+  /// No description provided for @coverSet.
+  ///
+  /// In de, this message translates to:
+  /// **'„{name}“ hat ein neues Titelbild.'**
+  String coverSet(String name);
+
+  /// No description provided for @choosePhoto.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto wählen'**
+  String get choosePhoto;
+
+  /// No description provided for @noPhotosInAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'In diesem Album gibt es noch keine Fotos.'**
+  String get noPhotosInAlbum;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

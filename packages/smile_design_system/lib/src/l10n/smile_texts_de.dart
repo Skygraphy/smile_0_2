@@ -858,4 +858,40 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get newsUnseen => 'Neuigkeiten, es gibt Neues';
+
+  @override
+  String pictureFor(String name) {
+    return 'Bild für „$name“';
+  }
+
+  @override
+  String coverFor(String name) {
+    return 'Titelbild für „$name“';
+  }
+
+  @override
+  String get pickFromAlbum => 'Foto aus dem Album wählen';
+
+  @override
+  String get automaticCover => 'Automatisch: neuestes Foto';
+
+  @override
+  String get removePicture => 'Bild entfernen';
+
+  @override
+  String get changeObjectPicture => 'Bild ändern';
+
+  @override
+  String get setAsCover => 'Als Titelbild';
+
+  @override
+  String coverSet(String name) {
+    return '„$name“ hat ein neues Titelbild.';
+  }
+
+  @override
+  String get choosePhoto => 'Foto wählen';
+
+  @override
+  String get noPhotosInAlbum => 'In diesem Album gibt es noch keine Fotos.';
 }

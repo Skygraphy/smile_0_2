@@ -12,6 +12,9 @@ import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/email_dialog.dart';
 import '../widgets/album_covers.dart';
+import '../services/avatar_upload.dart';
+import '../services/object_picture_service.dart';
+import '../widgets/picture_sheet.dart';
 import 'channel_feed_screen.dart';
 import 'create_frame_screen.dart';
 import 'frame_settings_screen.dart';
@@ -55,6 +58,7 @@ class SpaceInfoScreen extends StatefulWidget {
 
 class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
   late String _name = widget.spaceName;
+  String? _avatarPath;
   List<Map<String, dynamic>>? _albums;
   List<SharedChannelSummary> _sharedIn = const [];
   List<SmileFrame> _frames = const [];
@@ -80,7 +84,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     }));
     try {
       final results = await Future.wait<dynamic>([
-        supabase.from('spaces').select('name').eq('id', widget.spaceId).maybeSingle(),
+        supabase.from('spaces').select('name, avatar_path').eq('id', widget.spaceId).maybeSingle(),
         widget.channelService.listChannels(widget.spaceId),
         widget.membershipService.listSharedChannelsForSpace(widget.spaceId),
         widget.frameService.listFrames(widget.spaceId),
@@ -90,6 +94,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
       final row = results[0] as Map<String, dynamic>?;
       setState(() {
         if (row != null) _name = row['name'] as String;
+        _avatarPath = row?['avatar_path'] as String?;
         _albums = results[1] as List<Map<String, dynamic>>;
         _sharedIn = results[2] as List<SharedChannelSummary>;
         _frames = results[3] as List<SmileFrame>;
@@ -296,7 +301,21 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
       children: [
         SmileInfoHeader(
           icon: SmileIcons.space,
-          leading: SmileInitialsTile(name: _name, size: 80),
+          // Managers only ever see this page -- all of them may change it.
+          leading: SmileEditablePicture(
+            tooltip: t.changeObjectPicture,
+            onEdit: () async {
+              final changed = await changeObjectPicture(
+                context,
+                kind: ObjectKind.space,
+                id: widget.spaceId,
+                name: _name,
+                hasCustomPicture: _avatarPath != null,
+              );
+              if (changed) await _load();
+            },
+            child: SmileAlbumCover(name: _name, imageUrl: avatarPathToUrl(_avatarPath), size: 80),
+          ),
           title: _name,
           subtitleIcon: isAdmin ? SmileIcons.admin : SmileIcons.coAdmin,
           subtitle: admins == null ? null : (isAdmin ? t.youAreAdmin : t.youAreCoAdmin),
@@ -376,7 +395,10 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
             if (_frames.isEmpty) SmileSectionHint(icon: SmileIcons.frame, text: t.noFrameYet),
             for (final frame in _frames)
               SmileObjectTile(
-                leading: SmileStatusDot(online: frame.isOnline, child: SmileInitialsTile(name: frame.name, size: 40)),
+                leading: SmileStatusDot(
+                  online: frame.isOnline,
+                  child: SmileAlbumCover(name: frame.name, imageUrl: avatarPathToUrl(frame.avatarPath), size: 40),
+                ),
                 title: frame.name,
                 subtitle: _frameStatus(t, frame),
                 trailing: Icon(SmileIcons.chevron, size: 16, color: muted),

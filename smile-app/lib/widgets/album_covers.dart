@@ -22,7 +22,9 @@ Widget albumCover(String channelId, String name, Map<String, ChannelWithActivity
   return SmileAlbumCover(
     name: name,
     imageUrl: album?.coverUrl,
-    cacheKey: mediaId == null ? null : 'cover_$mediaId',
+    // An uploaded cover has a unique URL per upload, so the URL itself is a
+    // safe cache key; photo covers use their media id (URLs are re-signed).
+    cacheKey: mediaId == null ? album?.coverUrl : 'cover_$mediaId',
     size: size,
   );
 }

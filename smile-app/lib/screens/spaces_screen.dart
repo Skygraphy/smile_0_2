@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../main.dart';
+import '../services/avatar_upload.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/top_bar_actions.dart';
@@ -21,13 +22,14 @@ class SpacesScreen extends StatefulWidget {
 }
 
 class _SpaceRow {
-  _SpaceRow({required this.id, required this.name, required this.isAdmin, required this.albums, required this.frames});
+  _SpaceRow({required this.id, required this.name, required this.isAdmin, required this.albums, required this.frames, this.avatarPath});
 
   final String id;
   final String name;
   final bool isAdmin;
   final int albums;
   final int frames;
+  final String? avatarPath;
 }
 
 class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
@@ -46,7 +48,7 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
   Future<void> _load() async {
     try {
       final results = await Future.wait<dynamic>([
-        supabase.from('spaces').select('id, name, owner_id').order('created_at'),
+        supabase.from('spaces').select('id, name, owner_id, avatar_path').order('created_at'),
         supabase.from('channels').select('space_id'),
         supabase.from('frames').select('space_id'),
       ]);
@@ -72,6 +74,7 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
             isAdmin: row['owner_id'] == me,
             albums: albumCounts[id] ?? 0,
             frames: frameCounts[id] ?? 0,
+            avatarPath: row['avatar_path'] as String?,
           );
         }).toList();
         _errorMessage = null;
@@ -141,7 +144,7 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
                     ),
                   for (final space in spaces)
                     SmileObjectTile(
-                      leading: SmileInitialsTile(name: space.name),
+                      leading: SmileAlbumCover(name: space.name, imageUrl: avatarPathToUrl(space.avatarPath)),
                       title: space.name,
                       subtitleIcon: space.isAdmin ? SmileIcons.admin : SmileIcons.coAdmin,
                       subtitle: [

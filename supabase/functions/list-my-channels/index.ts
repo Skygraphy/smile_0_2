@@ -7,7 +7,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { visibleChannelIds } from "../_shared/channel-access.ts";
-import { fetchProfilesByUserId } from "../_shared/profiles.ts";
+import { avatarPublicUrl, fetchProfilesByUserId } from "../_shared/profiles.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     // testing (done shortly after the schema reset, likely before
     // PostgREST's cache had settled) but broke on the very first real
     // walkthrough afterward.
-    supabaseAdmin.from("channels").select("id, name, space_id, spaces!channels_space_id_fkey(id, name), created_at").in("id", channelIds),
+    supabaseAdmin.from("channels").select("id, name, space_id, cover_path, cover_media_id, spaces!channels_space_id_fkey(id, name, avatar_path), created_at").in("id", channelIds),
     // Every Space this channel is shared into (not just the caller's own)
     // -- a shared channel shows both households' Space names, the same
     // reason WhatsApp shows every member of a group, not just the ones
@@ -134,6 +134,15 @@ Deno.serve(async (req) => {
       coverByChannel.set(channelId, { mediaId: row.id as string, path: row.storage_path_thumbnail as string });
     }
   }
+  // A cover chosen in the album ("Als Titelbild", migrations/0066) wins over
+  // the newest photo -- as long as the caller can see it.
+  for (const c of channels ?? []) {
+    if (!c.cover_media_id) continue;
+    const chosen = (mediaRows ?? []).find((m) => m.id === c.cover_media_id);
+    if (chosen && !hidden.has(chosen.id as string) && chosen.storage_path_thumbnail) {
+      coverByChannel.set(c.id as string, { mediaId: chosen.id as string, path: chosen.storage_path_thumbnail as string });
+    }
+  }
   const coverPaths = [...coverByChannel.values()].map((c) => c.path);
   const coverUrlByPath = new Map<string, string>();
   if (coverPaths.length > 0) {
@@ -164,9 +173,11 @@ Deno.serve(async (req) => {
       last_activity_at: lastByChannel.get(c.id as string)?.at ?? c.created_at,
       unread_count: unreadByChannel.get(c.id as string) ?? 0,
       cover: (() => {
+        // An uploaded picture wins outright (stable public URL, no signing).
+        if (c.cover_path) return { media_id: null, thumbnail_url: avatarPublicUrl(c.cover_path as string), custom: true };
         const cover = coverByChannel.get(c.id as string);
         const url = cover ? coverUrlByPath.get(cover.path) : undefined;
-        return cover && url ? { media_id: cover.mediaId, thumbnail_url: url } : null;
+        return cover && url ? { media_id: cover.mediaId, thumbnail_url: url, custom: Boolean(c.cover_media_id) } : null;
       })(),
       last_post: (() => {
         const last = lastByChannel.get(c.id as string);

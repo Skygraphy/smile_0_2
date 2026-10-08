@@ -6,6 +6,9 @@ import 'package:smile_design_system/smile_design_system.dart';
 import '../services/frame_service.dart';
 import '../services/channel_picker_service.dart';
 import '../widgets/album_covers.dart';
+import '../services/avatar_upload.dart';
+import '../services/object_picture_service.dart';
+import '../widgets/picture_sheet.dart';
 import '../services/sync_bus.dart';
 
 /// A Frame's info page, same pattern as Album and Space: icon + name
@@ -203,6 +206,23 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                 children: [
                   SmileInfoHeader(
                     icon: SmileIcons.frame,
+                    leading: SmileEditablePicture(
+                      tooltip: t.changeObjectPicture,
+                      onEdit: () async {
+                        final changed = await changeObjectPicture(
+                          context,
+                          kind: ObjectKind.frame,
+                          id: _frame.id,
+                          name: _frame.name,
+                          hasCustomPicture: _frame.avatarPath != null,
+                        );
+                        if (changed) await _load();
+                      },
+                      child: SmileStatusDot(
+                        online: _frame.isOnline,
+                        child: SmileAlbumCover(name: _frame.name, imageUrl: avatarPathToUrl(_frame.avatarPath), size: 80),
+                      ),
+                    ),
                     title: _frame.name,
                     subtitleIcon: spaceName == null ? null : SmileIcons.space,
                     subtitle: [if (spaceName != null) t.frameInSpace(spaceName), status].join(' · '),

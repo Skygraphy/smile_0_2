@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
@@ -6,6 +8,11 @@ import '../services/channel_service.dart';
 import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/email_dialog.dart';
+import '../services/avatar_upload.dart';
+import '../services/channel_picker_service.dart';
+import '../services/object_picture_service.dart';
+import '../widgets/album_covers.dart';
+import '../widgets/picture_sheet.dart';
 
 /// The album's info page, WhatsApp-group-info style (decision 5,
 /// 2026-10-05): big icon + name (tap to rename), quick actions, then
@@ -42,7 +49,8 @@ class AlbumInfoScreen extends StatefulWidget {
 class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   ChannelRoster? _roster;
   MyInvitesInbox? _inbox;
-  List<({String frameId, String frameName})> _frames = const [];
+  List<({String frameId, String frameName, String? avatarPath})> _frames = const [];
+  Map<String, ChannelWithActivity> _covers = const {};
   late String _name = widget.channelName;
   String? _errorMessage;
 
@@ -59,6 +67,9 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   }
 
   Future<void> _load() async {
+    unawaited(loadAlbumCovers().then((c) {
+      if (mounted) setState(() => _covers = c);
+    }));
     try {
       final roster = await widget.membershipService.listChannelMembers(widget.channelId);
       // Only a manager may list this album's requests (list-my-invites
@@ -74,7 +85,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       setState(() {
         _roster = roster;
         _inbox = roster.callerIsSco ? results.first as MyInvitesInbox : null;
-        _frames = results[results.length - 2] as List<({String frameId, String frameName})>;
+        _frames = results[results.length - 2] as List<({String frameId, String frameName, String? avatarPath})>;
         if (row != null) _name = row['name'] as String;
         _errorMessage = null;
       });
@@ -239,7 +250,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(leading: SmileInitialsTile(name: space.name, size: 36), title: Text(space.name)),
+            ListTile(leading: SmileAlbumCover(name: space.name, imageUrl: space.avatarUrl, size: 36), title: Text(space.name)),
             SmileActionRow(
               icon: SmileIcons.shared,
               label: t.endShare,
@@ -308,6 +319,22 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       children: [
         SmileInfoHeader(
           icon: SmileIcons.album,
+          leading: SmileEditablePicture(
+            tooltip: t.changeObjectPicture,
+            onEdit: isManager
+                ? () async {
+                    final changed = await changeObjectPicture(
+                      context,
+                      kind: ObjectKind.album,
+                      id: widget.channelId,
+                      name: _name,
+                      hasCustomPicture: _covers[widget.channelId]?.coverCustom ?? false,
+                    );
+                    if (changed) await _load();
+                  }
+                : null,
+            child: albumCover(widget.channelId, _name, _covers, size: 80),
+          ),
           title: _name,
           subtitleIcon: SmileIcons.space,
           subtitle: [
@@ -381,7 +408,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                 SmileSectionHint(icon: SmileIcons.shared, text: t.notSharedYet),
               for (final space in roster.sharedSpaces)
                 SmileObjectTile(
-                  leading: SmileInitialsTile(name: space.name, size: 40),
+                  leading: SmileAlbumCover(name: space.name, imageUrl: space.avatarUrl, size: 40),
                   title: space.name,
                   subtitleIcon: SmileIcons.viewer,
                   subtitle: t.sharedViewOnly,
@@ -423,7 +450,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
               if (_frames.isEmpty) SmileSectionHint(icon: SmileIcons.frame, text: t.notOnAnyFrame),
               for (final frame in _frames)
                 SmileObjectTile(
-                  leading: SmileInitialsTile(name: frame.frameName, size: 40),
+                  leading: SmileAlbumCover(name: frame.frameName, imageUrl: avatarPathToUrl(frame.avatarPath), size: 40),
                   title: frame.frameName,
                 ),
             ],

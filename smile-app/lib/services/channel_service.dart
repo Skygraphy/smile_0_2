@@ -23,15 +23,19 @@ class ChannelService {
 
   /// Frames showing this album -- RLS only returns Frames of Spaces the
   /// caller manages, so other households' Frames never show up here.
-  Future<List<({String frameId, String frameName})>> listFramesShowing(String channelId) async {
+  Future<List<({String frameId, String frameName, String? avatarPath})>> listFramesShowing(String channelId) async {
     final rows = await supabase
         .from('frame_channels')
-        .select('frame_id, frames(name, lifecycle_state)')
+        .select('frame_id, frames(name, lifecycle_state, avatar_path)')
         .eq('channel_id', channelId);
     return (rows as List)
         .cast<Map<String, dynamic>>()
         .where((r) => r['frames'] != null && (r['frames'] as Map)['lifecycle_state'] != 'revoked')
-        .map((r) => (frameId: r['frame_id'] as String, frameName: (r['frames'] as Map)['name'] as String))
+        .map((r) => (
+              frameId: r['frame_id'] as String,
+              frameName: (r['frames'] as Map)['name'] as String,
+              avatarPath: (r['frames'] as Map)['avatar_path'] as String?,
+            ))
         .toList();
   }
 

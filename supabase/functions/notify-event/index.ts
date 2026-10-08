@@ -82,6 +82,8 @@ Deno.serve(async (req) => {
       await albumRenamed(supabaseAdmin, body.payload);
     } else if (body.kind === "space_renamed") {
       await spaceRenamed(supabaseAdmin, body.payload);
+    } else if (body.kind === "picture_changed") {
+      await pictureChanged(supabaseAdmin, body.payload);
     } else {
       return jsonResponse({ error: "unknown_kind" }, 400);
     }
@@ -450,4 +452,51 @@ async function spaceRenamed(supabaseAdmin: Admin, p: Record<string, any>) {
     { title: "Space umbenannt", body: `${actor} hat den Space „${p.old_name}“ in „${p.new_name}“ umbenannt.` },
     { type: "space_renamed", space_id: p.space_id, space_name: p.new_name },
   );
+}
+
+/** A Space's, album's or Frame's own picture changed (migrations/0066) ->
+ * the same people a rename reaches, except whoever did it. */
+// deno-lint-ignore no-explicit-any
+async function pictureChanged(supabaseAdmin: Admin, p: Record<string, any>) {
+  const actorId = (p.actor_id ?? null) as string | null;
+  const actor = actorId ? await displayName(supabaseAdmin, actorId) : "Jemand";
+  const removed = p.removed === true;
+  if (p.kind === "space") {
+    const { data: space } = await supabaseAdmin.from("spaces").select("name").eq("id", p.id).maybeSingle();
+    if (!space) return;
+    const people = new Set(await spaceManagerIds(supabaseAdmin, p.id));
+    const { data: channels } = await supabaseAdmin.from("channels").select("id").eq("space_id", p.id).is("deleted_at", null);
+    for (const c of channels ?? []) for (const u of await channelAudience(supabaseAdmin, c.id as string)) people.add(u);
+    if (actorId) people.delete(actorId);
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      [...people],
+      { title: "Bild geändert", body: `${actor} hat das Bild von „${space.name}“ ${removed ? "entfernt" : "geändert"}.` },
+      { type: "space_renamed", space_id: p.id, space_name: space.name as string },
+    );
+  } else if (p.kind === "album") {
+    const { data: channel } = await supabaseAdmin.from("channels").select("name").eq("id", p.id).maybeSingle();
+    if (!channel) return;
+    const people = (await channelAudience(supabaseAdmin, p.id)).filter((u) => u !== actorId);
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      people,
+      removed
+        ? { title: "Titelbild automatisch", body: `${actor}: „${channel.name}“ zeigt wieder automatisch das neueste Foto.` }
+        : { title: "Neues Titelbild", body: `${actor} hat ein neues Titelbild für „${channel.name}“ festgelegt.` },
+      { type: "album_renamed", channel_id: p.id, channel_name: channel.name as string },
+    );
+  } else if (p.kind === "frame") {
+    const { data: frame } = await supabaseAdmin.from("frames").select("name, space_id, spaces(name)").eq("id", p.id).maybeSingle();
+    if (!frame) return;
+    // deno-lint-ignore no-explicit-any
+    const spaceName = (frame.spaces as any)?.name ?? "";
+    const people = (await spaceManagerIds(supabaseAdmin, frame.space_id as string)).filter((u) => u !== actorId);
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      people,
+      { title: "Bild geändert", body: `${actor} hat das Bild des Frames „${frame.name}“ ${removed ? "entfernt" : "geändert"}.` },
+      { type: "frame_changed", space_id: frame.space_id as string, space_name: spaceName, frame_name: frame.name as string },
+    );
+  }
 }

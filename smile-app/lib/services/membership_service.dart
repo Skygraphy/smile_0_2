@@ -22,13 +22,19 @@ class ChannelMember {
 /// A Space this channel is currently shared into (view-only) --
 /// migrations/0031_architecture_reset.sql's `channel_shares`.
 class SharedSpaceRef {
-  SharedSpaceRef({required this.id, required this.name});
+  SharedSpaceRef({required this.id, required this.name, this.avatarUrl});
 
   final String id;
   final String name;
 
-  factory SharedSpaceRef.fromJson(Map<String, dynamic> json) =>
-      SharedSpaceRef(id: json['id'] as String, name: json['name'] as String);
+  /// The Space's own picture (migrations/0066), else initials.
+  final String? avatarUrl;
+
+  factory SharedSpaceRef.fromJson(Map<String, dynamic> json) => SharedSpaceRef(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        avatarUrl: json['avatar_url'] as String?,
+      );
 }
 
 class ChannelRoster {

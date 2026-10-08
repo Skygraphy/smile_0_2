@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../icons/smile_icons.dart';
+
 /// Lists show WHAT an object is, not just which kind it is (decided
 /// 2026-10-07): an album shows its newest photo, a Space or Frame two
 /// letters of its name -- instead of the same type icon on every row.
@@ -134,6 +136,57 @@ class SmileTypeBadge extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Icon(icon, size: 11, color: scheme.onSurfaceVariant),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A picture with the coral camera badge (bottom right) -- the same "tap to
+/// change" sign as on the profile picture. Without [onEdit] (people who may
+/// not change it) the badge is not shown.
+class SmileEditablePicture extends StatelessWidget {
+  const SmileEditablePicture({super.key, required this.child, this.onEdit, this.busy = false, this.tooltip});
+
+  final Widget child;
+  final VoidCallback? onEdit;
+  final bool busy;
+  final String? tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    if (onEdit == null) return child;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        GestureDetector(onTap: busy ? null : onEdit, child: child),
+        Positioned(
+          right: -6,
+          bottom: -6,
+          child: Tooltip(
+            message: tooltip ?? '',
+            child: GestureDetector(
+              onTap: busy ? null : onEdit,
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: scheme.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Theme.of(context).scaffoldBackgroundColor, width: 3),
+                ),
+                alignment: Alignment.center,
+                child: busy
+                    ? SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(scheme.onPrimary)),
+                      )
+                    : Icon(SmileIcons.camera, size: 16, color: scheme.onPrimary),
+              ),
+            ),
           ),
         ),
       ],

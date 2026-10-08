@@ -8,6 +8,7 @@ class SmileFrame {
     required this.lifecycleState,
     required this.channelSwitchEnabled,
     this.videoSound = true,
+    this.avatarPath,
     this.pairingCode,
     this.pairingCodeExpiresAt,
     this.currentAppVersion,
@@ -24,6 +25,9 @@ class SmileFrame {
 
   /// Play videos with sound on this Frame (migrations/0056).
   final bool videoSound;
+
+  /// Own picture in the avatars bucket (migrations/0066), else initials.
+  final String? avatarPath;
   final String? pairingCode;
   final DateTime? pairingCodeExpiresAt;
   final String? currentAppVersion;
@@ -48,6 +52,7 @@ class SmileFrame {
         lifecycleState: lifecycleState,
         channelSwitchEnabled: channelSwitchEnabled ?? this.channelSwitchEnabled,
         videoSound: videoSound ?? this.videoSound,
+        avatarPath: avatarPath,
         pairingCode: pairingCode,
         pairingCodeExpiresAt: pairingCodeExpiresAt,
         currentAppVersion: currentAppVersion,
@@ -64,6 +69,7 @@ class SmileFrame {
         lifecycleState: json['lifecycle_state'] as String,
         channelSwitchEnabled: json['channel_switch_enabled'] as bool? ?? false,
         videoSound: json['video_sound'] as bool? ?? true,
+        avatarPath: json['avatar_path'] as String?,
         pairingCode: json['pairing_code'] as String?,
         pairingCodeExpiresAt:
             json['pairing_code_expires_at'] != null ? DateTime.parse(json['pairing_code_expires_at'] as String) : null,
@@ -98,7 +104,7 @@ class AssignableChannel {
 /// telemetry (last_seen/battery/app_version) and the channel-switch
 /// display setting remain.
 class FrameService {
-  static const _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, video_sound, pairing_code, '
+  static const _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, video_sound, avatar_path, pairing_code, '
       'pairing_code_expires_at, current_app_version, last_seen_at, battery_level, is_charging, device_model';
 
   Future<List<SmileFrame>> listFrames(String spaceId) async {
