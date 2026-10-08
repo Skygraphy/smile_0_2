@@ -107,6 +107,9 @@ class ChannelPickerService {
     final rows = await supabase
         .from('channel_members')
         .select('channel_id, channels(name, spaces!channels_space_id_fkey(name))')
+        // RLS also shows the OTHER members of my albums (for member lists)
+        // -- without this, an album with 3 members was listed 3 times.
+        .eq('user_id', supabase.auth.currentUser!.id)
         .order('created_at');
     return (rows as List).cast<Map<String, dynamic>>().map((row) {
       final channel = row['channels'] as Map<String, dynamic>;
