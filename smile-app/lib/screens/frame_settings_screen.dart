@@ -331,11 +331,10 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                           // Three dots instead of a direct X (decided 2026-10-08):
                           // removing is behind a menu + confirmation, like
                           // people and shares on the album page.
-                          trailing: IconButton(
-                            icon: Icon(SmileIcons.more, color: scheme.onSurfaceVariant),
-                            tooltip: t.removeFromFrame,
-                            onPressed: () => _showAlbumActions(assignment),
-                          ),
+                          // A plain icon, not an IconButton: the whole row opens
+                          // the menu, and IconButton's padding pushed the dots
+                          // away from the right edge.
+                          trailing: Icon(SmileIcons.more, color: scheme.onSurfaceVariant),
                           onTap: () => _showAlbumActions(assignment),
                         ),
                       SmileActionRow(icon: SmileIcons.add, label: t.addAlbumToFrame, onTap: _addAlbum),
