@@ -595,5 +595,8 @@
     }
   },
   "choosePhoto": "Foto wählen",
-  "noPhotosInAlbum": "In diesem Album gibt es noch keine Fotos."
+  "noPhotosInAlbum": "In diesem Album gibt es noch keine Fotos.",
+  "captureInAlbum": "Foto aufnehmen – gedrückt halten für Video",
+  "captureSend": "Senden",
+  "captureRetake": "Nochmal"
 }

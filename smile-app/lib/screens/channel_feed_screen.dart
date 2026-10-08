@@ -18,6 +18,7 @@ import '../services/channel_service.dart';
 import '../services/foreground_notifications.dart';
 import '../services/object_picture_service.dart';
 import 'album_info_screen.dart';
+import 'capture_preview_screen.dart';
 import 'video_player_screen.dart';
 
 /// A picked photo shown in the grid immediately, before the network upload
@@ -360,7 +361,34 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     // videos of any length; 2026-10-08: multiple selection, mixed).
     final picked = await ImagePicker().pickMultipleMedia(imageQuality: 90);
     if (picked.isEmpty || !mounted) return;
+    await _uploadFiles(picked);
+  }
 
+  /// The album's own camera (decided 2026-10-08, WhatsApp-style): tap takes
+  /// a photo, long-press records a video; a preview offers "Senden" or
+  /// "Nochmal" before anything is uploaded.
+  Future<void> _captureAndUpload({required bool video}) async {
+    final picker = ImagePicker();
+    while (true) {
+      final captured = video
+          ? await picker.pickVideo(source: ImageSource.camera)
+          : await picker.pickImage(source: ImageSource.camera, imageQuality: 90);
+      if (captured == null || !mounted) return;
+      final decision = await Navigator.of(context).push<CaptureDecision>(
+        MaterialPageRoute(
+          builder: (_) => CapturePreviewScreen(file: File(captured.path), isVideo: video, albumName: _channelName),
+        ),
+      );
+      if (!mounted) return;
+      if (decision == CaptureDecision.send) {
+        await _uploadFiles([captured]);
+        return;
+      }
+      if (decision != CaptureDecision.retake) return;
+    }
+  }
+
+  Future<void> _uploadFiles(List<XFile> picked) async {
     setState(() {
       _isUploading = true;
       _errorMessage = null;
@@ -787,16 +815,38 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       floatingActionButton: _selectionMode || _showingHidden || _myStatus == null
           ? null
           : _myStatus!.isMember
-              ? FloatingActionButton(
-                  tooltip: t.addMedia,
-                  onPressed: _isUploading ? null : _pickAndUpload,
-                  child: _isUploading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(SmileIcons.add),
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // Camera above "+" (decided 2026-10-08): tap = photo,
+                    // long-press = video. "+" stays the main button --
+                    // most photos for a Frame already exist.
+                    GestureDetector(
+                      onLongPress: _isUploading ? null : () => _captureAndUpload(video: true),
+                      child: FloatingActionButton.small(
+                        heroTag: "capture",
+                        tooltip: t.captureInAlbum,
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                        foregroundColor: Theme.of(context).colorScheme.onSurface,
+                        onPressed: _isUploading ? null : () => _captureAndUpload(video: false),
+                        child: const Icon(SmileIcons.camera),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    FloatingActionButton(
+                      heroTag: "add",
+                      tooltip: t.addMedia,
+                      onPressed: _isUploading ? null : _pickAndUpload,
+                      child: _isUploading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(SmileIcons.add),
+                    ),
+                  ],
                 )
               : FloatingActionButton.extended(
                   // Only a Space-shared viewer (never a plain member, that
@@ -887,7 +937,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                               0,
                               8,
                               0,
-                              _selectionMode || _showingHidden ? 8 : 88,
+                              _selectionMode || _showingHidden ? 8 : (_myStatus?.isMember ?? false) ? 144 : 88,
                             ),
                             children: _buildFeedRows(pendingCount, visibleItems),
                           ),

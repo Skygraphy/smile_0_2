@@ -1527,6 +1527,24 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'In diesem Album gibt es noch keine Fotos.'**
   String get noPhotosInAlbum;
+
+  /// No description provided for @captureInAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto aufnehmen – gedrückt halten für Video'**
+  String get captureInAlbum;
+
+  /// No description provided for @captureSend.
+  ///
+  /// In de, this message translates to:
+  /// **'Senden'**
+  String get captureSend;
+
+  /// No description provided for @captureRetake.
+  ///
+  /// In de, this message translates to:
+  /// **'Nochmal'**
+  String get captureRetake;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

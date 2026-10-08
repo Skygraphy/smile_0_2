@@ -894,4 +894,13 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get noPhotosInAlbum => 'In diesem Album gibt es noch keine Fotos.';
+
+  @override
+  String get captureInAlbum => 'Foto aufnehmen – gedrückt halten für Video';
+
+  @override
+  String get captureSend => 'Senden';
+
+  @override
+  String get captureRetake => 'Nochmal';
 }

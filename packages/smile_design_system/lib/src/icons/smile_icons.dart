@@ -67,6 +67,8 @@ class SmileIcons {
   static const IconData handOver = IconData(0xe0a0, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData inviteCode = IconData(0xe3e6, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData camera = IconData(0xe10e, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// Phosphor `paper-plane-right`: send a photo just taken.
+  static const IconData send = IconData(0xe396, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   /// Pick an existing picture (avatar from the gallery) -- deliberately
   /// not the album icon, which means "a Smile album".
   static const IconData picture = IconData(0xe2ca, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
