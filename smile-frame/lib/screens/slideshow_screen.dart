@@ -90,6 +90,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     // A data push nudges the already-running sync loop immediately,
     // bypassing the 2-minute foreground poll interval.
     PushSyncSignal.onSyncRequested = () => unawaited(_sync());
+    widget.syncService.onEarlyResult = _applyEarly;
     _init();
   }
 
@@ -121,6 +122,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     PushSyncSignal.onSyncRequested = null;
+    widget.syncService.onEarlyResult = null;
     _syncTimer?.cancel();
     _advanceTimer?.cancel();
     _offlineRetryTimer?.cancel();
@@ -150,6 +152,17 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       widget.onUnpaired?.call();
       return;
     }
+    _apply(result);
+    unawaited(widget.heartbeatService.submitHeartbeat(fcmToken: _fcmToken));
+  }
+
+  /// The server's first answer, before the rest of the sync (SyncService.
+  /// onEarlyResult): settings and album switches take effect right away.
+  void _applyEarly(SyncResult early) {
+    if (mounted) _apply(early);
+  }
+
+  void _apply(SyncResult result) {
     setState(() {
       _deactivated = result.deactivated;
       _offlineExpired = result.offlineExpired;
@@ -173,7 +186,6 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       }
     });
     _restartAdvanceTimerIfNeeded();
-    unawaited(widget.heartbeatService.submitHeartbeat(fcmToken: _fcmToken));
   }
 
   bool get _showingVideo => _entries.isNotEmpty && _entries[_currentIndex % _entries.length].isVideo;

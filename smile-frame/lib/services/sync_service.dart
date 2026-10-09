@@ -217,6 +217,13 @@ class SyncService {
 
   Future<SyncResult>? _running;
 
+  /// Called as soon as the server's first answer is in -- settings, the
+  /// shown album and its already cached photos -- before the other albums
+  /// are fetched and anything is downloaded. A change from the app (sound,
+  /// album switch) then shows within 2-3 seconds instead of after the whole
+  /// sync (2026-10-09). The final result follows from sync() as usual.
+  void Function(SyncResult early)? onEarlyResult;
+
   /// One sync at a time: downloading a long video can take minutes, and a
   /// timer tick or push arriving meanwhile must not start a second run
   /// writing the same files -- it simply gets the running one's result.
@@ -252,6 +259,13 @@ class SyncService {
     final data = page.firstPageData!;
     final currentChannelId = data['channel_id'] as String?;
     final assignedChannels = _assignedFrom(data);
+    onEarlyResult?.call(SyncResult(
+      channelId: currentChannelId,
+      entries: local.where((e) => e.channelId == currentChannelId).toList(),
+      settings: _settingsFrom(data),
+      assignedChannels: assignedChannels,
+      spaceName: data['space_name'] as String?,
+    ));
 
     // Every other album of this Frame too, so it can switch between them
     // offline (2026-10-09). An album that couldn't be fetched this round

@@ -155,12 +155,16 @@ void main() {
           'space_name': 'Bergoma',
         };
     String? savedMeta;
+    String? earlyChannel;
+    bool? fetchedBeforeEarly;
+    service.onEarlyResult = (early) => earlyChannel = early.channelId;
     when(() => credentialsStore.saveLastSyncMeta(any())).thenAnswer((inv) async => savedMeta = inv.positionalArguments[0] as String);
     when(() => credentialsStore.lastSyncMeta).thenAnswer((_) async => savedMeta);
     when(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
         .thenAnswer((invocation) async {
       final body = jsonDecode(invocation.namedArguments[#body] as String) as Map<String, dynamic>;
       final fetched = body['fetch_channel_id'] as String?;
+      if (fetched != null) fetchedBeforeEarly ??= earlyChannel == null;
       return http.Response(
         jsonEncode(fetched == 'chan-b' ? albumResponse('chan-b', 'item-b') : albumResponse('chan-a', 'item-a')),
         200,
@@ -169,6 +173,10 @@ void main() {
 
     final online = await service.sync();
     expect(online.channelId, 'chan-a');
+    // Settings and the shown album arrive before the other albums are fetched.
+    expect(earlyChannel, 'chan-a');
+    expect(fetchedBeforeEarly, isFalse);
+    service.onEarlyResult = null;
     expect(online.entries.map((e) => e.mediaItemId), ['item-a']);
     expect((await cacheStore.readIndex()).map((e) => e.mediaItemId).toSet(), {'item-a', 'item-b'});
 
