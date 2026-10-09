@@ -185,7 +185,13 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     if (_showingVideo) return;
     if (_settings?.displayMode != 'manual' && _entries.length > 1) {
       final seconds = _settings?.slideshowIntervalSeconds ?? 8;
-      _advanceTimer = Timer.periodic(Duration(seconds: seconds), (_) => _advance(1));
+      // Never cut a video short (2026-10-09): a video reached any other way
+      // than by this timer -- from the overview, after an album switch --
+      // used to be skipped after at most one interval. The video moves on
+      // by itself when it ends.
+      _advanceTimer = Timer.periodic(Duration(seconds: seconds), (_) {
+        if (!_showingVideo) _advance(1);
+      });
     }
   }
 
@@ -256,13 +262,18 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     await _sync();
   }
 
-  void _toggleGrid() => setState(() => _showGrid = !_showGrid);
+  void _toggleGrid() {
+    setState(() => _showGrid = !_showGrid);
+    _restartAdvanceTimerIfNeeded();
+  }
 
   void _openInSlideshow(int index) {
     setState(() {
       _currentIndex = index;
       _showGrid = false;
+      _slideNumber++;
     });
+    _restartAdvanceTimerIfNeeded();
   }
 
   @override
