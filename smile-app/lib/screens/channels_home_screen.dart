@@ -8,7 +8,6 @@ import '../services/sync_bus.dart';
 import '../widgets/local_display.dart';
 import '../widgets/album_covers.dart';
 import '../widgets/top_bar_actions.dart';
-import '../widgets/offline_hint.dart';
 import '../services/offline.dart';
 import 'channel_feed_screen.dart';
 import 'news_screen.dart';
@@ -134,12 +133,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
         title: const SmileWordmark(fontSize: 20),
         actions: smileTopBarActions(onPhotoSent: _load),
       ),
-      body: Column(
-        children: [
-          const OfflineHint(),
-          Expanded(child: _body(channels)),
-        ],
-      ),
+      body: _body(channels),
     );
   }
 

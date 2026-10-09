@@ -22,7 +22,6 @@ import 'capture_preview_screen.dart';
 import '../widgets/capture_choice.dart';
 import '../widgets/album_covers.dart';
 import '../widgets/local_display.dart';
-import '../widgets/offline_hint.dart';
 import '../services/offline.dart';
 import '../services/local_changes.dart';
 import '../services/channel_picker_service.dart';
@@ -903,7 +902,6 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                const OfflineHint(),
                 if (_statusMessage != null)
                   Padding(
                     padding: const EdgeInsets.all(8),

@@ -20,6 +20,8 @@ import 'services/foreground_notifications.dart';
 import 'services/push_service.dart';
 import 'services/sync_bus.dart';
 import 'services/offline.dart';
+import 'services/offline_http_client.dart';
+import 'widgets/offline_hint.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 final supabase = Supabase.instance.client;
@@ -37,6 +39,14 @@ Future<void> main() async {
   await Supabase.initialize(
     url: SupabaseConfig.url,
     publishableKey: SupabaseConfig.publishableKey,
+    // Every screen also works offline with what it showed last (2026-10-09).
+    httpClient: OfflineCachingClient(currentUserId: () {
+      try {
+        return Supabase.instance.client.auth.currentUser?.id;
+      } catch (_) {
+        return null;
+      }
+    }),
   );
   await Firebase.initializeApp();
   // Monitoring stage 2 (2026-10-07): crashes and uncaught errors reach
@@ -170,6 +180,8 @@ class SmileApp extends StatelessWidget {
       locale: const Locale('de'),
       localizationsDelegates: SmileTexts.localizationsDelegates,
       supportedLocales: SmileTexts.supportedLocales,
+      // Offline: one quiet hint on every screen (2026-10-09).
+      builder: (context, child) => OfflineHintOverlay(child: child ?? const SizedBox.shrink()),
       home: AuthGate(),
     );
   }
