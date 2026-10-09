@@ -226,9 +226,27 @@ class SyncService {
 
   /// One sync at a time: downloading a long video can take minutes, and a
   /// timer tick or push arriving meanwhile must not start a second run
-  /// writing the same files -- it simply gets the running one's result.
+  /// writing the same files. But that run asked the server before the new
+  /// change -- so it runs once more right after (several requests in the
+  /// meantime count as one), and every caller gets the latest result.
+  /// Before 2026-10-09 such a change (e.g. sound off) was only picked up
+  /// by the next sync, up to 2 minutes later.
   Future<SyncResult> sync({String? fcmToken}) {
-    return _running ??= _sync(fcmToken: fcmToken).whenComplete(() => _running = null);
+    if (_running != null) {
+      _syncAgain = true;
+      return _running!;
+    }
+    return _running = _syncUntilCurrent(fcmToken).whenComplete(() => _running = null);
+  }
+
+  bool _syncAgain = false;
+
+  Future<SyncResult> _syncUntilCurrent(String? fcmToken) async {
+    while (true) {
+      _syncAgain = false;
+      final result = await _sync(fcmToken: fcmToken);
+      if (!_syncAgain) return result;
+    }
   }
 
   Future<SyncResult> _sync({String? fcmToken}) async {
@@ -272,17 +290,19 @@ class SyncService {
     // keeps its cached photos until the next one.
     final remoteItems = [...page.items];
     final fetchedChannels = <String>{?currentChannelId};
-    for (final album in assignedChannels) {
-      if (album.channelId == currentChannelId) continue;
-      final other = await _fetchAllPages(
-        accessToken: accessToken,
-        fcmToken: null,
-        selectChannelId: null,
-        fetchChannelId: album.channelId,
-      );
+    // All at once, not one after the other: a sync used to take several
+    // seconds this way, and a change from the app waited behind it.
+    final others = assignedChannels.where((album) => album.channelId != currentChannelId).toList();
+    final otherPages = await Future.wait(others.map((album) => _fetchAllPages(
+          accessToken: accessToken,
+          fcmToken: null,
+          selectChannelId: null,
+          fetchChannelId: album.channelId,
+        )));
+    for (final (index, other) in otherPages.indexed) {
       if (other.failed || other.firstPageData == null) continue;
       remoteItems.addAll(other.items);
-      fetchedChannels.add(album.channelId);
+      fetchedChannels.add(others[index].channelId);
     }
     final assignedIds = assignedChannels.map((c) => c.channelId).toSet();
 
@@ -297,6 +317,9 @@ class SyncService {
 
     final newEntries = <CachedMediaEntry>[];
     for (final remote in toDownload) {
+      // A newer change is waiting (sync() was called again): see to it
+      // first; what's left here is downloaded next round.
+      if (_syncAgain) break;
       if (remote.displayUrl == null) continue;
       try {
         // Streamed straight into the encrypted cache -- an hour-long video

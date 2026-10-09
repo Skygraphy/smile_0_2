@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -189,6 +190,44 @@ void main() {
     expect(offline.channelId, 'chan-b');
     expect(offline.entries.map((e) => e.mediaItemId), ['item-b']);
     expect(offline.assignedChannels, hasLength(2));
+  });
+
+  // 2026-10-09: sound switched off while a sync was running was lost.
+  test('a sync requested while one runs runs again afterwards and returns the newer state', () async {
+    var serverSound = true;
+    final firstCallStarted = Completer<void>();
+    final releaseFirstCall = Completer<void>();
+    var calls = 0;
+    when(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
+        .thenAnswer((_) async {
+      calls++;
+      final sound = serverSound; // what the server says at the moment it is asked
+      if (calls == 1) {
+        firstCallStarted.complete();
+        await releaseFirstCall.future;
+      }
+      return http.Response(
+        jsonEncode({
+          'channel_id': 'chan-1',
+          'items': <Map<String, dynamic>>[],
+          'next_cursor': null,
+          'settings': {'video_sound': sound},
+          'assigned_channels': [],
+          'space_name': 'Bergoma',
+        }),
+        200,
+      );
+    });
+
+    final first = service.sync();
+    await firstCallStarted.future;
+    serverSound = false; // switched off in the app while the sync runs
+    final second = service.sync();
+    releaseFirstCall.complete();
+
+    expect((await first).settings?.videoSound, isFalse);
+    expect((await second).settings?.videoSound, isFalse);
+    expect(calls, 2);
   });
 
   // Architecture review 2026-09-29, weakness 7.
