@@ -8,6 +8,8 @@ import '../services/sync_bus.dart';
 import '../widgets/local_display.dart';
 import '../widgets/album_covers.dart';
 import '../widgets/top_bar_actions.dart';
+import '../widgets/offline_hint.dart';
+import '../services/offline.dart';
 import 'channel_feed_screen.dart';
 import 'news_screen.dart';
 import 'space_info_screen.dart';
@@ -39,6 +41,10 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   @override
   void initState() {
     super.initState();
+    // The list as last loaded shows at once (also offline), then refreshes.
+    widget.channelPickerService.cachedMyChannels().then((cached) {
+      if (cached != null && mounted && _channels == null) setState(() => _channels = cached);
+    });
     _load();
   }
 
@@ -55,9 +61,11 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
       });
     } catch (e) {
       if (!mounted) return;
+      final offline = Offline.isConnectionError(e);
       setState(() {
         _channels ??= const [];
-        _errorMessage = SmileTexts.of(context).albumsLoadError('$e');
+        // Offline: the hint above says it; the list as last loaded stays.
+        _errorMessage = offline ? null : SmileTexts.of(context).albumsLoadError('$e');
       });
     }
   }
@@ -126,7 +134,17 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
         title: const SmileWordmark(fontSize: 20),
         actions: smileTopBarActions(onPhotoSent: _load),
       ),
-      body: channels == null
+      body: Column(
+        children: [
+          const OfflineHint(),
+          Expanded(child: _body(channels)),
+        ],
+      ),
+    );
+  }
+
+  Widget _body(List<ChannelWithActivity>? channels) {
+    return channels == null
           ? const Center(child: CircularProgressIndicator())
           : channels.isEmpty
               ? _FirstSteps(errorMessage: _errorMessage, onInvited: _openNews, onSetUp: _setUpSpace)
@@ -171,8 +189,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
                         ),
                     ],
                   ),
-                ),
-    );
+                );
   }
 }
 

@@ -11,6 +11,9 @@ class _NoAlbums implements ChannelPickerService {
   Future<List<ChannelWithActivity>> listMyChannelsWithActivity() async => const [];
 
   @override
+  Future<List<ChannelWithActivity>?> cachedMyChannels() async => null;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

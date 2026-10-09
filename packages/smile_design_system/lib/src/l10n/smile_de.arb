@@ -326,6 +326,7 @@
   "removeFromFrame": "Vom Frame entfernen",
   "openAlbum": "Album öffnen",
   "openFrame": "Frame öffnen",
+  "offlineHint": "Offline – zuletzt geladener Stand",
   "changeNotSaved": "Änderung nicht gespeichert: {reason}",
   "@changeNotSaved": {
     "placeholders": {

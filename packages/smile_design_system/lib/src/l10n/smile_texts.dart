@@ -1018,6 +1018,12 @@ abstract class SmileTexts {
   /// **'Frame öffnen'**
   String get openFrame;
 
+  /// No description provided for @offlineHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Offline – zuletzt geladener Stand'**
+  String get offlineHint;
+
   /// No description provided for @changeNotSaved.
   ///
   /// In de, this message translates to:

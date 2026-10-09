@@ -566,6 +566,9 @@ class SmileTextsDe extends SmileTexts {
   String get openFrame => 'Frame öffnen';
 
   @override
+  String get offlineHint => 'Offline – zuletzt geladener Stand';
+
+  @override
   String changeNotSaved(String reason) {
     return 'Änderung nicht gespeichert: $reason';
   }

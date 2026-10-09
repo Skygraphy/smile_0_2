@@ -19,6 +19,7 @@ import 'services/profile_service.dart';
 import 'services/foreground_notifications.dart';
 import 'services/push_service.dart';
 import 'services/sync_bus.dart';
+import 'services/offline.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 final supabase = Supabase.instance.client;
@@ -238,14 +239,27 @@ class _ProfileGateState extends State<_ProfileGate> {
       _isLoading = true;
       _errorMessage = null;
     });
+    final userId = supabase.auth.currentUser?.id;
+    final okKey = 'profile_ok_$userId';
     try {
       final profile = await _profileService.getMyProfile();
+      if (profile != null) unawaited(Offline.write(okKey, 'yes'));
       if (!mounted) return;
       setState(() {
         _hasProfile = profile != null;
         _isLoading = false;
       });
     } catch (e) {
+      // Offline with a profile set up before: just start -- the albums and
+      // photos last loaded are on the phone (2026-10-09).
+      if (Offline.noteFailure(e) && await Offline.read(okKey) == 'yes') {
+        if (!mounted) return;
+        setState(() {
+          _hasProfile = true;
+          _isLoading = false;
+        });
+        return;
+      }
       if (!mounted) return;
       setState(() {
         _isLoading = false;

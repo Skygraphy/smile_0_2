@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
+
 import '../main.dart';
 import 'edge_functions.dart';
+import 'offline.dart';
 
 /// A Space linked to a channel, either as its home Space or via a
 /// view-only share (channel_shares).
@@ -125,13 +129,40 @@ class ChannelPickerService {
   /// Every channel the caller can *see* (including view-only shares),
   /// sorted by most recent photo activity -- powers channels_home_screen.dart's
   /// WhatsApp-style flat "who did I last exchange photos with" landing list.
+  ///
+  /// Kept on the phone after every successful load: offline (2026-10-09)
+  /// the last list is returned instead of an error.
   Future<List<ChannelWithActivity>> listMyChannelsWithActivity() async {
-    final response = await invokeEdge('list-my-channels');
-    final data = response.data as Map<String, dynamic>;
+    final Map<String, dynamic> data;
+    try {
+      final response = await invokeEdge('list-my-channels');
+      data = response.data as Map<String, dynamic>;
+      Offline.reachedServer();
+    } catch (e) {
+      if (Offline.noteFailure(e)) {
+        final cached = await cachedMyChannels();
+        if (cached != null) return cached;
+      }
+      rethrow;
+    }
     if (data['error'] != null) throw ChannelPickerException(data['error'] as String);
     final channels = (data['channels'] as List).cast<Map<String, dynamic>>();
+    unawaited(Offline.write(_cacheKey(), jsonEncode(channels)));
     return channels.map(ChannelWithActivity.fromJson).toList();
   }
+
+  /// The list as last loaded (null: never loaded on this phone).
+  Future<List<ChannelWithActivity>?> cachedMyChannels() async {
+    final raw = await Offline.read(_cacheKey());
+    if (raw == null) return null;
+    try {
+      return (jsonDecode(raw) as List).cast<Map<String, dynamic>>().map(ChannelWithActivity.fromJson).toList();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _cacheKey() => 'albums_cache_${supabase.auth.currentUser?.id}';
 }
 
 class ChannelPickerException implements Exception {

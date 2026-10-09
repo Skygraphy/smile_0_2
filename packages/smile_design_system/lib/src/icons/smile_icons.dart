@@ -69,6 +69,8 @@ class SmileIcons {
   static const IconData camera = IconData(0xe10e, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   /// Phosphor `video-camera`: record a video in an album.
   static const IconData recordVideo = IconData(0xe4da, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// Phosphor `wifi-slash`: no connection (the offline hint).
+  static const IconData offline = IconData(0xe4f2, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   /// Phosphor `paper-plane-right`: send a photo just taken.
   static const IconData send = IconData(0xe396, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   /// Pick an existing picture (avatar from the gallery) -- deliberately
