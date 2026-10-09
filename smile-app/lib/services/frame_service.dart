@@ -9,6 +9,7 @@ class SmileFrame {
     required this.channelSwitchEnabled,
     this.videoSound = true,
     this.avatarPath,
+    this.currentChannelId,
     this.pairingCode,
     this.pairingCodeExpiresAt,
     this.currentAppVersion,
@@ -28,6 +29,11 @@ class SmileFrame {
 
   /// Own picture in the avatars bucket (migrations/0066), else initials.
   final String? avatarPath;
+
+  /// The album it shows right now (migrations/0069) -- set from the app
+  /// ("Jetzt zeigen") or by a switch on the Frame. Null until the Frame's
+  /// first sync: then it shows its first album.
+  final String? currentChannelId;
   final String? pairingCode;
   final DateTime? pairingCodeExpiresAt;
   final String? currentAppVersion;
@@ -53,6 +59,7 @@ class SmileFrame {
         channelSwitchEnabled: channelSwitchEnabled ?? this.channelSwitchEnabled,
         videoSound: videoSound ?? this.videoSound,
         avatarPath: avatarPath,
+        currentChannelId: currentChannelId,
         pairingCode: pairingCode,
         pairingCodeExpiresAt: pairingCodeExpiresAt,
         currentAppVersion: currentAppVersion,
@@ -70,6 +77,7 @@ class SmileFrame {
         channelSwitchEnabled: json['channel_switch_enabled'] as bool? ?? false,
         videoSound: json['video_sound'] as bool? ?? true,
         avatarPath: json['avatar_path'] as String?,
+        currentChannelId: json['current_channel_id'] as String?,
         pairingCode: json['pairing_code'] as String?,
         pairingCodeExpiresAt:
             json['pairing_code_expires_at'] != null ? DateTime.parse(json['pairing_code_expires_at'] as String) : null,
@@ -104,7 +112,7 @@ class AssignableChannel {
 /// telemetry (last_seen/battery/app_version) and the channel-switch
 /// display setting remain.
 class FrameService {
-  static const _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, video_sound, avatar_path, pairing_code, '
+  static const _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, video_sound, avatar_path, current_channel_id, pairing_code, '
       'pairing_code_expires_at, current_app_version, last_seen_at, battery_level, is_charging, device_model';
 
   Future<List<SmileFrame>> listFrames(String spaceId) async {
@@ -162,6 +170,12 @@ class FrameService {
     final response = await invokeEdge('delete-frame', body: {'frame_id': frameId});
     final data = response.data as Map<String, dynamic>?;
     if (data?['status'] != 'deleted') throw FrameServiceException(data?['error'] as String? ?? 'unknown_error');
+  }
+
+  /// "Jetzt zeigen": the Frame switches to this album (it is woken by the
+  /// frames change and syncs it).
+  Future<void> showChannelNow({required String frameId, required String channelId}) async {
+    await supabase.from('frames').update({'current_channel_id': channelId}).eq('id', frameId);
   }
 
   Future<void> setVideoSound({required String frameId, required bool enabled}) async {

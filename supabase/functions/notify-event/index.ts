@@ -389,6 +389,16 @@ async function frameChanged(supabaseAdmin: Admin, p: Record<string, any>) {
       body: `${actor ?? "Jemand"}: Am Frame „${p.new_name}“ ist der Album-Wechsel jetzt ${p.channel_switch ? "erlaubt" : "aus"}.`,
     });
   }
+  if (p.current_channel_id) {
+    // "Jetzt zeigen" in the app (migrations/0069).
+    const { data: channel } = await supabaseAdmin.from("channels").select("name").eq("id", p.current_channel_id).maybeSingle();
+    if (channel) {
+      messages.push({
+        title: p.new_name as string,
+        body: `${actor ?? "Jemand"} hat „${p.new_name}“ auf das Album „${channel.name}“ gestellt.`,
+      });
+    }
+  }
   for (const m of messages) await pushNotificationToUsers(supabaseAdmin, recipients, m, data);
 }
 

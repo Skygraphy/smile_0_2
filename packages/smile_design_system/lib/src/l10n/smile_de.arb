@@ -326,6 +326,23 @@
   "removeFromFrame": "Vom Frame entfernen",
   "openAlbum": "Album öffnen",
   "openFrame": "Frame öffnen",
+  "showingNow": "Läuft gerade",
+  "showNow": "Jetzt zeigen",
+  "showHereNow": "Hier jetzt zeigen",
+  "frameShowsThisAlbum": "zeigt gerade dieses Album",
+  "frameShowsAlbum": "zeigt gerade „{album}“",
+  "@frameShowsAlbum": {
+    "placeholders": {
+      "album": {"type": "String"}
+    }
+  },
+  "frameSwitched": "„{frame}“ zeigt jetzt „{album}“.",
+  "@frameSwitched": {
+    "placeholders": {
+      "frame": {"type": "String"},
+      "album": {"type": "String"}
+    }
+  },
   "removeFromFrameTitle": "„{album}“ vom Frame entfernen?",
   "@removeFromFrameTitle": {
     "placeholders": {

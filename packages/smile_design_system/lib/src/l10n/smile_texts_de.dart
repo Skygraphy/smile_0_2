@@ -566,6 +566,28 @@ class SmileTextsDe extends SmileTexts {
   String get openFrame => 'Frame öffnen';
 
   @override
+  String get showingNow => 'Läuft gerade';
+
+  @override
+  String get showNow => 'Jetzt zeigen';
+
+  @override
+  String get showHereNow => 'Hier jetzt zeigen';
+
+  @override
+  String get frameShowsThisAlbum => 'zeigt gerade dieses Album';
+
+  @override
+  String frameShowsAlbum(String album) {
+    return 'zeigt gerade „$album“';
+  }
+
+  @override
+  String frameSwitched(String frame, String album) {
+    return '„$frame“ zeigt jetzt „$album“.';
+  }
+
+  @override
   String removeFromFrameTitle(String album) {
     return '„$album“ vom Frame entfernen?';
   }

@@ -51,7 +51,7 @@ class AlbumInfoScreen extends StatefulWidget {
 class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   ChannelRoster? _roster;
   MyInvitesInbox? _inbox;
-  List<({String frameId, String frameName, String? avatarPath})> _frames = const [];
+  List<FrameShowing> _frames = const [];
   Map<String, ChannelWithActivity> _covers = const {};
   late String _name = widget.channelName;
   String? _errorMessage;
@@ -87,7 +87,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       setState(() {
         _roster = roster;
         _inbox = roster.callerIsSco ? results.first as MyInvitesInbox : null;
-        _frames = results[results.length - 2] as List<({String frameId, String frameName, String? avatarPath})>;
+        _frames = results[results.length - 2] as List<FrameShowing>;
         if (row != null) _name = row['name'] as String;
         _errorMessage = null;
       });
@@ -110,7 +110,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     }
   }
 
-  Future<void> _showFrameActions(({String frameId, String frameName, String? avatarPath}) frame) async {
+  Future<void> _showFrameActions(FrameShowing frame) async {
     final t = SmileTexts.of(context);
     await showModalBottomSheet<void>(
       context: context,
@@ -123,6 +123,15 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
               leading: SmileAlbumCover(name: frame.frameName, imageUrl: avatarPathToUrl(frame.avatarPath), size: 36),
               title: Text(frame.frameName),
             ),
+            if (frame.currentChannelId != widget.channelId)
+              SmileActionRow(
+                icon: SmileIcons.play,
+                label: t.showHereNow,
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _showHereNow(frame);
+                },
+              ),
             SmileActionRow(
               icon: SmileIcons.frame,
               label: t.openFrame,
@@ -144,6 +153,19 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         ),
       ),
     );
+  }
+
+  /// "Hier jetzt zeigen": the Frame switches to this album (migrations/0069).
+  Future<void> _showHereNow(FrameShowing frame) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final t = SmileTexts.of(context);
+    try {
+      await FrameService().showChannelNow(frameId: frame.frameId, channelId: widget.channelId);
+      messenger.showSnackBar(SnackBar(content: Text(t.frameSwitched(frame.frameName, _name))));
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+    }
+    if (mounted) await _load();
   }
 
   Future<void> _openFrame(String frameId) async {
@@ -524,6 +546,13 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                 SmileObjectTile(
                   leading: SmileAlbumCover(name: frame.frameName, imageUrl: avatarPathToUrl(frame.avatarPath), size: 40),
                   title: frame.frameName,
+                  subtitle: frame.currentChannelId == widget.channelId
+                      ? t.frameShowsThisAlbum
+                      : frame.currentAlbumName == null
+                          ? null
+                          : t.frameShowsAlbum(frame.currentAlbumName!),
+                  subtitleIcon: frame.currentChannelId == widget.channelId ? SmileIcons.play : null,
+                  subtitleHighlight: frame.currentChannelId == widget.channelId,
                   // Same pattern as the albums on the Frame page (2026-10-08).
                   trailing: Icon(SmileIcons.more, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   onTap: () => _showFrameActions(frame),

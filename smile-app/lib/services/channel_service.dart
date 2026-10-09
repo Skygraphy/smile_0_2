@@ -6,6 +6,15 @@ import '../main.dart';
 /// RLS (`is_space_owner(space_id)`) is all the authorization this needs; no
 /// RPC/Edge Function required. `on_channel_created` still auto-joins the
 /// creator (the SCO) into `channel_members` so they can post immediately.
+/// A Frame an album is on (album page, "Läuft auf").
+typedef FrameShowing = ({
+  String frameId,
+  String frameName,
+  String? avatarPath,
+  String? currentChannelId,
+  String? currentAlbumName,
+});
+
 class ChannelService {
   Future<List<Map<String, dynamic>>> listChannels(String spaceId) async {
     final rows = await supabase.from('channels').select('id, name').eq('space_id', spaceId).order('created_at');
@@ -23,10 +32,12 @@ class ChannelService {
 
   /// Frames showing this album -- RLS only returns Frames of Spaces the
   /// caller manages, so other households' Frames never show up here.
-  Future<List<({String frameId, String frameName, String? avatarPath})>> listFramesShowing(String channelId) async {
+  /// The Frames this album is on, each with the album it shows right now
+  /// ([currentAlbumName] null: not known yet, see migrations/0069).
+  Future<List<FrameShowing>> listFramesShowing(String channelId) async {
     final rows = await supabase
         .from('frame_channels')
-        .select('frame_id, frames(name, lifecycle_state, avatar_path)')
+        .select('frame_id, frames(name, lifecycle_state, avatar_path, current_channel_id, current:channels!frames_current_channel_id_fkey(name))')
         .eq('channel_id', channelId);
     return (rows as List)
         .cast<Map<String, dynamic>>()
@@ -35,6 +46,8 @@ class ChannelService {
               frameId: r['frame_id'] as String,
               frameName: (r['frames'] as Map)['name'] as String,
               avatarPath: (r['frames'] as Map)['avatar_path'] as String?,
+              currentChannelId: (r['frames'] as Map)['current_channel_id'] as String?,
+              currentAlbumName: ((r['frames'] as Map)['current'] as Map?)?['name'] as String?,
             ))
         .toList();
   }

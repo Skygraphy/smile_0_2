@@ -38,6 +38,7 @@ class SmileObjectTile extends StatelessWidget {
     this.subtitle,
     this.subtitleIcon,
     this.subtitleMaxLines = 1,
+    this.subtitleHighlight = false,
     this.trailing,
     this.onTap,
     this.onLongPress,
@@ -48,6 +49,10 @@ class SmileObjectTile extends StatelessWidget {
   final String? subtitle;
   final IconData? subtitleIcon;
   final int subtitleMaxLines;
+
+  /// Coral context line for a state that matters right now (e.g. the album
+  /// a Frame is showing: "Läuft gerade").
+  final bool subtitleHighlight;
   final Widget? trailing;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
@@ -56,6 +61,7 @@ class SmileObjectTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
+    final subColor = subtitleHighlight ? theme.colorScheme.primary : muted;
     final sub = subtitle;
     return InkWell(
       onTap: onTap,
@@ -83,7 +89,7 @@ class SmileObjectTile extends StatelessWidget {
                       child: Row(
                         children: [
                           if (subtitleIcon != null) ...[
-                            Icon(subtitleIcon, size: SmileIconSize.badge, color: muted),
+                            Icon(subtitleIcon, size: SmileIconSize.badge, color: subColor),
                             const SizedBox(width: SmileSpacing.xs),
                           ],
                           Expanded(
@@ -91,7 +97,11 @@ class SmileObjectTile extends StatelessWidget {
                               sub,
                               maxLines: subtitleMaxLines,
                               overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodySmall?.copyWith(color: muted, fontSize: 13),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: subColor,
+                                fontSize: 13,
+                                fontWeight: subtitleHighlight ? FontWeight.w600 : null,
+                              ),
                             ),
                           ),
                         ],

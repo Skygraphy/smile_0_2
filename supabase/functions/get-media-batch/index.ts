@@ -21,7 +21,12 @@ const MAX_LIMIT = 200;
 
 interface RequestBody {
   access_token: string;
+  // The album of the pages being continued (with cursor); on a first page
+  // only from Frame builds older than migrations/0069 (their local pick).
   channel_id?: string;
+  // A switch made on the Frame itself (Personal Mode) -- stored as the
+  // Frame's current album (0069).
+  select_channel_id?: string;
   cursor?: number;
   limit?: number;
   fcm_token?: string;
@@ -50,7 +55,7 @@ Deno.serve(async (req) => {
 
   const { data: frame } = await supabase
     .from("frames")
-    .select("id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, max_local_cache_gb, spaces(name, deleted_at)")
+    .select("id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, max_local_cache_gb, current_channel_id, spaces(name, deleted_at)")
     .eq("id", claims.frame_id)
     .maybeSingle();
   // Deleted (its Space was deleted) vs. merely revoked: a deleted Frame
@@ -105,8 +110,33 @@ Deno.serve(async (req) => {
     sort_order: r.sort_order,
   }));
 
-  let channelId = body.channel_id;
-  if (!channelId) channelId = assignedChannels[0]?.channel_id;
+  const isAssigned = (id: string | null | undefined) =>
+    !!id && assignedChannels.some((a: { channel_id: string }) => a.channel_id === id);
+
+  // Which album (migrations/0069): a switch on the Frame itself, else the
+  // album of the pages being continued, else the server's current album
+  // (set from the app or by an earlier switch), else an old Frame build's
+  // local pick, else the first album.
+  const firstPage = body.cursor === undefined || body.cursor === null;
+  let channelId: string | undefined;
+  if (body.select_channel_id) {
+    if (!isAssigned(body.select_channel_id)) return jsonResponse({ error: "frame_not_assigned_to_channel" }, 403);
+    channelId = body.select_channel_id;
+  } else if (!firstPage && body.channel_id) {
+    channelId = body.channel_id;
+  } else if (isAssigned(frame.current_channel_id)) {
+    channelId = frame.current_channel_id as string;
+  } else if (isAssigned(body.channel_id)) {
+    channelId = body.channel_id;
+  } else {
+    channelId = assignedChannels[0]?.channel_id;
+  }
+  // Remember what the Frame shows, so the app can show it too. Only on a
+  // first page: a continued page may still be the album from before a
+  // switch made meanwhile in the app.
+  if (firstPage && (channelId ?? null) !== (frame.current_channel_id ?? null)) {
+    await supabase.from("frames").update({ current_channel_id: channelId ?? null }).eq("id", claims.frame_id);
+  }
 
   if (!channelId) {
     return jsonResponse({

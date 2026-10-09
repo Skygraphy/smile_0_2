@@ -183,8 +183,30 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
     return '${two(local.day)}.${two(local.month)}.${local.year} ${two(local.hour)}:${two(local.minute)}';
   }
 
+  /// The album the Frame shows right now: the server's current album
+  /// (migrations/0069), else -- before its first sync -- the first one.
+  String? get _shownChannelId {
+    final assignments = _assignments ?? const <FrameChannelAssignment>[];
+    final current = _frame.currentChannelId;
+    if (current != null && assignments.any((a) => a.channelId == current)) return current;
+    return assignments.isEmpty ? null : assignments.first.channelId;
+  }
+
+  Future<void> _showNow(FrameChannelAssignment assignment) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final t = SmileTexts.of(context);
+    try {
+      await widget.frameService.showChannelNow(frameId: _frame.id, channelId: assignment.channelId);
+      messenger.showSnackBar(SnackBar(content: Text(t.frameSwitched(_frame.name, assignment.channelName))));
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+    }
+    await _load();
+  }
+
   Future<void> _showAlbumActions(FrameChannelAssignment assignment) async {
     final t = SmileTexts.of(context);
+    final isShown = assignment.channelId == _shownChannelId;
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -196,6 +218,15 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
               leading: albumCover(assignment.channelId, assignment.channelName, _covers, size: 36),
               title: Text(assignment.channelName),
             ),
+            if (!isShown)
+              SmileActionRow(
+                icon: SmileIcons.play,
+                label: t.showNow,
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _showNow(assignment);
+                },
+              ),
             SmileActionRow(
               icon: SmileIcons.album,
               label: t.openAlbum,
@@ -328,6 +359,9 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                         SmileObjectTile(
                           leading: albumCover(assignment.channelId, assignment.channelName, _covers, size: 40),
                           title: assignment.channelName,
+                          subtitle: assignment.channelId == _shownChannelId ? t.showingNow : null,
+                          subtitleIcon: SmileIcons.play,
+                          subtitleHighlight: true,
                           // Three dots instead of a direct X (decided 2026-10-08):
                           // removing is behind a menu + confirmation, like
                           // people and shares on the album page.

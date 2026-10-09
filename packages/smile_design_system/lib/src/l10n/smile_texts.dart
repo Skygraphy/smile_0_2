@@ -1018,6 +1018,42 @@ abstract class SmileTexts {
   /// **'Frame öffnen'**
   String get openFrame;
 
+  /// No description provided for @showingNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Läuft gerade'**
+  String get showingNow;
+
+  /// No description provided for @showNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Jetzt zeigen'**
+  String get showNow;
+
+  /// No description provided for @showHereNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Hier jetzt zeigen'**
+  String get showHereNow;
+
+  /// No description provided for @frameShowsThisAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'zeigt gerade dieses Album'**
+  String get frameShowsThisAlbum;
+
+  /// No description provided for @frameShowsAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'zeigt gerade „{album}“'**
+  String frameShowsAlbum(String album);
+
+  /// No description provided for @frameSwitched.
+  ///
+  /// In de, this message translates to:
+  /// **'„{frame}“ zeigt jetzt „{album}“.'**
+  String frameSwitched(String frame, String album);
+
   /// No description provided for @removeFromFrameTitle.
   ///
   /// In de, this message translates to:

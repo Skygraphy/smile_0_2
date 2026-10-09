@@ -129,11 +129,10 @@ class SyncService {
   final MediaCacheStore _cacheStore;
   final http.Client _httpClient;
 
-  /// Persists the Personal-Mode-picked channel (see frame_settings_screen.dart
-  /// on the Smile-App side for how a Frame gets assigned to more than one
-  /// channel, and the `channel_switch_enabled` setting gate). Caller still
-  /// has to trigger a `sync()` afterwards to actually pick up the new
-  /// channel's content.
+  /// A Personal-Mode pick on the Frame (gated by `channel_switch_enabled`).
+  /// Since migrations/0069 the server keeps the Frame's current album (the
+  /// app can switch it too), so the pick is only kept until the next sync
+  /// has reported it. Caller still has to trigger a `sync()` afterwards.
   Future<void> selectChannel(String channelId) => _credentialsStore.savePreferredChannelId(channelId);
 
   /// How long a Frame keeps showing its photos without reaching the
@@ -181,14 +180,17 @@ class SyncService {
     final local = await _cacheStore.readIndex();
     if (accessToken == null) return _offlineFallback(local);
 
-    final preferredChannelId = await _credentialsStore.preferredChannelId;
-    var page = await _fetchAllPages(accessToken: accessToken, fcmToken: fcmToken, channelIdOverride: preferredChannelId);
+    // A switch made on the Frame since the last sync (also an old build's
+    // stored pick): reported once, then the server's choice applies.
+    final pickedChannelId = await _credentialsStore.preferredChannelId;
+    var page = await _fetchAllPages(accessToken: accessToken, fcmToken: fcmToken, selectChannelId: pickedChannelId);
     if (page.notAssignedToChosenChannel) {
-      // The channel this Frame was switched to (Personal Mode) is no
-      // longer assigned to it -- fall back to the server default instead
-      // of getting permanently stuck requesting a channel that's gone.
+      // The picked channel is no longer assigned to this Frame -- drop the
+      // pick and take the server's choice.
       await _credentialsStore.clearPreferredChannelId();
-      page = await _fetchAllPages(accessToken: accessToken, fcmToken: fcmToken, channelIdOverride: null);
+      page = await _fetchAllPages(accessToken: accessToken, fcmToken: fcmToken, selectChannelId: null);
+    } else if (pickedChannelId != null && !page.failed) {
+      await _credentialsStore.clearPreferredChannelId();
     }
     if (page.frameNotFound) return _unpair();
     if (page.frameNotActive) return _deactivate();
@@ -279,14 +281,16 @@ class SyncService {
 
   /// Loops through get-media-batch's keyset pages until exhausted, so a
   /// channel with more than one page's worth of assigned items still gets
-  /// synced in full, not just the first page. [channelIdOverride] is the
-  /// Personal-Mode-picked channel (see FrameCredentialsStore), if any --
-  /// omitted, the server falls back to its own default (first-assigned).
+  /// synced in full, not just the first page. [selectChannelId] is a
+  /// Personal-Mode pick to report (first page only); otherwise the server
+  /// decides (its stored current album, see migrations/0069). Later pages
+  /// ask for the album the first page answered with.
   Future<_PageFetchResult> _fetchAllPages({
     required String accessToken,
     required String? fcmToken,
-    required String? channelIdOverride,
+    required String? selectChannelId,
   }) async {
+    String? channelId;
     Map<String, dynamic>? firstPageData;
     final remoteItems = <RemoteMediaEntry>[];
     int? cursor;
@@ -299,7 +303,8 @@ class SyncService {
           body: jsonEncode({
             'access_token': accessToken,
             'fcm_token': ?fcmToken,
-            'channel_id': ?channelIdOverride,
+            if (cursor == null) 'select_channel_id': ?selectChannelId,
+            if (cursor != null) 'channel_id': ?channelId,
             'cursor': ?cursor,
           }),
         );
@@ -314,7 +319,7 @@ class SyncService {
         } catch (_) {}
         if (data?['error'] == 'frame_not_found') return _PageFetchResult.notFound();
         if (data?['error'] == 'frame_not_active') return _PageFetchResult.notActive();
-        if (channelIdOverride != null && data?['error'] == 'frame_not_assigned_to_channel') {
+        if (selectChannelId != null && data?['error'] == 'frame_not_assigned_to_channel') {
           return _PageFetchResult.notAssigned();
         }
       }
@@ -324,6 +329,7 @@ class SyncService {
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       firstPageData ??= data;
+      channelId ??= data['channel_id'] as String?;
       remoteItems.addAll(
         ((data['items'] as List?) ?? []).cast<Map<String, dynamic>>().map((e) => RemoteMediaEntry(
               mediaItemId: e['media_item_id'] as String,
