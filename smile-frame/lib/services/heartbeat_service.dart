@@ -82,7 +82,7 @@ class HeartbeatService {
           'is_charging': ?isCharging,
           'device_model': ?deviceModel,
         }),
-      );
+      ).timeout(BackendConfig.requestTimeout);
     } catch (_) {
       // Offline -- try again next round; the periodic sync loop already
       // covers real connectivity, this is a best-effort side channel.

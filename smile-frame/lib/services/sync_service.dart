@@ -244,17 +244,21 @@ class SyncService {
       try {
         // Streamed straight into the encrypted cache -- an hour-long video
         // (decision 2026-10-01) never has to fit in memory.
-        final response = await _httpClient.send(http.Request('GET', Uri.parse(remote.displayUrl!)));
+        final response =
+            await _httpClient.send(http.Request('GET', Uri.parse(remote.displayUrl!))).timeout(BackendConfig.requestTimeout);
         if (response.statusCode != 200) {
           await response.stream.drain<void>();
           continue;
         }
         final isVideo = remote.mediaType == 'video';
         final fileName = '${remote.mediaItemId}.${isVideo ? 'mp4' : 'jpg'}';
-        final size = await _cacheStore.writeMediaStream(fileName, response.stream);
+        final size = await _cacheStore.writeMediaStream(
+          fileName,
+          response.stream.timeout(BackendConfig.downloadStallTimeout),
+        );
         String? posterFileName;
         if (isVideo && remote.posterUrl != null) {
-          final poster = await _httpClient.get(Uri.parse(remote.posterUrl!));
+          final poster = await _httpClient.get(Uri.parse(remote.posterUrl!)).timeout(BackendConfig.requestTimeout);
           if (poster.statusCode == 200) {
             posterFileName = '${remote.mediaItemId}_poster.jpg';
             await _cacheStore.writeMedia(posterFileName, poster.bodyBytes);
@@ -346,7 +350,7 @@ class SyncService {
             if (cursor != null) 'channel_id': ?channelId,
             'cursor': ?cursor,
           }),
-        );
+        ).timeout(BackendConfig.requestTimeout);
       } catch (_) {
         return _PageFetchResult.failed();
       }

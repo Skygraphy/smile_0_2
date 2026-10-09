@@ -59,6 +59,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   int _currentIndex = 0;
   Timer? _syncTimer;
   Timer? _advanceTimer;
+  // Offline, the next attempt comes much sooner than the regular 2 minutes,
+  // so album switching is back right after WLAN returns (2026-10-09).
+  Timer? _offlineRetryTimer;
+  static const _offlineRetryInterval = Duration(seconds: 10);
   bool _loadedOnce = false;
   // Revoked in the Smile-App -- the cache is already wiped (SyncService),
   // this just swaps the whole screen for a notice. Keeps syncing on the
@@ -120,6 +124,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     PushSyncSignal.onSyncRequested = null;
     _syncTimer?.cancel();
     _advanceTimer?.cancel();
+    _offlineRetryTimer?.cancel();
     super.dispose();
   }
 
@@ -149,6 +154,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       _deactivated = result.deactivated;
       _offlineExpired = result.offlineExpired;
       _offline = result.offline;
+      _offlineRetryTimer?.cancel();
+      if (result.offline) _offlineRetryTimer = Timer(_offlineRetryInterval, _sync);
       _entries = result.entries;
       _settings = result.settings;
       _loadedOnce = true;
@@ -248,6 +255,13 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     if (picked == null || picked == _currentChannelId) return;
     await widget.syncService.selectChannel(picked);
     await _sync();
+  }
+
+  /// Tapped while offline: try right away, and if the server answers,
+  /// open the album choice as if it had never been away.
+  Future<void> _retryThenPick() async {
+    await _sync();
+    if (mounted && _canSwitchChannel) await _pickChannel();
   }
 
   void _toggleGrid() => setState(() => _showGrid = !_showGrid);
@@ -418,7 +432,11 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       bottom: 16,
       child: SafeArea(
         child: GestureDetector(
-          onTap: switchable ? _pickChannel : null,
+          onTap: switchable
+              ? _pickChannel
+              : _offline && (_settings?.channelSwitchEnabled ?? false)
+                  ? _retryThenPick
+                  : null,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             decoration: BoxDecoration(

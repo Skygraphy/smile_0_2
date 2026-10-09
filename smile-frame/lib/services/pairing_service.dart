@@ -62,7 +62,7 @@ class PairingService {
       Uri.parse(BackendConfig.functionUrl('claim-frame-pairing')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'code': code}),
-    );
+    ).timeout(BackendConfig.requestTimeout);
     _throwIfError(response);
     return FrameCredentials.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
@@ -72,7 +72,7 @@ class PairingService {
       Uri.parse(BackendConfig.functionUrl('refresh-frame-token')),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'frame_id': frameId, 'refresh_secret': refreshSecret}),
-    );
+    ).timeout(BackendConfig.requestTimeout);
     _throwIfError(response);
     return RefreshedTokens.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
