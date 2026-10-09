@@ -59,6 +59,7 @@ class SyncResult {
     this.deactivated = false,
     this.unpaired = false,
     this.offlineExpired = false,
+    this.offline = false,
   });
 
   /// The server reports this Frame as revoked (frame_not_active) -- the
@@ -72,7 +73,8 @@ class SyncResult {
         spaceName = null,
         deactivated = true,
         unpaired = false,
-        offlineExpired = false;
+        offlineExpired = false,
+        offline = false;
 
   /// The Frame record no longer exists (its Space was deleted) -- cache AND
   /// credentials are gone; the app has to go back to pairing.
@@ -84,7 +86,8 @@ class SyncResult {
         spaceName = null,
         deactivated = false,
         unpaired = true,
-        offlineExpired = false;
+        offlineExpired = false,
+        offline = false;
 
   /// No successful sync for longer than SyncService.maxOffline -- the
   /// photos are wiped until the Frame reaches the server again.
@@ -96,7 +99,8 @@ class SyncResult {
         spaceName = null,
         deactivated = false,
         unpaired = false,
-        offlineExpired = true;
+        offlineExpired = true,
+        offline = false;
 
   final String? channelId;
   final List<CachedMediaEntry> entries;
@@ -106,6 +110,11 @@ class SyncResult {
   final bool deactivated;
   final bool unpaired;
   final bool offlineExpired;
+
+  /// The server couldn't be reached: cached photos, and the settings and
+  /// albums from the last successful sync. Switching albums needs the
+  /// server, so it is off meanwhile.
+  final bool offline;
 }
 
 /// Orchestrates one sync round: refresh the access token if it's close to
@@ -154,8 +163,36 @@ class SyncService {
       await _wipeCache();
       return SyncResult.offlineExpired();
     }
-    return SyncResult(channelId: null, entries: local, settings: null, assignedChannels: const []);
+    // Keep what the last successful sync said (2026-10-09): offline, the
+    // Frame used to forget its albums and settings -- album switching was
+    // blocked and sound/display mode fell back to their defaults.
+    final meta = await _readLastMeta();
+    return SyncResult(
+      channelId: meta?['channel_id'] as String?,
+      entries: local,
+      settings: _settingsFrom(meta),
+      assignedChannels: _assignedFrom(meta),
+      spaceName: meta?['space_name'] as String?,
+      offline: true,
+    );
   }
+
+  Future<Map<String, dynamic>?> _readLastMeta() async {
+    try {
+      final raw = await _credentialsStore.lastSyncMeta;
+      return raw == null ? null : jsonDecode(raw) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static FrameSettingsInfo? _settingsFrom(Map<String, dynamic>? data) {
+    final json = data?['settings'] as Map<String, dynamic>?;
+    return json == null ? null : FrameSettingsInfo.fromJson(json);
+  }
+
+  static List<AssignedChannel> _assignedFrom(Map<String, dynamic>? data) =>
+      ((data?['assigned_channels'] as List?) ?? []).cast<Map<String, dynamic>>().map(AssignedChannel.fromJson).toList();
 
   Future<void> _deleteEntryFiles(CachedMediaEntry entry) async {
     await _cacheStore.deleteFile(entry.fileName);
@@ -252,8 +289,7 @@ class SyncService {
       ...newEntries,
     ]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
-    final settingsJson = data['settings'] as Map<String, dynamic>?;
-    final settings = settingsJson != null ? FrameSettingsInfo.fromJson(settingsJson) : null;
+    final settings = _settingsFrom(data);
     final maxBytes = settings?.maxLocalCacheGb != null ? (settings!.maxLocalCacheGb! * 1024 * 1024 * 1024).round() : null;
 
     final toEvict = MediaCacheSync.entriesToEvictForCap(merged, maxBytes);
@@ -265,10 +301,13 @@ class SyncService {
 
     await _cacheStore.writeIndex(finalEntries);
 
-    final assignedChannels = ((data['assigned_channels'] as List?) ?? [])
-        .cast<Map<String, dynamic>>()
-        .map(AssignedChannel.fromJson)
-        .toList();
+    final assignedChannels = _assignedFrom(data);
+    await _credentialsStore.saveLastSyncMeta(jsonEncode({
+      'channel_id': data['channel_id'],
+      'settings': data['settings'],
+      'assigned_channels': data['assigned_channels'],
+      'space_name': data['space_name'],
+    }));
 
     return SyncResult(
       channelId: data['channel_id'] as String?,

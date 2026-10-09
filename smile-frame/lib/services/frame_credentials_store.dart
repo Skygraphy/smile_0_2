@@ -19,6 +19,9 @@ class FrameCredentialsStore {
   // exactly like before this existed.
   static const _keyPreferredChannelId = 'preferred_channel_id';
   static const _keyLastSyncOkAt = 'last_sync_ok_at';
+  // What the last successful sync said besides the photos (settings, the
+  // albums, Space name, current album) -- kept for offline (2026-10-09).
+  static const _keyLastSyncMeta = 'last_sync_meta';
 
   Future<bool> isProvisioned() async {
     final frameId = await _storage.read(key: _keyFrameId);
@@ -86,6 +89,10 @@ class FrameCredentialsStore {
   }
 
   Future<void> saveLastSyncOkAt(DateTime at) => _storage.write(key: _keyLastSyncOkAt, value: at.toUtc().toIso8601String());
+
+  Future<String?> get lastSyncMeta => _storage.read(key: _keyLastSyncMeta);
+
+  Future<void> saveLastSyncMeta(String json) => _storage.write(key: _keyLastSyncMeta, value: json);
 
   Future<void> clear() => _storage.deleteAll();
 }

@@ -67,6 +67,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   // No server contact for longer than SyncService.maxOffline: photos are
   // wiped (see there); shown as a notice until the Frame is online again.
   bool _offlineExpired = false;
+  bool _offline = false;
   // Decrypted photos (CacheCipher) -- a few kept in memory so paging back
   // and forth and the grid don't decrypt the same file over and over.
   final Map<String, Future<Uint8List?>> _decrypted = {};
@@ -147,6 +148,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     setState(() {
       _deactivated = result.deactivated;
       _offlineExpired = result.offlineExpired;
+      _offline = result.offline;
       _entries = result.entries;
       _settings = result.settings;
       _loadedOnce = true;
@@ -211,7 +213,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   // Personal Mode only -- an Assisted Mode Frame (channelSwitchEnabled ==
   // false, the default) never shows this at all, and a Frame with only one
   // assigned channel has nothing to switch to.
-  bool get _canSwitchChannel => (_settings?.channelSwitchEnabled ?? false) && _assignedChannels.length > 1;
+  bool get _canSwitchChannel =>
+      !_offline && (_settings?.channelSwitchEnabled ?? false) && _assignedChannels.length > 1;
 
   Future<void> _pickChannel() async {
     final sorted = [..._assignedChannels]..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));

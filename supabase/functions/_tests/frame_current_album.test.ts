@@ -33,6 +33,12 @@ Deno.test("app and Frame switch the shown album; last choice wins", async () => 
     for (const album of [albumA, albumB]) {
       assertEquals((await invoke("assign-frame-channel", accessToken, { frame_id: frameId, channel_id: album })).status, 200);
     }
+    // Each added album goes to the end (0070).
+    const { body: order } = await svc(`frame_channels?frame_id=eq.${frameId}&select=channel_id,sort_order&order=sort_order`);
+    assertEquals((order as { channel_id: string; sort_order: number }[]).map((r) => [r.channel_id, r.sort_order]), [
+      [albumA, 0],
+      [albumB, 1],
+    ]);
     const batch = (extra: Record<string, unknown> = {}) =>
       invoke("get-media-batch", "irrelevant-anon-call", { access_token: frameToken, ...extra });
     const current = async () =>

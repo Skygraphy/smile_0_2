@@ -187,7 +187,9 @@ class FrameService {
         .from('frame_channels')
         .select('channel_id, channels(name)')
         .eq('frame_id', frameId)
-        .order('sort_order');
+        // Same order as the Frame itself (frame_visible_channels).
+        .order('sort_order')
+        .order('created_at');
     return (rows as List).cast<Map<String, dynamic>>().map((row) {
       final channel = row['channels'] as Map<String, dynamic>;
       return FrameChannelAssignment(channelId: row['channel_id'] as String, channelName: channel['name'] as String);

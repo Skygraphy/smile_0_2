@@ -52,6 +52,8 @@ void main() {
     when(() => credentialsStore.preferredChannelId).thenAnswer((_) async => null);
     when(() => credentialsStore.lastSyncOkAt).thenAnswer((_) async => null);
     when(() => credentialsStore.saveLastSyncOkAt(any())).thenAnswer((_) async {});
+    when(() => credentialsStore.lastSyncMeta).thenAnswer((_) async => null);
+    when(() => credentialsStore.saveLastSyncMeta(any())).thenAnswer((_) async {});
 
     // Media downloads are streamed (videos of any length), posters are small gets.
     when(() => httpClient.send(any())).thenAnswer(
@@ -167,6 +169,29 @@ void main() {
     expect(result.offlineExpired, isTrue);
     expect(await cacheStore.readIndex(), isEmpty);
     expect(await File('${tempDir.path}/old.jpg').exists(), isFalse);
+  });
+
+  test('offline, the Frame keeps its albums and settings from the last sync', () async {
+    when(() => credentialsStore.lastSyncMeta).thenAnswer((_) async => jsonEncode({
+          'channel_id': 'ch-b',
+          'settings': {'display_mode': 'manual', 'channel_switch_enabled': true, 'video_sound': false},
+          'assigned_channels': [
+            {'channel_id': 'ch-a', 'name': 'Geburtstag', 'sort_order': 0},
+            {'channel_id': 'ch-b', 'name': 'Enkelkinder', 'sort_order': 1},
+          ],
+          'space_name': 'Bergoma',
+        }));
+    when(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
+        .thenThrow(const SocketException('offline'));
+
+    final result = await service.sync();
+
+    expect(result.offline, isTrue);
+    expect(result.channelId, 'ch-b');
+    expect(result.spaceName, 'Bergoma');
+    expect(result.assignedChannels.map((c) => c.name), ['Geburtstag', 'Enkelkinder']);
+    expect(result.settings?.videoSound, isFalse);
+    expect(result.settings?.displayMode, 'manual');
   });
 
   test('a multi-block file (like a long video) round-trips and stays encrypted at rest', () async {
