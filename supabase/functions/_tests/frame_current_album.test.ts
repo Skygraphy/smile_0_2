@@ -78,6 +78,11 @@ Deno.test("app and Frame switch the shown album; last choice wins", async () => 
     assertEquals((await batch()).body.channel_id, albumA);
     assertEquals((await batch({ select_channel_id: albumC })).status, 403);
 
+    // Fetching another album for the offline cache doesn't switch the Frame.
+    assertEquals((await batch({ fetch_channel_id: albumB })).body.channel_id, albumB);
+    assertEquals(await current(), albumA);
+    assertEquals((await batch({ fetch_channel_id: albumC })).status, 403);
+
     // Taking the shown album off the Frame falls back to the first one left.
     await asUser(`frame_channels?frame_id=eq.${frameId}&channel_id=eq.${albumA}`, accessToken, { method: "DELETE" });
     assertEquals(await current(), null);

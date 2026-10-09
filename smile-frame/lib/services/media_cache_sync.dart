@@ -8,12 +8,17 @@ class RemoteMediaEntry {
     required this.sortOrder,
     required this.displayUrl,
     this.posterUrl,
+    this.channelId,
   });
 
   final String mediaItemId;
   final String mediaType;
   final int sortOrder;
   final String? displayUrl;
+
+  /// The album it belongs to -- a Frame caches all of its albums
+  /// (2026-10-09) and shows one of them.
+  final String? channelId;
 
   /// A video's poster frame (grid view); null for photos.
   final String? posterUrl;
@@ -28,6 +33,7 @@ class CachedMediaEntry {
     required this.fileSizeBytes,
     required this.cachedAt,
     this.posterFileName,
+    this.channelId,
   });
 
   final String mediaItemId;
@@ -40,6 +46,10 @@ class CachedMediaEntry {
   /// A video's cached poster frame, if it has one.
   final String? posterFileName;
 
+  /// The album it belongs to. Null only for entries cached before all
+  /// albums were cached (they get theirs on the next sync).
+  final String? channelId;
+
   bool get isVideo => mediaType == 'video';
 
   Map<String, dynamic> toJson() => {
@@ -50,6 +60,7 @@ class CachedMediaEntry {
         'file_size_bytes': fileSizeBytes,
         'cached_at': cachedAt.toUtc().toIso8601String(),
         'poster_file_name': posterFileName,
+        'channel_id': channelId,
       };
 
   factory CachedMediaEntry.fromJson(Map<String, dynamic> json) => CachedMediaEntry(
@@ -60,9 +71,10 @@ class CachedMediaEntry {
         fileSizeBytes: json['file_size_bytes'] as int,
         cachedAt: DateTime.parse(json['cached_at'] as String),
         posterFileName: json['poster_file_name'] as String?,
+        channelId: json['channel_id'] as String?,
       );
 
-  CachedMediaEntry copyWith({int? sortOrder}) => CachedMediaEntry(
+  CachedMediaEntry copyWith({int? sortOrder, String? channelId}) => CachedMediaEntry(
         mediaItemId: mediaItemId,
         mediaType: mediaType,
         sortOrder: sortOrder ?? this.sortOrder,
@@ -70,6 +82,7 @@ class CachedMediaEntry {
         fileSizeBytes: fileSizeBytes,
         cachedAt: cachedAt,
         posterFileName: posterFileName,
+        channelId: channelId ?? this.channelId,
       );
 }
 
@@ -94,11 +107,22 @@ class MediaCacheSync {
     return CacheDiff(toDownload: toDownload, toDelete: toDelete);
   }
 
-  /// Oldest-by-sortOrder-first eviction once the cache exceeds [maxBytes].
-  /// Returns the entries to remove; caller deletes the underlying files.
-  static List<CachedMediaEntry> entriesToEvictForCap(List<CachedMediaEntry> cached, int? maxBytes) {
+  /// Eviction once the cache exceeds [maxBytes]: the other albums' photos
+  /// go first, the shown album ([keepChannelId]) last; oldest-by-sortOrder
+  /// first within each. Returns the entries to remove; caller deletes the
+  /// underlying files.
+  static List<CachedMediaEntry> entriesToEvictForCap(
+    List<CachedMediaEntry> cached,
+    int? maxBytes, {
+    String? keepChannelId,
+  }) {
     if (maxBytes == null) return const [];
-    final sorted = [...cached]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    int rank(CachedMediaEntry e) => keepChannelId != null && e.channelId == keepChannelId ? 1 : 0;
+    final sorted = [...cached]
+      ..sort((a, b) {
+        final byAlbum = rank(a).compareTo(rank(b));
+        return byAlbum != 0 ? byAlbum : a.sortOrder.compareTo(b.sortOrder);
+      });
     var total = cached.fold<int>(0, (sum, e) => sum + e.fileSizeBytes);
     final toEvict = <CachedMediaEntry>[];
     for (final entry in sorted) {

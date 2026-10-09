@@ -139,6 +139,50 @@ void main() {
     verify(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body'))).called(1);
   });
 
+  // 2026-10-09: every album of the Frame is cached, the shown one is shown.
+  test('caches all albums, shows the current one, switches offline from the cache', () async {
+    Map<String, dynamic> albumResponse(String channel, String item) => {
+          'channel_id': channel,
+          'items': [
+            {'media_item_id': item, 'media_type': 'photo', 'sort_order': 1, 'display_url': 'https://example.com/$item.jpg'},
+          ],
+          'next_cursor': null,
+          'settings': {'channel_switch_enabled': true},
+          'assigned_channels': [
+            {'channel_id': 'chan-a', 'name': 'Geburtstag', 'sort_order': 0},
+            {'channel_id': 'chan-b', 'name': 'Enkelkinder', 'sort_order': 1},
+          ],
+          'space_name': 'Bergoma',
+        };
+    String? savedMeta;
+    when(() => credentialsStore.saveLastSyncMeta(any())).thenAnswer((inv) async => savedMeta = inv.positionalArguments[0] as String);
+    when(() => credentialsStore.lastSyncMeta).thenAnswer((_) async => savedMeta);
+    when(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
+        .thenAnswer((invocation) async {
+      final body = jsonDecode(invocation.namedArguments[#body] as String) as Map<String, dynamic>;
+      final fetched = body['fetch_channel_id'] as String?;
+      return http.Response(
+        jsonEncode(fetched == 'chan-b' ? albumResponse('chan-b', 'item-b') : albumResponse('chan-a', 'item-a')),
+        200,
+      );
+    });
+
+    final online = await service.sync();
+    expect(online.channelId, 'chan-a');
+    expect(online.entries.map((e) => e.mediaItemId), ['item-a']);
+    expect((await cacheStore.readIndex()).map((e) => e.mediaItemId).toSet(), {'item-a', 'item-b'});
+
+    // Offline, a pick on the Frame shows the other album from the cache.
+    when(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body')))
+        .thenThrow(const SocketException('offline'));
+    when(() => credentialsStore.preferredChannelId).thenAnswer((_) async => 'chan-b');
+    final offline = await service.sync();
+    expect(offline.offline, isTrue);
+    expect(offline.channelId, 'chan-b');
+    expect(offline.entries.map((e) => e.mediaItemId), ['item-b']);
+    expect(offline.assignedChannels, hasLength(2));
+  });
+
   // Architecture review 2026-09-29, weakness 7.
   test('photos are stored encrypted and read back intact', () async {
     await cacheStore.writeMedia('a.jpg', [1, 2, 3, 4, 5]);

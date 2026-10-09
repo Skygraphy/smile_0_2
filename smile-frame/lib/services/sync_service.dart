@@ -167,14 +167,30 @@ class SyncService {
     // Frame used to forget its albums and settings -- album switching was
     // blocked and sound/display mode fell back to their defaults.
     final meta = await _readLastMeta();
+    // All albums are cached (2026-10-09): offline, a pick on the Frame
+    // shows that album at once; the server hears of it once it's back.
+    final shown = await _credentialsStore.preferredChannelId ?? meta?['channel_id'] as String?;
     return SyncResult(
-      channelId: meta?['channel_id'] as String?,
-      entries: local,
+      channelId: shown,
+      entries: _entriesOf(local, shown),
       settings: _settingsFrom(meta),
       assignedChannels: _assignedFrom(meta),
       spaceName: meta?['space_name'] as String?,
       offline: true,
     );
+  }
+
+  /// The cached photos of [channelId] -- plus any cached before albums
+  /// were told apart (no album yet; sorted out by the next online sync).
+  static List<CachedMediaEntry> _entriesOf(List<CachedMediaEntry> all, String? channelId) =>
+      all.where((e) => e.channelId == null || e.channelId == channelId).toList();
+
+  /// What to show before the first sync of a session: the cached photos
+  /// of the album shown last (or picked meanwhile).
+  Future<List<CachedMediaEntry>> cachedShownEntries() async {
+    final meta = await _readLastMeta();
+    final shown = await _credentialsStore.preferredChannelId ?? meta?['channel_id'] as String?;
+    return _entriesOf(await _cacheStore.readIndex(), shown);
   }
 
   Future<Map<String, dynamic>?> _readLastMeta() async {
@@ -234,12 +250,39 @@ class SyncService {
     if (page.failed) return _offlineFallback(local);
     await _credentialsStore.saveLastSyncOkAt(DateTime.now());
     final data = page.firstPageData!;
-    final remoteItems = page.items;
+    final currentChannelId = data['channel_id'] as String?;
+    final assignedChannels = _assignedFrom(data);
+
+    // Every other album of this Frame too, so it can switch between them
+    // offline (2026-10-09). An album that couldn't be fetched this round
+    // keeps its cached photos until the next one.
+    final remoteItems = [...page.items];
+    final fetchedChannels = <String>{?currentChannelId};
+    for (final album in assignedChannels) {
+      if (album.channelId == currentChannelId) continue;
+      final other = await _fetchAllPages(
+        accessToken: accessToken,
+        fcmToken: null,
+        selectChannelId: null,
+        fetchChannelId: album.channelId,
+      );
+      if (other.failed || other.firstPageData == null) continue;
+      remoteItems.addAll(other.items);
+      fetchedChannels.add(album.channelId);
+    }
+    final assignedIds = assignedChannels.map((c) => c.channelId).toSet();
 
     final diff = MediaCacheSync.diff(remoteItems, local);
+    // Gone from the server -- unless its album just couldn't be fetched.
+    final toDelete = diff.toDelete
+        .where((e) => !(e.channelId != null && assignedIds.contains(e.channelId) && !fetchedChannels.contains(e.channelId)))
+        .toList();
+    // The shown album first: it's what is on screen.
+    final toDownload = [...diff.toDownload]
+      ..sort((a, b) => (a.channelId == currentChannelId ? 0 : 1).compareTo(b.channelId == currentChannelId ? 0 : 1));
 
     final newEntries = <CachedMediaEntry>[];
-    for (final remote in diff.toDownload) {
+    for (final remote in toDownload) {
       if (remote.displayUrl == null) continue;
       try {
         // Streamed straight into the encrypted cache -- an hour-long video
@@ -272,6 +315,7 @@ class SyncService {
           fileSizeBytes: size,
           cachedAt: DateTime.now(),
           posterFileName: posterFileName,
+          channelId: remote.channelId,
         ));
       } catch (_) {
         // Skip this item this round; it's retried on the next sync since
@@ -279,16 +323,16 @@ class SyncService {
       }
     }
 
-    final deleteIds = diff.toDelete.map((e) => e.mediaItemId).toSet();
-    for (final del in diff.toDelete) {
+    final deleteIds = toDelete.map((e) => e.mediaItemId).toSet();
+    for (final del in toDelete) {
       await _deleteEntryFiles(del);
     }
 
-    final remoteSortByMediaId = {for (final r in remoteItems) r.mediaItemId: r.sortOrder};
+    final remoteByMediaId = {for (final r in remoteItems) r.mediaItemId: r};
     final merged = [
       ...local.where((e) => !deleteIds.contains(e.mediaItemId)).map((e) {
-        final newSort = remoteSortByMediaId[e.mediaItemId];
-        return newSort != null ? e.copyWith(sortOrder: newSort) : e;
+        final remote = remoteByMediaId[e.mediaItemId];
+        return remote != null ? e.copyWith(sortOrder: remote.sortOrder, channelId: remote.channelId) : e;
       }),
       ...newEntries,
     ]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
@@ -296,7 +340,7 @@ class SyncService {
     final settings = _settingsFrom(data);
     final maxBytes = settings?.maxLocalCacheGb != null ? (settings!.maxLocalCacheGb! * 1024 * 1024 * 1024).round() : null;
 
-    final toEvict = MediaCacheSync.entriesToEvictForCap(merged, maxBytes);
+    final toEvict = MediaCacheSync.entriesToEvictForCap(merged, maxBytes, keepChannelId: currentChannelId);
     final evictIds = toEvict.map((e) => e.mediaItemId).toSet();
     for (final e in toEvict) {
       await _deleteEntryFiles(e);
@@ -305,7 +349,6 @@ class SyncService {
 
     await _cacheStore.writeIndex(finalEntries);
 
-    final assignedChannels = _assignedFrom(data);
     await _credentialsStore.saveLastSyncMeta(jsonEncode({
       'channel_id': data['channel_id'],
       'settings': data['settings'],
@@ -314,8 +357,8 @@ class SyncService {
     }));
 
     return SyncResult(
-      channelId: data['channel_id'] as String?,
-      entries: finalEntries,
+      channelId: currentChannelId,
+      entries: finalEntries.where((e) => e.channelId == currentChannelId).toList(),
       settings: settings,
       assignedChannels: assignedChannels,
       spaceName: data['space_name'] as String?,
@@ -332,6 +375,7 @@ class SyncService {
     required String accessToken,
     required String? fcmToken,
     required String? selectChannelId,
+    String? fetchChannelId,
   }) async {
     String? channelId;
     Map<String, dynamic>? firstPageData;
@@ -347,6 +391,7 @@ class SyncService {
             'access_token': accessToken,
             'fcm_token': ?fcmToken,
             if (cursor == null) 'select_channel_id': ?selectChannelId,
+            if (cursor == null) 'fetch_channel_id': ?fetchChannelId,
             if (cursor != null) 'channel_id': ?channelId,
             'cursor': ?cursor,
           }),
@@ -380,6 +425,7 @@ class SyncService {
               sortOrder: e['sort_order'] as int,
               displayUrl: e['display_url'] as String?,
               posterUrl: e['poster_url'] as String?,
+              channelId: data['channel_id'] as String?,
             )),
       );
       cursor = data['next_cursor'] as int?;

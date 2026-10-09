@@ -71,7 +71,6 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   // No server contact for longer than SyncService.maxOffline: photos are
   // wiped (see there); shown as a notice until the Frame is online again.
   bool _offlineExpired = false;
-  bool _offline = false;
   // Decrypted photos (CacheCipher) -- a few kept in memory so paging back
   // and forth and the grid don't decrypt the same file over and over.
   final Map<String, Future<Uint8List?>> _decrypted = {};
@@ -135,7 +134,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       if (mounted) setState(() => _offlineExpired = true);
       return;
     }
-    final cached = await widget.cacheStore.readIndex();
+    // Only the album shown last: the cache holds all of the Frame's albums.
+    final cached = await widget.syncService.cachedShownEntries();
     if (!mounted || cached.isEmpty) return;
     setState(() {
       _entries = cached..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
@@ -153,7 +153,6 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     setState(() {
       _deactivated = result.deactivated;
       _offlineExpired = result.offlineExpired;
-      _offline = result.offline;
       _offlineRetryTimer?.cancel();
       if (result.offline) _offlineRetryTimer = Timer(_offlineRetryInterval, _sync);
       _entries = result.entries;
@@ -220,8 +219,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   // Personal Mode only -- an Assisted Mode Frame (channelSwitchEnabled ==
   // false, the default) never shows this at all, and a Frame with only one
   // assigned channel has nothing to switch to.
-  bool get _canSwitchChannel =>
-      !_offline && (_settings?.channelSwitchEnabled ?? false) && _assignedChannels.length > 1;
+  // Works offline too: every album is in the cache (2026-10-09).
+  bool get _canSwitchChannel => (_settings?.channelSwitchEnabled ?? false) && _assignedChannels.length > 1;
 
   Future<void> _pickChannel() async {
     final sorted = [..._assignedChannels]..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));
@@ -255,13 +254,6 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     if (picked == null || picked == _currentChannelId) return;
     await widget.syncService.selectChannel(picked);
     await _sync();
-  }
-
-  /// Tapped while offline: try right away, and if the server answers,
-  /// open the album choice as if it had never been away.
-  Future<void> _retryThenPick() async {
-    await _sync();
-    if (mounted && _canSwitchChannel) await _pickChannel();
   }
 
   void _toggleGrid() => setState(() => _showGrid = !_showGrid);
@@ -432,11 +424,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       bottom: 16,
       child: SafeArea(
         child: GestureDetector(
-          onTap: switchable
-              ? _pickChannel
-              : _offline && (_settings?.channelSwitchEnabled ?? false)
-                  ? _retryThenPick
-                  : null,
+          onTap: switchable ? _pickChannel : null,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             decoration: BoxDecoration(

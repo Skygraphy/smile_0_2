@@ -54,6 +54,7 @@ void main() {
     // state deterministically, avoiding a real network call in the test.
     when(() => syncService.sync()).thenAnswer((_) => Completer<SyncResult>().future);
     when(() => syncService.isOfflineExpired()).thenAnswer((_) async => false);
+    when(() => syncService.cachedShownEntries()).thenAnswer((_) async => []);
 
     await tester.pumpWidget(MaterialApp(
       locale: const Locale('de'),

@@ -27,6 +27,9 @@ interface RequestBody {
   // A switch made on the Frame itself (Personal Mode) -- stored as the
   // Frame's current album (0069).
   select_channel_id?: string;
+  // Any other album of this Frame, fetched for the offline cache only --
+  // doesn't change what the Frame shows (2026-10-09: all albums cached).
+  fetch_channel_id?: string;
   cursor?: number;
   limit?: number;
   fcm_token?: string;
@@ -119,7 +122,10 @@ Deno.serve(async (req) => {
   // local pick, else the first album.
   const firstPage = body.cursor === undefined || body.cursor === null;
   let channelId: string | undefined;
-  if (body.select_channel_id) {
+  if (body.fetch_channel_id) {
+    if (!isAssigned(body.fetch_channel_id)) return jsonResponse({ error: "frame_not_assigned_to_channel" }, 403);
+    channelId = body.fetch_channel_id;
+  } else if (body.select_channel_id) {
     if (!isAssigned(body.select_channel_id)) return jsonResponse({ error: "frame_not_assigned_to_channel" }, 403);
     channelId = body.select_channel_id;
   } else if (!firstPage && body.channel_id) {
@@ -134,7 +140,7 @@ Deno.serve(async (req) => {
   // Remember what the Frame shows, so the app can show it too. Only on a
   // first page: a continued page may still be the album from before a
   // switch made meanwhile in the app.
-  if (firstPage && (channelId ?? null) !== (frame.current_channel_id ?? null)) {
+  if (!body.fetch_channel_id && firstPage && (channelId ?? null) !== (frame.current_channel_id ?? null)) {
     await supabase.from("frames").update({ current_channel_id: channelId ?? null }).eq("id", claims.frame_id);
   }
 
@@ -168,28 +174,33 @@ Deno.serve(async (req) => {
     sort_key: number;
   }[];
 
-  const items = [];
-  for (const row of rows) {
-    const { data: signed } = await supabase.storage
-      .from("media-display")
-      .createSignedUrl(row.storage_path_display, SIGNED_URL_TTL_SECONDS);
-    // A video's display file is the MP4; its poster frame is what the
-    // Frame's grid view shows (0054).
-    let posterUrl: string | null = null;
-    if (row.media_type === "video" && row.storage_path_thumbnail) {
-      const { data: poster } = await supabase.storage
-        .from("media-thumbnails")
-        .createSignedUrl(row.storage_path_thumbnail, SIGNED_URL_TTL_SECONDS);
-      posterUrl = poster?.signedUrl ?? null;
+  // Signed in one call per bucket instead of one per photo: with every
+  // album of a Frame synced (2026-10-09), per-photo calls made a sync slow.
+  const signAll = async (bucket: string, paths: string[]) => {
+    const urls = new Map<string, string>();
+    if (paths.length === 0) return urls;
+    const { data } = await supabase.storage.from(bucket).createSignedUrls(paths, SIGNED_URL_TTL_SECONDS);
+    for (const entry of data ?? []) {
+      if (entry.path && entry.signedUrl) urls.set(entry.path, entry.signedUrl);
     }
-    items.push({
-      media_item_id: row.media_item_id,
-      media_type: row.media_type,
-      sort_order: row.sort_key,
-      display_url: signed?.signedUrl ?? null,
-      poster_url: posterUrl,
-    });
-  }
+    return urls;
+  };
+  const displayUrls = await signAll("media-display", rows.map((r) => r.storage_path_display));
+  // A video's display file is the MP4; its poster frame is what the
+  // Frame's grid view shows (0054).
+  const posterUrls = await signAll(
+    "media-thumbnails",
+    rows.filter((r) => r.media_type === "video" && r.storage_path_thumbnail).map((r) => r.storage_path_thumbnail as string),
+  );
+  const items = rows.map((row) => ({
+    media_item_id: row.media_item_id,
+    media_type: row.media_type,
+    sort_order: row.sort_key,
+    display_url: displayUrls.get(row.storage_path_display) ?? null,
+    poster_url: row.media_type === "video" && row.storage_path_thumbnail
+      ? posterUrls.get(row.storage_path_thumbnail) ?? null
+      : null,
+  }));
   const nextCursor = rows.length === limit ? rows[rows.length - 1].sort_key : null;
 
   return jsonResponse({

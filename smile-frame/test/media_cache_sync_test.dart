@@ -1,13 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smile_frame/services/media_cache_sync.dart';
 
-CachedMediaEntry _cached(String id, int sortOrder, {int sizeBytes = 1000}) => CachedMediaEntry(
+CachedMediaEntry _cached(String id, int sortOrder, {int sizeBytes = 1000, String? channelId}) => CachedMediaEntry(
       mediaItemId: id,
       mediaType: 'photo',
       sortOrder: sortOrder,
       fileName: '$id.jpg',
       fileSizeBytes: sizeBytes,
       cachedAt: DateTime(2026, 1, 1),
+      channelId: channelId,
     );
 
 RemoteMediaEntry _remote(String id, int sortOrder) => RemoteMediaEntry(
@@ -67,6 +68,16 @@ void main() {
       // total 300, cap 150 -> must evict oldest (sortOrder 1) then middle (sortOrder 2) to reach 100 <= 150
       final evicted = MediaCacheSync.entriesToEvictForCap(cached, 150);
       expect(evicted.map((e) => e.mediaItemId), ['oldest', 'middle']);
+    });
+
+    test('over cap evicts the other albums first, the shown album last', () {
+      final cached = [
+        _cached('shown-old', 1, sizeBytes: 100, channelId: 'shown'),
+        _cached('other-new', 5, sizeBytes: 100, channelId: 'other'),
+        _cached('shown-new', 6, sizeBytes: 100, channelId: 'shown'),
+      ];
+      final evicted = MediaCacheSync.entriesToEvictForCap(cached, 150, keepChannelId: 'shown');
+      expect(evicted.map((e) => e.mediaItemId), ['other-new', 'shown-old']);
     });
   });
 }
