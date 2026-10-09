@@ -1,5 +1,6 @@
 import '../main.dart';
 import 'edge_functions.dart';
+import 'local_changes.dart';
 
 class ChannelMember {
   ChannelMember({required this.userId, required this.displayName, required this.avatarUrl, required this.createdAt});
@@ -181,12 +182,14 @@ class MembershipService {
   /// SCO-only (enforced server-side and by RLS on the resulting delete).
   Future<void> removeMember({required String channelId, required String userId}) async {
     await supabase.from('channel_members').delete().eq('channel_id', channelId).eq('user_id', userId);
+    LocalChanges.saved(tablesChanged({'channel_members'}, channelIds: {channelId}));
   }
 
   /// Self-service leave -- a member removing their own row.
   Future<void> leaveChannel(String channelId) async {
     await supabase.from('channel_members').delete().eq('channel_id', channelId).eq(
         'user_id', supabase.auth.currentUser!.id);
+    LocalChanges.saved(tablesChanged({'channel_members'}, channelIds: {channelId}));
   }
 
   /// SCO invites a known person (by email) to become a posting member.
@@ -200,6 +203,7 @@ class MembershipService {
     if (status != 'invited' && status != 'already_member') {
       throw ChannelRequestException(data?['error'] as String? ?? 'unknown_error');
     }
+    LocalChanges.saved(tablesChanged({'channel_membership_requests'}, channelIds: {channelId}));
   }
 
   /// SCO invites a known person (by email) to view-share this channel with
@@ -214,6 +218,7 @@ class MembershipService {
     if (data?['status'] != 'invited') {
       throw ChannelRequestException(data?['error'] as String? ?? 'unknown_error');
     }
+    LocalChanges.saved(tablesChanged({'channel_share_requests'}, channelIds: {channelId}));
   }
 
   Future<void> decideMembershipRequest(String requestId, {required bool accept}) async {
@@ -222,6 +227,7 @@ class MembershipService {
         .update({'status': accept ? 'accepted' : 'declined'}).eq('id', requestId);
     // The other side is notified server-side (a trigger raises notify-event
     // 'request_decided', migrations/0050) -- even if this app closes now.
+    LocalChanges.saved(tablesChanged({'channel_membership_requests', 'channel_members'}));
   }
 
   /// Deciding a share *invite* also supplies which of the caller's own
@@ -233,6 +239,7 @@ class MembershipService {
       'status': accept ? 'accepted' : 'declined',
       'space_id': ?spaceId,
     }).eq('id', requestId);
+    LocalChanges.saved(tablesChanged({'channel_share_requests', 'channel_shares'}));
   }
 
   /// A viewer (sees the channel only via a Space they own being shared
@@ -247,6 +254,7 @@ class MembershipService {
       'user_id': supabase.auth.currentUser!.id,
       'direction': 'request',
     });
+    LocalChanges.saved(tablesChanged({'channel_membership_requests'}, channelIds: {channelId}));
   }
 
   /// Whether the caller already posts here, or -- if not -- whether they
@@ -289,10 +297,12 @@ class MembershipService {
 
   Future<void> withdrawMembershipRequest(String requestId) async {
     await supabase.from('channel_membership_requests').delete().eq('id', requestId);
+    LocalChanges.saved(tablesChanged({'channel_membership_requests'}));
   }
 
   Future<void> withdrawShareRequest(String requestId) async {
     await supabase.from('channel_share_requests').delete().eq('id', requestId);
+    LocalChanges.saved(tablesChanged({'channel_share_requests'}));
   }
 
   /// Ending a share -- either side may, unilaterally: the linked Space's
@@ -301,6 +311,7 @@ class MembershipService {
   /// server-side (notify-event).
   Future<void> revokeShare({required String channelId, required String spaceId}) async {
     await supabase.from('channel_shares').delete().eq('channel_id', channelId).eq('space_id', spaceId);
+    LocalChanges.saved(tablesChanged({'channel_shares'}, channelIds: {channelId}, spaceIds: {spaceId}));
   }
 
   /// Every Space this channel is currently shared into, plus the channel's

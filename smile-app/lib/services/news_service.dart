@@ -1,6 +1,7 @@
 import '../main.dart';
 import 'membership_service.dart';
 import 'space_service.dart';
+import 'local_changes.dart';
 
 /// What the Neuigkeiten icon shows.
 class NewsStatus {
@@ -50,5 +51,9 @@ class NewsService {
   }
 
   /// Opening Neuigkeiten counts as having seen everything in it.
-  Future<void> markSeen() => supabase.rpc('mark_news_seen');
+  Future<void> markSeen() async {
+    await supabase.rpc('mark_news_seen');
+    // The Neuigkeiten icon loses its dot at once (LocalChanges).
+    LocalChanges.saved(tablesChanged({'news_reads'}));
+  }
 }

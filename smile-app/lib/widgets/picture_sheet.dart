@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/avatar_upload.dart';
 import '../services/media_service.dart';
+import '../services/local_changes.dart';
 import '../services/object_picture_service.dart';
+import 'album_covers.dart';
 import 'avatar_picker.dart';
 
 enum _PictureChoice { albumPhoto, camera, gallery, url, remove }
@@ -21,7 +24,6 @@ Future<bool> changeObjectPicture(
 }) async {
   final t = SmileTexts.of(context);
   final pictures = service ?? ObjectPictureService();
-  final messenger = ScaffoldMessenger.of(context);
   final isAlbum = kind == ObjectKind.album;
 
   final choice = await showModalBottomSheet<_PictureChoice>(
@@ -75,40 +77,68 @@ Future<bool> changeObjectPicture(
   );
   if (choice == null || !context.mounted) return false;
 
-  try {
-    switch (choice) {
-      case _PictureChoice.albumPhoto:
-        final mediaId = await Navigator.of(context).push<String>(
-          MaterialPageRoute(builder: (_) => _AlbumPhotoPicker(channelId: id, albumName: name)),
-        );
-        if (mediaId == null) return false;
-        await pictures.setAlbumCoverPhoto(id, mediaId);
-      case _PictureChoice.camera:
-        final path = await pictures.fromCamera(kind, id);
-        if (path == null) return false;
-        await pictures.save(kind, id, path);
-      case _PictureChoice.gallery:
-        final path = await pictures.fromGallery(kind, id);
-        if (path == null) return false;
-        await pictures.save(kind, id, path);
-      case _PictureChoice.url:
-        final url = await showAvatarUrlDialog(context);
-        if (url == null || url.trim().isEmpty) return false;
-        await pictures.save(kind, id, await pictures.fromUrl(kind, id, url.trim()));
-      case _PictureChoice.remove:
-        if (isAlbum) {
-          await pictures.resetAlbumCover(id);
-        } else {
-          await pictures.save(kind, id, null);
-        }
-    }
-    return true;
-  } on AvatarUrlException catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text(e.message)));
-  } catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text(t.actionFailed('$e'))));
+  // The new picture shows at once, everywhere, while it uploads; if saving
+  // fails it goes away again with a message (LocalChanges, 2026-10-09).
+  final local = LocalChanges.instance;
+  final key = switch (kind) {
+    ObjectKind.space => LocalChanges.spacePicture(id),
+    ObjectKind.frame => LocalChanges.framePicture(id),
+    ObjectKind.album => LocalChanges.albumCover(id),
+  };
+  final affects = switch (kind) {
+    ObjectKind.space => tablesChanged({'spaces'}, spaceIds: {id}),
+    ObjectKind.frame => tablesChanged({'frames'}),
+    ObjectKind.album => tablesChanged({'channels'}, channelIds: {id}),
+  };
+  String? savedPath;
+  Future<void> warmUp() => precacheUrl(avatarPathToUrl(savedPath));
+
+  switch (choice) {
+    case _PictureChoice.albumPhoto:
+      final item = await Navigator.of(context).push<MediaItem>(
+        MaterialPageRoute(builder: (_) => _AlbumPhotoPicker(channelId: id, albumName: name)),
+      );
+      if (item == null || item.thumbnailUrl == null) return false;
+      return local.run(
+        overrides: {key: LocalPicture.url(item.thumbnailUrl!, cacheKey: albumPhotoCacheKey(item.id))},
+        commit: () => pictures.setAlbumCoverPhoto(id, item.id),
+        affects: affects,
+      );
+    case _PictureChoice.camera:
+    case _PictureChoice.gallery:
+      final picked = await pickPictureBytes(choice == _PictureChoice.camera ? ImageSource.camera : ImageSource.gallery);
+      if (picked == null) return false;
+      return local.run(
+        overrides: {key: LocalPicture.bytes(picked.bytes)},
+        commit: () async {
+          savedPath = await pictures.uploadPicked(kind, id, picked);
+          await pictures.save(kind, id, savedPath);
+        },
+        warmUp: warmUp,
+        affects: affects,
+      );
+    case _PictureChoice.url:
+      if (!context.mounted) return false;
+      final url = (await showAvatarUrlDialog(context))?.trim();
+      if (url == null || url.isEmpty) return false;
+      return local.run(
+        overrides: {key: LocalPicture.url(url)},
+        commit: () async {
+          savedPath = await pictures.fromUrl(kind, id, url);
+          await pictures.save(kind, id, savedPath);
+        },
+        warmUp: warmUp,
+        affects: affects,
+      );
+    case _PictureChoice.remove:
+      // Back to automatic (album): which photo that is, only the server
+      // knows -- shown as soon as it answered.
+      return local.run(
+        overrides: isAlbum ? const {} : {key: const LocalPicture.removed()},
+        commit: () => isAlbum ? pictures.resetAlbumCover(id) : pictures.save(kind, id, null),
+        affects: affects,
+      );
   }
-  return false;
 }
 
 /// Grid of the album's photos to pick a cover from.
@@ -156,7 +186,7 @@ class _AlbumPhotoPickerState extends State<_AlbumPhotoPicker> {
                   children: [
                     for (final item in items)
                       GestureDetector(
-                        onTap: () => Navigator.of(context).pop(item.id),
+                        onTap: () => Navigator.of(context).pop(item),
                         child: SmileAlbumCover(
                           name: widget.albumName,
                           imageUrl: item.thumbnailUrl,

@@ -21,6 +21,8 @@ import 'album_info_screen.dart';
 import 'capture_preview_screen.dart';
 import '../widgets/capture_choice.dart';
 import '../widgets/album_covers.dart';
+import '../widgets/local_display.dart';
+import '../services/local_changes.dart';
 import '../services/channel_picker_service.dart';
 import 'video_player_screen.dart';
 
@@ -536,13 +538,18 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     final t = SmileTexts.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final mediaId = _selectedIds.first;
-    try {
-      await ObjectPictureService().setAlbumCoverPhoto(widget.channelId, mediaId);
-      _clearSelection();
-      messenger.showSnackBar(SnackBar(content: Text(t.coverSet(_channelName))));
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(t.actionFailed('$e'))));
-    }
+    final item = _items!.firstWhere((i) => i.id == mediaId);
+    _clearSelection();
+    // The photo is the cover at once, here and in every list (LocalChanges).
+    final saved = await LocalChanges.instance.run(
+      overrides: {
+        if (item.thumbnailUrl != null)
+          LocalChanges.albumCover(widget.channelId): LocalPicture.url(item.thumbnailUrl!, cacheKey: albumPhotoCacheKey(mediaId)),
+      },
+      commit: () => ObjectPictureService().setAlbumCoverPhoto(widget.channelId, mediaId),
+      affects: tablesChanged({'channels'}, channelIds: {widget.channelId}),
+    );
+    if (saved) messenger.showSnackBar(SnackBar(content: Text(t.coverSet(_shownName))));
   }
 
   /// Destructive and permanent: gone from the DB, every storage bucket,
@@ -585,20 +592,29 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
 
     final ids = deletableIds;
     _clearSelection();
-    try {
-      final result = await widget.mediaService.deletePhotos(ids);
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = result.deniedIds.isEmpty
-            ? null
-            : '${result.deniedIds.length} Foto(s) konnten nicht gelöscht werden (nicht eigenes Foto).';
-      });
-      await _load();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _errorMessage = 'Löschen fehlgeschlagen: $e');
-    }
+    // Gone at once; back with a message if the server says no.
+    MediaActionResult? result;
+    final saved = await LocalChanges.instance.run(
+      overrides: {for (final id in ids) LocalChanges.mediaGone(id): _viewName},
+      commit: () async => result = await widget.mediaService.deletePhotos(ids),
+      affects: tablesChanged({'media_items', 'channels'}, channelIds: {widget.channelId}),
+      failureText: 'Löschen fehlgeschlagen.',
+    );
+    if (!saved || !mounted) return;
+    final denied = result?.deniedIds ?? const [];
+    LocalChanges.instance.drop(denied.map(LocalChanges.mediaGone));
+    setState(() {
+      _errorMessage = denied.isEmpty ? null : '${denied.length} Foto(s) konnten nicht gelöscht werden (nicht eigenes Foto).';
+    });
+    await _load();
   }
+
+  /// Which list a just-removed photo disappears from (normal or hidden).
+  String get _viewName => _showingHidden ? 'hidden' : 'feed';
+
+  bool _isGoneHere(String mediaId) => LocalChanges.instance.text(LocalChanges.mediaGone(mediaId)) == _viewName;
+
+  String get _shownName => albumNameOf(widget.channelId, _channelName);
 
   /// Non-destructive and personal: any channel member may hide/re-show any
   /// selected photo(s) for just their own Smile-App view. Same multi-select
@@ -608,21 +624,19 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     final ids = _selectedIds.toList();
     _clearSelection();
     final hiding = !_showingHidden;
-    try {
-      final result = hiding
-          ? await widget.mediaService.hidePhotos(ids)
-          : await widget.mediaService.unhidePhotos(ids);
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = result.deniedIds.isEmpty
-            ? null
-            : '${result.deniedIds.length} Foto(s) nicht möglich.';
-      });
-      await _load();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _errorMessage = '${hiding ? "Ausblenden" : "Einblenden"} fehlgeschlagen: $e');
-    }
+    // Out of this list at once; back with a message if the server says no.
+    MediaActionResult? result;
+    final saved = await LocalChanges.instance.run(
+      overrides: {for (final id in ids) LocalChanges.mediaGone(id): _viewName},
+      commit: () async => result = hiding ? await widget.mediaService.hidePhotos(ids) : await widget.mediaService.unhidePhotos(ids),
+      affects: tablesChanged({'media_items', 'media_item_hides', 'channels'}, channelIds: {widget.channelId}),
+      failureText: hiding ? 'Ausblenden fehlgeschlagen.' : 'Einblenden fehlgeschlagen.',
+    );
+    if (!saved || !mounted) return;
+    final denied = result?.deniedIds ?? const [];
+    LocalChanges.instance.drop(denied.map(LocalChanges.mediaGone));
+    setState(() => _errorMessage = denied.isEmpty ? null : '${denied.length} Foto(s) nicht möglich.');
+    await _load();
   }
 
   /// Builds the chat rows newest-first (for the `reverse: true` list),
@@ -816,9 +830,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                         child: Row(
                           children: [
-                            albumCover(widget.channelId, _channelName, _covers, size: 36),
+                            albumCover(widget.channelId, _shownName, _covers, size: 36),
                             const SizedBox(width: SmileSpacing.m),
-                            Expanded(child: Text(_channelName, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            Expanded(child: Text(_shownName, maxLines: 1, overflow: TextOverflow.ellipsis)),
                           ],
                         ),
                       ),
@@ -905,9 +919,11 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                     // otherwise it'd render twice: once at full local
                     // quality via the pending tile, once blurry via its
                     // server-side preview. Never applies in the hidden view.
-                    final visibleItems = _showingHidden
-                        ? _items!
-                        : _items!.where((item) => item.isReady || !pendingIds.contains(item.id)).toList();
+                    final visibleItems = (_showingHidden
+                            ? _items!
+                            : _items!.where((item) => item.isReady || !pendingIds.contains(item.id)))
+                        .where((item) => !_isGoneHere(item.id))
+                        .toList();
                     if (visibleItems.isEmpty && pendingCount == 0) {
                       return RefreshIndicator(
                         onRefresh: _refreshAll,

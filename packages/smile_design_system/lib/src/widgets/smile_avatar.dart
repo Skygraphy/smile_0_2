@@ -9,10 +9,14 @@ import 'package:flutter/material.dart';
 /// -- not per-person hue variety, matching the single-primary-color
 /// ground rule rather than a Slack/WhatsApp-style colorful-initials system.
 class SmileAvatar extends StatelessWidget {
-  const SmileAvatar({super.key, required this.name, this.avatarUrl, this.size = 40});
+  const SmileAvatar({super.key, required this.name, this.avatarUrl, this.image, this.size = 40});
 
   final String name;
   final String? avatarUrl;
+
+  /// A picture not on the server yet (just picked, shown at once) -- wins
+  /// over [avatarUrl].
+  final ImageProvider? image;
   final double size;
 
   String get _initials {
@@ -31,7 +35,9 @@ class SmileAvatar extends StatelessWidget {
       child: SizedBox(
         width: size,
         height: size,
-        child: (url != null && url.isNotEmpty)
+        child: image != null
+            ? Image(image: image!, fit: BoxFit.cover, gaplessPlayback: true)
+            : (url != null && url.isNotEmpty)
             ? CachedNetworkImage(
                 imageUrl: url,
                 fit: BoxFit.cover,

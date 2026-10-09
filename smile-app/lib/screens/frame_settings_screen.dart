@@ -6,6 +6,8 @@ import 'package:smile_design_system/smile_design_system.dart';
 import '../services/frame_service.dart';
 import '../services/channel_picker_service.dart';
 import '../widgets/album_covers.dart';
+import '../widgets/local_display.dart';
+import '../services/local_changes.dart';
 import '../services/avatar_upload.dart';
 import '../services/object_picture_service.dart';
 import '../widgets/picture_sheet.dart';
@@ -88,9 +90,15 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
 
   Future<void> _rename() async {
     final t = SmileTexts.of(context);
-    final name = await showSmileNameDialog(context, title: t.renameFrame, confirmLabel: t.save, initialValue: _frame.name);
+    final name = await showSmileNameDialog(context, title: t.renameFrame, confirmLabel: t.save, initialValue: _shownName);
     if (name == null) return;
-    await _run(() => widget.frameService.renameFrame(frameId: _frame.id, name: name));
+    // Shows at once everywhere (LocalChanges, 2026-10-09).
+    final saved = await LocalChanges.instance.run(
+      overrides: {LocalChanges.frameName(_frame.id): name},
+      commit: () => widget.frameService.renameFrame(frameId: _frame.id, name: name),
+      affects: tablesChanged({'frames'}, spaceIds: {widget.spaceId}),
+    );
+    if (saved && mounted) await _load();
   }
 
   Future<void> _toggleRevoked() async {
@@ -127,16 +135,33 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
     }
   }
 
-  /// Optimistic: the switch moves at once, a failure reloads the truth.
+  /// Optimistic: the switch moves at once, a failure says why and reloads
+  /// the truth.
   Future<void> _setAlbumSwitch(bool value) async {
     setState(() => _frame = _frame.copyWith(channelSwitchEnabled: value));
-    await _run(() => widget.frameService.setChannelSwitchEnabled(frameId: _frame.id, enabled: value));
+    await _saveSetting(() => widget.frameService.setChannelSwitchEnabled(frameId: _frame.id, enabled: value));
   }
 
   Future<void> _setVideoSound(bool value) async {
     setState(() => _frame = _frame.copyWith(videoSound: value));
-    await _run(() => widget.frameService.setVideoSound(frameId: _frame.id, enabled: value));
+    await _saveSetting(() => widget.frameService.setVideoSound(frameId: _frame.id, enabled: value));
   }
+
+  Future<void> _saveSetting(Future<void> Function() save) async {
+    final saved = await LocalChanges.instance.run(
+      overrides: const {},
+      commit: save,
+      affects: tablesChanged({'frames'}, spaceIds: {widget.spaceId}),
+    );
+    if (!saved && mounted) await _load();
+  }
+
+  String get _shownName => frameNameOf(_frame.id, _frame.name);
+
+  /// Albums still on the Frame -- one just taken off is gone at once.
+  List<FrameChannelAssignment>? get _visibleAssignments => _assignments
+      ?.where((a) => !LocalChanges.instance.flag(LocalChanges.frameAlbumRemoved(_frame.id, a.channelId)))
+      .toList();
 
   Future<void> _addAlbum() async {
     final t = SmileTexts.of(context);
@@ -186,8 +211,8 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
   /// The album the Frame shows right now: the server's current album
   /// (migrations/0069), else -- before its first sync -- the first one.
   String? get _shownChannelId {
-    final assignments = _assignments ?? const <FrameChannelAssignment>[];
-    final current = _frame.currentChannelId;
+    final assignments = _visibleAssignments ?? const <FrameChannelAssignment>[];
+    final current = LocalChanges.instance.text(LocalChanges.frameAlbum(_frame.id)) ?? _frame.currentChannelId;
     if (current != null && assignments.any((a) => a.channelId == current)) return current;
     return assignments.isEmpty ? null : assignments.first.channelId;
   }
@@ -195,13 +220,17 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
   Future<void> _showNow(FrameChannelAssignment assignment) async {
     final messenger = ScaffoldMessenger.of(context);
     final t = SmileTexts.of(context);
-    try {
-      await widget.frameService.showChannelNow(frameId: _frame.id, channelId: assignment.channelId);
-      messenger.showSnackBar(SnackBar(content: Text(t.frameSwitched(_frame.name, assignment.channelName))));
-    } catch (e) {
-      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+    final saved = await LocalChanges.instance.run(
+      overrides: {LocalChanges.frameAlbum(_frame.id): assignment.channelId},
+      commit: () => widget.frameService.showChannelNow(frameId: _frame.id, channelId: assignment.channelId),
+      affects: tablesChanged({'frames'}, spaceIds: {widget.spaceId}),
+    );
+    if (saved) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(t.frameSwitched(_shownName, albumNameOf(assignment.channelId, assignment.channelName)))),
+      );
+      if (mounted) await _load();
     }
-    await _load();
   }
 
   Future<void> _showAlbumActions(FrameChannelAssignment assignment) async {
@@ -216,7 +245,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
           children: [
             ListTile(
               leading: albumCover(assignment.channelId, assignment.channelName, _covers, size: 36),
-              title: Text(assignment.channelName),
+              title: Text(albumNameOf(assignment.channelId, assignment.channelName)),
             ),
             if (!isShown)
               SmileActionRow(
@@ -264,13 +293,18 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
       destructive: true,
     );
     if (!confirmed) return;
-    await _run(() => widget.frameService.unassignChannel(frameId: _frame.id, channelId: assignment.channelId));
+    final saved = await LocalChanges.instance.run(
+      overrides: {LocalChanges.frameAlbumRemoved(_frame.id, assignment.channelId): true},
+      commit: () => widget.frameService.unassignChannel(frameId: _frame.id, channelId: assignment.channelId),
+      affects: tablesChanged({'frame_channels', 'frames'}, channelIds: {assignment.channelId}, spaceIds: {widget.spaceId}),
+    );
+    if (saved && mounted) await _load();
   }
 
   @override
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
-    final assignments = _assignments;
+    final assignments = _visibleAssignments;
     final scheme = Theme.of(context).colorScheme;
     final status = switch (_frame.lifecycleState) {
       'active' => t.frameActive,
@@ -298,17 +332,22 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                           context,
                           kind: ObjectKind.frame,
                           id: _frame.id,
-                          name: _frame.name,
+                          name: _shownName,
                           hasCustomPicture: _frame.avatarPath != null,
                         );
                         if (changed) await _load();
                       },
                       child: SmileStatusDot(
                         online: _frame.isOnline,
-                        child: SmileAlbumCover(name: _frame.name, imageUrl: avatarPathToUrl(_frame.avatarPath), size: 80),
+                        child: objectPicture(
+                          key: LocalChanges.framePicture(_frame.id),
+                          name: _shownName,
+                          serverUrl: avatarPathToUrl(_frame.avatarPath),
+                          size: 80,
+                        ),
                       ),
                     ),
-                    title: _frame.name,
+                    title: _shownName,
                     subtitleIcon: spaceName == null ? null : SmileIcons.space,
                     subtitle: [if (spaceName != null) t.frameInSpace(spaceName), status].join(' · '),
                     onRename: _rename,
@@ -358,7 +397,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                       for (final assignment in assignments)
                         SmileObjectTile(
                           leading: albumCover(assignment.channelId, assignment.channelName, _covers, size: 40),
-                          title: assignment.channelName,
+                          title: albumNameOf(assignment.channelId, assignment.channelName),
                           subtitle: assignment.channelId == _shownChannelId ? t.showingNow : null,
                           subtitleIcon: SmileIcons.play,
                           subtitleHighlight: true,

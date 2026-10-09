@@ -12,6 +12,8 @@ import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/email_dialog.dart';
 import '../widgets/album_covers.dart';
+import '../widgets/local_display.dart';
+import '../services/local_changes.dart';
 import '../services/avatar_upload.dart';
 import '../services/object_picture_service.dart';
 import '../widgets/picture_sheet.dart';
@@ -123,10 +125,18 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
 
   Future<void> _rename() async {
     final t = SmileTexts.of(context);
-    final name = await showSmileNameDialog(context, title: t.renameSpace, confirmLabel: t.save, initialValue: _name);
+    final name = await showSmileNameDialog(context, title: t.renameSpace, confirmLabel: t.save, initialValue: _shownName);
     if (name == null) return;
-    await _run(() => widget.spaceService.renameSpace(spaceId: widget.spaceId, name: name));
+    // Shows at once everywhere (LocalChanges, 2026-10-09).
+    final saved = await LocalChanges.instance.run(
+      overrides: {LocalChanges.spaceName(widget.spaceId): name},
+      commit: () => widget.spaceService.renameSpace(spaceId: widget.spaceId, name: name),
+      affects: tablesChanged({'spaces'}, spaceIds: {widget.spaceId}),
+    );
+    if (saved && mounted) await _load();
   }
+
+  String get _shownName => spaceNameOf(widget.spaceId, _name);
 
   Future<void> _createAlbum() async {
     final t = SmileTexts.of(context);
@@ -309,14 +319,19 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
                 context,
                 kind: ObjectKind.space,
                 id: widget.spaceId,
-                name: _name,
+                name: _shownName,
                 hasCustomPicture: _avatarPath != null,
               );
               if (changed) await _load();
             },
-            child: SmileAlbumCover(name: _name, imageUrl: avatarPathToUrl(_avatarPath), size: 80),
+            child: objectPicture(
+              key: LocalChanges.spacePicture(widget.spaceId),
+              name: _shownName,
+              serverUrl: avatarPathToUrl(_avatarPath),
+              size: 80,
+            ),
           ),
-          title: _name,
+          title: _shownName,
           subtitleIcon: isAdmin ? SmileIcons.admin : SmileIcons.coAdmin,
           subtitle: admins == null ? null : (isAdmin ? t.youAreAdmin : t.youAreCoAdmin),
           onRename: _rename,
@@ -341,7 +356,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
             for (final album in albums)
               SmileObjectTile(
                 leading: albumCover(album['id'] as String, album['name'] as String, _covers, size: 40),
-                title: album['name'] as String,
+                title: albumNameOf(album['id'] as String, album['name'] as String),
                 trailing: Icon(SmileIcons.chevron, size: 16, color: muted),
                 onTap: () async {
                   await Navigator.of(context).push(
@@ -397,9 +412,14 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
               SmileObjectTile(
                 leading: SmileStatusDot(
                   online: frame.isOnline,
-                  child: SmileAlbumCover(name: frame.name, imageUrl: avatarPathToUrl(frame.avatarPath), size: 40),
+                  child: objectPicture(
+                    key: LocalChanges.framePicture(frame.id),
+                    name: frameNameOf(frame.id, frame.name),
+                    serverUrl: avatarPathToUrl(frame.avatarPath),
+                    size: 40,
+                  ),
                 ),
-                title: frame.name,
+                title: frameNameOf(frame.id, frame.name),
                 subtitle: _frameStatus(t, frame),
                 trailing: Icon(SmileIcons.chevron, size: 16, color: muted),
                 onTap: () async {

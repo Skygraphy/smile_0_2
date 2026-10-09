@@ -5,6 +5,8 @@ import '../main.dart';
 import '../services/channel_picker_service.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
+import '../widgets/local_display.dart';
+import '../widgets/album_covers.dart';
 import '../widgets/top_bar_actions.dart';
 import 'channel_feed_screen.dart';
 import 'news_screen.dart';
@@ -139,12 +141,13 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
                         ),
                       for (final channel in channels)
                         SmileObjectTile(
-                          leading: SmileAlbumCover(
-                            name: channel.channelName,
-                            imageUrl: channel.coverUrl,
-                            cacheKey: channel.coverMediaId == null ? null : 'cover_${channel.coverMediaId}',
+                          // Same cover logic as everywhere, own changes included.
+                          leading: albumCover(
+                            channel.channelId,
+                            albumNameOf(channel.channelId, channel.channelName),
+                            {channel.channelId: channel},
                           ),
-                          title: channel.channelName,
+                          title: albumNameOf(channel.channelId, channel.channelName),
                           // Role icon first: pencil = Member (may post),
                           // binoculars = Viewer (sees it via a share); then
                           // the newest post, WhatsApp chat-list style.
@@ -159,7 +162,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
                               MaterialPageRoute(
                                 builder: (_) => ChannelFeedScreen(
                                   channelId: channel.channelId,
-                                  channelName: channel.channelName,
+                                  channelName: albumNameOf(channel.channelId, channel.channelName),
                                 ),
                               ),
                             );

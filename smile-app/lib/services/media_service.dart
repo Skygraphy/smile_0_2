@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'local_changes.dart';
 
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -216,6 +217,7 @@ class MediaService {
       }
       rethrow;
     }
+    LocalChanges.saved(tablesChanged({'media_items', 'channels'}, channelIds: {channelId}));
   }
 
   /// A video of any length (decision 2026-10-01): same two-step flow as
@@ -267,6 +269,7 @@ class MediaService {
       } catch (_) {}
       rethrow;
     }
+    LocalChanges.saved(tablesChanged({'media_items', 'channels'}, channelIds: {channelId}));
   }
 
   /// A still frame from the start of a local video (JPEG bytes), for the

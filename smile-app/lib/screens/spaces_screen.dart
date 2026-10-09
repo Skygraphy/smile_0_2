@@ -3,6 +3,8 @@ import 'package:smile_design_system/smile_design_system.dart';
 
 import '../main.dart';
 import '../services/avatar_upload.dart';
+import '../services/local_changes.dart';
+import '../widgets/local_display.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/top_bar_actions.dart';
@@ -144,8 +146,12 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
                     ),
                   for (final space in spaces)
                     SmileObjectTile(
-                      leading: SmileAlbumCover(name: space.name, imageUrl: avatarPathToUrl(space.avatarPath)),
-                      title: space.name,
+                      leading: objectPicture(
+                        key: LocalChanges.spacePicture(space.id),
+                        name: spaceNameOf(space.id, space.name),
+                        serverUrl: avatarPathToUrl(space.avatarPath),
+                      ),
+                      title: spaceNameOf(space.id, space.name),
                       subtitleIcon: space.isAdmin ? SmileIcons.admin : SmileIcons.coAdmin,
                       subtitle: [
                         space.isAdmin ? t.roleAdmin : t.roleCoAdmin,

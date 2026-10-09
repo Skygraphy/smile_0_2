@@ -1,8 +1,12 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show SignOutScope;
 
 import '../main.dart';
 import '../services/avatar_upload.dart';
+import '../services/local_changes.dart';
+import '../widgets/local_display.dart';
 import '../services/profile_service.dart';
 import '../services/push_service.dart';
 import '../services/sync_bus.dart';
@@ -33,7 +37,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
   final _pushService = PushService();
   SmileProfile? _profile;
   String? _errorMessage;
-  bool _isPickingAvatar = false;
 
   @override
   void initState() {
@@ -69,39 +72,38 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
     );
   }
 
+  /// The new picture shows at once while it uploads (LocalChanges,
+  /// 2026-10-09); a failure takes it back with a message.
   Future<void> _changeAvatar() async {
     final source = await showAvatarSourceSheet(context);
-    if (source == null) return;
-    String? url;
+    if (source == null || !mounted) return;
+    final LocalPicture shown;
+    final Future<void> Function() commit;
     if (source == AvatarSource.url) {
-      if (!mounted) return;
-      final enteredUrl = await showAvatarUrlDialog(context);
-      if (enteredUrl == null || enteredUrl.trim().isEmpty) return;
-      setState(() => _isPickingAvatar = true);
-      try {
-        url = await widget.profileService.uploadMyAvatarFromUrl(enteredUrl.trim());
-      } on AvatarUrlException catch (e) {
-        if (mounted) setState(() => _errorMessage = e.message);
-      } catch (e) {
-        if (mounted) setState(() => _errorMessage = SmileTexts.of(context).avatarUploadError('$e'));
-      }
+      final enteredUrl = (await showAvatarUrlDialog(context))?.trim();
+      if (enteredUrl == null || enteredUrl.isEmpty) return;
+      shown = LocalPicture.url(enteredUrl);
+      commit = () => widget.profileService.uploadMyAvatarFromUrl(enteredUrl);
     } else {
-      setState(() => _isPickingAvatar = true);
-      try {
-        url = source == AvatarSource.camera
-            ? await widget.profileService.uploadMyAvatarFromCamera()
-            : await widget.profileService.uploadMyAvatarFromGallery();
-      } catch (e) {
-        if (mounted) setState(() => _errorMessage = SmileTexts.of(context).avatarUploadError('$e'));
-      }
+      final picked = await pickPictureBytes(source == AvatarSource.camera ? ImageSource.camera : ImageSource.gallery);
+      if (picked == null) return;
+      shown = LocalPicture.bytes(picked.bytes);
+      commit = () => widget.profileService.uploadMyAvatarPicked(picked);
     }
-    if (!mounted) return;
-    setState(() {
-      _isPickingAvatar = false;
-      if (url != null && _profile != null) {
-        _profile = SmileProfile(userId: _profile!.userId, displayName: _profile!.displayName, avatarUrl: url);
-      }
-    });
+    final serverUrl = widget.profileService.myAvatarUrl();
+    final saved = await LocalChanges.instance.run(
+      overrides: {LocalChanges.profileAvatar: shown},
+      commit: commit,
+      // Same address as before (one avatar per person): drop the old copy
+      // from the image cache, then load the new one.
+      warmUp: () async {
+        if (serverUrl == null) return;
+        await CachedNetworkImage.evictFromCache(serverUrl);
+        await precacheUrl(serverUrl);
+      },
+      affects: tablesChanged({'profiles'}),
+    );
+    if (saved && mounted) await _load();
   }
 
   Future<void> _editName() async {
@@ -111,13 +113,14 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
     final newName =
         await showSmileNameDialog(context, title: t.changeName, confirmLabel: t.save, initialValue: profile.displayName);
     if (newName == null) return;
-    try {
-      await widget.profileService.setDisplayName(newName);
-      if (!mounted) return;
-      setState(() => _profile = SmileProfile(userId: profile.userId, displayName: newName, avatarUrl: profile.avatarUrl));
-    } catch (e) {
-      if (mounted) setState(() => _errorMessage = t.nameSaveError('$e'));
-    }
+    final saved = await LocalChanges.instance.run(
+      overrides: {LocalChanges.profileName: newName},
+      commit: () => widget.profileService.setDisplayName(newName),
+      affects: tablesChanged({'profiles'}),
+      failureText: t.nameSaveError(''),
+    );
+    if (!saved || !mounted) return;
+    setState(() => _profile = SmileProfile(userId: profile.userId, displayName: newName, avatarUrl: profile.avatarUrl));
   }
 
   /// At the bottom of the Profil tab -- a rare,
@@ -220,7 +223,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                         message: t.viewPicture,
                         child: GestureDetector(
                           onTap: _viewAvatarFullScreen,
-                          child: SmileAvatar(name: profile.displayName, avatarUrl: profile.avatarUrl, size: 128),
+                          child: myAvatar(name: myNameOf(profile.displayName), serverUrl: profile.avatarUrl, size: 128),
                         ),
                       ),
                       Positioned(
@@ -229,20 +232,12 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                         child: Tooltip(
                           message: t.changePicture,
                           child: GestureDetector(
-                            onTap: _isPickingAvatar ? null : _changeAvatar,
+                            onTap: _changeAvatar,
                             child: CircleAvatar(
                               radius: 20,
                               backgroundColor: scheme.primary,
-                              child: _isPickingAvatar
-                                  ? SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation(scheme.onPrimary),
-                                      ),
-                                    )
-                                  : Icon(SmileIcons.camera, size: 20, color: scheme.onPrimary),
+                              // No waiting spinner: the new picture shows at once.
+                              child: Icon(SmileIcons.camera, size: 20, color: scheme.onPrimary),
                             ),
                           ),
                         ),
@@ -261,7 +256,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         child: Text(
-                          profile.displayName,
+                          myNameOf(profile.displayName),
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                         ),
                       ),

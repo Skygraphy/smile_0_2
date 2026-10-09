@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../widgets/album_covers.dart';
+import '../widgets/local_display.dart';
 
 import '../services/channel_picker_service.dart';
 import '../services/media_service.dart';
@@ -159,7 +160,7 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
                           for (final channel in channels)
                             SmileObjectTile(
                               leading: albumCover(channel.channelId, channel.channelName, _covers),
-                              title: channel.channelName,
+                              title: albumNameOf(channel.channelId, channel.channelName),
                               subtitleIcon: SmileIcons.space,
                               subtitle: channel.spaceName,
                               trailing: _uploadingTo == channel

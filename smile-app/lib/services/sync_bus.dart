@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
+import 'local_changes.dart';
 
 /// One "something you can see changed" signal. [tables]/[channelIds]/
 /// [spaceIds] are empty for [SyncEvent.everything] (app resumed -- any
@@ -71,6 +72,8 @@ mixin SyncReload<T extends StatefulWidget> on State<T> {
   @override
   void initState() {
     super.initState();
+    // Own changes not yet confirmed by the server show at once (2026-10-09).
+    LocalChanges.instance.addListener(_onLocalChange);
     _syncSubscription = SyncBus.stream.listen((event) {
       _pendingSync = _pendingSync?.merge(event) ?? event;
       _syncDebounce?.cancel();
@@ -83,8 +86,13 @@ mixin SyncReload<T extends StatefulWidget> on State<T> {
     });
   }
 
+  void _onLocalChange() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    LocalChanges.instance.removeListener(_onLocalChange);
     _syncDebounce?.cancel();
     unawaited(_syncSubscription?.cancel());
     super.dispose();

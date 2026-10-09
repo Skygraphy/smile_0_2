@@ -1,5 +1,6 @@
 import '../main.dart';
 import 'edge_functions.dart';
+import 'local_changes.dart';
 
 class SmileFrame {
   SmileFrame({
@@ -145,6 +146,7 @@ class FrameService {
     if (data == null || data['frame_id'] == null) {
       throw FrameServiceException(data?['error'] as String? ?? 'unknown_error');
     }
+    LocalChanges.saved(tablesChanged({'frames'}, spaceIds: {spaceId}));
     return getFrame(data['frame_id'] as String);
   }
 
@@ -158,6 +160,7 @@ class FrameService {
   /// that; the Frame's existing credentials still work, no re-pairing needed.
   Future<void> setRevoked({required String frameId, required bool revoked}) async {
     await supabase.from('frames').update({'lifecycle_state': revoked ? 'revoked' : 'active'}).eq('id', frameId);
+    LocalChanges.saved(tablesChanged({'frames'}));
   }
 
   Future<void> setChannelSwitchEnabled({required String frameId, required bool enabled}) async {
@@ -170,6 +173,7 @@ class FrameService {
     final response = await invokeEdge('delete-frame', body: {'frame_id': frameId});
     final data = response.data as Map<String, dynamic>?;
     if (data?['status'] != 'deleted') throw FrameServiceException(data?['error'] as String? ?? 'unknown_error');
+    LocalChanges.saved(tablesChanged({'frames', 'frame_channels'}));
   }
 
   /// "Jetzt zeigen": the Frame switches to this album (it is woken by the
@@ -237,6 +241,7 @@ class FrameService {
     if (data?['status'] != 'assigned') {
       throw FrameServiceException(data?['error'] as String? ?? 'unknown_error');
     }
+    LocalChanges.saved(tablesChanged({'frame_channels', 'frames'}, channelIds: {channelId}));
   }
 
   Future<void> unassignChannel({required String frameId, required String channelId}) async {

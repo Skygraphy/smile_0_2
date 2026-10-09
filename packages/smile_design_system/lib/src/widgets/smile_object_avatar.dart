@@ -48,17 +48,27 @@ class SmileInitialsTile extends StatelessWidget {
 /// [cacheKey] should be stable per photo (the media id) -- the signed URL
 /// changes on every load and would defeat the disk cache.
 class SmileAlbumCover extends StatelessWidget {
-  const SmileAlbumCover({super.key, required this.name, this.imageUrl, this.cacheKey, this.size = 42});
+  const SmileAlbumCover({super.key, required this.name, this.imageUrl, this.cacheKey, this.image, this.size = 42});
 
   final String name;
   final String? imageUrl;
   final String? cacheKey;
   final double size;
 
+  /// A picture not on the server yet (just picked, shown at once) -- wins
+  /// over [imageUrl].
+  final ImageProvider? image;
+
   @override
   Widget build(BuildContext context) {
     final url = imageUrl;
     final fallback = SmileInitialsTile(name: name, size: size);
+    if (image != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(size * 0.29),
+        child: Image(image: image!, width: size, height: size, fit: BoxFit.cover, gaplessPlayback: true),
+      );
+    }
     if (url == null || url.isEmpty) return fallback;
     return ClipRRect(
       borderRadius: BorderRadius.circular(size * 0.29),

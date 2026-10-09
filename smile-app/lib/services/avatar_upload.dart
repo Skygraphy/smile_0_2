@@ -18,6 +18,17 @@ Future<String?> pickAndUploadFromCamera(String objectPath) => _pickAndUpload(obj
 Future<String?> pickAndUploadFromGallery(String objectPath) => _pickAndUpload(objectPath, ImageSource.gallery);
 
 Future<String?> _pickAndUpload(String objectPath, ImageSource source) async {
+  final picked = await pickPictureBytes(source);
+  if (picked == null) return null;
+  await uploadPictureBytes(objectPath, picked);
+  return objectPath;
+}
+
+/// A picture picked on this phone, not uploaded yet -- shown at once while
+/// it uploads (LocalChanges, 2026-10-09).
+typedef PickedPicture = ({Uint8List bytes, String mimeType});
+
+Future<PickedPicture?> pickPictureBytes(ImageSource source) async {
   final picked = await ImagePicker().pickImage(
     source: source,
     imageQuality: 85,
@@ -25,12 +36,12 @@ Future<String?> _pickAndUpload(String objectPath, ImageSource source) async {
     maxHeight: 512,
   );
   if (picked == null) return null;
-  final bytes = await picked.readAsBytes();
   final extension = picked.path.split('.').last.toLowerCase();
-  final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
-  await _upload(objectPath, bytes, mimeType);
-  return objectPath;
+  return (bytes: await picked.readAsBytes(), mimeType: extension == 'png' ? 'image/png' : 'image/jpeg');
 }
+
+Future<void> uploadPictureBytes(String objectPath, PickedPicture picture) =>
+    _upload(objectPath, picture.bytes, picture.mimeType);
 
 /// Downloads whatever the URL points to and uploads it as-is -- throws
 /// [AvatarUrlException] with a user-facing reason instead of a raw

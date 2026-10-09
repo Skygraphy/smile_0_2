@@ -1018,6 +1018,12 @@ abstract class SmileTexts {
   /// **'Frame öffnen'**
   String get openFrame;
 
+  /// No description provided for @changeNotSaved.
+  ///
+  /// In de, this message translates to:
+  /// **'Änderung nicht gespeichert: {reason}'**
+  String changeNotSaved(String reason);
+
   /// No description provided for @showingNow.
   ///
   /// In de, this message translates to:

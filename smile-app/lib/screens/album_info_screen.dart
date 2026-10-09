@@ -15,6 +15,8 @@ import '../services/channel_picker_service.dart';
 import '../services/object_picture_service.dart';
 import '../widgets/album_covers.dart';
 import '../widgets/picture_sheet.dart';
+import '../widgets/local_display.dart';
+import '../services/local_changes.dart';
 
 /// The album's info page, WhatsApp-group-info style (decision 5,
 /// 2026-10-05): big icon + name (tap to rename), quick actions, then
@@ -120,10 +122,15 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: SmileAlbumCover(name: frame.frameName, imageUrl: avatarPathToUrl(frame.avatarPath), size: 36),
-              title: Text(frame.frameName),
+              leading: objectPicture(
+                key: LocalChanges.framePicture(frame.frameId),
+                name: frameNameOf(frame.frameId, frame.frameName),
+                serverUrl: avatarPathToUrl(frame.avatarPath),
+                size: 36,
+              ),
+              title: Text(frameNameOf(frame.frameId, frame.frameName)),
             ),
-            if (frame.currentChannelId != widget.channelId)
+            if (_frameShows(frame) != widget.channelId)
               SmileActionRow(
                 icon: SmileIcons.play,
                 label: t.showHereNow,
@@ -159,14 +166,28 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   Future<void> _showHereNow(FrameShowing frame) async {
     final messenger = ScaffoldMessenger.of(context);
     final t = SmileTexts.of(context);
-    try {
-      await FrameService().showChannelNow(frameId: frame.frameId, channelId: widget.channelId);
-      messenger.showSnackBar(SnackBar(content: Text(t.frameSwitched(frame.frameName, _name))));
-    } catch (e) {
-      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+    final saved = await LocalChanges.instance.run(
+      overrides: {LocalChanges.frameAlbum(frame.frameId): widget.channelId},
+      commit: () => FrameService().showChannelNow(frameId: frame.frameId, channelId: widget.channelId),
+      affects: tablesChanged({'frames'}, channelIds: {widget.channelId}),
+    );
+    if (saved) {
+      messenger.showSnackBar(SnackBar(content: Text(t.frameSwitched(frameNameOf(frame.frameId, frame.frameName), _shownName))));
+      if (mounted) await _load();
     }
-    if (mounted) await _load();
   }
+
+  String get _shownName => albumNameOf(widget.channelId, _name);
+
+  /// Frames still showing this album -- one it was just taken off is gone
+  /// at once.
+  List<FrameShowing> get _visibleFrames => _frames
+      .where((f) => !LocalChanges.instance.flag(LocalChanges.frameAlbumRemoved(f.frameId, widget.channelId)))
+      .toList();
+
+  /// The album a Frame shows right now, an own switch included.
+  String? _frameShows(FrameShowing frame) =>
+      LocalChanges.instance.text(LocalChanges.frameAlbum(frame.frameId)) ?? frame.currentChannelId;
 
   Future<void> _openFrame(String frameId) async {
     final frameService = FrameService();
@@ -193,21 +214,31 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     final t = SmileTexts.of(context);
     final confirmed = await showSmileConfirmDialog(
       context,
-      title: t.removeFromFrameTitle(_name),
+      title: t.removeFromFrameTitle(_shownName),
       message: t.removeFromFrameMessage,
       confirmLabel: t.actionRemove,
       destructive: true,
     );
     if (!confirmed) return;
-    await _run(() => FrameService().unassignChannel(frameId: frameId, channelId: widget.channelId));
+    final saved = await LocalChanges.instance.run(
+      overrides: {LocalChanges.frameAlbumRemoved(frameId, widget.channelId): true},
+      commit: () => FrameService().unassignChannel(frameId: frameId, channelId: widget.channelId),
+      affects: tablesChanged({'frame_channels', 'frames'}, channelIds: {widget.channelId}),
+    );
+    if (saved && mounted) await _load();
   }
 
   Future<void> _rename() async {
     final t = SmileTexts.of(context);
-    final name = await showSmileNameDialog(context, title: t.renameAlbum, confirmLabel: t.save, initialValue: _name);
+    final name = await showSmileNameDialog(context, title: t.renameAlbum, confirmLabel: t.save, initialValue: _shownName);
     if (name == null) return;
-    await _run(() => widget.channelService.renameChannel(channelId: widget.channelId, name: name));
-    if (!mounted) return;
+    // Shows at once everywhere (LocalChanges, 2026-10-09).
+    final saved = await LocalChanges.instance.run(
+      overrides: {LocalChanges.albumName(widget.channelId): name},
+      commit: () => widget.channelService.renameChannel(channelId: widget.channelId, name: name),
+      affects: tablesChanged({'channels'}, channelIds: {widget.channelId}),
+    );
+    if (!saved || !mounted) return;
     setState(() => _name = name);
     widget.onRenamed?.call(name);
   }
@@ -260,7 +291,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     final confirmed = await showSmileConfirmDialog(
       context,
       title: t.endShareTitle(space.name),
-      message: t.endShareMessage(space.name, _name),
+      message: t.endShareMessage(space.name, _shownName),
       confirmLabel: t.endShare,
       destructive: true,
     );
@@ -291,7 +322,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     final t = SmileTexts.of(context);
     final confirmed = await showSmileConfirmDialog(
       context,
-      title: t.deleteAlbumTitle(_name),
+      title: t.deleteAlbumTitle(_shownName),
       message: t.deleteAlbumMessage,
       confirmLabel: t.actionDelete,
       destructive: true,
@@ -344,7 +375,15 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(leading: SmileAlbumCover(name: space.name, imageUrl: space.avatarUrl, size: 36), title: Text(space.name)),
+            ListTile(
+              leading: objectPicture(
+                key: LocalChanges.spacePicture(space.id),
+                name: spaceNameOf(space.id, space.name),
+                serverUrl: space.avatarUrl,
+                size: 36,
+              ),
+              title: Text(spaceNameOf(space.id, space.name)),
+            ),
             SmileActionRow(
               icon: SmileIcons.shared,
               label: t.endShare,
@@ -421,15 +460,15 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                       context,
                       kind: ObjectKind.album,
                       id: widget.channelId,
-                      name: _name,
+                      name: _shownName,
                       hasCustomPicture: _covers[widget.channelId]?.coverCustom ?? false,
                     );
                     if (changed) await _load();
                   }
                 : null,
-            child: albumCover(widget.channelId, _name, _covers, size: 80),
+            child: albumCover(widget.channelId, _shownName, _covers, size: 80),
           ),
-          title: _name,
+          title: _shownName,
           subtitleIcon: SmileIcons.space,
           subtitle: [
             if (homeSpace != null) t.albumInSpace(homeSpace),
@@ -502,8 +541,13 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                 SmileSectionHint(icon: SmileIcons.shared, text: t.notSharedYet),
               for (final space in roster.sharedSpaces)
                 SmileObjectTile(
-                  leading: SmileAlbumCover(name: space.name, imageUrl: space.avatarUrl, size: 40),
-                  title: space.name,
+                  leading: objectPicture(
+                    key: LocalChanges.spacePicture(space.id),
+                    name: spaceNameOf(space.id, space.name),
+                    serverUrl: space.avatarUrl,
+                    size: 40,
+                  ),
+                  title: spaceNameOf(space.id, space.name),
                   subtitleIcon: SmileIcons.viewer,
                   subtitle: t.sharedViewOnly,
                   onTap: isManager ? () => _showShareActions(space) : null,
@@ -541,18 +585,25 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
           SmileInfoSection(
             title: t.showsOn,
             children: [
-              if (_frames.isEmpty) SmileSectionHint(icon: SmileIcons.frame, text: t.notOnAnyFrame),
-              for (final frame in _frames)
+              if (_visibleFrames.isEmpty) SmileSectionHint(icon: SmileIcons.frame, text: t.notOnAnyFrame),
+              for (final frame in _visibleFrames)
                 SmileObjectTile(
-                  leading: SmileAlbumCover(name: frame.frameName, imageUrl: avatarPathToUrl(frame.avatarPath), size: 40),
-                  title: frame.frameName,
-                  subtitle: frame.currentChannelId == widget.channelId
+                  leading: objectPicture(
+                    key: LocalChanges.framePicture(frame.frameId),
+                    name: frameNameOf(frame.frameId, frame.frameName),
+                    serverUrl: avatarPathToUrl(frame.avatarPath),
+                    size: 40,
+                  ),
+                  title: frameNameOf(frame.frameId, frame.frameName),
+                  subtitle: _frameShows(frame) == widget.channelId
                       ? t.frameShowsThisAlbum
-                      : frame.currentAlbumName == null
+                      // Another album: its name is known only for the server's
+                      // own state, not for a switch just made elsewhere.
+                      : _frameShows(frame) != frame.currentChannelId || frame.currentAlbumName == null
                           ? null
-                          : t.frameShowsAlbum(frame.currentAlbumName!),
-                  subtitleIcon: frame.currentChannelId == widget.channelId ? SmileIcons.play : null,
-                  subtitleHighlight: frame.currentChannelId == widget.channelId,
+                          : t.frameShowsAlbum(albumNameOf(frame.currentChannelId!, frame.currentAlbumName!)),
+                  subtitleIcon: _frameShows(frame) == widget.channelId ? SmileIcons.play : null,
+                  subtitleHighlight: _frameShows(frame) == widget.channelId,
                   // Same pattern as the albums on the Frame page (2026-10-08).
                   trailing: Icon(SmileIcons.more, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   onTap: () => _showFrameActions(frame),

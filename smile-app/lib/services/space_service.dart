@@ -1,5 +1,6 @@
 import '../main.dart';
 import 'edge_functions.dart';
+import 'local_changes.dart';
 
 /// A person with full, ongoing SCO-equivalent power over a Space, granted
 /// by its founder -- migrations/0037_space_co_owners.sql. Solves the gap a
@@ -124,6 +125,7 @@ class SpaceService {
   /// Returns the new Space's id.
   Future<String> createSpace(String name) async {
     final row = await supabase.from('spaces').insert({'name': name}).select('id').single();
+    LocalChanges.saved(tablesChanged({'spaces'}));
     return row['id'] as String;
   }
 
@@ -132,6 +134,7 @@ class SpaceService {
   /// (delete-space-or-channel); restorable via TrashService.
   Future<void> deleteSpace(String spaceId) async {
     await supabase.functions.invoke('delete-space-or-channel', body: {'kind': 'space', 'id': spaceId});
+    LocalChanges.saved(tablesChanged({'spaces', 'channels'}, spaceIds: {spaceId}));
   }
 
   /// Founder + every co-owner of this Space (oldest-added first -- also
@@ -171,6 +174,7 @@ class SpaceService {
     if (status != 'invited' && status != 'already_co_owner') {
       throw SpaceServiceException(data?['error'] as String? ?? 'unknown_error');
     }
+    LocalChanges.saved(tablesChanged({'space_co_owner_invites'}, spaceIds: {spaceId}));
   }
 
   /// The founder may withdraw a not-yet-answered invite (e.g. wrong
@@ -178,6 +182,7 @@ class SpaceService {
   /// space_co_owner_invites_founder_withdraw's policy.
   Future<void> withdrawCoOwnerInvite(String inviteId) async {
     await supabase.from('space_co_owner_invites').delete().eq('id', inviteId);
+    LocalChanges.saved(tablesChanged({'space_co_owner_invites'}));
   }
 
   /// The caller's own pending co-owner invites, across every Space --
@@ -200,6 +205,7 @@ class SpaceService {
         .from('space_co_owner_invites')
         .update({'status': accept ? 'accepted' : 'declined'}).eq('id', inviteId);
     // Notified server-side (notify-event 'request_decided', migrations/0050).
+    LocalChanges.saved(tablesChanged({'space_co_owner_invites', 'space_co_owners', 'spaces'}));
   }
 
   /// The founder may remove any co-owner; a co-owner may also remove
@@ -207,6 +213,7 @@ class SpaceService {
   /// delete, see space_co_owners_delete's policy.
   Future<void> removeCoOwner({required String spaceId, required String userId}) async {
     await supabase.from('space_co_owners').delete().eq('space_id', spaceId).eq('user_id', userId);
+    LocalChanges.saved(tablesChanged({'space_co_owners', 'spaces'}, spaceIds: {spaceId}));
   }
 
   /// The founder voluntarily hands the founder role to one of their
@@ -222,6 +229,7 @@ class SpaceService {
     if (data?['status'] != 'transferred') {
       throw SpaceServiceException(data?['error'] as String? ?? 'unknown_error');
     }
+    LocalChanges.saved(tablesChanged({'space_co_owners', 'spaces'}, spaceIds: {spaceId}));
   }
 }
 

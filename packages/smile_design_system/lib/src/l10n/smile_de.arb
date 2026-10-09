@@ -326,6 +326,12 @@
   "removeFromFrame": "Vom Frame entfernen",
   "openAlbum": "Album öffnen",
   "openFrame": "Frame öffnen",
+  "changeNotSaved": "Änderung nicht gespeichert: {reason}",
+  "@changeNotSaved": {
+    "placeholders": {
+      "reason": {"type": "String"}
+    }
+  },
   "showingNow": "Läuft gerade",
   "showNow": "Jetzt zeigen",
   "showHereNow": "Hier jetzt zeigen",

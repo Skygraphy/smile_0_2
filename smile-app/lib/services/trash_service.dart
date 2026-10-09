@@ -1,5 +1,6 @@
 import '../main.dart';
 import 'edge_functions.dart';
+import 'local_changes.dart';
 
 /// One Space or Channel in the 30-day trash (supabase/migrations/0048_trash.sql).
 class TrashItem {
@@ -46,5 +47,6 @@ class TrashService {
 
   Future<void> restore(TrashItem item) async {
     await supabase.functions.invoke('restore-space-or-channel', body: {'kind': item.kind, 'id': item.id});
+    LocalChanges.saved(tablesChanged({'spaces', 'channels'}));
   }
 }

@@ -566,6 +566,11 @@ class SmileTextsDe extends SmileTexts {
   String get openFrame => 'Frame öffnen';
 
   @override
+  String changeNotSaved(String reason) {
+    return 'Änderung nicht gespeichert: $reason';
+  }
+
+  @override
   String get showingNow => 'Läuft gerade';
 
   @override

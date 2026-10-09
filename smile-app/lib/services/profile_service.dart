@@ -52,6 +52,15 @@ class ProfileService {
 
   Future<String?> uploadMyAvatarFromUrl(String url) => _setAvatar(uploadAvatarFromUrl('users/${_userId()}', url));
 
+  /// A picture already picked (and shown at once, LocalChanges).
+  Future<String?> uploadMyAvatarPicked(PickedPicture picture) => _setAvatar(() async {
+        await uploadPictureBytes('users/${_userId()}', picture);
+        return 'users/${_userId()}';
+      }());
+
+  /// The own avatar's address (always the same -- one avatar per person).
+  String? myAvatarUrl() => avatarPathToUrl('users/${_userId()}');
+
   String _userId() => supabase.auth.currentUser!.id;
 
   Future<String?> _setAvatar(Future<String?> upload) async {

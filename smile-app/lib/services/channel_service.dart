@@ -1,4 +1,5 @@
 import '../main.dart';
+import 'local_changes.dart';
 
 /// Channel creation is a plain client insert -- `channels.space_id` is a
 /// real not-null column again (migrations/0031_architecture_reset.sql
@@ -23,6 +24,7 @@ class ChannelService {
 
   Future<void> createChannel({required String spaceId, required String name}) async {
     await supabase.from('channels').insert({'space_id': spaceId, 'name': name});
+    LocalChanges.saved(tablesChanged({'channels'}, spaceIds: {spaceId}));
   }
 
   /// Home Space Admin and Co-Admins only (RLS channels_owner_update).
@@ -57,11 +59,13 @@ class ChannelService {
   /// no-op, so calling it after every feed reload is fine.
   Future<void> markAlbumSeen(String channelId) async {
     await supabase.rpc('mark_album_seen', params: {'p_channel': channelId});
+    LocalChanges.saved(tablesChanged({'album_reads'}));
   }
 
   /// Into the 30-day trash, for everyone at once (delete-space-or-channel);
   /// restorable via TrashService until purge-trash removes it for good.
   Future<void> deleteChannel(String channelId) async {
     await supabase.functions.invoke('delete-space-or-channel', body: {'kind': 'channel', 'id': channelId});
+    LocalChanges.saved(tablesChanged({'channels'}, channelIds: {channelId}));
   }
 }
