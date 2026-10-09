@@ -742,16 +742,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       appBar: _selectionMode
           ? AppBar(
               leading: IconButton(icon: const Icon(SmileIcons.close), onPressed: _clearSelection),
-              title: Text(t.selectedCount(_selectedIds.length)),
+              // Just the number, like WhatsApp -- "1 ausgewählt" got cut off.
+              title: Text('${_selectedIds.length}'),
               actions: [
-                // "Als Titelbild" (2026-10-08): exactly one ready photo, and
-                // only for the album's managers (RLS checks it as well).
-                if (_canSetCover)
-                  TextButton.icon(
-                    onPressed: _setSelectedAsCover,
-                    icon: const Icon(SmileIcons.picture, size: 18),
-                    label: Text(t.setAsCover),
-                  ),
                 IconButton(
                   icon: Icon(_showingHidden ? SmileIcons.unhide : SmileIcons.hide),
                   tooltip: _showingHidden ? t.actionUnhide : t.actionHide,
@@ -762,6 +755,16 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                   tooltip: t.actionDelete,
                   onPressed: _confirmAndDeleteSelection,
                 ),
+                // Rarer actions behind three dots (2026-10-09). "Als
+                // Titelbild": exactly one ready photo, and only for the
+                // album's managers (RLS checks it as well).
+                if (_canSetCover)
+                  PopupMenuButton<void>(
+                    icon: const Icon(SmileIcons.more),
+                    itemBuilder: (_) => [
+                      PopupMenuItem<void>(onTap: _setSelectedAsCover, child: Text(t.setAsCover)),
+                    ],
+                  ),
               ],
             )
           : _showingHidden
