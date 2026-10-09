@@ -20,6 +20,8 @@ import '../services/object_picture_service.dart';
 import 'album_info_screen.dart';
 import 'capture_preview_screen.dart';
 import '../widgets/capture_choice.dart';
+import '../widgets/album_covers.dart';
+import '../services/channel_picker_service.dart';
 import 'video_player_screen.dart';
 
 /// A picked photo shown in the grid immediately, before the network upload
@@ -85,6 +87,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   String? _errorMessage;
   String? _statusMessage;
   final Set<String> _selectedIds = {};
+  /// For the album's own cover next to its name in the top bar, as
+  /// WhatsApp shows the group picture (2026-10-09).
+  Map<String, ChannelWithActivity> _covers = const {};
   // WhatsApp's own "floating" date header: pinned at the top of the
   // visible feed, updating to whichever day's messages are currently
   // scrolled to the top. Not a real sliver-pinned header (that needs
@@ -117,6 +122,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     // Photos arriving in this album need no notification while it is open.
     ForegroundNotifications.openAlbumId = widget.channelId;
     _loadFromCacheThenRefresh();
+    _loadCover();
     unawaited(_loadMyStatus());
     _scrollController.addListener(_updateStickyDate);
   }
@@ -140,6 +146,13 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   Future<void> onSync() async {
     if (await closeIfGone(context, table: 'channels', id: widget.channelId)) return;
     await _refreshAll();
+    _loadCover();
+  }
+
+  void _loadCover() {
+    unawaited(loadAlbumCovers().then((covers) {
+      if (mounted) setState(() => _covers = covers);
+    }));
   }
 
   /// Pull-to-refresh's own handler: also re-checks membership status, not
@@ -786,20 +799,24 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                     message: t.albumInfo,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(SmileRadius.m),
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => AlbumInfoScreen(
-                            channelId: widget.channelId,
-                            channelName: _channelName,
-                            onRenamed: (name) => setState(() => _channelName = name),
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => AlbumInfoScreen(
+                              channelId: widget.channelId,
+                              channelName: _channelName,
+                              onRenamed: (name) => setState(() => _channelName = name),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                        // The cover may have been changed there.
+                        _loadCover();
+                      },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                         child: Row(
                           children: [
-                            const SmileObjectIcon(icon: SmileIcons.album, size: 36),
+                            albumCover(widget.channelId, _channelName, _covers, size: 36),
                             const SizedBox(width: SmileSpacing.m),
                             Expanded(child: Text(_channelName, maxLines: 1, overflow: TextOverflow.ellipsis)),
                           ],
@@ -937,7 +954,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                               0,
                               8,
                               0,
-                              _selectionMode || _showingHidden ? 8 : (_myStatus?.isMember ?? false) ? 144 : 88,
+                              // + the system navigation bar: the feed runs
+                              // underneath it (edge-to-edge), the FABs don't.
+                              MediaQuery.paddingOf(context).bottom +
+                                  (_selectionMode || _showingHidden ? 8 : (_myStatus?.isMember ?? false) ? 144 : 88),
                             ),
                             children: _buildFeedRows(pendingCount, visibleItems),
                           ),
