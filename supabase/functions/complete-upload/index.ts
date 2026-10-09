@@ -9,7 +9,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { announceReadyPhoto } from "../_shared/media-fanout.ts";
-import { processedPaths } from "../_shared/media-paths.ts";
+import { clientPosterPath, processedPaths } from "../_shared/media-paths.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -25,7 +25,18 @@ const processingStorageKey = Deno.env.get("MEDIA_PROCESSING_STORAGE_KEY") ?? "";
 
 interface CompleteUploadRequest {
   media_item_id: string;
+  // See create-upload: the video is already in the display format.
+  client_encoded?: boolean;
+  width?: number;
+  height?: number;
+  duration_seconds?: number;
+  // The size actually uploaded: the phone registers a video before it has
+  // finished converting it (smile-app MediaService.uploadVideo).
+  file_size_bytes?: number;
 }
+
+/** Above this, a "converted" video is not trusted and goes through the worker. */
+const MAX_CLIENT_ENCODED_BYTES = 500 * 1024 * 1024;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -58,6 +69,56 @@ Deno.serve(async (req) => {
     .maybeSingle();
 
   if (fetchError || !mediaItem) return jsonResponse({ error: "media_item_not_found" }, 404);
+  if (body.file_size_bytes && body.file_size_bytes > 0 && body.file_size_bytes !== mediaItem.file_size_bytes) {
+    mediaItem.file_size_bytes = Math.round(body.file_size_bytes);
+    await supabaseAdmin.from("media_items").update({ file_size_bytes: mediaItem.file_size_bytes }).eq("id", mediaItem.id);
+  }
+
+  // A video the phone already converted (2026-10-09): taken as it is --
+  // ready in a second instead of waiting ~30 s for a worker task to start.
+  // Falls through to the worker if anything about it doesn't fit.
+  if (
+    body.client_encoded &&
+    mediaItem.media_type === "video" &&
+    mediaItem.mime_type === "video/mp4" &&
+    (mediaItem.file_size_bytes ?? 0) <= MAX_CLIENT_ENCODED_BYTES
+  ) {
+    const { displayPath, thumbnailPath } = processedPaths("video", mediaItem.storage_path_original);
+    const posterPath = clientPosterPath(mediaItem.storage_path_original);
+    const { error: videoCopyError } = await supabaseAdmin.storage
+      .from("media-originals")
+      .copy(mediaItem.storage_path_original, displayPath, { destinationBucket: "media-display" });
+    const { error: posterCopyError } = await supabaseAdmin.storage
+      .from("media-originals")
+      .copy(posterPath, thumbnailPath, { destinationBucket: "media-thumbnails" });
+    if (!videoCopyError && !posterCopyError) {
+      const { error: updateError } = await supabaseAdmin
+        .from("media_items")
+        .update({
+          storage_path_display: displayPath,
+          storage_path_thumbnail: thumbnailPath,
+          processing_status: "ready",
+          ...(body.width ? { width: Math.round(body.width) } : {}),
+          ...(body.height ? { height: Math.round(body.height) } : {}),
+          ...(body.duration_seconds ? { duration_seconds: body.duration_seconds } : {}),
+        })
+        .eq("id", mediaItem.id);
+      if (!updateError) {
+        // The phone hears "ready" at once; the cleanup (its copy now lives
+        // in media-thumbnails) and the pushes to the others run on after.
+        const after = (async () => {
+          await supabaseAdmin.storage.from("media-originals").remove([posterPath]);
+          await announceReadyPhoto(supabaseAdmin, mediaItem.id, mediaItem.channel_id);
+        })();
+        // deno-lint-ignore no-explicit-any
+        const runtime = (globalThis as any).EdgeRuntime;
+        if (runtime?.waitUntil) runtime.waitUntil(after);
+        else await after;
+        return jsonResponse({ status: "ready" });
+      }
+    }
+    console.error("client-encoded video fell back to the worker", videoCopyError, posterCopyError);
+  }
 
   const processingConfigured = Boolean(processingServiceUrl && processingServiceToken && processingCallbackToken);
 

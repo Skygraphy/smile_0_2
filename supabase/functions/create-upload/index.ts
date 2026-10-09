@@ -6,6 +6,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { resolveChannelAccess } from "../_shared/channel-access.ts";
+import { clientPosterPath } from "../_shared/media-paths.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -28,6 +29,10 @@ interface CreateUploadRequest {
   file_extension: string;
   file_size_bytes?: number;
   preview_data_url?: string;
+  // The phone already converted the video to the display format (smile-app
+  // MediaShrink, 2026-10-09): it also uploads a poster frame, and
+  // complete-upload takes both as they are -- no worker, no waiting.
+  client_encoded?: boolean;
 }
 
 Deno.serve(async (req) => {
@@ -100,10 +105,19 @@ Deno.serve(async (req) => {
 
   if (signError || !signedUpload) return jsonResponse({ error: "signed_url_failed" }, 500);
 
+  // Where the phone puts the poster frame of a video it converted itself.
+  let poster: { poster_path: string; poster_token: string } | Record<string, never> = {};
+  if (body.media_type === "video" && body.client_encoded) {
+    const posterPath = clientPosterPath(storagePath);
+    const { data: posterUpload } = await supabaseAdmin.storage.from("media-originals").createSignedUploadUrl(posterPath);
+    if (posterUpload) poster = { poster_path: posterPath, poster_token: posterUpload.token };
+  }
+
   return jsonResponse({
     media_item_id: mediaItem.id,
     storage_path: storagePath,
     signed_url: signedUpload.signedUrl,
     token: signedUpload.token,
+    ...poster,
   });
 });

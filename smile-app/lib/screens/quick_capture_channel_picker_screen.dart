@@ -45,6 +45,8 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
   /// The photo itself, or a frame taken from the video.
   Uint8List? _preview;
   int? _videoPercent;
+  /// The video is first shrunk on the phone (MediaShrink), then uploaded.
+  bool _videoPreparing = false;
 
   @override
   void initState() {
@@ -91,8 +93,20 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
           file: File(widget.file.path),
           fileExtension: extension,
           mimeType: extension == "mov" ? "video/quicktime" : "video/$extension",
+          onPreparing: (percent) {
+            if (mounted) {
+              setState(() {
+                _videoPreparing = true;
+                _videoPercent = percent;
+              });
+            }
+          },
           onProgress: (sent, total) {
-            if (mounted && total > 0) setState(() => _videoPercent = (sent * 100 / total).floor());
+            if (!mounted || total == 0) return;
+            setState(() {
+              _videoPreparing = false;
+              _videoPercent = (sent * 100 / total).floor();
+            });
           },
         );
       } else {
@@ -165,7 +179,7 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
                               subtitle: channel.spaceName,
                               trailing: _uploadingTo == channel
                                   ? (_videoPercent != null
-                                      ? Text("${_videoPercent!} %")
+                                      ? Text(_videoPreparing ? "Vorbereiten ${_videoPercent!} %" : "${_videoPercent!} %")
                                       : const SizedBox(
                                           width: 20,
                                           height: 20,

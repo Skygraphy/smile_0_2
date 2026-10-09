@@ -462,15 +462,17 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
             mimeType: item.extension == 'mov' ? 'video/quicktime' : 'video/${item.extension}',
             onMediaItemCreated: (id) => item.pending.mediaItemId = id,
             onRetrying: onRetrying,
+            // First shrunk on the phone (MediaShrink), then uploaded.
+            onPreparing: (percent) {
+              if (mounted) setState(() => _statusMessage = 'Video wird vorbereitet: $percent %$counter');
+            },
             onProgress: (sent, total) {
               if (!mounted || total == 0) return;
               setState(() => _statusMessage = 'Video wird hochgeladen: ${(sent * 100 / total).floor()} %$counter');
             },
           );
-          // Converting a long video takes a while -- no point waiting for
-          // it. It shows up (with its preview frame) as processing, and
-          // becomes playable on its own once the media worker is done.
-          if (mounted) setState(() => _pendingUploads.remove(item.pending));
+          // Its sharp frame from the phone stays until the server's poster
+          // is loaded (_load) -- no blurry preview in between (2026-10-09).
         } else {
           if (batch.length > 1) setState(() => _statusMessage = 'Foto wird hochgeladen$counter');
           await widget.mediaService.uploadPhoto(
@@ -518,7 +520,13 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
         setState(() {
           _isUploading = false;
           for (final b in batch) {
-            _pendingUploads.remove(b.pending);
+            // A video still converting on the server (the fallback when the
+            // phone couldn't) keeps its sharp frame until it's ready --
+            // _load drops it then.
+            final waitingVideo = b.isVideo &&
+                b.pending.mediaItemId != null &&
+                !(_items ?? const <MediaItem>[]).any((i) => i.id == b.pending.mediaItemId && i.isReady);
+            if (!waitingVideo) _pendingUploads.remove(b.pending);
           }
         });
       }

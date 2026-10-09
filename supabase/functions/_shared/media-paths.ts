@@ -2,6 +2,11 @@
 // path -- one definition for complete-upload (dispatching the job) and
 // media-processed-callback (handing a long-running video worker fresh
 // upload tokens at the end, see there).
+/** The poster frame a phone uploads for a video it converted itself. */
+export function clientPosterPath(storagePathOriginal: string) {
+  return storagePathOriginal.replace(/.[^./]+$/, "") + "_poster.jpg";
+}
+
 export function processedPaths(mediaType: string, storagePathOriginal: string) {
   const extMatch = storagePathOriginal.match(/\.[^./]+$/);
   const originalExt = extMatch ? extMatch[0] : "";

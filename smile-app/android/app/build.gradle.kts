@@ -55,4 +55,9 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Shrinking videos on the phone before upload (VideoCompressor.kt) --
+    // same Media3 version video_player already brings in.
+    implementation("androidx.media3:media3-transformer:1.9.2")
+    implementation("androidx.media3:media3-effect:1.9.2")
+    implementation("androidx.media3:media3-common:1.9.2")
 }

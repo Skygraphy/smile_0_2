@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'local_changes.dart';
+import 'media_shrink.dart';
 
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -175,14 +177,20 @@ class MediaService {
     void Function(String mediaItemId)? onMediaItemCreated,
     void Function(int attempt, int maxAttempts)? onRetrying,
   }) async {
-    final previewDataUrl = await _buildPreviewDataUrl(bytes);
+    // Shrunk on the phone first, like WhatsApp (MediaShrink, 2026-10-09):
+    // to the size the server keeps anyway -- a fraction of the upload.
+    final shrunk = await MediaShrink.photo(bytes);
+    final uploadBytes = shrunk ?? bytes;
+    final uploadMime = shrunk != null ? 'image/jpeg' : mimeType;
+    final uploadExtension = shrunk != null ? 'jpg' : fileExtension;
+    final previewDataUrl = await _buildPreviewDataUrl(uploadBytes);
 
     final createData = await _withRetry(
       () => _createUpload(
         channelId: channelId,
-        mimeType: mimeType,
-        fileExtension: fileExtension,
-        fileSizeBytes: bytes.length,
+        mimeType: uploadMime,
+        fileExtension: uploadExtension,
+        fileSizeBytes: uploadBytes.length,
         previewDataUrl: previewDataUrl,
       ),
       onRetry: onRetrying,
@@ -197,8 +205,8 @@ class MediaService {
         () => supabase.storage.from('media-originals').uploadBinaryToSignedUrl(
               storagePath,
               token,
-              bytes,
-              FileOptions(contentType: mimeType),
+              uploadBytes,
+              FileOptions(contentType: uploadMime),
             ),
         onRetry: onRetrying,
       );
@@ -233,35 +241,132 @@ class MediaService {
     void Function(String mediaItemId)? onMediaItemCreated,
     void Function(int attempt, int maxAttempts)? onRetrying,
     void Function(int sentBytes, int totalBytes)? onProgress,
+    void Function(int percent)? onPreparing,
   }) async {
     final frame = await videoPosterBytes(file);
     final previewDataUrl = frame == null ? null : await _buildPreviewDataUrl(frame);
-
-    final createData = await _withRetry(
+    final clock = Stopwatch()..start();
+    // Registering with the server runs while the phone converts -- one
+    // round trip less (2026-10-09). The real size follows in complete-upload.
+    final created = _withRetry(
       () => _createUpload(
         channelId: channelId,
         mediaType: 'video',
-        mimeType: mimeType,
-        fileExtension: fileExtension,
+        mimeType: 'video/mp4',
+        fileExtension: 'mp4',
         fileSizeBytes: file.lengthSync(),
         previewDataUrl: previewDataUrl,
+        clientEncoded: true,
       ),
       onRetry: onRetrying,
-    );
+    )..ignore(); // awaited below; this only keeps an early failure from counting as unhandled
+    // Re-encoded on the phone first, like WhatsApp (MediaShrink,
+    // 2026-10-09): ~15 MB per minute instead of 100-700 MB. If the phone
+    // can't, the original goes up and the server shrinks it as before.
+    final shrunk = await MediaShrink.video(file, onProgress: onPreparing);
+    debugPrint('SmileUpload: shrunk in ${clock.elapsedMilliseconds} ms');
+    final upload = shrunk?.file ?? file;
+    // Its own poster frame goes up with it, so the server can take both
+    // as they are (complete-upload, client_encoded). The frame already
+    // taken from the original is the same picture.
+    final posterFrame = shrunk == null ? null : (frame ?? await videoPosterBytes(shrunk.file));
+    final poster = posterFrame == null ? null : await MediaShrink.poster(posterFrame);
+    // From here on it is uploading -- the status says so.
+    onProgress?.call(0, upload.lengthSync());
+    final uploadMime = shrunk != null ? 'video/mp4' : mimeType;
+    try {
+      await _uploadVideoFile(
+        channelId: channelId,
+        createData: await created,
+        upload: upload,
+        shrunk: poster == null ? null : shrunk,
+        poster: poster,
+        mimeType: uploadMime,
+        onMediaItemCreated: onMediaItemCreated,
+        onRetrying: onRetrying,
+        onProgress: onProgress,
+      );
+    } finally {
+      // The shrunk copy is only needed for the upload.
+      if (shrunk != null) {
+        try {
+          await shrunk.file.delete();
+        } catch (_) {}
+      }
+    }
+  }
+
+  Future<void> _uploadVideoFile({
+    required String channelId,
+    required Map<String, dynamic> createData,
+    required File upload,
+    ShrunkVideo? shrunk,
+    Uint8List? poster,
+    required String mimeType,
+    void Function(String mediaItemId)? onMediaItemCreated,
+    void Function(int attempt, int maxAttempts)? onRetrying,
+    void Function(int sentBytes, int totalBytes)? onProgress,
+  }) async {
+    final clock = Stopwatch()..start();
+    final size = upload.lengthSync();
     final mediaItemId = createData['media_item_id'] as String;
     onMediaItemCreated?.call(mediaItemId);
 
     try {
-      await ResumableUpload().upload(
-        file: file,
-        bucket: 'media-originals',
-        objectName: createData['storage_path'] as String,
-        token: createData['token'] as String,
-        contentType: mimeType,
-        onProgress: onProgress,
-        onRetrying: onRetrying,
+      final path = createData['storage_path'] as String;
+      final token = createData['token'] as String;
+      // A converted video is small: one request instead of the chunked,
+      // resumable protocol meant for huge originals (2026-10-09).
+      Future<void> sendVideo() async {
+        if (size > _singleRequestVideoBytes) {
+          await ResumableUpload().upload(
+            file: upload,
+            bucket: 'media-originals',
+            objectName: path,
+            token: token,
+            contentType: mimeType,
+            onProgress: onProgress,
+            onRetrying: onRetrying,
+          );
+          return;
+        }
+        final bytes = await upload.readAsBytes();
+        await _withRetry(
+          () => supabase.storage
+              .from('media-originals')
+              .uploadBinaryToSignedUrl(path, token, bytes, FileOptions(contentType: mimeType)),
+          onRetry: onRetrying,
+        );
+        onProgress?.call(size, size);
+      }
+
+      // Converted on the phone: the poster goes up at the same time, then
+      // the server takes both as they are -- ready at once.
+      final posterPath = createData['poster_path'] as String?;
+      final posterToken = createData['poster_token'] as String?;
+      Future<bool> sendPoster() async {
+        if (shrunk == null || poster == null || posterPath == null || posterToken == null) return false;
+        try {
+          await _withRetry(
+            () => supabase.storage
+                .from('media-originals')
+                .uploadBinaryToSignedUrl(posterPath, posterToken, poster, const FileOptions(contentType: 'image/jpeg')),
+            onRetry: onRetrying,
+          );
+          return true;
+        } catch (_) {
+          return false; // without its poster the server converts it as before
+        }
+      }
+
+      final sent = await Future.wait([sendVideo().then((_) => true), sendPoster()]);
+      debugPrint('SmileUpload: uploaded $size bytes, ${clock.elapsedMilliseconds} ms');
+      final clientEncoded = sent[1];
+      await _withRetry(
+        () => _completeUpload(mediaItemId, clientEncoded: clientEncoded ? shrunk : null, fileSizeBytes: size),
+        onRetry: onRetrying,
       );
-      await _withRetry(() => _completeUpload(mediaItemId), onRetry: onRetrying);
+      debugPrint('SmileUpload: complete-upload ${clock.elapsedMilliseconds} ms');
     } catch (e) {
       // Same cleanup rule as uploadPhoto: never leave a ghost row behind.
       try {
@@ -272,12 +377,16 @@ class MediaService {
     LocalChanges.saved(tablesChanged({'media_items', 'channels'}, channelIds: {channelId}));
   }
 
+  /// Up to this size a video goes up in one request (converted videos are
+  /// ~20 MB per minute); larger ones resumably in chunks.
+  static const _singleRequestVideoBytes = 50 * 1024 * 1024;
+
   /// A still frame from the start of a local video (JPEG bytes), for the
   /// placeholder while it uploads. Best-effort: null if it can't be read.
   static Future<Uint8List?> videoPosterBytes(File file) async {
     try {
       return await FcNativeVideoThumbnail()
-          .saveThumbnailToBytes(srcFile: file.path, width: 640, height: 640, format: 'jpeg', quality: 80);
+          .saveThumbnailToBytes(srcFile: file.path, width: 1280, height: 1280, format: 'jpeg', quality: 85);
     } catch (_) {
       return null;
     }
@@ -290,8 +399,10 @@ class MediaService {
     required String fileExtension,
     required int fileSizeBytes,
     String? previewDataUrl,
+    bool clientEncoded = false,
   }) async {
     final response = await invokeEdge('create-upload', body: {
+      if (clientEncoded) 'client_encoded': true,
       'channel_id': channelId,
       'media_type': mediaType,
       'mime_type': mimeType,
@@ -304,8 +415,17 @@ class MediaService {
     return data;
   }
 
-  Future<void> _completeUpload(String mediaItemId) async {
-    final response = await invokeEdge('complete-upload', body: {'media_item_id': mediaItemId});
+  Future<void> _completeUpload(String mediaItemId, {ShrunkVideo? clientEncoded, int? fileSizeBytes}) async {
+    final response = await invokeEdge('complete-upload', body: {
+      'media_item_id': mediaItemId,
+      'file_size_bytes': ?fileSizeBytes,
+      if (clientEncoded != null) ...{
+        'client_encoded': true,
+        'width': ?clientEncoded.width,
+        'height': ?clientEncoded.height,
+        'duration_seconds': ?clientEncoded.durationSeconds,
+      },
+    });
     final data = response.data as Map<String, dynamic>;
     const acceptedStatuses = {'ready', 'pending_processing', 'processing'};
     if (!acceptedStatuses.contains(data['status'])) {
