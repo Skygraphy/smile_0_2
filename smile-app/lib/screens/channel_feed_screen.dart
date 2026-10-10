@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -41,6 +42,10 @@ class _PendingUpload {
   /// Its own progress ring in the album, like WhatsApp (2026-10-10):
   /// 0..1 while known (a video being converted and sent), null = spinning.
   double? progress;
+  /// Prepared on the phone with a connection: from here on it almost
+  /// always goes through, so no more ring (decided 2026-10-10) -- if it
+  /// fails after all, it disappears again with a message.
+  bool sure = false;
   // Decoded once up front (see _pickAndUpload) so the placeholder shows
   // at the photo's real aspect ratio from the very first frame instead
   // of a square that reflows once the real item arrives.
@@ -417,6 +422,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       _errorMessage = null;
       _statusMessage = null;
     });
+    // Without a connection we can't be sure -- the ring stays then.
+    final connected = !Offline.isOffline.value &&
+        !(await Connectivity().checkConnectivity()).contains(ConnectivityResult.none);
 
     // Show every picked photo/video frame in the feed *before* any network
     // call -- the slow part (upload + server-side processing) happens behind
@@ -476,11 +484,14 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
             // First shrunk on the phone (MediaShrink), then uploaded.
             // Converting is the first third of its ring, sending the rest.
             onPreparing: (percent) {
-              if (mounted) setState(() => item.pending.progress = percent / 100 * 0.3);
+              if (mounted) setState(() => item.pending.progress = percent / 100);
+            },
+            onPrepared: () {
+              if (mounted && connected) setState(() => item.pending.sure = true);
             },
             onProgress: (sent, total) {
               if (!mounted || total == 0) return;
-              setState(() => item.pending.progress = 0.3 + 0.7 * sent / total);
+              setState(() => item.pending.progress = sent / total);
             },
           );
           // Its sharp frame from the phone stays until the server's poster
@@ -526,6 +537,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
             ),
         ],
         onMediaItemCreated: (i, id) => photoItems[i].pending.mediaItemId = id,
+        onPrepared: (i) {
+          if (mounted && connected) setState(() => photoItems[i].pending.sure = true);
+        },
         onRetrying: onRetrying,
       );
       for (final (i, error) in errors.indexed) {
@@ -741,7 +755,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           isMine: true,
           showTail: isFirstInRun,
           aspectRatio: pending.aspectRatio,
-          photo: _UploadProgress(progress: pending.progress, child: _PhotoTile(bytes: pending.bytes)),
+          photo: pending.sure
+              ? (pending.isVideo ? _VideoBadge(child: _PhotoTile(bytes: pending.bytes)) : _PhotoTile(bytes: pending.bytes))
+              : _UploadProgress(progress: pending.progress, child: _PhotoTile(bytes: pending.bytes)),
         ));
       } else {
         final item = visibleItems[i - pendingCount];

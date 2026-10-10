@@ -205,6 +205,8 @@ class MediaService {
     void Function(int index, String mediaItemId)? onMediaItemCreated,
     void Function(int index)? onReady,
     void Function(int attempt, int maxAttempts)? onRetrying,
+    // A photo is ready on the phone; only the network part is left.
+    void Function(int index)? onPrepared,
   }) async {
     final clock = Stopwatch()..start();
     final userId = supabase.auth.currentUser!.id;
@@ -220,6 +222,7 @@ class MediaService {
         size: shrunk == null ? null : await MediaShrink.sizeOf(shrunk),
         preview: await _buildPreviewDataUrl(thumbnail ?? photo.bytes),
       ));
+      if (shrunk != null && thumbnail != null) onPrepared?.call(prepared.length - 1);
     }
     debugPrint('SmilePhoto: ${photos.length} prepared in ${clock.elapsedMilliseconds} ms');
 
@@ -531,6 +534,8 @@ class MediaService {
     void Function(int attempt, int maxAttempts)? onRetrying,
     void Function(int sentBytes, int totalBytes)? onProgress,
     void Function(int percent)? onPreparing,
+    // Converted on the phone; only the network part is left.
+    void Function()? onPrepared,
   }) async {
     final frame = await videoPosterBytes(file);
     final previewDataUrl = frame == null ? null : await _buildPreviewDataUrl(frame);
@@ -553,6 +558,7 @@ class MediaService {
     // 2026-10-09): ~15 MB per minute instead of 100-700 MB. If the phone
     // can't, the original goes up and the server shrinks it as before.
     final shrunk = await MediaShrink.video(file, onProgress: onPreparing);
+    if (shrunk != null) onPrepared?.call();
     debugPrint('SmileUpload: shrunk in ${clock.elapsedMilliseconds} ms');
     final upload = shrunk?.file ?? file;
     // Its own poster frame goes up with it, so the server can take both
