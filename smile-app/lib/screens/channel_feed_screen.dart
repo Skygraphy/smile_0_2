@@ -38,6 +38,9 @@ class _PendingUpload {
   final Uint8List? bytes;
   final bool isVideo;
   String? mediaItemId;
+  /// Its own progress ring in the album, like WhatsApp (2026-10-10):
+  /// 0..1 while known (a video being converted and sent), null = spinning.
+  double? progress;
   // Decoded once up front (see _pickAndUpload) so the placeholder shows
   // at the photo's real aspect ratio from the very first frame instead
   // of a square that reflows once the real item arrives.
@@ -86,7 +89,6 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   List<MediaItem>? _items;
   late String _channelName = widget.channelName;
   final List<_PendingUpload> _pendingUploads = [];
-  bool _isUploading = false;
   String? _errorMessage;
   String? _statusMessage;
   final Set<String> _selectedIds = {};
@@ -409,8 +411,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   }
 
   Future<void> _uploadFiles(List<XFile> picked) async {
+    // The buttons stay free: more photos and videos can be sent while these
+    // go up -- each shows its own progress in the album (2026-10-10).
     setState(() {
-      _isUploading = true;
       _errorMessage = null;
       _statusMessage = null;
     });
@@ -441,9 +444,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     }
 
     var failed = 0;
-    var finished = 0;
     Object? lastError;
-    final photoCount = batch.where((b) => !b.isVideo).length;
 
     Future<void> uploadOne(
       int index,
@@ -473,12 +474,13 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
             },
             onRetrying: onRetrying,
             // First shrunk on the phone (MediaShrink), then uploaded.
+            // Converting is the first third of its ring, sending the rest.
             onPreparing: (percent) {
-              if (mounted) setState(() => _statusMessage = 'Video wird vorbereitet: $percent %$counter');
+              if (mounted) setState(() => item.pending.progress = percent / 100 * 0.3);
             },
             onProgress: (sent, total) {
               if (!mounted || total == 0) return;
-              setState(() => _statusMessage = 'Video wird hochgeladen: ${(sent * 100 / total).floor()} %$counter');
+              setState(() => item.pending.progress = 0.3 + 0.7 * sent / total);
             },
           );
           // Its sharp frame from the phone stays until the server's poster
@@ -495,10 +497,6 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
             },
             onRetrying: onRetrying,
           );
-          finished++;
-          if (mounted && photoCount > 1) {
-            setState(() => _statusMessage = 'Fotos hochgeladen: $finished von $photoCount');
-          }
         }
       } catch (e) {
         failed++;
@@ -517,7 +515,6 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
         if (mounted) setState(() => _statusMessage = 'Verbindung unterbrochen, versuche erneut ($attempt/$maxAttempts)…');
       }
 
-      if (photoCount > 1) setState(() => _statusMessage = 'Fotos hochgeladen: 0 von $photoCount');
       final errors = await widget.mediaService.uploadPhotos(
         channelId: widget.channelId,
         photos: [
@@ -529,12 +526,6 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
             ),
         ],
         onMediaItemCreated: (i, id) => photoItems[i].pending.mediaItemId = id,
-        onReady: (_) {
-          finished++;
-          if (mounted && photoCount > 1) {
-            setState(() => _statusMessage = 'Fotos hochgeladen: $finished von $photoCount');
-          }
-        },
         onRetrying: onRetrying,
       );
       for (final (i, error) in errors.indexed) {
@@ -576,7 +567,6 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     } finally {
       if (mounted) {
         setState(() {
-          _isUploading = false;
           for (final b in batch) {
             // A video still converting on the server (the fallback when the
             // phone couldn't) keeps its sharp frame until it's ready --
@@ -751,7 +741,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           isMine: true,
           showTail: isFirstInRun,
           aspectRatio: pending.aspectRatio,
-          photo: pending.isVideo ? _VideoBadge(child: _PhotoTile(bytes: pending.bytes)) : _PhotoTile(bytes: pending.bytes),
+          photo: _UploadProgress(progress: pending.progress, child: _PhotoTile(bytes: pending.bytes)),
         ));
       } else {
         final item = visibleItems[i - pendingCount];
@@ -932,21 +922,15 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                       tooltip: t.captureInAlbum,
                       backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                       foregroundColor: Theme.of(context).colorScheme.onSurface,
-                      onPressed: _isUploading ? null : _chooseCapture,
+                      onPressed: _chooseCapture,
                       child: const Icon(SmileIcons.camera),
                     ),
                     const SizedBox(height: 12),
                     FloatingActionButton(
                       heroTag: "add",
                       tooltip: t.addMedia,
-                      onPressed: _isUploading ? null : _pickAndUpload,
-                      child: _isUploading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Icon(SmileIcons.add),
+                      onPressed: _pickAndUpload,
+                      child: const Icon(SmileIcons.add),
                     ),
                   ],
                 )
@@ -1076,6 +1060,43 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
 /// photo", not "a photo that's loading", so the later swap to the real
 /// `CachedNetworkImage` goes unnoticed. `bytes` is null only if a remote
 /// preview failed to generate.
+/// A photo or video still on its way: its own progress ring on the
+/// picture, like WhatsApp (2026-10-10) -- instead of a spinner on the
+/// button that blocked sending more.
+class _UploadProgress extends StatelessWidget {
+  const _UploadProgress({required this.child, this.progress});
+
+  final Widget child;
+  final double? progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.passthrough,
+      children: [
+        child,
+        Positioned.fill(child: ColoredBox(color: Colors.black.withValues(alpha: 0.25))),
+        Positioned.fill(
+          child: Center(
+            child: Container(
+              width: 48,
+              height: 48,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.55), shape: BoxShape.circle),
+              child: CircularProgressIndicator(
+                value: progress,
+                strokeWidth: 3,
+                color: Colors.white,
+                backgroundColor: progress == null ? null : Colors.white24,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _PhotoTile extends StatelessWidget {
   const _PhotoTile({required this.bytes});
 
