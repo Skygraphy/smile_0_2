@@ -34,6 +34,50 @@ interface CreateUploadRequest {
   // frame, a photo's thumbnail), and complete-upload takes both as they
   // are -- no worker, no waiting.
   client_encoded?: boolean;
+  // Several at once (2026-10-10): one request for a whole selection of
+  // photos instead of one each -- every Edge Function call costs ~1 s.
+  // channel_id is shared; each item has the per-file fields above.
+  items?: Omit<CreateUploadRequest, "channel_id" | "items">[];
+}
+
+type ItemRequest = Omit<CreateUploadRequest, "channel_id" | "items">;
+
+function invalid(item: ItemRequest): string | null {
+  if (!item.media_type || !item.mime_type || !item.file_extension) return "missing_fields";
+  if (!["photo", "video"].includes(item.media_type)) return "invalid_media_type";
+  const maxBytes = item.media_type === "video" ? MAX_VIDEO_BYTES : MAX_PHOTO_BYTES;
+  if (item.file_size_bytes && item.file_size_bytes > maxBytes) return "file_too_large";
+  if (item.preview_data_url && item.preview_data_url.length > MAX_PREVIEW_DATA_URL_LENGTH) return "preview_too_large";
+  return null;
+}
+
+// deno-lint-ignore no-explicit-any
+async function uploadSlots(supabaseAdmin: any, item: ItemRequest, mediaItemId: string, storagePath: string) {
+  // Prepared on the phone (display version + thumbnail/poster): both go
+  // straight to where they are served from, so complete-upload only has to
+  // mark the item ready -- no copying (2026-10-10). The original slot stays
+  // for the fallback (the server prepares it, as before).
+  const { displayPath, thumbnailPath } = processedPaths(item.media_type, storagePath);
+  const [original, display, thumb] = await Promise.all([
+    supabaseAdmin.storage.from("media-originals").createSignedUploadUrl(storagePath),
+    item.client_encoded ? supabaseAdmin.storage.from("media-display").createSignedUploadUrl(displayPath) : null,
+    item.client_encoded ? supabaseAdmin.storage.from("media-thumbnails").createSignedUploadUrl(thumbnailPath) : null,
+  ]);
+  if (!original?.data) return null;
+  return {
+    media_item_id: mediaItemId,
+    storage_path: storagePath,
+    signed_url: original.data.signedUrl,
+    token: original.data.token,
+    ...(display?.data && thumb?.data
+      ? {
+        display_path: displayPath,
+        display_token: display.data.token,
+        thumb_path: thumbnailPath,
+        thumb_token: thumb.data.token,
+      }
+      : {}),
+  };
 }
 
 Deno.serve(async (req) => {
@@ -56,18 +100,13 @@ Deno.serve(async (req) => {
   } catch {
     return jsonResponse({ error: "invalid_json" }, 400);
   }
-  if (!body.channel_id || !body.media_type || !body.mime_type || !body.file_extension) {
-    return jsonResponse({ error: "missing_fields" }, 400);
-  }
-  if (!["photo", "video"].includes(body.media_type)) {
-    return jsonResponse({ error: "invalid_media_type" }, 400);
-  }
-  const maxBytes = body.media_type === "video" ? MAX_VIDEO_BYTES : MAX_PHOTO_BYTES;
-  if (body.file_size_bytes && body.file_size_bytes > maxBytes) {
-    return jsonResponse({ error: "file_too_large" }, 400);
-  }
-  if (body.preview_data_url && body.preview_data_url.length > MAX_PREVIEW_DATA_URL_LENGTH) {
-    return jsonResponse({ error: "preview_too_large" }, 400);
+  if (!body.channel_id) return jsonResponse({ error: "missing_fields" }, 400);
+  const batch = Array.isArray(body.items);
+  const items: ItemRequest[] = batch ? body.items! : [body];
+  if (items.length === 0 || items.length > 50) return jsonResponse({ error: "invalid_items" }, 400);
+  for (const item of items) {
+    const problem = invalid(item);
+    if (problem) return jsonResponse({ error: problem }, 400);
   }
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
@@ -79,58 +118,34 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "not_a_channel_member" }, 403);
   }
 
-  const mediaItemId = crypto.randomUUID();
-  const storagePath = `${body.channel_id}/${mediaItemId}.${body.file_extension}`;
-
-  const { data: mediaItem, error: insertError } = await supabaseAdmin
-    .from("media_items")
-    .insert({
-      id: mediaItemId,
+  // One insert for all; a millisecond apart, so they keep the order they
+  // were picked in (the album sorts by created_at).
+  const base = Date.now();
+  const rows = items.map((item, index) => {
+    const id = crypto.randomUUID();
+    return {
+      id,
       channel_id: body.channel_id,
       sender_id: userId,
-      media_type: body.media_type,
-      storage_path_original: storagePath,
-      mime_type: body.mime_type,
-      file_size_bytes: body.file_size_bytes ?? null,
-      preview_data_url: body.preview_data_url ?? null,
+      media_type: item.media_type,
+      storage_path_original: `${body.channel_id}/${id}.${item.file_extension}`,
+      mime_type: item.mime_type,
+      file_size_bytes: item.file_size_bytes ?? null,
+      preview_data_url: item.preview_data_url ?? null,
       processing_status: "uploaded",
-    })
-    .select()
-    .single();
-
-  if (insertError || !mediaItem) return jsonResponse({ error: "media_item_creation_failed" }, 500);
-
-  const { data: signedUpload, error: signError } = await supabaseAdmin.storage
-    .from("media-originals")
-    .createSignedUploadUrl(storagePath);
-
-  if (signError || !signedUpload) return jsonResponse({ error: "signed_url_failed" }, 500);
-
-  // Prepared on the phone (display version + thumbnail/poster): both go
-  // straight to where they are served from, so complete-upload only has to
-  // mark the item ready -- no copying (2026-10-10).
-  let direct: Record<string, string> = {};
-  if (body.client_encoded) {
-    const { displayPath, thumbnailPath } = processedPaths(body.media_type, storagePath);
-    const [{ data: displayUpload }, { data: thumbUpload }] = await Promise.all([
-      supabaseAdmin.storage.from("media-display").createSignedUploadUrl(displayPath),
-      supabaseAdmin.storage.from("media-thumbnails").createSignedUploadUrl(thumbnailPath),
-    ]);
-    if (displayUpload && thumbUpload) {
-      direct = {
-        display_path: displayPath,
-        display_token: displayUpload.token,
-        thumb_path: thumbnailPath,
-        thumb_token: thumbUpload.token,
-      };
-    }
-  }
-
-  return jsonResponse({
-    media_item_id: mediaItem.id,
-    storage_path: storagePath,
-    signed_url: signedUpload.signedUrl,
-    token: signedUpload.token,
-    ...direct,
+      created_at: new Date(base + index).toISOString(),
+    };
   });
+  const { error: insertError } = await supabaseAdmin.from("media_items").insert(rows);
+  if (insertError) return jsonResponse({ error: "media_item_creation_failed" }, 500);
+
+  const slots = await Promise.all(
+    rows.map((row, index) => uploadSlots(supabaseAdmin, items[index], row.id, row.storage_path_original)),
+  );
+  if (slots.some((s) => s === null)) {
+    await supabaseAdmin.from("media_items").delete().in("id", rows.map((r) => r.id));
+    return jsonResponse({ error: "signed_url_failed" }, 500);
+  }
+  if (batch) return jsonResponse({ items: slots });
+  return jsonResponse(slots[0]);
 });

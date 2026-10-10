@@ -507,38 +507,47 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       }
     }
 
-    // Several photos go up at once, like WhatsApp (2026-10-10) -- up to
-    // three at a time. Each registers with the server only after the one
-    // before it did, so they keep their order in the album. Videos go one
-    // by one (each is converted on the phone first).
-    if (photoCount > 1) setState(() => _statusMessage = 'Fotos hochgeladen: 0 von $photoCount');
-    final running = <Future<void>>[];
-    Future<void>? previousCreated;
-    for (final (index, item) in batch.indexed) {
-      if (!mounted) return;
-      if (item.isVideo) {
-        await Future.wait(running.toList());
-        await uploadOne(index, item);
-        continue;
-      }
-      if (previousCreated != null) await previousCreated;
-      while (running.length >= 3) {
-        await Future.any(running.toList());
-      }
-      final created = Completer<void>();
-      void markCreated() {
-        if (!created.isCompleted) created.complete();
+    // All photos of the selection in one go, like WhatsApp (2026-10-10):
+    // registered together, uploaded in parallel, marked ready together
+    // (MediaService.uploadPhotos). Videos then one by one (each is
+    // converted on the phone first).
+    final photoItems = batch.where((b) => !b.isVideo).toList();
+    if (photoItems.isNotEmpty) {
+      void onRetrying(int attempt, int maxAttempts) {
+        if (mounted) setState(() => _statusMessage = 'Verbindung unterbrochen, versuche erneut ($attempt/$maxAttempts)…');
       }
 
-      late final Future<void> task;
-      task = uploadOne(index, item, onCreated: markCreated).whenComplete(() {
-        markCreated();
-        running.remove(task);
-      });
-      running.add(task);
-      previousCreated = created.future;
+      if (photoCount > 1) setState(() => _statusMessage = 'Fotos hochgeladen: 0 von $photoCount');
+      final errors = await widget.mediaService.uploadPhotos(
+        channelId: widget.channelId,
+        photos: [
+          for (final item in photoItems)
+            (
+              bytes: item.photoBytes!,
+              fileExtension: item.extension,
+              mimeType: item.extension == 'png' ? 'image/png' : 'image/jpeg',
+            ),
+        ],
+        onMediaItemCreated: (i, id) => photoItems[i].pending.mediaItemId = id,
+        onReady: (_) {
+          finished++;
+          if (mounted && photoCount > 1) {
+            setState(() => _statusMessage = 'Fotos hochgeladen: $finished von $photoCount');
+          }
+        },
+        onRetrying: onRetrying,
+      );
+      for (final (i, error) in errors.indexed) {
+        if (error == null) continue;
+        failed++;
+        lastError = error;
+        if (mounted) setState(() => _pendingUploads.remove(photoItems[i].pending));
+      }
     }
-    await Future.wait(running.toList());
+    for (final (index, item) in batch.indexed) {
+      if (!mounted) return;
+      if (item.isVideo) await uploadOne(index, item);
+    }
     if (!mounted) return;
     setState(() {
       _statusMessage = null;

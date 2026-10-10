@@ -35,6 +35,9 @@ interface CompleteUploadRequest {
   // The size actually uploaded: the phone registers a video before it has
   // finished converting it (smile-app MediaService.uploadVideo).
   file_size_bytes?: number;
+  // Several prepared (direct) uploads at once (2026-10-10) -- one request
+  // for a whole selection of photos.
+  items?: Omit<CompleteUploadRequest, "items">[];
 }
 
 /** Above this, a "converted" upload is not trusted and goes through the worker. */
@@ -60,6 +63,7 @@ Deno.serve(async (req) => {
   } catch {
     return jsonResponse({ error: "invalid_json" }, 400);
   }
+  if (Array.isArray(body.items)) return completeBatch(body.items, userData.user.id);
   if (!body.media_item_id) return jsonResponse({ error: "media_item_id_required" }, 400);
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
@@ -232,3 +236,56 @@ Deno.serve(async (req) => {
 
   return jsonResponse({ status: "processing" });
 });
+
+/**
+ * Prepared uploads whose files are already in media-display and
+ * media-thumbnails: marked ready together, one push for the whole
+ * selection (it counts the batch itself, see media-fanout.ts).
+ */
+async function completeBatch(items: Omit<CompleteUploadRequest, "items">[], userId: string) {
+  if (items.length === 0 || items.length > 50) return jsonResponse({ error: "invalid_items" }, 400);
+  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+  const ids = items.map((i) => i.media_item_id);
+  const { data: rows } = await supabaseAdmin
+    .from("media_items")
+    .select("id, channel_id, media_type, mime_type, storage_path_original")
+    .in("id", ids)
+    .eq("sender_id", userId);
+  const byId = new Map((rows ?? []).map((r: { id: string }) => [r.id, r]));
+  const results: { media_item_id: string; status: string }[] = [];
+  const announced = new Map<string, string>();
+  for (const item of items) {
+    // deno-lint-ignore no-explicit-any
+    const row = byId.get(item.media_item_id) as any;
+    const prepared = row &&
+      ((row.media_type === "photo" && row.mime_type === "image/jpeg") ||
+        (row.media_type === "video" && row.mime_type === "video/mp4"));
+    if (!prepared) {
+      results.push({ media_item_id: item.media_item_id, status: "not_found" });
+      continue;
+    }
+    const { displayPath, thumbnailPath } = processedPaths(row.media_type, row.storage_path_original);
+    const { error } = await supabaseAdmin
+      .from("media_items")
+      .update({
+        storage_path_display: displayPath,
+        storage_path_thumbnail: thumbnailPath,
+        processing_status: "ready",
+        ...(item.width ? { width: Math.round(item.width) } : {}),
+        ...(item.height ? { height: Math.round(item.height) } : {}),
+        ...(item.duration_seconds ? { duration_seconds: item.duration_seconds } : {}),
+        ...(item.file_size_bytes ? { file_size_bytes: Math.round(item.file_size_bytes) } : {}),
+      })
+      .eq("id", row.id);
+    results.push({ media_item_id: row.id, status: error ? "failed" : "ready" });
+    if (!error) announced.set(row.channel_id, row.id);
+  }
+  const announce = Promise.all(
+    [...announced].map(([channelId, lastId]) => announceReadyPhoto(supabaseAdmin, lastId, channelId)),
+  );
+  // deno-lint-ignore no-explicit-any
+  const runtime = (globalThis as any).EdgeRuntime;
+  if (runtime?.waitUntil) runtime.waitUntil(announce);
+  else await announce;
+  return jsonResponse({ items: results });
+}

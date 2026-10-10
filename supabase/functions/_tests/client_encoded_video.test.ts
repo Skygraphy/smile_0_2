@@ -72,3 +72,44 @@ async function preparedUpload(kind: "photo" | "video") {
 
 Deno.test("prepared video goes straight to its place and is ready at once", () => preparedUpload("video"));
 Deno.test("prepared photo goes straight to its place and is ready at once", () => preparedUpload("photo"));
+
+Deno.test("a selection of photos: one request to register, one to mark ready, order kept", async () => {
+  const { url, anonKey } = requireEnv();
+  const owner = await createThrowawayUser("cebatch");
+  let space: string | undefined;
+  try {
+    await ensureProfile(owner.id, "CB Owner");
+    const { accessToken } = await accessTokenFor(owner.email);
+    space = await createSpace(accessToken, "CB Space");
+    const album = await createChannel(accessToken, space, "CB Album");
+    const item = { media_type: "photo", mime_type: "image/jpeg", file_extension: "jpg", file_size_bytes: 16, client_encoded: true };
+    const created = await invoke("create-upload", accessToken, { channel_id: album, items: [item, item, item] });
+    assertEquals(created.status, 200, JSON.stringify(created.body));
+    const slots = created.body.items as Record<string, string>[];
+    assertEquals(slots.length, 3);
+
+    for (const slot of slots) {
+      for (const [bucket, path, token] of [
+        ["media-display", slot.display_path, slot.display_token],
+        ["media-thumbnails", slot.thumb_path, slot.thumb_token],
+      ]) {
+        const res = await fetch(`${url}/storage/v1/object/upload/sign/${bucket}/${path}?token=${token}`, {
+          method: "PUT",
+          headers: { apikey: anonKey, "Content-Type": "image/jpeg" },
+          body: new Uint8Array(16),
+        });
+        assertEquals(res.status, 200);
+      }
+    }
+    const done = await invoke("complete-upload", accessToken, {
+      items: slots.map((s) => ({ media_item_id: s.media_item_id, width: 2048, height: 1536 })),
+    });
+    assertEquals((done.body.items as { status: string }[]).map((r) => r.status), ["ready", "ready", "ready"]);
+
+    const { body: rows } = await svc(`media_items?channel_id=eq.${album}&select=id,processing_status&order=created_at`);
+    assertEquals((rows as { id: string }[]).map((r) => r.id), slots.map((s) => s.media_item_id), "order kept");
+  } finally {
+    if (space) await deleteSpace(space);
+    await deleteUser(owner.id);
+  }
+});
