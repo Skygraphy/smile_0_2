@@ -26,6 +26,7 @@ import '../widgets/local_display.dart';
 import '../services/offline.dart';
 import '../services/local_changes.dart';
 import '../services/channel_picker_service.dart';
+import 'photo_viewer_screen.dart';
 import 'video_player_screen.dart';
 
 /// A picked photo shown in the grid immediately, before the network upload
@@ -806,7 +807,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           // A video's display URL is the MP4 itself -- only its poster
           // frame (thumbnail) is an image.
           final imageUrl = item.isVideo ? item.thumbnailUrl : item.thumbnailUrl ?? item.displayUrl;
-          tile = imageUrl != null
+          final Widget small = imageUrl != null
               ? CachedNetworkImage(
                   // The URL itself carries a short-lived signed token that
                   // changes on every fetch -- key the disk cache on the
@@ -826,6 +827,23 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
               : previewBytes != null
                   ? Image.memory(previewBytes, fit: BoxFit.cover)
                   : const ColoredBox(color: Colors.black12);
+          // A photo shows its full version in the bubble (2026-10-10): the
+          // 400 px thumbnail looked blurry in the larger WhatsApp-like
+          // bubbles. The thumbnail stands in until it's loaded (and
+          // offline, if it never was); the full view then opens from cache.
+          tile = !item.isVideo && item.displayUrl != null
+              ? CachedNetworkImage(
+                  cacheKey: '${item.id}_display',
+                  imageUrl: item.displayUrl!,
+                  fit: BoxFit.cover,
+                  // Decoded at bubble size, not 2048 px -- memory.
+                  memCacheWidth: 900,
+                  fadeInDuration: Duration.zero,
+                  fadeOutDuration: Duration.zero,
+                  placeholder: (context, url) => small,
+                  errorWidget: (context, url, error) => small,
+                )
+              : small;
         }
 
         final isMine = item.senderId == myUserId;
@@ -853,7 +871,12 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                   ? () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => VideoPlayerScreen(mediaId: item.id, url: item.displayUrl)),
                       )
-                  : null,
+                  // A photo: the whole of it, full screen (the bubble crops).
+                  : (!item.isVideo && item.isReady)
+                      ? () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => PhotoViewerScreen(item: item)),
+                          )
+                      : null,
           photo: item.isVideo
               ? _VideoBadge(playable: item.isReady && item.displayUrl != null, child: tile)
               : tile,
@@ -1247,9 +1270,6 @@ class _ChatRow extends StatelessWidget {
   final VoidCallback? onLongPress;
 
   static const _avatarGutterWidth = 36.0;
-  static const _maxPhotoWidth = 220.0;
-  static const _maxPhotoHeight = 280.0;
-  static const _minPhotoSize = 130.0;
   static const _cornerRadius = 16.0;
   // The tail sticks out *sideways* from the bubble's top corner (right of
   // it for mine, left of it for others) by (tailWidth - tailOverlap); the
@@ -1269,25 +1289,16 @@ class _ChatRow extends StatelessWidget {
     return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
   }
 
-  /// Fits `aspectRatio` inside a `_maxPhotoWidth` x `_maxPhotoHeight` box
-  /// (like `BoxFit.contain` would), then guards against a sliver for an
-  /// extreme aspect ratio with a floor on the shorter side.
+  /// Like WhatsApp (decided 2026-10-10, variant D): three fixed shapes
+  /// instead of each photo's exact ratio, which made photos of the same
+  /// camera come out in different widths. Landscape wide (4:3), portrait
+  /// narrower (3:4), roughly square ones square -- the picture is cropped
+  /// to fit (BoxFit.cover); tapping it shows the whole photo.
   Size _photoBoxSize() {
     final ratio = aspectRatio ?? 1.0;
-    var w = _maxPhotoWidth;
-    var h = w / ratio;
-    if (h > _maxPhotoHeight) {
-      h = _maxPhotoHeight;
-      w = h * ratio;
-    }
-    if (w < _minPhotoSize) {
-      w = _minPhotoSize;
-      h = w / ratio;
-    } else if (h < _minPhotoSize) {
-      h = _minPhotoSize;
-      w = h * ratio;
-    }
-    return Size(w, h);
+    if (ratio > 1.1) return const Size(264, 198); // 4:3
+    if (ratio < 0.9) return const Size(210, 280); // 3:4
+    return const Size(236, 236);
   }
 
   @override
