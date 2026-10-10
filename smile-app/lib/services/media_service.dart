@@ -210,42 +210,34 @@ class MediaService {
     onMediaItemCreated?.call(mediaItemId);
 
     try {
-      final thumbPath = createData['poster_path'] as String?;
-      final thumbToken = createData['poster_token'] as String?;
-      Future<bool> sendThumbnail() async {
-        if (thumbnail == null || thumbPath == null || thumbToken == null) return false;
-        try {
-          await _withRetry(
-            () => supabase.storage
-                .from('media-originals')
-                .uploadBinaryToSignedUrl(thumbPath, thumbToken, thumbnail, const FileOptions(contentType: 'image/jpeg')),
-            onRetry: onRetrying,
-          );
-          return true;
-        } catch (_) {
-          return false; // without it the server makes the thumbnail as before
-        }
+      // Prepared here: photo and thumbnail go straight to where they are
+      // served from, both at once (create-upload's direct slots), and the
+      // server only marks the item ready -- no copying (2026-10-10).
+      final displayPath = createData['display_path'] as String?;
+      final displayToken = createData['display_token'] as String?;
+      final thumbPath = createData['thumb_path'] as String?;
+      final thumbToken = createData['thumb_token'] as String?;
+      final direct = shrunk != null &&
+          thumbnail != null &&
+          displayPath != null &&
+          displayToken != null &&
+          thumbPath != null &&
+          thumbToken != null;
+      if (direct) {
+        await Future.wait([
+          _put('media-display', displayPath, displayToken, uploadBytes, 'image/jpeg', onRetrying),
+          _put('media-thumbnails', thumbPath, thumbToken, thumbnail, 'image/jpeg', onRetrying),
+        ]);
+      } else {
+        // Not prepared (unusual format): the server makes both, as before.
+        await _put('media-originals', storagePath, token, uploadBytes, uploadMime, onRetrying);
       }
-
-      final sent = await Future.wait([
-        _withRetry(
-          () => supabase.storage.from('media-originals').uploadBinaryToSignedUrl(
-                storagePath,
-                token,
-                uploadBytes,
-                FileOptions(contentType: uploadMime),
-              ),
-          onRetry: onRetrying,
-        ).then((_) => true),
-        sendThumbnail(),
-      ]);
       debugPrint('SmilePhoto: uploaded in ${clock.elapsedMilliseconds} ms');
-      final fast = shrunk != null && sent[1];
       await _withRetry(
         () => _completeUpload(
           mediaItemId,
           fileSizeBytes: uploadBytes.length,
-          photo: fast ? (width: size?.$1, height: size?.$2) : null,
+          photo: direct ? (width: size?.$1, height: size?.$2) : null,
         ),
         onRetry: onRetrying,
       );
@@ -364,15 +356,29 @@ class MediaService {
     onMediaItemCreated?.call(mediaItemId);
 
     try {
-      final path = createData['storage_path'] as String;
-      final token = createData['token'] as String;
+      // Converted here: video and poster go straight to where they are
+      // served from, at once, and the server only marks it ready
+      // (2026-10-10). Otherwise the original goes to the worker as before.
+      final displayPath = createData['display_path'] as String?;
+      final displayToken = createData['display_token'] as String?;
+      final thumbPath = createData['thumb_path'] as String?;
+      final thumbToken = createData['thumb_token'] as String?;
+      final direct = shrunk != null &&
+          poster != null &&
+          displayPath != null &&
+          displayToken != null &&
+          thumbPath != null &&
+          thumbToken != null;
+      final bucket = direct ? 'media-display' : 'media-originals';
+      final path = direct ? displayPath : createData['storage_path'] as String;
+      final token = direct ? displayToken : createData['token'] as String;
       // A converted video is small: one request instead of the chunked,
       // resumable protocol meant for huge originals (2026-10-09).
       Future<void> sendVideo() async {
         if (size > _singleRequestVideoBytes) {
           await ResumableUpload().upload(
             file: upload,
-            bucket: 'media-originals',
+            bucket: bucket,
             objectName: path,
             token: token,
             contentType: mimeType,
@@ -382,39 +388,17 @@ class MediaService {
           return;
         }
         final bytes = await upload.readAsBytes();
-        await _withRetry(
-          () => supabase.storage
-              .from('media-originals')
-              .uploadBinaryToSignedUrl(path, token, bytes, FileOptions(contentType: mimeType)),
-          onRetry: onRetrying,
-        );
+        await _put(bucket, path, token, bytes, mimeType, onRetrying);
         onProgress?.call(size, size);
       }
 
-      // Converted on the phone: the poster goes up at the same time, then
-      // the server takes both as they are -- ready at once.
-      final posterPath = createData['poster_path'] as String?;
-      final posterToken = createData['poster_token'] as String?;
-      Future<bool> sendPoster() async {
-        if (shrunk == null || poster == null || posterPath == null || posterToken == null) return false;
-        try {
-          await _withRetry(
-            () => supabase.storage
-                .from('media-originals')
-                .uploadBinaryToSignedUrl(posterPath, posterToken, poster, const FileOptions(contentType: 'image/jpeg')),
-            onRetry: onRetrying,
-          );
-          return true;
-        } catch (_) {
-          return false; // without its poster the server converts it as before
-        }
-      }
-
-      final sent = await Future.wait([sendVideo().then((_) => true), sendPoster()]);
+      await Future.wait([
+        sendVideo(),
+        if (direct) _put('media-thumbnails', thumbPath, thumbToken, poster, 'image/jpeg', onRetrying),
+      ]);
       debugPrint('SmileUpload: uploaded $size bytes, ${clock.elapsedMilliseconds} ms');
-      final clientEncoded = sent[1];
       await _withRetry(
-        () => _completeUpload(mediaItemId, clientEncoded: clientEncoded ? shrunk : null, fileSizeBytes: size),
+        () => _completeUpload(mediaItemId, clientEncoded: direct ? shrunk : null, fileSizeBytes: size),
         onRetry: onRetrying,
       );
       debugPrint('SmileUpload: complete-upload ${clock.elapsedMilliseconds} ms');
@@ -427,6 +411,20 @@ class MediaService {
     }
     LocalChanges.saved(tablesChanged({'media_items', 'channels'}, channelIds: {channelId}));
   }
+
+  /// One file to a signed upload slot, with the usual retries.
+  Future<void> _put(
+    String bucket,
+    String path,
+    String token,
+    Uint8List data,
+    String mimeType,
+    void Function(int attempt, int maxAttempts)? onRetrying,
+  ) =>
+      _withRetry(
+        () => supabase.storage.from(bucket).uploadBinaryToSignedUrl(path, token, data, FileOptions(contentType: mimeType)),
+        onRetry: onRetrying,
+      );
 
   /// Up to this size a video goes up in one request (converted videos are
   /// ~20 MB per minute); larger ones resumably in chunks.
@@ -477,11 +475,13 @@ class MediaService {
       'file_size_bytes': ?fileSizeBytes,
       if (photo != null) ...{
         'client_encoded': true,
+        'direct': true,
         'width': ?photo.width,
         'height': ?photo.height,
       },
       if (clientEncoded != null) ...{
         'client_encoded': true,
+        'direct': true,
         'width': ?clientEncoded.width,
         'height': ?clientEncoded.height,
         'duration_seconds': ?clientEncoded.durationSeconds,

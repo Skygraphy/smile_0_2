@@ -441,8 +441,15 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     }
 
     var failed = 0;
+    var finished = 0;
     Object? lastError;
-    for (final (index, item) in batch.indexed) {
+    final photoCount = batch.where((b) => !b.isVideo).length;
+
+    Future<void> uploadOne(
+      int index,
+      ({XFile file, String extension, bool isVideo, Uint8List? photoBytes, _PendingUpload pending}) item, {
+      void Function()? onCreated,
+    }) async {
       if (!mounted) return;
       final counter = batch.length > 1 ? ' (${index + 1}/${batch.length})' : '';
       // A dropped connection (e.g. switching WiFi networks mid-upload) is
@@ -460,7 +467,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
             file: File(item.file.path),
             fileExtension: item.extension,
             mimeType: item.extension == 'mov' ? 'video/quicktime' : 'video/${item.extension}',
-            onMediaItemCreated: (id) => item.pending.mediaItemId = id,
+            onMediaItemCreated: (id) {
+              item.pending.mediaItemId = id;
+              onCreated?.call();
+            },
             onRetrying: onRetrying,
             // First shrunk on the phone (MediaShrink), then uploaded.
             onPreparing: (percent) {
@@ -474,15 +484,21 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           // Its sharp frame from the phone stays until the server's poster
           // is loaded (_load) -- no blurry preview in between (2026-10-09).
         } else {
-          if (batch.length > 1) setState(() => _statusMessage = 'Foto wird hochgeladen$counter');
           await widget.mediaService.uploadPhoto(
             channelId: widget.channelId,
             bytes: item.photoBytes!,
             fileExtension: item.extension,
             mimeType: item.extension == 'png' ? 'image/png' : 'image/jpeg',
-            onMediaItemCreated: (id) => item.pending.mediaItemId = id,
+            onMediaItemCreated: (id) {
+              item.pending.mediaItemId = id;
+              onCreated?.call();
+            },
             onRetrying: onRetrying,
           );
+          finished++;
+          if (mounted && photoCount > 1) {
+            setState(() => _statusMessage = 'Fotos hochgeladen: $finished von $photoCount');
+          }
         }
       } catch (e) {
         failed++;
@@ -490,6 +506,39 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
         if (mounted) setState(() => _pendingUploads.remove(item.pending));
       }
     }
+
+    // Several photos go up at once, like WhatsApp (2026-10-10) -- up to
+    // three at a time. Each registers with the server only after the one
+    // before it did, so they keep their order in the album. Videos go one
+    // by one (each is converted on the phone first).
+    if (photoCount > 1) setState(() => _statusMessage = 'Fotos hochgeladen: 0 von $photoCount');
+    final running = <Future<void>>[];
+    Future<void>? previousCreated;
+    for (final (index, item) in batch.indexed) {
+      if (!mounted) return;
+      if (item.isVideo) {
+        await Future.wait(running.toList());
+        await uploadOne(index, item);
+        continue;
+      }
+      if (previousCreated != null) await previousCreated;
+      while (running.length >= 3) {
+        await Future.any(running.toList());
+      }
+      final created = Completer<void>();
+      void markCreated() {
+        if (!created.isCompleted) created.complete();
+      }
+
+      late final Future<void> task;
+      task = uploadOne(index, item, onCreated: markCreated).whenComplete(() {
+        markCreated();
+        running.remove(task);
+      });
+      running.add(task);
+      previousCreated = created.future;
+    }
+    await Future.wait(running.toList());
     if (!mounted) return;
     setState(() {
       _statusMessage = null;

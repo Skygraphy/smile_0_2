@@ -27,6 +27,8 @@ interface CompleteUploadRequest {
   media_item_id: string;
   // See create-upload: the video is already in the display format.
   client_encoded?: boolean;
+  // Both files were uploaded straight to media-display/media-thumbnails.
+  direct?: boolean;
   width?: number;
   height?: number;
   duration_seconds?: number;
@@ -82,6 +84,31 @@ Deno.serve(async (req) => {
     (mediaItem.file_size_bytes ?? 0) <= MAX_CLIENT_ENCODED_BYTES;
   const clientPhoto = mediaItem.media_type === "photo" && mediaItem.mime_type === "image/jpeg" &&
     (mediaItem.file_size_bytes ?? 0) <= MAX_CLIENT_ENCODED_PHOTO_BYTES;
+  if (body.client_encoded && body.direct && (clientVideo || clientPhoto)) {
+    // Already where they are served from: only mark it ready.
+    const { displayPath, thumbnailPath } = processedPaths(mediaItem.media_type, mediaItem.storage_path_original);
+    const { error: updateError } = await supabaseAdmin
+      .from("media_items")
+      .update({
+        storage_path_display: displayPath,
+        storage_path_thumbnail: thumbnailPath,
+        processing_status: "ready",
+        ...(body.width ? { width: Math.round(body.width) } : {}),
+        ...(body.height ? { height: Math.round(body.height) } : {}),
+        ...(body.duration_seconds ? { duration_seconds: body.duration_seconds } : {}),
+      })
+      .eq("id", mediaItem.id);
+    if (!updateError) {
+      const announce = announceReadyPhoto(supabaseAdmin, mediaItem.id, mediaItem.channel_id);
+      // deno-lint-ignore no-explicit-any
+      const runtime = (globalThis as any).EdgeRuntime;
+      if (runtime?.waitUntil) runtime.waitUntil(announce);
+      else await announce;
+      return jsonResponse({ status: "ready" });
+    }
+    console.error("direct upload could not be marked ready", updateError);
+  }
+
   if (body.client_encoded && (clientVideo || clientPhoto)) {
     const { displayPath, thumbnailPath } = processedPaths(mediaItem.media_type, mediaItem.storage_path_original);
     const posterPath = clientPosterPath(mediaItem.storage_path_original);

@@ -6,7 +6,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { resolveChannelAccess } from "../_shared/channel-access.ts";
-import { clientPosterPath } from "../_shared/media-paths.ts";
+import { processedPaths } from "../_shared/media-paths.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -106,12 +106,24 @@ Deno.serve(async (req) => {
 
   if (signError || !signedUpload) return jsonResponse({ error: "signed_url_failed" }, 500);
 
-  // Where the phone puts the poster frame of a video it converted itself.
-  let poster: { poster_path: string; poster_token: string } | Record<string, never> = {};
+  // Prepared on the phone (display version + thumbnail/poster): both go
+  // straight to where they are served from, so complete-upload only has to
+  // mark the item ready -- no copying (2026-10-10).
+  let direct: Record<string, string> = {};
   if (body.client_encoded) {
-    const posterPath = clientPosterPath(storagePath);
-    const { data: posterUpload } = await supabaseAdmin.storage.from("media-originals").createSignedUploadUrl(posterPath);
-    if (posterUpload) poster = { poster_path: posterPath, poster_token: posterUpload.token };
+    const { displayPath, thumbnailPath } = processedPaths(body.media_type, storagePath);
+    const [{ data: displayUpload }, { data: thumbUpload }] = await Promise.all([
+      supabaseAdmin.storage.from("media-display").createSignedUploadUrl(displayPath),
+      supabaseAdmin.storage.from("media-thumbnails").createSignedUploadUrl(thumbnailPath),
+    ]);
+    if (displayUpload && thumbUpload) {
+      direct = {
+        display_path: displayPath,
+        display_token: displayUpload.token,
+        thumb_path: thumbnailPath,
+        thumb_token: thumbUpload.token,
+      };
+    }
   }
 
   return jsonResponse({
@@ -119,6 +131,6 @@ Deno.serve(async (req) => {
     storage_path: storagePath,
     signed_url: signedUpload.signedUrl,
     token: signedUpload.token,
-    ...poster,
+    ...direct,
   });
 });
