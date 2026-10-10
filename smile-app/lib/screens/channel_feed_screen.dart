@@ -421,11 +421,21 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   Future<void> _ticks = Future<void>.value();
   void _tick([void Function()? action]) {
     _ticks = _ticks.then((_) async {
-      if (mounted) action?.call();
+      if (mounted && action != null) {
+        action();
+        // Felt when it is SEEN: wait until the frame showing the change is
+        // actually on screen (the phone may be busy preparing the next
+        // photo), then vibrate.
+        await WidgetsBinding.instance.endOfFrame;
+      }
       await HapticFeedback.lightImpact();
       await Future<void>.delayed(const Duration(milliseconds: 150));
     });
   }
+
+  /// Photos leaving the album one by one, each with its tick, before the
+  /// delete goes to the server (LocalChanges then keeps them hidden).
+  final Set<String> _leaving = {};
 
   Future<void> _uploadFiles(List<XFile> picked) async {
     // The buttons stay free: more photos and videos can be sent while these
@@ -678,11 +688,13 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     if (!confirmed) return;
 
     final ids = deletableIds;
-    // A short tick per deleted photo, like WhatsApp (2026-10-10).
-    for (var i = 0; i < ids.length; i++) {
-      _tick();
-    }
     _clearSelection();
+    // One after the other, each photo disappears with its own short tick,
+    // like WhatsApp (2026-10-10).
+    for (final id in ids) {
+      _tick(() => setState(() => _leaving.add(id)));
+    }
+    await _ticks;
     // Gone at once; back with a message if the server says no.
     MediaActionResult? result;
     final saved = await LocalChanges.instance.run(
@@ -691,6 +703,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       affects: tablesChanged({'media_items', 'channels'}, channelIds: {widget.channelId}),
       failureText: 'Löschen fehlgeschlagen.',
     );
+    // From here LocalChanges keeps them hidden -- or they come back.
+    if (mounted) setState(() => _leaving.removeAll(ids));
     if (!saved || !mounted) return;
     final denied = result?.deniedIds ?? const [];
     LocalChanges.instance.drop(denied.map(LocalChanges.mediaGone));
@@ -703,7 +717,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// Which list a just-removed photo disappears from (normal or hidden).
   String get _viewName => _showingHidden ? 'hidden' : 'feed';
 
-  bool _isGoneHere(String mediaId) => LocalChanges.instance.text(LocalChanges.mediaGone(mediaId)) == _viewName;
+  bool _isGoneHere(String mediaId) =>
+      _leaving.contains(mediaId) || LocalChanges.instance.text(LocalChanges.mediaGone(mediaId)) == _viewName;
 
   String get _shownName => albumNameOf(widget.channelId, _channelName);
 
