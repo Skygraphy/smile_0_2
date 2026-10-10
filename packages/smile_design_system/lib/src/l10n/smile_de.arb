@@ -327,6 +327,7 @@
   "openAlbum": "Album öffnen",
   "openFrame": "Frame öffnen",
   "offlineHint": "Offline – zuletzt geladener Stand",
+  "videoNotOnPhone": "Dieses Video ist noch nicht auf dem Handy. Ohne Verbindung kann es nicht abgespielt werden.",
   "changeNotSaved": "Änderung nicht gespeichert: {reason}",
   "@changeNotSaved": {
     "placeholders": {

@@ -754,7 +754,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
               ? () => _toggleSelected(item.id)
               : (item.isVideo && item.isReady && item.displayUrl != null)
                   ? () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => VideoPlayerScreen(url: item.displayUrl!)),
+                        MaterialPageRoute(builder: (_) => VideoPlayerScreen(mediaId: item.id, url: item.displayUrl)),
                       )
                   : null,
           photo: item.isVideo ? _VideoBadge(child: tile) : tile,

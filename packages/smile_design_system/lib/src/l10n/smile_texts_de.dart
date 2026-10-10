@@ -569,6 +569,10 @@ class SmileTextsDe extends SmileTexts {
   String get offlineHint => 'Offline – zuletzt geladener Stand';
 
   @override
+  String get videoNotOnPhone =>
+      'Dieses Video ist noch nicht auf dem Handy. Ohne Verbindung kann es nicht abgespielt werden.';
+
+  @override
   String changeNotSaved(String reason) {
     return 'Änderung nicht gespeichert: $reason';
   }

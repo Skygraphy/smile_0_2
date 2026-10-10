@@ -22,6 +22,7 @@ import 'services/sync_bus.dart';
 import 'services/offline.dart';
 import 'services/offline_http_client.dart';
 import 'widgets/offline_hint.dart';
+import 'services/video_prefetcher.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 final supabase = Supabase.instance.client;
@@ -88,6 +89,8 @@ Future<void> main() async {
   // While open: the same sync signals, live (works where silent pushes are
   // throttled -- iOS). Push above stays for when the app is closed.
   LiveSyncChannel.start();
+  // In WLAN, new videos are downloaded ahead of time for offline (2026-10-10).
+  VideoPrefetcher.start();
   runApp(const SmileApp());
 }
 

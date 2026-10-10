@@ -1024,6 +1024,12 @@ abstract class SmileTexts {
   /// **'Offline – zuletzt geladener Stand'**
   String get offlineHint;
 
+  /// No description provided for @videoNotOnPhone.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieses Video ist noch nicht auf dem Handy. Ohne Verbindung kann es nicht abgespielt werden.'**
+  String get videoNotOnPhone;
+
   /// No description provided for @changeNotSaved.
   ///
   /// In de, this message translates to:

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'local_changes.dart';
 import 'media_shrink.dart';
+import 'video_cache.dart';
 
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -274,6 +275,8 @@ class MediaService {
     // From here on it is uploading -- the status says so.
     onProgress?.call(0, upload.lengthSync());
     final uploadMime = shrunk != null ? 'video/mp4' : mimeType;
+    String? mediaItemId;
+    var uploaded = false;
     try {
       await _uploadVideoFile(
         channelId: channelId,
@@ -282,16 +285,26 @@ class MediaService {
         shrunk: poster == null ? null : shrunk,
         poster: poster,
         mimeType: uploadMime,
-        onMediaItemCreated: onMediaItemCreated,
+        onMediaItemCreated: (id) {
+          mediaItemId = id;
+          onMediaItemCreated?.call(id);
+        },
         onRetrying: onRetrying,
         onProgress: onProgress,
       );
+      uploaded = true;
     } finally {
-      // The shrunk copy is only needed for the upload.
+      // The converted copy is the video as it now is on the server: kept on
+      // the phone, it plays at once and offline (VideoCache, 2026-10-10).
       if (shrunk != null) {
-        try {
-          await shrunk.file.delete();
-        } catch (_) {}
+        final id = mediaItemId;
+        if (uploaded && id != null) {
+          await VideoCache.keep(id, shrunk.file);
+        } else {
+          try {
+            await shrunk.file.delete();
+          } catch (_) {}
+        }
       }
     }
   }
