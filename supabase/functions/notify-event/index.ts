@@ -28,6 +28,7 @@ import { fetchProfilesByUserId } from "../_shared/profiles.ts";
 import { pushNotificationToUsers } from "../_shared/push-users.ts";
 import { spaceManagerIds } from "../_shared/space-access.ts";
 import { purgeAfter } from "../_shared/trash.ts";
+import { announceReadyPhoto } from "../_shared/media-fanout.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -84,6 +85,10 @@ Deno.serve(async (req) => {
       await spaceRenamed(supabaseAdmin, body.payload);
     } else if (body.kind === "picture_changed") {
       await pictureChanged(supabaseAdmin, body.payload);
+    } else if (body.kind === "media_ready") {
+      // Photos the phone put in directly (migrations/0071): the same "new
+      // photo(s)" push as after an upload through complete-upload.
+      await announceReadyPhoto(supabaseAdmin, body.payload.media_item_id, body.payload.channel_id);
     } else {
       return jsonResponse({ error: "unknown_kind" }, 400);
     }

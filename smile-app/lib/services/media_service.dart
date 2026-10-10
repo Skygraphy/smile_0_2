@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -187,6 +188,169 @@ class MediaService {
     if (errors.single != null) throw errors.single!;
   }
 
+  /// Several photos at once, straight from the phone (2026-10-10,
+  /// migrations/0071): no Edge Function in between -- those cost ~1-1.6 s
+  /// per call. The phone gives each photo its id, uploads the prepared
+  /// photo and its thumbnail directly to where they are served from (four
+  /// photos at a time), then inserts all rows as ready in ONE request; the
+  /// database checks the files and announces them itself.
+  ///
+  /// Photos the phone can't prepare (unusual format) take the old way
+  /// through the server. [onMediaItemCreated] (index, id) at once,
+  /// [onReady] (index) when one is in the album. Returns one entry per
+  /// photo: null when it worked, else the error.
+  Future<List<Object?>> uploadPhotos({
+    required String channelId,
+    required List<({Uint8List bytes, String fileExtension, String mimeType})> photos,
+    void Function(int index, String mediaItemId)? onMediaItemCreated,
+    void Function(int index)? onReady,
+    void Function(int attempt, int maxAttempts)? onRetrying,
+  }) async {
+    final clock = Stopwatch()..start();
+    final userId = supabase.auth.currentUser!.id;
+    final errors = List<Object?>.filled(photos.length, null);
+
+    final prepared = <({Uint8List? shrunk, Uint8List? thumbnail, (int, int)? size, String? preview})>[];
+    for (final photo in photos) {
+      final shrunk = await MediaShrink.photo(photo.bytes);
+      final thumbnail = shrunk == null ? null : await MediaShrink.thumbnail(shrunk);
+      prepared.add((
+        shrunk: shrunk,
+        thumbnail: thumbnail,
+        size: shrunk == null ? null : await MediaShrink.sizeOf(shrunk),
+        preview: await _buildPreviewDataUrl(thumbnail ?? photo.bytes),
+      ));
+    }
+    debugPrint('SmilePhoto: ${photos.length} prepared in ${clock.elapsedMilliseconds} ms');
+
+    final direct = [for (var i = 0; i < photos.length; i++) if (prepared[i].shrunk != null && prepared[i].thumbnail != null) i];
+    final ids = <int, String>{for (final i in direct) i: _newUuid()};
+    for (final i in direct) {
+      onMediaItemCreated?.call(i, ids[i]!);
+    }
+    String displayPath(int i) => '$channelId/${ids[i]}_display.jpg';
+    String thumbPath(int i) => '$channelId/${ids[i]}_thumb.jpg';
+
+    // The files: four photos at a time, each photo with its thumbnail.
+    final uploaded = <int>[];
+    var next = 0;
+    Future<void> worker() async {
+      while (next < direct.length) {
+        final i = direct[next++];
+        try {
+          await Future.wait([
+            _uploadOwn('media-display', displayPath(i), prepared[i].shrunk!, onRetrying),
+            _uploadOwn('media-thumbnails', thumbPath(i), prepared[i].thumbnail!, onRetrying),
+          ]);
+          uploaded.add(i);
+        } catch (e) {
+          errors[i] = e;
+        }
+      }
+    }
+
+    await Future.wait(List.generate(direct.length < 4 ? direct.length : 4, (_) => worker()));
+    uploaded.sort();
+    debugPrint('SmilePhoto: uploaded in ${clock.elapsedMilliseconds} ms');
+
+    // One request puts them all in the album, in the order they were picked.
+    if (uploaded.isNotEmpty) {
+      try {
+        await _withRetry(
+          () async {
+            try {
+              await supabase.from('media_items').insert([
+                for (final i in uploaded)
+                  {
+                    'id': ids[i],
+                    'channel_id': channelId,
+                    'sender_id': userId,
+                    'media_type': 'photo',
+                    'mime_type': 'image/jpeg',
+                    'storage_path_original': displayPath(i),
+                    'storage_path_display': displayPath(i),
+                    'storage_path_thumbnail': thumbPath(i),
+                    'processing_status': 'ready',
+                    'file_size_bytes': prepared[i].shrunk!.length,
+                    'width': ?prepared[i].size?.$1,
+                    'height': ?prepared[i].size?.$2,
+                    'preview_data_url': ?prepared[i].preview,
+                  },
+              ]);
+            } on PostgrestException catch (e) {
+              // A retry after the first attempt went through but its answer
+              // was lost: the rows are there.
+              if (e.code != '23505') rethrow;
+            }
+          },
+          onRetry: onRetrying,
+        );
+        for (final i in uploaded) {
+          onReady?.call(i);
+        }
+      } catch (e) {
+        for (final i in uploaded) {
+          errors[i] = e;
+        }
+        // Not in the album: take the files back again (no leftovers).
+        try {
+          await supabase.storage.from('media-display').remove([for (final i in uploaded) displayPath(i)]);
+          await supabase.storage.from('media-thumbnails').remove([for (final i in uploaded) thumbPath(i)]);
+        } catch (_) {}
+      }
+    }
+    debugPrint('SmilePhoto: ${uploaded.length} ready in ${clock.elapsedMilliseconds} ms');
+
+    // Couldn't be prepared here: through the server, as before.
+    final viaServer = [for (var i = 0; i < photos.length; i++) if (!direct.contains(i)) i];
+    if (viaServer.isNotEmpty) {
+      final serverErrors = await _uploadPhotosViaServer(
+        channelId: channelId,
+        photos: [for (final i in viaServer) photos[i]],
+        onMediaItemCreated: (j, id) => onMediaItemCreated?.call(viaServer[j], id),
+        onReady: (j) => onReady?.call(viaServer[j]),
+        onRetrying: onRetrying,
+      );
+      for (final (j, error) in serverErrors.indexed) {
+        errors[viaServer[j]] = error;
+      }
+    } else if (uploaded.isNotEmpty) {
+      LocalChanges.saved(tablesChanged({'media_items', 'channels'}, channelIds: {channelId}));
+    }
+    return errors;
+  }
+
+  /// One of the caller's own files into a media bucket (migrations/0071's
+  /// policy). A retry that finds the file already there counts as done.
+  Future<void> _uploadOwn(
+    String bucket,
+    String path,
+    Uint8List data,
+    void Function(int attempt, int maxAttempts)? onRetrying,
+  ) =>
+      _withRetry(
+        () async {
+          try {
+            await supabase.storage.from(bucket).uploadBinary(path, data, fileOptions: const FileOptions(contentType: 'image/jpeg'));
+          } on StorageException catch (e) {
+            if (e.statusCode != '409' && !e.message.toLowerCase().contains('exists')) rethrow;
+          }
+        },
+        onRetry: onRetrying,
+      );
+
+  /// A random (version 4) UUID -- the phone names its photos itself.
+  static String _newUuid() {
+    final random = Random.secure();
+    final b = List<int>.generate(16, (_) => random.nextInt(256));
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    String hex(int from, int to) => b.sublist(from, to).map((x) => x.toRadixString(16).padLeft(2, '0')).join();
+    return '${hex(0, 4)}-${hex(4, 6)}-${hex(6, 8)}-${hex(8, 10)}-${hex(10, 16)}';
+  }
+
+  /// The old way through the server (create-upload/complete-upload) --
+  /// for photos the phone couldn't prepare.
   /// Several photos at once, like WhatsApp (2026-10-10). Every Edge Function
   /// call costs ~1 s regardless of size, so the whole selection is
   /// registered in ONE create-upload call and marked ready in ONE
@@ -197,7 +361,7 @@ class MediaService {
   /// [onMediaItemCreated] (index, id) as soon as the ids are known. Returns
   /// one entry per photo: null when it worked, else the error -- a failed
   /// photo is removed again and doesn't hold up the others.
-  Future<List<Object?>> uploadPhotos({
+  Future<List<Object?>> _uploadPhotosViaServer({
     required String channelId,
     required List<({Uint8List bytes, String fileExtension, String mimeType})> photos,
     void Function(int index, String mediaItemId)? onMediaItemCreated,
