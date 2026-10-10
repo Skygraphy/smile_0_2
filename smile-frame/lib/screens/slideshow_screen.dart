@@ -245,6 +245,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final picked = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
+      // Scrolls when there are more albums than fit (found 2026-10-10 with
+      // 7 albums on the landscape P610: "bottom overflowed").
+      isScrollControlled: true,
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -256,15 +260,22 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                 child: Text(SmileTexts.of(context).chooseAlbum, style: Theme.of(context).textTheme.titleMedium),
               ),
             ),
-            for (final channel in sorted)
-              ListTile(
-                leading: const SmileObjectIcon(icon: SmileIcons.album, size: 40),
-                title: Text(channel.name ?? channel.channelId, style: const TextStyle(fontSize: 18)),
-                trailing: channel.channelId == _currentChannelId
-                    ? const Icon(SmileIcons.accept, color: SmileTheme.primary)
-                    : null,
-                onTap: () => Navigator.of(context).pop(channel.channelId),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final channel in sorted)
+                    ListTile(
+                      leading: const SmileObjectIcon(icon: SmileIcons.album, size: 40),
+                      title: Text(channel.name ?? channel.channelId, style: const TextStyle(fontSize: 18)),
+                      trailing: channel.channelId == _currentChannelId
+                          ? const Icon(SmileIcons.accept, color: SmileTheme.primary)
+                          : null,
+                      onTap: () => Navigator.of(context).pop(channel.channelId),
+                    ),
+                ],
               ),
+            ),
           ],
         ),
       ),
