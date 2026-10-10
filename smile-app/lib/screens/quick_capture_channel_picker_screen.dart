@@ -1,7 +1,9 @@
 import 'dart:io';
-import 'dart:typed_data';
+
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../widgets/album_covers.dart';
@@ -81,6 +83,8 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
   }
 
   Future<void> _sendTo(UploadableChannel channel) async {
+    // A short tick when it's sent, like WhatsApp (2026-10-10).
+    unawaited(HapticFeedback.lightImpact());
     setState(() {
       _uploadingTo = channel;
       _errorMessage = null;

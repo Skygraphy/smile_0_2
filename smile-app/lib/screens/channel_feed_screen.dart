@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../main.dart';
@@ -449,6 +449,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       batch.add((file: file, extension: extension, isVideo: isVideo, photoBytes: photoBytes, pending: pending));
       if (!mounted) return;
       setState(() => _pendingUploads.insert(0, pending));
+      // A short tick when it's sent, like WhatsApp (2026-10-10).
+      if (index == 0) unawaited(HapticFeedback.lightImpact());
     }
 
     var failed = 0;
@@ -666,6 +668,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     if (!confirmed) return;
 
     final ids = deletableIds;
+    // A short tick when it's deleted, like WhatsApp (2026-10-10).
+    unawaited(HapticFeedback.lightImpact());
     _clearSelection();
     // Gone at once; back with a message if the server says no.
     MediaActionResult? result;
