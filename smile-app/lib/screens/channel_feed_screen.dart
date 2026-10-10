@@ -756,7 +756,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           showTail: isFirstInRun,
           aspectRatio: pending.aspectRatio,
           photo: pending.sure
-              ? (pending.isVideo ? _VideoBadge(child: _PhotoTile(bytes: pending.bytes)) : _PhotoTile(bytes: pending.bytes))
+              ? (pending.isVideo
+                  ? _VideoBadge(playable: false, child: _PhotoTile(bytes: pending.bytes))
+                  : _PhotoTile(bytes: pending.bytes))
               : _UploadProgress(progress: pending.progress, child: _PhotoTile(bytes: pending.bytes)),
         ));
       } else {
@@ -821,7 +823,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                         MaterialPageRoute(builder: (_) => VideoPlayerScreen(mediaId: item.id, url: item.displayUrl)),
                       )
                   : null,
-          photo: item.isVideo ? _VideoBadge(child: tile) : tile,
+          photo: item.isVideo
+              ? _VideoBadge(playable: item.isReady && item.displayUrl != null, child: tile)
+              : tile,
         ));
       }
 
@@ -1151,9 +1155,14 @@ class _PhotoTile extends StatelessWidget {
 /// A play symbol over a video's poster frame -- videos are tiles like
 /// photos, tapping one plays it full-screen (VideoPlayerScreen).
 class _VideoBadge extends StatelessWidget {
-  const _VideoBadge({required this.child});
+  const _VideoBadge({required this.child, this.playable = true});
 
   final Widget child;
+
+  /// False while the video can't be played yet (still going up, or still
+  /// being prepared on the server): the play sign is only faint then
+  /// (2026-10-10), so it doesn't look like a button.
+  final bool playable;
 
   @override
   Widget build(BuildContext context) {
@@ -1161,7 +1170,7 @@ class _VideoBadge extends StatelessWidget {
       fit: StackFit.passthrough,
       children: [
         child,
-        const Center(child: Icon(SmileIcons.play, size: 56, color: Colors.white70)),
+        Center(child: Icon(SmileIcons.play, size: 56, color: playable ? Colors.white70 : Colors.white24)),
       ],
     );
   }
