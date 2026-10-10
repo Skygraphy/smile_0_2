@@ -415,6 +415,16 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     }
   }
 
+  /// A short tick per photo/video when it counts as sent, like WhatsApp
+  /// (2026-10-10) -- a little apart, so several don't blur into one.
+  Future<void> _ticks = Future<void>.value();
+  void _sentTick() {
+    _ticks = _ticks.then((_) async {
+      await HapticFeedback.lightImpact();
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+    });
+  }
+
   Future<void> _uploadFiles(List<XFile> picked) async {
     // The buttons stay free: more photos and videos can be sent while these
     // go up -- each shows its own progress in the album (2026-10-10).
@@ -449,8 +459,6 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       batch.add((file: file, extension: extension, isVideo: isVideo, photoBytes: photoBytes, pending: pending));
       if (!mounted) return;
       setState(() => _pendingUploads.insert(0, pending));
-      // A short tick when it's sent, like WhatsApp (2026-10-10).
-      if (index == 0) unawaited(HapticFeedback.lightImpact());
     }
 
     var failed = 0;
@@ -490,6 +498,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
             },
             onPrepared: () {
               if (mounted && connected) setState(() => item.pending.sure = true);
+              _sentTick();
             },
             onProgress: (sent, total) {
               if (!mounted || total == 0) return;
@@ -541,6 +550,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
         onMediaItemCreated: (i, id) => photoItems[i].pending.mediaItemId = id,
         onPrepared: (i) {
           if (mounted && connected) setState(() => photoItems[i].pending.sure = true);
+          _sentTick();
         },
         onRetrying: onRetrying,
       );
