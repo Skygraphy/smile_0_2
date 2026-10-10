@@ -415,11 +415,13 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     }
   }
 
-  /// A short tick per photo/video when it counts as sent, like WhatsApp
-  /// (2026-10-10) -- a little apart, so several don't blur into one.
+  /// A short tick per photo/video, like WhatsApp (2026-10-10) -- together
+  /// with what it stands for ([action]: its ring disappearing), and a
+  /// little apart from the next, so several don't blur into one.
   Future<void> _ticks = Future<void>.value();
-  void _sentTick() {
+  void _tick([void Function()? action]) {
     _ticks = _ticks.then((_) async {
+      if (mounted) action?.call();
       await HapticFeedback.lightImpact();
       await Future<void>.delayed(const Duration(milliseconds: 150));
     });
@@ -496,10 +498,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
             onPreparing: (percent) {
               if (mounted) setState(() => item.pending.progress = percent / 100);
             },
-            onPrepared: () {
-              if (mounted && connected) setState(() => item.pending.sure = true);
-              _sentTick();
-            },
+            onPrepared: () => _tick(() {
+              if (connected) setState(() => item.pending.sure = true);
+            }),
             onProgress: (sent, total) {
               if (!mounted || total == 0) return;
               setState(() => item.pending.progress = sent / total);
@@ -548,10 +549,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
             ),
         ],
         onMediaItemCreated: (i, id) => photoItems[i].pending.mediaItemId = id,
-        onPrepared: (i) {
-          if (mounted && connected) setState(() => photoItems[i].pending.sure = true);
-          _sentTick();
-        },
+        onPrepared: (i) => _tick(() {
+          if (connected) setState(() => photoItems[i].pending.sure = true);
+        }),
         onRetrying: onRetrying,
       );
       for (final (i, error) in errors.indexed) {
@@ -678,8 +678,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     if (!confirmed) return;
 
     final ids = deletableIds;
-    // A short tick when it's deleted, like WhatsApp (2026-10-10).
-    unawaited(HapticFeedback.lightImpact());
+    // A short tick per deleted photo, like WhatsApp (2026-10-10).
+    for (var i = 0; i < ids.length; i++) {
+      _tick();
+    }
     _clearSelection();
     // Gone at once; back with a message if the server says no.
     MediaActionResult? result;
