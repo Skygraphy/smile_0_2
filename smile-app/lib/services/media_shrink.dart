@@ -24,15 +24,36 @@ class ShrunkVideo {
 class MediaShrink {
   MediaShrink._();
 
-  /// The server's display size for photos (DISPLAY_MAX_EDGE).
-  static const photoMaxEdge = 2560;
+  /// Longer edge of an uploaded photo: sharp on the Frames (the P610 shows
+  /// 2000 px) and small to send -- WhatsApp sends ~1600 px (2026-10-10).
+  static const photoMaxEdge = 2048;
+
+  /// The server's thumbnail size (THUMBNAIL_MAX_EDGE) -- the album grid.
+  static const thumbnailMaxEdge = 400;
 
   static const _videoChannel = MethodChannel('smile/video_compress');
 
-  /// A photo as JPEG with its longer edge at most [photoMaxEdge] (~0.5-1 MB
-  /// instead of 3-6 MB). Returns null if it can't be shrunk -- then the
+  /// A photo as JPEG with its longer edge at most [photoMaxEdge] (~300-600
+  /// KB instead of 3-6 MB). Returns null if it can't be shrunk -- then the
   /// original is uploaded as before.
-  static Future<Uint8List?> photo(Uint8List original) async {
+  static Future<Uint8List?> photo(Uint8List original) => _jpeg(original, photoMaxEdge, 80);
+
+  /// The small picture of a photo for the album grid.
+  static Future<Uint8List?> thumbnail(Uint8List photo) => _jpeg(photo, thumbnailMaxEdge, 80);
+
+  /// Width and height of an image as shown.
+  static Future<(int, int)?> sizeOf(Uint8List image) async {
+    try {
+      final descriptor = await ui.ImageDescriptor.encoded(await ui.ImmutableBuffer.fromUint8List(image));
+      final size = (descriptor.width, descriptor.height);
+      descriptor.dispose();
+      return size;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<Uint8List?> _jpeg(Uint8List original, int maxEdge, int quality) async {
     try {
       final descriptor = await ui.ImageDescriptor.encoded(await ui.ImmutableBuffer.fromUint8List(original));
       final longEdge = descriptor.width > descriptor.height ? descriptor.width : descriptor.height;
@@ -40,12 +61,12 @@ class MediaShrink {
       descriptor.dispose();
       // flutter_image_compress keeps both sides at least min*: passing the
       // target SHORT edge for both works for any orientation.
-      final targetShort = longEdge <= photoMaxEdge ? shortEdge : (shortEdge * photoMaxEdge / longEdge).round();
+      final targetShort = longEdge <= maxEdge ? shortEdge : (shortEdge * maxEdge / longEdge).round();
       final shrunk = await FlutterImageCompress.compressWithList(
         original,
         minWidth: targetShort,
         minHeight: targetShort,
-        quality: 85,
+        quality: quality,
         format: CompressFormat.jpeg,
       );
       return shrunk.isEmpty ? null : shrunk;

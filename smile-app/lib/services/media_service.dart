@@ -178,40 +178,78 @@ class MediaService {
     void Function(String mediaItemId)? onMediaItemCreated,
     void Function(int attempt, int maxAttempts)? onRetrying,
   }) async {
-    // Shrunk on the phone first, like WhatsApp (MediaShrink, 2026-10-09):
-    // to the size the server keeps anyway -- a fraction of the upload.
+    // Like WhatsApp (2026-10-10): the phone makes both versions itself --
+    // the photo (MediaShrink, ~300-600 KB) and its thumbnail -- and the
+    // server takes them as they are (complete-upload, client_encoded):
+    // ready as soon as it is uploaded, no worker in between. Registering
+    // with the server runs meanwhile.
+    final clock = Stopwatch()..start();
+    final previewDataUrl = await _buildPreviewDataUrl(bytes);
+    final created = _withRetry(
+      () => _createUpload(
+        channelId: channelId,
+        mimeType: 'image/jpeg',
+        fileExtension: 'jpg',
+        fileSizeBytes: bytes.length,
+        previewDataUrl: previewDataUrl,
+        clientEncoded: true,
+      ),
+      onRetry: onRetrying,
+    )..ignore(); // awaited below; this only keeps an early failure from counting as unhandled
     final shrunk = await MediaShrink.photo(bytes);
     final uploadBytes = shrunk ?? bytes;
     final uploadMime = shrunk != null ? 'image/jpeg' : mimeType;
-    final uploadExtension = shrunk != null ? 'jpg' : fileExtension;
-    final previewDataUrl = await _buildPreviewDataUrl(uploadBytes);
+    final thumbnail = shrunk == null ? null : await MediaShrink.thumbnail(shrunk);
+    final size = shrunk == null ? null : await MediaShrink.sizeOf(shrunk);
+    debugPrint('SmilePhoto: shrunk ${bytes.length} -> ${uploadBytes.length} bytes in ${clock.elapsedMilliseconds} ms');
 
-    final createData = await _withRetry(
-      () => _createUpload(
-        channelId: channelId,
-        mimeType: uploadMime,
-        fileExtension: uploadExtension,
-        fileSizeBytes: uploadBytes.length,
-        previewDataUrl: previewDataUrl,
-      ),
-      onRetry: onRetrying,
-    );
+    final createData = await created;
     final storagePath = createData['storage_path'] as String;
     final token = createData['token'] as String;
     final mediaItemId = createData['media_item_id'] as String;
     onMediaItemCreated?.call(mediaItemId);
 
     try {
+      final thumbPath = createData['poster_path'] as String?;
+      final thumbToken = createData['poster_token'] as String?;
+      Future<bool> sendThumbnail() async {
+        if (thumbnail == null || thumbPath == null || thumbToken == null) return false;
+        try {
+          await _withRetry(
+            () => supabase.storage
+                .from('media-originals')
+                .uploadBinaryToSignedUrl(thumbPath, thumbToken, thumbnail, const FileOptions(contentType: 'image/jpeg')),
+            onRetry: onRetrying,
+          );
+          return true;
+        } catch (_) {
+          return false; // without it the server makes the thumbnail as before
+        }
+      }
+
+      final sent = await Future.wait([
+        _withRetry(
+          () => supabase.storage.from('media-originals').uploadBinaryToSignedUrl(
+                storagePath,
+                token,
+                uploadBytes,
+                FileOptions(contentType: uploadMime),
+              ),
+          onRetry: onRetrying,
+        ).then((_) => true),
+        sendThumbnail(),
+      ]);
+      debugPrint('SmilePhoto: uploaded in ${clock.elapsedMilliseconds} ms');
+      final fast = shrunk != null && sent[1];
       await _withRetry(
-        () => supabase.storage.from('media-originals').uploadBinaryToSignedUrl(
-              storagePath,
-              token,
-              uploadBytes,
-              FileOptions(contentType: uploadMime),
-            ),
+        () => _completeUpload(
+          mediaItemId,
+          fileSizeBytes: uploadBytes.length,
+          photo: fast ? (width: size?.$1, height: size?.$2) : null,
+        ),
         onRetry: onRetrying,
       );
-      await _withRetry(() => _completeUpload(mediaItemId), onRetry: onRetrying);
+      debugPrint('SmilePhoto: ready in ${clock.elapsedMilliseconds} ms');
     } catch (e) {
       // create-upload already created the media_items row at this point --
       // giving up here without cleanup would leave it stuck at
@@ -428,10 +466,20 @@ class MediaService {
     return data;
   }
 
-  Future<void> _completeUpload(String mediaItemId, {ShrunkVideo? clientEncoded, int? fileSizeBytes}) async {
+  Future<void> _completeUpload(
+    String mediaItemId, {
+    ShrunkVideo? clientEncoded,
+    ({int? width, int? height})? photo,
+    int? fileSizeBytes,
+  }) async {
     final response = await invokeEdge('complete-upload', body: {
       'media_item_id': mediaItemId,
       'file_size_bytes': ?fileSizeBytes,
+      if (photo != null) ...{
+        'client_encoded': true,
+        'width': ?photo.width,
+        'height': ?photo.height,
+      },
       if (clientEncoded != null) ...{
         'client_encoded': true,
         'width': ?clientEncoded.width,

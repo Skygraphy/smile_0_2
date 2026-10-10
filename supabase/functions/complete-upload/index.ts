@@ -35,8 +35,9 @@ interface CompleteUploadRequest {
   file_size_bytes?: number;
 }
 
-/** Above this, a "converted" video is not trusted and goes through the worker. */
+/** Above this, a "converted" upload is not trusted and goes through the worker. */
 const MAX_CLIENT_ENCODED_BYTES = 500 * 1024 * 1024;
+const MAX_CLIENT_ENCODED_PHOTO_BYTES = 10 * 1024 * 1024;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -77,13 +78,12 @@ Deno.serve(async (req) => {
   // A video the phone already converted (2026-10-09): taken as it is --
   // ready in a second instead of waiting ~30 s for a worker task to start.
   // Falls through to the worker if anything about it doesn't fit.
-  if (
-    body.client_encoded &&
-    mediaItem.media_type === "video" &&
-    mediaItem.mime_type === "video/mp4" &&
-    (mediaItem.file_size_bytes ?? 0) <= MAX_CLIENT_ENCODED_BYTES
-  ) {
-    const { displayPath, thumbnailPath } = processedPaths("video", mediaItem.storage_path_original);
+  const clientVideo = mediaItem.media_type === "video" && mediaItem.mime_type === "video/mp4" &&
+    (mediaItem.file_size_bytes ?? 0) <= MAX_CLIENT_ENCODED_BYTES;
+  const clientPhoto = mediaItem.media_type === "photo" && mediaItem.mime_type === "image/jpeg" &&
+    (mediaItem.file_size_bytes ?? 0) <= MAX_CLIENT_ENCODED_PHOTO_BYTES;
+  if (body.client_encoded && (clientVideo || clientPhoto)) {
+    const { displayPath, thumbnailPath } = processedPaths(mediaItem.media_type, mediaItem.storage_path_original);
     const posterPath = clientPosterPath(mediaItem.storage_path_original);
     const { error: videoCopyError } = await supabaseAdmin.storage
       .from("media-originals")
@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ status: "ready" });
       }
     }
-    console.error("client-encoded video fell back to the worker", videoCopyError, posterCopyError);
+    console.error("client-encoded upload fell back to the worker", videoCopyError, posterCopyError);
   }
 
   const processingConfigured = Boolean(processingServiceUrl && processingServiceToken && processingCallbackToken);

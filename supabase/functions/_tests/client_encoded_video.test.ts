@@ -67,3 +67,37 @@ Deno.test("client-encoded video is ready at once with its own poster, nothing le
     await deleteUser(owner.id);
   }
 });
+
+Deno.test("client-encoded photo is ready at once with its own thumbnail", async () => {
+  const { url, anonKey } = requireEnv();
+  const owner = await createThrowawayUser("cephoto");
+  let space: string | undefined;
+  try {
+    await ensureProfile(owner.id, "CP Owner");
+    const { accessToken } = await accessTokenFor(owner.email);
+    space = await createSpace(accessToken, "CP Space");
+    const album = await createChannel(accessToken, space, "CP Album");
+    const created = await invoke("create-upload", accessToken, {
+      channel_id: album, media_type: "photo", mime_type: "image/jpeg", file_extension: "jpg",
+      file_size_bytes: 16, client_encoded: true,
+    });
+    assertEquals(created.status, 200, JSON.stringify(created.body));
+    const { media_item_id: id, storage_path: path, token, poster_path: thumbPath, poster_token: thumbToken } = created.body;
+    const put = (p: string, t: string) =>
+      fetch(`${url}/storage/v1/object/upload/sign/media-originals/${p}?token=${t}`, {
+        method: "PUT",
+        headers: { apikey: anonKey, "Content-Type": "image/jpeg" },
+        body: new Uint8Array(16),
+      });
+    assertEquals((await put(path, token)).status, 200);
+    assertEquals((await put(thumbPath, thumbToken)).status, 200);
+    const done = await invoke("complete-upload", accessToken, { media_item_id: id, client_encoded: true, width: 2048, height: 1536 });
+    assertEquals(done.body.status, "ready", JSON.stringify(done.body));
+    const { body: rows } = await svc(`media_items?id=eq.${id}&select=processing_status,width,height,storage_path_thumbnail`);
+    assertEquals([rows[0].processing_status, rows[0].width, rows[0].height], ["ready", 2048, 1536]);
+    assertEquals(typeof rows[0].storage_path_thumbnail, "string");
+  } finally {
+    if (space) await deleteSpace(space);
+    await deleteUser(owner.id);
+  }
+});

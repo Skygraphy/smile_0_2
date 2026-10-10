@@ -29,9 +29,10 @@ interface CreateUploadRequest {
   file_extension: string;
   file_size_bytes?: number;
   preview_data_url?: string;
-  // The phone already converted the video to the display format (smile-app
-  // MediaShrink, 2026-10-09): it also uploads a poster frame, and
-  // complete-upload takes both as they are -- no worker, no waiting.
+  // The phone already made the display version (smile-app MediaShrink,
+  // 2026-10-09/10): it also uploads the small picture (a video's poster
+  // frame, a photo's thumbnail), and complete-upload takes both as they
+  // are -- no worker, no waiting.
   client_encoded?: boolean;
 }
 
@@ -107,7 +108,7 @@ Deno.serve(async (req) => {
 
   // Where the phone puts the poster frame of a video it converted itself.
   let poster: { poster_path: string; poster_token: string } | Record<string, never> = {};
-  if (body.media_type === "video" && body.client_encoded) {
+  if (body.client_encoded) {
     const posterPath = clientPosterPath(storagePath);
     const { data: posterUpload } = await supabaseAdmin.storage.from("media-originals").createSignedUploadUrl(posterPath);
     if (posterUpload) poster = { poster_path: posterPath, poster_token: posterUpload.token };
