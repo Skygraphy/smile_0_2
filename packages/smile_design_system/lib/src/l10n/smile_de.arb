@@ -633,5 +633,17 @@
   "captureInAlbum": "Aufnehmen",
   "recordVideo": "Video aufnehmen",
   "captureSend": "Senden",
-  "captureRetake": "Nochmal"
+  "captureRetake": "Nochmal",
+  "noConnectionTitle": "Keine Internetverbindung",
+  "noConnectionMessage": "Prüfe deine Verbindung und versuche es noch einmal.",
+  "noConnectionReason": "keine Internetverbindung",
+  "sendFailed": "Das Senden hat leider nicht geklappt. Bitte versuche es noch einmal.",
+  "sendFailedSome": "{failed} von {total} konnten nicht gesendet werden. Bitte versuche es noch einmal.",
+  "@sendFailedSome": {
+    "placeholders": {
+      "failed": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "ok": "OK"
 }

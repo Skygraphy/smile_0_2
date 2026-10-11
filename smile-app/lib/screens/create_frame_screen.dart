@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/friendly_error.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../services/frame_service.dart';
@@ -47,7 +48,7 @@ class _CreateFrameScreenState extends State<CreateFrameScreen> {
       setState(() => _created = frame);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _errorMessage = 'Frame konnte nicht erstellt werden: $e');
+      setState(() => _errorMessage = 'Frame konnte nicht erstellt werden: ${errorReason(context, e)}');
     } finally {
       if (mounted) setState(() => _isCreating = false);
     }

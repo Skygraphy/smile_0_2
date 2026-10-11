@@ -4,6 +4,7 @@ import '../services/avatar_upload.dart';
 import '../services/profile_service.dart';
 import '../widgets/avatar_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/friendly_error.dart';
 
 /// The mandatory first-login onboarding step -- main.dart's profile gate
 /// shows this whenever profiles.display_name doesn't exist yet for the
@@ -52,7 +53,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       } on AvatarUrlException catch (e) {
         if (mounted) setState(() => _errorMessage = e.message);
       } catch (e) {
-        if (mounted) setState(() => _errorMessage = 'Bild konnte nicht hochgeladen werden: $e');
+        if (mounted) setState(() => _errorMessage = 'Bild konnte nicht hochgeladen werden: ${errorReason(context, e)}');
       }
     } else {
       setState(() => _isPickingAvatar = true);
@@ -61,7 +62,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             ? await widget.profileService.uploadMyAvatarFromCamera()
             : await widget.profileService.uploadMyAvatarFromGallery();
       } catch (e) {
-        if (mounted) setState(() => _errorMessage = 'Bild konnte nicht hochgeladen werden: $e');
+        if (mounted) setState(() => _errorMessage = 'Bild konnte nicht hochgeladen werden: ${errorReason(context, e)}');
       }
     }
     if (!mounted) return;
@@ -85,7 +86,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       await widget.profileService.setDisplayName(name);
       widget.onDone();
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'Speichern fehlgeschlagen: $e');
+      if (mounted) setState(() => _errorMessage = 'Speichern fehlgeschlagen: ${errorReason(context, e)}');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

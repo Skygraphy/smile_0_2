@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/friendly_error.dart';
 
 import '../main.dart';
 import '../services/channel_service.dart';
@@ -95,7 +96,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _errorMessage = SmileTexts.of(context).albumInfoLoadError('$e'));
+      setState(() => _errorMessage = SmileTexts.of(context).albumInfoLoadError(errorReason(context, e)));
     }
   }
 
@@ -108,7 +109,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     } on ChannelRequestException catch (e) {
       if (mounted) setState(() => _errorMessage = e.message);
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).actionFailed('$e'));
+      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).actionFailed(errorReason(context, e)));
     }
   }
 
@@ -206,7 +207,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       );
       if (mounted) await _load();
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).actionFailed('$e'));
+      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).actionFailed(errorReason(context, e)));
     }
   }
 
@@ -314,7 +315,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       // The feed underneath is no longer accessible -- straight back home.
       if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
     }
   }
 
@@ -332,7 +333,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       await widget.channelService.deleteChannel(widget.channelId);
       if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
     }
   }
 

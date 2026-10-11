@@ -1629,6 +1629,42 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Nochmal'**
   String get captureRetake;
+
+  /// No description provided for @noConnectionTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Internetverbindung'**
+  String get noConnectionTitle;
+
+  /// No description provided for @noConnectionMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Prüfe deine Verbindung und versuche es noch einmal.'**
+  String get noConnectionMessage;
+
+  /// No description provided for @noConnectionReason.
+  ///
+  /// In de, this message translates to:
+  /// **'keine Internetverbindung'**
+  String get noConnectionReason;
+
+  /// No description provided for @sendFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Senden hat leider nicht geklappt. Bitte versuche es noch einmal.'**
+  String get sendFailed;
+
+  /// No description provided for @sendFailedSome.
+  ///
+  /// In de, this message translates to:
+  /// **'{failed} von {total} konnten nicht gesendet werden. Bitte versuche es noch einmal.'**
+  String sendFailedSome(int failed, int total);
+
+  /// No description provided for @ok.
+  ///
+  /// In de, this message translates to:
+  /// **'OK'**
+  String get ok;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

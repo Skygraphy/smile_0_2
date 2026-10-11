@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/friendly_error.dart';
 
 import '../main.dart';
 import '../services/channel_service.dart';
@@ -107,7 +108,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
       if (!mounted) return;
       setState(() {
         _albums ??= const [];
-        _errorMessage = SmileTexts.of(context).spaceInfoLoadError('$e');
+        _errorMessage = SmileTexts.of(context).spaceInfoLoadError(errorReason(context, e));
       });
     }
   }
@@ -119,7 +120,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     } on SpaceServiceException catch (e) {
       if (mounted) setState(() => _errorMessage = e.message);
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).actionFailed('$e'));
+      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).actionFailed(errorReason(context, e)));
     }
   }
 
@@ -218,7 +219,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
         await _load();
       }
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
     }
   }
 
@@ -252,7 +253,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
       Navigator.of(context).popUntil((route) => route.isFirst);
       messenger.showSnackBar(SnackBar(content: Text(t.inTrash(_name))));
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
     }
   }
 

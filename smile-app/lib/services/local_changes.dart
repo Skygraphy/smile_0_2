@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/friendly_error.dart';
 
 import '../main.dart';
 import 'avatar_upload.dart';
@@ -144,7 +145,11 @@ class LocalChanges extends ChangeNotifier {
     if (messenger == null) return;
     // A reason meant for people (e.g. "Die Adresse zeigt auf kein Bild.")
     // is shown as it is.
-    final reason = error is AvatarUrlException ? error.message : '$error';
+    final reason = error is AvatarUrlException
+        ? error.message
+        : context != null
+            ? errorReasonIn(SmileTexts.of(context), error)
+            : '$error';
     final message = text ??
         (error is AvatarUrlException
             ? reason

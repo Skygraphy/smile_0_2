@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/friendly_error.dart';
 
 import '../main.dart';
 import '../services/channel_picker_service.dart';
@@ -64,7 +65,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
       setState(() {
         _channels ??= const [];
         // Offline: the hint above says it; the list as last loaded stays.
-        _errorMessage = offline ? null : SmileTexts.of(context).albumsLoadError('$e');
+        _errorMessage = offline ? null : SmileTexts.of(context).albumsLoadError(errorReason(context, e));
       });
     }
   }
@@ -89,7 +90,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
       await navigator.push(MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: spaceId, spaceName: name)));
       await _load();
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
     }
   }
 

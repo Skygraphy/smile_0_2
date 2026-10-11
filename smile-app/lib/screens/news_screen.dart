@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/friendly_error.dart';
 
 import '../main.dart';
 import '../services/membership_service.dart';
@@ -82,7 +83,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _errorMessage = SmileTexts.of(context).newsLoadError('$e'));
+      setState(() => _errorMessage = SmileTexts.of(context).newsLoadError(errorReason(context, e)));
     }
   }
 
@@ -96,7 +97,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
       await _load();
       if (success != null) messenger.showSnackBar(SnackBar(content: Text(success)));
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(t.actionFailed('$e'))));
+      messenger.showSnackBar(SnackBar(content: Text(t.actionFailed(errorReasonIn(t, e)))));
     }
   }
 

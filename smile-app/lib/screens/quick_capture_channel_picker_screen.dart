@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/friendly_error.dart';
 import '../widgets/album_covers.dart';
 import '../widgets/local_display.dart';
 
 import '../services/channel_picker_service.dart';
 import '../services/media_service.dart';
+import '../services/offline.dart';
 import '../services/sync_bus.dart';
 import 'channel_feed_screen.dart';
 
@@ -77,12 +79,18 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
       if (!mounted) return;
       setState(() {
         _channels ??= const [];
-        _errorMessage = SmileTexts.of(context).albumsLoadError('$e');
+        _errorMessage = SmileTexts.of(context).albumsLoadError(errorReason(context, e));
       });
     }
   }
 
   Future<void> _sendTo(UploadableChannel channel) async {
+    // No network: a friendly note right away instead of an error later.
+    if (!await hasNetwork()) {
+      if (mounted) unawaited(showNoConnection(context));
+      return;
+    }
+    if (!mounted) return;
     // A short tick when it's sent, like WhatsApp (2026-10-10).
     unawaited(HapticFeedback.lightImpact());
     setState(() {
@@ -132,8 +140,10 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
       setState(() {
         _uploadingTo = null;
         _videoPercent = null;
-        _errorMessage = 'Senden fehlgeschlagen: $e';
+        _errorMessage = Offline.isConnectionError(e) ? null : SmileTexts.of(context).sendFailed;
       });
+      debugPrint('SmileUpload failed: $e');
+      if (Offline.isConnectionError(e)) unawaited(showNoConnection(context));
     }
   }
 

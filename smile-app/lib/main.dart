@@ -24,6 +24,7 @@ import 'services/offline_http_client.dart';
 import 'widgets/offline_hint.dart';
 import 'services/video_prefetcher.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import 'widgets/friendly_error.dart';
 
 final supabase = Supabase.instance.client;
 
@@ -278,7 +279,7 @@ class _ProfileGateState extends State<_ProfileGate> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Profil konnte nicht geladen werden: $e';
+        _errorMessage = 'Profil konnte nicht geladen werden: ${errorReason(context, e)}';
       });
     }
   }

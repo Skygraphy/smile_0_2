@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/friendly_error.dart';
 
 import '../services/frame_service.dart';
 import '../services/channel_picker_service.dart';
@@ -74,7 +75,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
       if (!mounted) return;
       setState(() {
         _assignments ??= const [];
-        _errorMessage = SmileTexts.of(context).frameInfoLoadError('$e');
+        _errorMessage = SmileTexts.of(context).frameInfoLoadError(errorReason(context, e));
       });
     }
   }
@@ -84,7 +85,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
       await action();
       await _load();
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).actionFailed('$e'));
+      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).actionFailed(errorReason(context, e)));
     }
   }
 
@@ -131,7 +132,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
       await widget.frameService.deleteFrame(_frame.id);
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
     }
   }
 

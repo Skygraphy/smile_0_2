@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/friendly_error.dart';
 
 import '../services/sync_bus.dart';
 import '../services/trash_service.dart';
@@ -41,7 +42,7 @@ class _TrashScreenState extends State<TrashScreen> with SyncReload {
       if (!mounted) return;
       setState(() {
         _items ??= const [];
-        _errorMessage = SmileTexts.of(context).trashLoadError('$e');
+        _errorMessage = SmileTexts.of(context).trashLoadError(errorReason(context, e));
       });
     }
   }
@@ -54,7 +55,7 @@ class _TrashScreenState extends State<TrashScreen> with SyncReload {
       await _load();
       messenger.showSnackBar(SnackBar(content: Text(t.restored(item.name))));
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(t.actionFailed('$e'))));
+      messenger.showSnackBar(SnackBar(content: Text(t.actionFailed(errorReasonIn(t, e)))));
     }
   }
 

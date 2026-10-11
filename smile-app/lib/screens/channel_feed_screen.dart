@@ -20,6 +20,7 @@ import '../services/foreground_notifications.dart';
 import '../services/object_picture_service.dart';
 import 'album_info_screen.dart';
 import 'capture_preview_screen.dart';
+import '../widgets/friendly_error.dart';
 import '../widgets/capture_choice.dart';
 import '../widgets/album_covers.dart';
 import '../widgets/local_display.dart';
@@ -192,7 +193,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       await _loadMyStatus();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Anfrage fehlgeschlagen: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Anfrage fehlgeschlagen: ${errorReason(context, e)}')));
     } finally {
       if (mounted) setState(() => _isRequestingMembership = false);
     }
@@ -207,7 +208,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       await _loadMyStatus();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Zurückziehen fehlgeschlagen: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Zurückziehen fehlgeschlagen: ${errorReason(context, e)}')));
     } finally {
       if (mounted) setState(() => _isRequestingMembership = false);
     }
@@ -439,6 +440,13 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   final Set<String> _leaving = {};
 
   Future<void> _uploadFiles(List<XFile> picked) async {
+    // No network at all: say so right away, like WhatsApp, instead of
+    // trying for a while and then showing a technical error (2026-10-11).
+    if (!await hasNetwork()) {
+      if (mounted) unawaited(showNoConnection(context));
+      return;
+    }
+    if (!mounted) return;
     // The buttons stay free: more photos and videos can be sent while these
     // go up -- each shows its own progress in the album (2026-10-10).
     setState(() {
@@ -579,12 +587,17 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     if (!mounted) return;
     setState(() {
       _statusMessage = null;
-      if (failed > 0) {
-        _errorMessage = batch.length == 1
-            ? 'Upload fehlgeschlagen (auch nach mehreren Versuchen): $lastError'
-            : '$failed von ${batch.length} Uploads fehlgeschlagen (auch nach mehreren Versuchen): $lastError';
+      // Friendly words only; the technical reason goes to the log.
+      if (failed > 0 && !Offline.isConnectionError(lastError!)) {
+        debugPrint('SmileUpload failed: $lastError');
+        final t = SmileTexts.of(context);
+        _errorMessage = batch.length == 1 ? t.sendFailed : t.sendFailedSome(failed, batch.length);
       }
     });
+    if (failed > 0 && Offline.isConnectionError(lastError!)) {
+      debugPrint('SmileUpload offline: $lastError');
+      unawaited(showNoConnection(context));
+    }
 
     try {
       // Processing (resize/thumbnail) happens asynchronously in the

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/friendly_error.dart';
 
 import '../main.dart';
 import '../services/avatar_upload.dart';
@@ -87,7 +88,7 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
       // forever -- a permanent spinner with no explanation.
       setState(() {
         _spaces ??= const [];
-        _errorMessage = SmileTexts.of(context).spacesLoadError('$e');
+        _errorMessage = SmileTexts.of(context).spacesLoadError(errorReason(context, e));
       });
     }
   }
@@ -100,7 +101,7 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
       await widget.spaceService.createSpace(name);
       await _load();
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
     }
   }
 

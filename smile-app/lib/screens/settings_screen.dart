@@ -12,6 +12,7 @@ import '../services/push_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/avatar_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../widgets/friendly_error.dart';
 import '../widgets/top_bar_actions.dart';
 import 'avatar_viewer_screen.dart';
 
@@ -57,7 +58,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _errorMessage = SmileTexts.of(context).profileLoadError('$e'));
+      setState(() => _errorMessage = SmileTexts.of(context).profileLoadError(errorReason(context, e)));
     }
   }
 
@@ -169,7 +170,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
     try {
       await widget.profileService.deleteMyAccount();
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = t.actionFailed('$e'));
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
       return;
     }
     if (!mounted) return;

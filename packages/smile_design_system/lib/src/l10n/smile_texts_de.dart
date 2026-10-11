@@ -955,4 +955,26 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get captureRetake => 'Nochmal';
+
+  @override
+  String get noConnectionTitle => 'Keine Internetverbindung';
+
+  @override
+  String get noConnectionMessage =>
+      'Prüfe deine Verbindung und versuche es noch einmal.';
+
+  @override
+  String get noConnectionReason => 'keine Internetverbindung';
+
+  @override
+  String get sendFailed =>
+      'Das Senden hat leider nicht geklappt. Bitte versuche es noch einmal.';
+
+  @override
+  String sendFailedSome(int failed, int total) {
+    return '$failed von $total konnten nicht gesendet werden. Bitte versuche es noch einmal.';
+  }
+
+  @override
+  String get ok => 'OK';
 }
