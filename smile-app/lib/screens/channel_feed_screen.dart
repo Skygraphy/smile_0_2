@@ -115,7 +115,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     if (!mounted) return;
     setState(() {});
     for (final item in _pendingUploads) {
-      if (item.sure && _ticked.add(item.id)) _tick(() => setState(() {}));
+      if (item.sure && _ticked.add(item.id)) _tickNow();
     }
     if (_pendingUploads.any((p) => p.done)) unawaited(_handOver());
   }
@@ -417,6 +417,25 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       }
       await HapticFeedback.lightImpact();
       await Future<void>.delayed(const Duration(milliseconds: 150));
+    });
+  }
+
+  /// The tick of a sent photo/video, in the very frame its ring goes --
+  /// like WhatsApp (2026-10-11: the queued ticks above lagged behind).
+  /// The first one at once, each further one at least 150 ms after the
+  /// previous, so they never overlap (decided 2026-10-11).
+  DateTime _nextTickAt = DateTime(0);
+  void _tickNow() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final now = DateTime.now();
+      final at = now.isAfter(_nextTickAt) ? now : _nextTickAt;
+      _nextTickAt = at.add(const Duration(milliseconds: 150));
+      final wait = at.difference(now);
+      if (wait <= Duration.zero) {
+        unawaited(HapticFeedback.lightImpact());
+      } else {
+        Future<void>.delayed(wait, HapticFeedback.lightImpact);
+      }
     });
   }
 

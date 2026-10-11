@@ -192,9 +192,10 @@ class UploadQueue extends ChangeNotifier {
       _items.add(item);
       _adding.remove(id);
       notifyListeners();
+      // The first one starts at once -- not only after all were put in.
+      unawaited(process());
     }
     unawaited(_scheduleBackground(true));
-    unawaited(process());
   }
 
   /// "Nicht senden": only while it waits.
@@ -622,7 +623,9 @@ class UploadQueue extends ChangeNotifier {
 
   static Future<double?> _aspectRatio(Uint8List bytes) async {
     try {
-      final codec = await ui.instantiateImageCodec(bytes);
+      // A small decode is enough for the shape -- a full 12 MP one takes
+      // a few hundred ms per photo.
+      final codec = await ui.instantiateImageCodec(bytes, targetWidth: 64);
       final frame = await codec.getNextFrame();
       final ratio = frame.image.height > 0 ? frame.image.width / frame.image.height : null;
       frame.image.dispose();
