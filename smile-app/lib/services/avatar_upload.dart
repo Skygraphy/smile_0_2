@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -56,10 +56,11 @@ Future<String> uploadAvatarFromUrl(String objectPath, String url) async {
   try {
     response = await http.get(uri).timeout(const Duration(seconds: 20));
   } catch (e) {
-    throw AvatarUrlException('Bild konnte nicht geladen werden: $e');
+    debugPrint('SmileAvatar: $e');
+    throw AvatarUrlException('Das Bild konnte nicht geladen werden. Bitte prüfe die Adresse.');
   }
   if (response.statusCode != 200) {
-    throw AvatarUrlException('Bild konnte nicht geladen werden (Status ${response.statusCode}).');
+    throw AvatarUrlException('Das Bild konnte nicht geladen werden. Bitte prüfe die Adresse.');
   }
   final contentType = response.headers['content-type'] ?? '';
   if (!contentType.startsWith('image/')) {

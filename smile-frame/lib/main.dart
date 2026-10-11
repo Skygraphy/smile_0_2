@@ -17,6 +17,12 @@ import 'services/sync_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Never Flutter's red error screen for people (2026-10-11): a part that
+  // fails to build stays empty; the error goes to the log (and Crashlytics).
+  ErrorWidget.builder = (details) {
+    debugPrint('SmileBuildError: ${details.exception}');
+    return const SizedBox.shrink();
+  };
   // No explicit FirebaseOptions: on Android this reads the native
   // google-services.json (Android-only for now, matches the plan's
   // platform scope) via the Google Services Gradle plugin.

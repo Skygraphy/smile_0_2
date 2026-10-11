@@ -57,7 +57,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     } catch (e) {
       if (!mounted) return;
       final t = SmileTexts.of(context);
-      setState(() => _error = Offline.isConnectionError(e) ? t.videoNotOnPhone : 'Video konnte nicht abgespielt werden: $e');
+      setState(() => _error = Offline.isConnectionError(e) ? t.videoNotOnPhone : t.videoNotPlayable);
     }
   }
 

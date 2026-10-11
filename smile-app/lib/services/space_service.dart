@@ -247,7 +247,7 @@ class SpaceServiceException implements Exception {
         'already_co_owner' => 'Diese Person ist bereits Co-Admin.',
         'invite_already_pending' => 'Es gibt bereits eine offene Einladung.',
         'not_a_co_owner' => 'Diese Person ist kein Co-Admin.',
-        _ => 'Aktion fehlgeschlagen.',
+        _ => 'Das hat leider nicht geklappt. Bitte versuche es noch einmal.',
       };
 
   @override

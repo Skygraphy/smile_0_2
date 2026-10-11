@@ -324,11 +324,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       // nothing else ever calls setState to move past it.
       // Offline: the photos last loaded stay, the hint above says why
       // nothing new comes (2026-10-09).
-      final offline = Offline.noteFailure(e);
-      setState(() {
-        _items ??= const [];
-        _errorMessage = offline ? null : 'Fotos konnten nicht geladen werden: $e';
-      });
+      // Never an error on screen (2026-10-11): what was loaded last stays.
+      Offline.noteFailure(e);
+      debugPrint('SmileFeed: load failed: $e');
+      setState(() => _items ??= const []);
       return;
     }
     Offline.reachedServer();

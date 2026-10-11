@@ -149,13 +149,13 @@ class LocalChanges extends ChangeNotifier {
         ? error.message
         : context != null
             ? errorReasonIn(SmileTexts.of(context), error)
-            : '$error';
+            : 'Bitte versuche es noch einmal.';
     final message = text ??
         (error is AvatarUrlException
             ? reason
             : context != null
                 ? SmileTexts.of(context).changeNotSaved(reason)
-                : 'Änderung nicht gespeichert: $reason');
+                : 'Die Änderung wurde nicht gespeichert. $reason');
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 }

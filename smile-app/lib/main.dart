@@ -40,6 +40,12 @@ final navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Never Flutter's red error screen for people (2026-10-11): a part that
+  // fails to build stays empty; the error goes to the log (and Crashlytics).
+  ErrorWidget.builder = (details) {
+    debugPrint('SmileBuildError: ${details.exception}');
+    return const SizedBox.shrink();
+  };
   await Supabase.initialize(
     url: SupabaseConfig.url,
     publishableKey: SupabaseConfig.publishableKey,

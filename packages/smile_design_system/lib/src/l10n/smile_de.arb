@@ -86,7 +86,7 @@
       }
     }
   },
-  "albumsLoadError": "Alben konnten nicht geladen werden: {error}",
+  "albumsLoadError": "Die Alben konnten gerade nicht geladen werden. {error}",
   "@albumsLoadError": {
     "placeholders": {
       "error": {
@@ -184,7 +184,7 @@
     }
   },
   "deleteAlbumMessage": "Das Album verschwindet mit allen Fotos sofort für alle Personen und von allen Frames. 30 Tage lang kannst du es im Papierkorb wiederherstellen.",
-  "albumInfoLoadError": "Album-Infos konnten nicht geladen werden: {error}",
+  "albumInfoLoadError": "Die Album-Infos konnten gerade nicht geladen werden. {error}",
   "@albumInfoLoadError": {
     "placeholders": {
       "error": {
@@ -192,7 +192,7 @@
       }
     }
   },
-  "actionFailed": "Aktion fehlgeschlagen: {error}",
+  "actionFailed": "Das hat leider nicht geklappt. {error}",
   "@actionFailed": {
     "placeholders": {
       "error": {
@@ -203,7 +203,7 @@
   "actionAccept": "Annehmen",
   "actionDecline": "Ablehnen",
   "actionWithdraw": "Zurückziehen",
-  "spacesLoadError": "Spaces konnten nicht geladen werden: {error}",
+  "spacesLoadError": "Die Spaces konnten gerade nicht geladen werden. {error}",
   "@spacesLoadError": {
     "placeholders": {
       "error": {
@@ -219,7 +219,7 @@
   "youAreAdmin": "Du bist Admin",
   "youAreCoAdmin": "Du bist Co-Admin",
   "renameSpace": "Space umbenennen",
-  "spaceInfoLoadError": "Space-Infos konnten nicht geladen werden: {error}",
+  "spaceInfoLoadError": "Die Space-Infos konnten gerade nicht geladen werden. {error}",
   "@spaceInfoLoadError": {
     "placeholders": {
       "error": {
@@ -291,7 +291,7 @@
       }
     }
   },
-  "frameInfoLoadError": "Frame-Infos konnten nicht geladen werden: {error}",
+  "frameInfoLoadError": "Die Frame-Infos konnten gerade nicht geladen werden. {error}",
   "@frameInfoLoadError": {
     "placeholders": {
       "error": {
@@ -329,7 +329,7 @@
   "openFrame": "Frame öffnen",
   "offlineHint": "Offline – zuletzt geladener Stand",
   "videoNotOnPhone": "Dieses Video ist noch nicht auf dem Handy. Ohne Verbindung kann es nicht abgespielt werden.",
-  "changeNotSaved": "Änderung nicht gespeichert: {reason}",
+  "changeNotSaved": "Die Änderung wurde nicht gespeichert. {reason}",
   "@changeNotSaved": {
     "placeholders": {
       "reason": {"type": "String"}
@@ -364,7 +364,7 @@
   "reactivateFrame": "Frame wieder aktivieren",
   "newsEmptyTitle": "Keine Neuigkeiten",
   "newsEmptyMessage": "Hier erscheinen Einladungen, Anfragen und gelöschte Alben oder Spaces.",
-  "newsLoadError": "Neuigkeiten konnten nicht geladen werden: {error}",
+  "newsLoadError": "Die Neuigkeiten konnten gerade nicht geladen werden. {error}",
   "@newsLoadError": {
     "placeholders": {
       "error": {
@@ -444,7 +444,7 @@
   "needOwnSpace": "Du brauchst zuerst einen eigenen Space, um ein geteiltes Album anzunehmen.",
   "chooseSpace": "Mit welchem Space?",
   "trashEmpty": "Der Papierkorb ist leer.",
-  "trashLoadError": "Papierkorb konnte nicht geladen werden: {error}",
+  "trashLoadError": "Der Papierkorb konnte gerade nicht geladen werden. {error}",
   "@trashLoadError": {
     "placeholders": {
       "error": {
@@ -484,7 +484,7 @@
       }
     }
   },
-  "profileLoadError": "Profil konnte nicht geladen werden: {error}",
+  "profileLoadError": "Dein Profil konnte gerade nicht geladen werden. {error}",
   "@profileLoadError": {
     "placeholders": {
       "error": {
@@ -494,7 +494,7 @@
   },
   "retry": "Erneut versuchen",
   "changeName": "Name ändern",
-  "nameSaveError": "Name konnte nicht gespeichert werden: {error}",
+  "nameSaveError": "Der Name konnte nicht gespeichert werden. {error}",
   "@nameSaveError": {
     "placeholders": {
       "error": {
@@ -502,7 +502,7 @@
       }
     }
   },
-  "avatarUploadError": "Bild konnte nicht hochgeladen werden: {error}",
+  "avatarUploadError": "Das Bild konnte nicht hochgeladen werden. {error}",
   "@avatarUploadError": {
     "placeholders": {
       "error": {
@@ -637,7 +637,11 @@
   "captureRetake": "Nochmal",
   "noConnectionTitle": "Keine Internetverbindung",
   "noConnectionMessage": "Prüfe deine Verbindung und versuche es noch einmal.",
-  "noConnectionReason": "keine Internetverbindung",
+  "noConnectionReason": "Keine Internetverbindung.",
+  "tryAgainReason": "Bitte versuche es noch einmal.",
+  "videoNotPlayable": "Das Video kann gerade nicht abgespielt werden.",
+  "loginSendFailed": "Die E-Mail mit dem Code konnte gerade nicht gesendet werden. Bitte versuche es gleich noch einmal.",
+  "loginCodeWrong": "Der Code stimmt nicht oder ist abgelaufen. Bitte prüfe ihn oder lass dir einen neuen schicken.",
   "sendFailed": "Das Senden hat leider nicht geklappt. Bitte versuche es noch einmal.",
   "sendFailedSome": "{failed} von {total} konnten nicht gesendet werden. Bitte versuche es noch einmal.",
   "@sendFailedSome": {

@@ -178,7 +178,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String albumsLoadError(String error) {
-    return 'Alben konnten nicht geladen werden: $error';
+    return 'Die Alben konnten gerade nicht geladen werden. $error';
   }
 
   @override
@@ -338,12 +338,12 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String albumInfoLoadError(String error) {
-    return 'Album-Infos konnten nicht geladen werden: $error';
+    return 'Die Album-Infos konnten gerade nicht geladen werden. $error';
   }
 
   @override
   String actionFailed(String error) {
-    return 'Aktion fehlgeschlagen: $error';
+    return 'Das hat leider nicht geklappt. $error';
   }
 
   @override
@@ -357,7 +357,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String spacesLoadError(String error) {
-    return 'Spaces konnten nicht geladen werden: $error';
+    return 'Die Spaces konnten gerade nicht geladen werden. $error';
   }
 
   @override
@@ -388,7 +388,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String spaceInfoLoadError(String error) {
-    return 'Space-Infos konnten nicht geladen werden: $error';
+    return 'Die Space-Infos konnten gerade nicht geladen werden. $error';
   }
 
   @override
@@ -497,7 +497,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String frameInfoLoadError(String error) {
-    return 'Frame-Infos konnten nicht geladen werden: $error';
+    return 'Die Frame-Infos konnten gerade nicht geladen werden. $error';
   }
 
   @override
@@ -576,7 +576,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String changeNotSaved(String reason) {
-    return 'Änderung nicht gespeichert: $reason';
+    return 'Die Änderung wurde nicht gespeichert. $reason';
   }
 
   @override
@@ -629,7 +629,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String newsLoadError(String error) {
-    return 'Neuigkeiten konnten nicht geladen werden: $error';
+    return 'Die Neuigkeiten konnten gerade nicht geladen werden. $error';
   }
 
   @override
@@ -699,7 +699,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String trashLoadError(String error) {
-    return 'Papierkorb konnte nicht geladen werden: $error';
+    return 'Der Papierkorb konnte gerade nicht geladen werden. $error';
   }
 
   @override
@@ -724,7 +724,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String profileLoadError(String error) {
-    return 'Profil konnte nicht geladen werden: $error';
+    return 'Dein Profil konnte gerade nicht geladen werden. $error';
   }
 
   @override
@@ -735,12 +735,12 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String nameSaveError(String error) {
-    return 'Name konnte nicht gespeichert werden: $error';
+    return 'Der Name konnte nicht gespeichert werden. $error';
   }
 
   @override
   String avatarUploadError(String error) {
-    return 'Bild konnte nicht hochgeladen werden: $error';
+    return 'Das Bild konnte nicht hochgeladen werden. $error';
   }
 
   @override
@@ -966,7 +966,22 @@ class SmileTextsDe extends SmileTexts {
       'Prüfe deine Verbindung und versuche es noch einmal.';
 
   @override
-  String get noConnectionReason => 'keine Internetverbindung';
+  String get noConnectionReason => 'Keine Internetverbindung.';
+
+  @override
+  String get tryAgainReason => 'Bitte versuche es noch einmal.';
+
+  @override
+  String get videoNotPlayable =>
+      'Das Video kann gerade nicht abgespielt werden.';
+
+  @override
+  String get loginSendFailed =>
+      'Die E-Mail mit dem Code konnte gerade nicht gesendet werden. Bitte versuche es gleich noch einmal.';
+
+  @override
+  String get loginCodeWrong =>
+      'Der Code stimmt nicht oder ist abgelaufen. Bitte prüfe ihn oder lass dir einen neuen schicken.';
 
   @override
   String get sendFailed =>

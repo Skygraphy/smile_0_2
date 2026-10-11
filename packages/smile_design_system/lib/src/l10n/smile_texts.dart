@@ -355,7 +355,7 @@ abstract class SmileTexts {
   /// No description provided for @albumsLoadError.
   ///
   /// In de, this message translates to:
-  /// **'Alben konnten nicht geladen werden: {error}'**
+  /// **'Die Alben konnten gerade nicht geladen werden. {error}'**
   String albumsLoadError(String error);
 
   /// No description provided for @albumsEmptyTitle.
@@ -631,13 +631,13 @@ abstract class SmileTexts {
   /// No description provided for @albumInfoLoadError.
   ///
   /// In de, this message translates to:
-  /// **'Album-Infos konnten nicht geladen werden: {error}'**
+  /// **'Die Album-Infos konnten gerade nicht geladen werden. {error}'**
   String albumInfoLoadError(String error);
 
   /// No description provided for @actionFailed.
   ///
   /// In de, this message translates to:
-  /// **'Aktion fehlgeschlagen: {error}'**
+  /// **'Das hat leider nicht geklappt. {error}'**
   String actionFailed(String error);
 
   /// No description provided for @actionAccept.
@@ -661,7 +661,7 @@ abstract class SmileTexts {
   /// No description provided for @spacesLoadError.
   ///
   /// In de, this message translates to:
-  /// **'Spaces konnten nicht geladen werden: {error}'**
+  /// **'Die Spaces konnten gerade nicht geladen werden. {error}'**
   String spacesLoadError(String error);
 
   /// No description provided for @spacesEmptyTitle.
@@ -715,7 +715,7 @@ abstract class SmileTexts {
   /// No description provided for @spaceInfoLoadError.
   ///
   /// In de, this message translates to:
-  /// **'Space-Infos konnten nicht geladen werden: {error}'**
+  /// **'Die Space-Infos konnten gerade nicht geladen werden. {error}'**
   String spaceInfoLoadError(String error);
 
   /// No description provided for @createAlbum.
@@ -895,7 +895,7 @@ abstract class SmileTexts {
   /// No description provided for @frameInfoLoadError.
   ///
   /// In de, this message translates to:
-  /// **'Frame-Infos konnten nicht geladen werden: {error}'**
+  /// **'Die Frame-Infos konnten gerade nicht geladen werden. {error}'**
   String frameInfoLoadError(String error);
 
   /// No description provided for @frameInSpace.
@@ -1039,7 +1039,7 @@ abstract class SmileTexts {
   /// No description provided for @changeNotSaved.
   ///
   /// In de, this message translates to:
-  /// **'Änderung nicht gespeichert: {reason}'**
+  /// **'Die Änderung wurde nicht gespeichert. {reason}'**
   String changeNotSaved(String reason);
 
   /// No description provided for @showingNow.
@@ -1123,7 +1123,7 @@ abstract class SmileTexts {
   /// No description provided for @newsLoadError.
   ///
   /// In de, this message translates to:
-  /// **'Neuigkeiten konnten nicht geladen werden: {error}'**
+  /// **'Die Neuigkeiten konnten gerade nicht geladen werden. {error}'**
   String newsLoadError(String error);
 
   /// No description provided for @invitations.
@@ -1225,7 +1225,7 @@ abstract class SmileTexts {
   /// No description provided for @trashLoadError.
   ///
   /// In de, this message translates to:
-  /// **'Papierkorb konnte nicht geladen werden: {error}'**
+  /// **'Der Papierkorb konnte gerade nicht geladen werden. {error}'**
   String trashLoadError(String error);
 
   /// No description provided for @trashSpaceIn.
@@ -1255,7 +1255,7 @@ abstract class SmileTexts {
   /// No description provided for @profileLoadError.
   ///
   /// In de, this message translates to:
-  /// **'Profil konnte nicht geladen werden: {error}'**
+  /// **'Dein Profil konnte gerade nicht geladen werden. {error}'**
   String profileLoadError(String error);
 
   /// No description provided for @retry.
@@ -1273,13 +1273,13 @@ abstract class SmileTexts {
   /// No description provided for @nameSaveError.
   ///
   /// In de, this message translates to:
-  /// **'Name konnte nicht gespeichert werden: {error}'**
+  /// **'Der Name konnte nicht gespeichert werden. {error}'**
   String nameSaveError(String error);
 
   /// No description provided for @avatarUploadError.
   ///
   /// In de, this message translates to:
-  /// **'Bild konnte nicht hochgeladen werden: {error}'**
+  /// **'Das Bild konnte nicht hochgeladen werden. {error}'**
   String avatarUploadError(String error);
 
   /// No description provided for @changePicture.
@@ -1651,8 +1651,32 @@ abstract class SmileTexts {
   /// No description provided for @noConnectionReason.
   ///
   /// In de, this message translates to:
-  /// **'keine Internetverbindung'**
+  /// **'Keine Internetverbindung.'**
   String get noConnectionReason;
+
+  /// No description provided for @tryAgainReason.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte versuche es noch einmal.'**
+  String get tryAgainReason;
+
+  /// No description provided for @videoNotPlayable.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Video kann gerade nicht abgespielt werden.'**
+  String get videoNotPlayable;
+
+  /// No description provided for @loginSendFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Die E-Mail mit dem Code konnte gerade nicht gesendet werden. Bitte versuche es gleich noch einmal.'**
+  String get loginSendFailed;
+
+  /// No description provided for @loginCodeWrong.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Code stimmt nicht oder ist abgelaufen. Bitte prüfe ihn oder lass dir einen neuen schicken.'**
+  String get loginCodeWrong;
 
   /// No description provided for @sendFailed.
   ///

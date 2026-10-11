@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
+import '../services/offline.dart';
 import '../widgets/otp_code_field.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
@@ -44,8 +45,13 @@ class _LoginScreenState extends State<LoginScreen> {
       await supabase.auth.signInWithOtp(email: _email);
       if (!mounted) return;
       setState(() => _step = _LoginStep.enterCode);
-    } on AuthException catch (e) {
-      setState(() => _errorMessage = e.message);
+    } catch (e) {
+      // Never the server's own (English) text (2026-10-11).
+      debugPrint('SmileLogin: $e');
+      if (mounted) {
+        final t = SmileTexts.of(context);
+        setState(() => _errorMessage = Offline.isConnectionError(e) ? t.noConnectionReason : t.loginSendFailed);
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -65,8 +71,12 @@ class _LoginScreenState extends State<LoginScreen> {
         token: code,
       );
       // AuthGate's onAuthStateChange listener handles navigation from here.
-    } on AuthException catch (e) {
-      setState(() => _errorMessage = e.message);
+    } catch (e) {
+      debugPrint('SmileLogin: $e');
+      if (mounted) {
+        final t = SmileTexts.of(context);
+        setState(() => _errorMessage = Offline.isConnectionError(e) ? t.noConnectionReason : t.loginCodeWrong);
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

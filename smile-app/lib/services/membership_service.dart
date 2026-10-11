@@ -383,7 +383,7 @@ class ChannelRequestException implements Exception {
         'user_not_found' => 'Diese Person hat noch keinen Smile-Account.',
         'not_channel_sco' => 'Du bist nicht berechtigt, dieses Album zu verwalten.',
         'request_already_pending' => 'Es gibt bereits eine offene Einladung/Anfrage.',
-        _ => 'Aktion fehlgeschlagen.',
+        _ => 'Das hat leider nicht geklappt. Bitte versuche es noch einmal.',
       };
 
   @override
