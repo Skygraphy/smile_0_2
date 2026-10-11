@@ -291,6 +291,9 @@ class SmileTextsDe extends SmileTexts {
   String get notOnAnyFrame => 'Noch auf keinem Frame';
 
   @override
+  String get showOnFrame => 'Auf Frame zeigen';
+
+  @override
   String get removeFromAlbum => 'Aus dem Album entfernen';
 
   @override

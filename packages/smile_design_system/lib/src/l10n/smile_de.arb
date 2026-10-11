@@ -141,6 +141,7 @@
   "notSharedYet": "Noch mit keinem anderen Space geteilt",
   "showsOn": "Läuft auf",
   "notOnAnyFrame": "Noch auf keinem Frame",
+  "showOnFrame": "Auf Frame zeigen",
   "removeFromAlbum": "Aus dem Album entfernen",
   "removePersonTitle": "{name} entfernen?",
   "@removePersonTitle": {

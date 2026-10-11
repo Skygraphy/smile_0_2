@@ -229,6 +229,35 @@ class FrameService {
     return byId.values.toList();
   }
 
+  /// The Frames this album could be put on from its page (2026-10-11):
+  /// Frames of Spaces the caller manages (RLS) whose Space can view the
+  /// album -- its own Space, or one it is shared with. Revoked ones don't
+  /// count; the caller leaves out those it is already on.
+  Future<List<({String frameId, String frameName, String? avatarPath, String spaceName})>> listFramesForAlbum(
+    String channelId,
+  ) async {
+    final results = await Future.wait<dynamic>([
+      supabase.from('channels').select('space_id').eq('id', channelId).maybeSingle(),
+      supabase.from('channel_shares').select('space_id').eq('channel_id', channelId),
+      supabase.from('frames').select('id, name, avatar_path, space_id, lifecycle_state, spaces(name)').order('created_at'),
+    ]);
+    final home = (results[0] as Map<String, dynamic>?)?['space_id'] as String?;
+    final spaces = {
+      ?home,
+      for (final row in (results[1] as List).cast<Map<String, dynamic>>()) row['space_id'] as String,
+    };
+    return (results[2] as List)
+        .cast<Map<String, dynamic>>()
+        .where((r) => spaces.contains(r['space_id']) && r['lifecycle_state'] != 'revoked')
+        .map((r) => (
+              frameId: r['id'] as String,
+              frameName: r['name'] as String,
+              avatarPath: r['avatar_path'] as String?,
+              spaceName: (r['spaces'] as Map?)?['name'] as String? ?? '',
+            ))
+        .toList();
+  }
+
   /// Edge-function-backed (not a bare insert) so the refusal comes with a
   /// clear reason when the Frame's household can't see the channel -- see
   /// assign-frame-channel/index.ts.

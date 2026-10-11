@@ -55,6 +55,8 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   ChannelRoster? _roster;
   MyInvitesInbox? _inbox;
   List<FrameShowing> _frames = const [];
+  /// Frames it could be put on ("Auf Frame zeigen", 2026-10-11).
+  List<({String frameId, String frameName, String? avatarPath, String spaceName})> _possibleFrames = const [];
   Map<String, ChannelWithActivity> _covers = const {};
   late String _name = widget.channelName;
   String? _errorMessage;
@@ -83,6 +85,10 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       final results = await Future.wait<dynamic>([
         if (roster.callerIsSco) widget.membershipService.listMyInvites(channelId: widget.channelId),
         widget.channelService.listFramesShowing(widget.channelId),
+        // Best effort -- without it there is just no quick way onto a Frame.
+        FrameService()
+            .listFramesForAlbum(widget.channelId)
+            .catchError((Object _) => <({String frameId, String frameName, String? avatarPath, String spaceName})>[]),
         supabase.from('channels').select('name').eq('id', widget.channelId).maybeSingle(),
       ]);
       if (!mounted) return;
@@ -90,7 +96,9 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       setState(() {
         _roster = roster;
         _inbox = roster.callerIsSco ? results.first as MyInvitesInbox : null;
-        _frames = results[results.length - 2] as List<FrameShowing>;
+        _frames = results[results.length - 3] as List<FrameShowing>;
+        _possibleFrames = results[results.length - 2]
+            as List<({String frameId, String frameName, String? avatarPath, String spaceName})>;
         if (row != null) _name = row['name'] as String;
         _errorMessage = null;
       });
@@ -179,6 +187,56 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   }
 
   String get _shownName => albumNameOf(widget.channelId, _name);
+
+  /// Frames it isn't on yet but could be.
+  List<({String frameId, String frameName, String? avatarPath, String spaceName})> get _addableFrames {
+    final on = _visibleFrames.map((f) => f.frameId).toSet();
+    return _possibleFrames.where((f) => !on.contains(f.frameId)).toList();
+  }
+
+  /// "Auf Frame zeigen": puts the album into a Frame's album list, like
+  /// "Album hinzufügen" on the Frame page.
+  Future<void> _showOnFrame() async {
+    final t = SmileTexts.of(context);
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(t.showOnFrame),
+        children: [
+          for (final frame in _addableFrames)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop(frame.frameId),
+              child: Row(
+                children: [
+                  objectPicture(
+                    key: LocalChanges.framePicture(frame.frameId),
+                    name: frameNameOf(frame.frameId, frame.frameName),
+                    serverUrl: avatarPathToUrl(frame.avatarPath),
+                    size: 32,
+                  ),
+                  const SizedBox(width: SmileSpacing.m),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(frameNameOf(frame.frameId, frame.frameName)),
+                        if (frame.spaceName.isNotEmpty)
+                          Text(
+                            frame.spaceName,
+                            style: TextStyle(fontSize: 12.5, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (picked == null) return;
+    await _run(() => FrameService().assignChannel(frameId: picked, channelId: widget.channelId));
+  }
 
   /// Frames still showing this album -- one it was just taken off is gone
   /// at once.
@@ -582,7 +640,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         // --- Läuft auf --------------------------------------------------
         // Only Frames of Spaces the caller manages are visible (RLS), so a
         // plain member sees this section only if it has entries.
-        if (isManager || _frames.isNotEmpty)
+        if (isManager || _frames.isNotEmpty || _addableFrames.isNotEmpty)
           SmileInfoSection(
             title: t.showsOn,
             children: [
@@ -609,6 +667,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                   trailing: Icon(SmileIcons.more, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   onTap: () => _showFrameActions(frame),
                 ),
+              if (_addableFrames.isNotEmpty) SmileActionRow(icon: SmileIcons.add, label: t.showOnFrame, onTap: _showOnFrame),
             ],
           ),
 

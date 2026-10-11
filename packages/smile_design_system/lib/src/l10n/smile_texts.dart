@@ -556,6 +556,12 @@ abstract class SmileTexts {
   /// **'Noch auf keinem Frame'**
   String get notOnAnyFrame;
 
+  /// No description provided for @showOnFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Auf Frame zeigen'**
+  String get showOnFrame;
+
   /// No description provided for @removeFromAlbum.
   ///
   /// In de, this message translates to:
