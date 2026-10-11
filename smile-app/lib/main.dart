@@ -24,6 +24,10 @@ import 'services/offline_http_client.dart';
 import 'widgets/offline_hint.dart';
 import 'services/video_prefetcher.dart';
 import 'services/upload_queue.dart';
+import 'frame/frame_app.dart';
+import 'frame/frame_mode.dart';
+import 'frame/services/push_service.dart' as frame_push;
+import 'frame/services/push_sync_signal.dart';
 import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import 'widgets/friendly_error.dart';
@@ -68,7 +72,15 @@ Future<void> main() async {
   };
   unawaited(FirebaseCrashlytics.instance.setCustomKey('app', 'smile-app'));
   await ForegroundNotifications.init(onTap: openNotificationTarget);
+  // One app for person and Frame (2026-10-11).
+  await FrameMode.detect();
+  FirebaseMessaging.onBackgroundMessage(frame_push.firebaseMessagingBackgroundHandler);
   FirebaseMessaging.onMessage.listen((message) {
+    // A Frame: every push just means "sync now".
+    if (FrameMode.active.value == true) {
+      PushSyncSignal.requestSync();
+      return;
+    }
     // Silent cross-device sync (sync-fanout) -- never shown, just reloads
     // whatever is on screen.
     if (message.data['type'] == 'sync') {
@@ -103,7 +115,7 @@ Future<void> main() async {
   VideoPrefetcher.start();
   // Photos/videos still waiting to be sent go out (2026-10-11).
   unawaited(UploadQueue.instance.start());
-  runApp(const SmileApp());
+  runApp(const SmileRoot());
 }
 
 /// Started by Android's WorkManager (UploadWorker.kt) when Smile itself
@@ -124,6 +136,20 @@ Future<void> uploadQueueWorker() async {
     debugPrint('SmileQueue: background run failed: $e');
   }
   await const MethodChannel('smile/upload_queue').invokeMethod<void>('finished', left);
+}
+
+/// Person or Frame (FrameMode) -- the whole app switches when a device is
+/// paired as a Frame or unpaired again.
+class SmileRoot extends StatelessWidget {
+  const SmileRoot({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool?>(
+      valueListenable: FrameMode.active,
+      builder: (context, frame, _) => frame == true ? const FrameModeApp() : const SmileApp(),
+    );
+  }
 }
 
 // ignore: unused_element -- held only so the listener isn't garbage-collected.

@@ -1,0 +1,497 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:smile_design_system/smile_design_system.dart';
+
+import '../services/heartbeat_service.dart';
+import '../services/media_cache_store.dart';
+import '../services/media_cache_sync.dart';
+import '../services/push_service.dart';
+import '../services/push_sync_signal.dart';
+import '../services/sync_service.dart';
+import 'video_slide.dart';
+
+/// The Frame's actual display: 'slideshow' mode auto-advances on a timer,
+/// 'manual' mode advances on tap -- driven entirely by the Frame's own
+/// display_mode row (migrations/0031_architecture_reset.sql), never a
+/// local setting. Renders only from the local cache; syncing
+/// (get-media-batch, download, evict) is a separate periodic concern
+/// layered on top, so the display never blocks on network and stays up
+/// fully offline once something is cached.
+class SlideshowScreen extends StatefulWidget {
+  SlideshowScreen({
+    super.key,
+    SyncService? syncService,
+    MediaCacheStore? cacheStore,
+    HeartbeatService? heartbeatService,
+    PushService? pushService,
+    this.onUnpaired,
+  })  : syncService = syncService ?? SyncService(),
+        cacheStore = cacheStore ?? MediaCacheStore(),
+        heartbeatService = heartbeatService ?? HeartbeatService(),
+        pushService = pushService ?? PushService();
+
+  final SyncService syncService;
+  final MediaCacheStore cacheStore;
+
+  /// This Frame was deleted (its Space was deleted) -- credentials are
+  /// already cleared; StartupGate re-checks and shows pairing again.
+  final VoidCallback? onUnpaired;
+  final HeartbeatService heartbeatService;
+  final PushService pushService;
+
+  @override
+  State<SlideshowScreen> createState() => _SlideshowScreenState();
+}
+
+class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingObserver {
+  static const _syncInterval = Duration(minutes: 2);
+
+  List<CachedMediaEntry> _entries = [];
+  FrameSettingsInfo? _settings;
+  String? _cacheDirPath;
+  String? _spaceName;
+  String? _channelName;
+  String? _currentChannelId;
+  List<AssignedChannel> _assignedChannels = [];
+  String? _fcmToken;
+  int _currentIndex = 0;
+  Timer? _syncTimer;
+  Timer? _advanceTimer;
+  // Offline, the next attempt comes much sooner than the regular 2 minutes,
+  // so album switching is back right after WLAN returns (2026-10-09).
+  Timer? _offlineRetryTimer;
+  static const _offlineRetryInterval = Duration(seconds: 10);
+  bool _loadedOnce = false;
+  // Revoked in the Smile-App -- the cache is already wiped (SyncService),
+  // this just swaps the whole screen for a notice. Keeps syncing on the
+  // usual timer/push, so "Wieder aktivieren" brings it straight back.
+  bool _deactivated = false;
+  // No server contact for longer than SyncService.maxOffline: photos are
+  // wiped (see there); shown as a notice until the Frame is online again.
+  bool _offlineExpired = false;
+  // Decrypted photos (CacheCipher) -- a few kept in memory so paging back
+  // and forth and the grid don't decrypt the same file over and over.
+  final Map<String, Future<Uint8List?>> _decrypted = {};
+  // Tile-grid overview toggle: reuses the same `_entries`/`_cacheDirPath`
+  // this screen already syncs and caches, so it updates live the instant a
+  // push-triggered `_sync()` lands -- no separate data path needed. Meant
+  // to become a real browsing view later, not just a dev convenience.
+  bool _showGrid = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _enterImmersiveMode();
+    // Auto-pin/Home-role-request on start and resume are deliberately
+    // disabled during development (2026-09-07) -- see MainActivity.kt.
+    // A data push nudges the already-running sync loop immediately,
+    // bypassing the 2-minute foreground poll interval.
+    PushSyncSignal.onSyncRequested = () => unawaited(_sync());
+    widget.syncService.onEarlyResult = _applyEarly;
+    _init();
+  }
+
+  // Hides the status bar and navigation-gesture hint -- this is a dedicated
+  // display, not a regular tablet UI. Must be re-applied on resume: Android
+  // can bring the system bars back on focus changes.
+  void _enterImmersiveMode() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _enterImmersiveMode();
+    }
+  }
+
+  Future<void> _init() async {
+    _cacheDirPath = await widget.cacheStore.resolvedDirectoryPath();
+    // Decrypted playback copies left behind by a crash mid-video.
+    await widget.cacheStore.clearPlaybackFiles();
+    _fcmToken = await widget.pushService.getToken();
+    await _loadFromCacheImmediately();
+    unawaited(_sync());
+    _syncTimer = Timer.periodic(_syncInterval, (_) => _sync());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    PushSyncSignal.onSyncRequested = null;
+    widget.syncService.onEarlyResult = null;
+    _syncTimer?.cancel();
+    _advanceTimer?.cancel();
+    _offlineRetryTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadFromCacheImmediately() async {
+    // Show whatever's already on disk before the first network round-trip
+    // completes -- offline-first, no blank screen while waiting on sync.
+    if (await widget.syncService.isOfflineExpired()) {
+      if (mounted) setState(() => _offlineExpired = true);
+      return;
+    }
+    // Only the album shown last: the cache holds all of the Frame's albums.
+    final cached = await widget.syncService.cachedShownEntries();
+    if (!mounted || cached.isEmpty) return;
+    setState(() {
+      _entries = cached..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      _loadedOnce = true;
+    });
+  }
+
+  Future<void> _sync() async {
+    final result = await widget.syncService.sync(fcmToken: _fcmToken);
+    if (!mounted) return;
+    if (result.unpaired) {
+      widget.onUnpaired?.call();
+      return;
+    }
+    _apply(result);
+    unawaited(widget.heartbeatService.submitHeartbeat(fcmToken: _fcmToken));
+  }
+
+  /// The server's first answer, before the rest of the sync (SyncService.
+  /// onEarlyResult): settings and album switches take effect right away.
+  void _applyEarly(SyncResult early) {
+    if (mounted) _apply(early);
+  }
+
+  void _apply(SyncResult result) {
+    setState(() {
+      _deactivated = result.deactivated;
+      _offlineExpired = result.offlineExpired;
+      _offlineRetryTimer?.cancel();
+      if (result.offline) _offlineRetryTimer = Timer(_offlineRetryInterval, _sync);
+      _entries = result.entries;
+      _settings = result.settings;
+      _loadedOnce = true;
+      if (result.spaceName != null) _spaceName = result.spaceName;
+      _currentChannelId = result.channelId;
+      _assignedChannels = result.assignedChannels;
+      final currentChannel = result.assignedChannels
+          .where((c) => c.channelId == result.channelId)
+          .map((c) => c.name)
+          .firstOrNull;
+      if (currentChannel != null) _channelName = currentChannel;
+      if (_entries.isEmpty) {
+        _currentIndex = 0;
+      } else if (_currentIndex >= _entries.length) {
+        _currentIndex = 0;
+      }
+    });
+    _restartAdvanceTimerIfNeeded();
+  }
+
+  bool get _showingVideo => _entries.isNotEmpty && _entries[_currentIndex % _entries.length].isVideo;
+
+  void _restartAdvanceTimerIfNeeded() {
+    _advanceTimer?.cancel();
+    // A video plays to its end and moves on by itself (VideoSlide); the
+    // timer only paces photos.
+    if (_showingVideo) return;
+    if (_settings?.displayMode != 'manual' && _entries.length > 1) {
+      final seconds = _settings?.slideshowIntervalSeconds ?? 8;
+      // Never cut a video short (2026-10-09): a video reached any other way
+      // than by this timer -- from the overview, after an album switch --
+      // used to be skipped after at most one interval. The video moves on
+      // by itself when it ends.
+      _advanceTimer = Timer.periodic(Duration(seconds: seconds), (_) {
+        if (!_showingVideo) _advance(1);
+      });
+    }
+  }
+
+  // Bumped on every move, so even a single-video channel restarts its
+  // video (same index, new slide) instead of freezing on the last frame.
+  int _slideNumber = 0;
+
+  void _advance(int delta) {
+    if (_entries.isEmpty) return;
+    setState(() {
+      _currentIndex = (_currentIndex + delta) % _entries.length;
+      _slideNumber++;
+    });
+    _restartAdvanceTimerIfNeeded();
+  }
+
+  void _onVideoFinished() {
+    if (_settings?.displayMode == 'manual') return; // stays until tapped
+    _advance(1);
+  }
+
+  void _handleTap(TapDownDetails details, double width) {
+    if (_settings?.displayMode != 'manual') return;
+    if (details.globalPosition.dx < width / 2) {
+      _advance(-1);
+    } else {
+      _advance(1);
+    }
+  }
+
+  // Personal Mode only -- an Assisted Mode Frame (channelSwitchEnabled ==
+  // false, the default) never shows this at all, and a Frame with only one
+  // assigned channel has nothing to switch to.
+  // Works offline too: every album is in the cache (2026-10-09).
+  bool get _canSwitchChannel => (_settings?.channelSwitchEnabled ?? false) && _assignedChannels.length > 1;
+
+  Future<void> _pickChannel() async {
+    final sorted = [..._assignedChannels]..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      // Scrolls when there are more albums than fit (found 2026-10-10 with
+      // 7 albums on the landscape P610: "bottom overflowed").
+      isScrollControlled: true,
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(SmileTexts.of(context).chooseAlbum, style: Theme.of(context).textTheme.titleMedium),
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final channel in sorted)
+                    ListTile(
+                      leading: const SmileObjectIcon(icon: SmileIcons.album, size: 40),
+                      title: Text(channel.name ?? channel.channelId, style: const TextStyle(fontSize: 18)),
+                      trailing: channel.channelId == _currentChannelId
+                          ? const Icon(SmileIcons.accept, color: SmileTheme.primary)
+                          : null,
+                      onTap: () => Navigator.of(context).pop(channel.channelId),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (picked == null || picked == _currentChannelId) return;
+    await widget.syncService.selectChannel(picked);
+    await _sync();
+  }
+
+  void _toggleGrid() {
+    setState(() => _showGrid = !_showGrid);
+    _restartAdvanceTimerIfNeeded();
+  }
+
+  void _openInSlideshow(int index) {
+    setState(() {
+      _currentIndex = index;
+      _showGrid = false;
+      _slideNumber++;
+    });
+    _restartAdvanceTimerIfNeeded();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loadedOnce) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final t = SmileTexts.of(context);
+    if (_offlineExpired) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Text(
+              t.frameOfflineTooLong,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70, fontSize: 20),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_deactivated) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Text(
+              t.frameRevokedScreen,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70, fontSize: 20),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final Widget body;
+    if (_entries.isEmpty || _cacheDirPath == null) {
+      body = SmileEmptyState(icon: SmileIcons.album, title: t.frameNoPhotos);
+    } else if (_showGrid) {
+      body = _buildGrid();
+    } else {
+      final entry = _entries[_currentIndex % _entries.length];
+      body = GestureDetector(
+        onTapDown: (details) => _handleTap(details, MediaQuery.of(context).size.width),
+        child: SizedBox.expand(
+          child: entry.isVideo
+              ? VideoSlide(
+                  key: ValueKey('${entry.fileName}#$_slideNumber'),
+                  entry: entry,
+                  cacheStore: widget.cacheStore,
+                  onFinished: _onVideoFinished,
+                  withSound: _settings?.videoSound ?? true,
+                )
+              : _photo(entry, BoxFit.contain),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          body,
+          _buildSpaceChannelLabel(),
+          _buildGridToggle(),
+        ],
+      ),
+    );
+  }
+
+  Future<Uint8List?> _bytesFor(String fileName) {
+    final existing = _decrypted.remove(fileName);
+    final future = existing ?? widget.cacheStore.readMedia(fileName);
+    _decrypted[fileName] = future; // re-insert = most recently used
+    while (_decrypted.length > 40) {
+      _decrypted.remove(_decrypted.keys.first);
+    }
+    return future;
+  }
+
+  Widget _photo(CachedMediaEntry entry, BoxFit fit) {
+    // A video shows its poster frame here (grid view); photos themselves.
+    final imageFile = entry.isVideo ? entry.posterFileName : entry.fileName;
+    if (imageFile == null) return const ColoredBox(color: Colors.black);
+    return FutureBuilder<Uint8List?>(
+      key: ValueKey(imageFile),
+      future: _bytesFor(imageFile),
+      builder: (context, snapshot) {
+        final bytes = snapshot.data;
+        if (bytes == null) return const SizedBox.expand();
+        return Image.memory(bytes, fit: fit, gaplessPlayback: true);
+      },
+    );
+  }
+
+  Widget _buildGrid() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: _entries.length,
+      itemBuilder: (context, index) {
+        final entry = _entries[index];
+        return GestureDetector(
+          key: ValueKey(entry.mediaItemId),
+          onTap: () => _openInSlideshow(index),
+          child: entry.isVideo
+              ? Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _photo(entry, BoxFit.cover),
+                    const Center(child: Icon(SmileIcons.play, size: 40, color: Colors.white70)),
+                  ],
+                )
+              : _photo(entry, BoxFit.cover),
+        );
+      },
+    );
+  }
+
+  Widget _buildGridToggle() {
+    return Positioned(
+      left: 16,
+      bottom: 16,
+      child: SafeArea(
+        child: GestureDetector(
+          onTap: _toggleGrid,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: SmileTheme.primary, width: 1.5),
+            ),
+            child: Icon(_showGrid ? SmileIcons.slideshow : SmileIcons.overview, color: Colors.white70),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpaceChannelLabel() {
+    if (_spaceName == null && _channelName == null) return const SizedBox.shrink();
+    final switchable = _canSwitchChannel;
+    return Positioned(
+      right: 16,
+      bottom: 16,
+      child: SafeArea(
+        child: GestureDetector(
+          onTap: switchable ? _pickChannel : null,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: SmileTheme.primary, width: 1.5),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(fontSize: 22, color: Colors.white70),
+                    children: [
+                      if (_spaceName != null) TextSpan(text: _spaceName),
+                      if (_spaceName != null && _channelName != null) const TextSpan(text: '  ·  '),
+                      if (_channelName != null)
+                        TextSpan(
+                          text: _channelName,
+                          style: const TextStyle(color: SmileTheme.primary, fontWeight: FontWeight.w600),
+                        ),
+                    ],
+                  ),
+                ),
+                if (switchable) ...[
+                  const SizedBox(width: 6),
+                  const Icon(SmileIcons.switchAlbum, color: SmileTheme.primary, size: 20),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

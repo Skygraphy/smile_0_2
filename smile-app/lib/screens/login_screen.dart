@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 import '../services/offline.dart';
 import '../widgets/otp_code_field.dart';
+import '../frame/screens/pairing_screen.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 /// Passwordless Email-OTP login (concept doc sect. 4): request a 6-digit
@@ -156,6 +157,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : const Text('Code anfordern'),
+      ),
+      const SizedBox(height: 32),
+      // One app (2026-10-11): an old tablet becomes a Frame from here.
+      OutlinedButton.icon(
+        onPressed: _isSubmitting
+            ? null
+            : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PairingScreen())),
+        icon: const Icon(SmileIcons.frame),
+        label: Text(SmileTexts.of(context).useAsFrame),
       ),
     ];
   }
