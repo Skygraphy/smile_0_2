@@ -1665,6 +1665,12 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'OK'**
   String get ok;
+
+  /// No description provided for @dontSend.
+  ///
+  /// In de, this message translates to:
+  /// **'Nicht senden'**
+  String get dontSend;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

@@ -60,4 +60,6 @@ dependencies {
     implementation("androidx.media3:media3-transformer:1.9.2")
     implementation("androidx.media3:media3-effect:1.9.2")
     implementation("androidx.media3:media3-common:1.9.2")
+    // Sending what waits in the upload queue with Smile closed (UploadWorker.kt).
+    implementation("androidx.work:work-runtime-ktx:2.10.1")
 }

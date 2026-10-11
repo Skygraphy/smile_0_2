@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -28,6 +29,15 @@ class Offline {
         text.contains('Connection reset') ||
         text.contains('Network is unreachable') ||
         text.contains('AuthRetryableFetchException');
+  }
+
+  /// Whether the phone has any network at all (Wi-Fi or mobile data).
+  static Future<bool> hasNetwork() async {
+    try {
+      return !(await Connectivity().checkConnectivity()).contains(ConnectivityResult.none);
+    } catch (_) {
+      return true;
+    }
   }
 
   /// Notes a failed request; returns whether it was a missing connection.

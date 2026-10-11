@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'local_changes.dart';
 import 'media_shrink.dart';
-import 'video_cache.dart';
+import 'offline.dart';
 
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -92,6 +92,40 @@ class MediaItem {
 /// Outcome of a delete-media call (delete/hide/unhide) -- bulk-capable, so
 /// a mix of eligible and ineligible ids in one call still applies to what
 /// it can; [deniedIds] reports the rest instead of failing the whole call.
+/// A photo made ready on the phone (MediaService.preparePhoto).
+class PreparedPhoto {
+  const PreparedPhoto({required this.display, required this.thumbnail, this.size, this.preview});
+
+  final Uint8List display;
+  final Uint8List thumbnail;
+  final (int, int)? size;
+  final String? preview;
+}
+
+/// A video made ready on the phone (MediaService.prepareVideo): [file] is
+/// the converted copy, or the original if the phone couldn't convert it.
+class PreparedVideo {
+  const PreparedVideo({
+    required this.file,
+    required this.mimeType,
+    this.shrunk,
+    this.poster,
+    this.frame,
+    this.previewDataUrl,
+  });
+
+  final File file;
+  final String mimeType;
+  /// Set only when it was converted AND has its poster: then video and
+  /// poster go straight to where they are served from.
+  final ShrunkVideo? shrunk;
+  final Uint8List? poster;
+  /// A still from the start of the original, as taken (what the album
+  /// shows while it waits).
+  final Uint8List? frame;
+  final String? previewDataUrl;
+}
+
 class MediaActionResult {
   MediaActionResult({required this.appliedIds, required this.deniedIds});
 
@@ -160,90 +194,52 @@ class MediaService {
     }
   }
 
-  /// Returns the media_item_id as soon as it's known (right after
-  /// create-upload responds) via [onMediaItemCreated], so the caller can
-  /// reconcile an optimistic local preview with the real item once it shows
-  /// up in a later feed fetch -- without waiting for the whole upload to
-  /// finish just to learn the id. Each network step (create-upload, the
-  /// storage PUT, complete-upload) is individually retried with backoff --
-  /// a WiFi handover mid-upload otherwise kills whichever HTTP request was
-  /// in flight and fails the whole thing outright, even though the network
-  /// is back seconds later. [onRetrying] (attempt, maxAttempts) fires before
-  /// each wait, so the caller can show a transient "retrying" state instead
-  /// of a hard error while this is still happening.
-  Future<void> uploadPhoto({
-    required String channelId,
-    required Uint8List bytes,
-    required String fileExtension,
-    required String mimeType,
-    void Function(String mediaItemId)? onMediaItemCreated,
-    void Function(int attempt, int maxAttempts)? onRetrying,
-  }) async {
-    final errors = await uploadPhotos(
-      channelId: channelId,
-      photos: [(bytes: bytes, fileExtension: fileExtension, mimeType: mimeType)],
-      onMediaItemCreated: (_, id) => onMediaItemCreated?.call(id),
-      onRetrying: onRetrying,
+  /// A photo made ready for the album on the phone -- no connection needed
+  /// (2026-10-11, UploadQueue): shrunk (MediaShrink), its thumbnail, its
+  /// size and the tiny preview. Null if the phone can't (unusual format);
+  /// then it goes the old way through the server.
+  Future<PreparedPhoto?> preparePhoto(Uint8List original) async {
+    final display = await MediaShrink.photo(original);
+    if (display == null) return null;
+    final thumbnail = await MediaShrink.thumbnail(display);
+    if (thumbnail == null) return null;
+    return PreparedPhoto(
+      display: display,
+      thumbnail: thumbnail,
+      size: await MediaShrink.sizeOf(display),
+      preview: await _buildPreviewDataUrl(thumbnail),
     );
-    if (errors.single != null) throw errors.single!;
   }
 
-  /// Several photos at once, straight from the phone (2026-10-10,
-  /// migrations/0071): no Edge Function in between -- those cost ~1-1.6 s
-  /// per call. The phone gives each photo its id, uploads the prepared
-  /// photo and its thumbnail directly to where they are served from (four
-  /// photos at a time), then inserts all rows as ready in ONE request; the
-  /// database checks the files and announces them itself.
+  /// Prepared photos straight from the phone (2026-10-10, migrations/0071):
+  /// no Edge Function in between -- those cost ~1-1.6 s per call. Each photo
+  /// brings its own id ([newUuid], kept by the UploadQueue so a second try
+  /// can't make a second photo); the files go directly to where they are
+  /// served from (four photos at a time), then ONE request inserts all rows
+  /// as ready -- the database checks the files and announces them itself.
   ///
-  /// Photos the phone can't prepare (unusual format) take the old way
-  /// through the server. [onMediaItemCreated] (index, id) at once,
-  /// [onReady] (index) when one is in the album. Returns one entry per
-  /// photo: null when it worked, else the error.
-  Future<List<Object?>> uploadPhotos({
+  /// Returns one entry per photo: null when it worked, else the error.
+  Future<List<Object?>> sendPreparedPhotos({
     required String channelId,
-    required List<({Uint8List bytes, String fileExtension, String mimeType})> photos,
-    void Function(int index, String mediaItemId)? onMediaItemCreated,
-    void Function(int index)? onReady,
+    required List<({String id, PreparedPhoto photo})> photos,
     void Function(int attempt, int maxAttempts)? onRetrying,
-    // A photo is ready on the phone; only the network part is left.
-    void Function(int index)? onPrepared,
   }) async {
     final clock = Stopwatch()..start();
     final userId = supabase.auth.currentUser!.id;
     final errors = List<Object?>.filled(photos.length, null);
-
-    final prepared = <({Uint8List? shrunk, Uint8List? thumbnail, (int, int)? size, String? preview})>[];
-    for (final photo in photos) {
-      final shrunk = await MediaShrink.photo(photo.bytes);
-      final thumbnail = shrunk == null ? null : await MediaShrink.thumbnail(shrunk);
-      prepared.add((
-        shrunk: shrunk,
-        thumbnail: thumbnail,
-        size: shrunk == null ? null : await MediaShrink.sizeOf(shrunk),
-        preview: await _buildPreviewDataUrl(thumbnail ?? photo.bytes),
-      ));
-      if (shrunk != null && thumbnail != null) onPrepared?.call(prepared.length - 1);
-    }
-    debugPrint('SmilePhoto: ${photos.length} prepared in ${clock.elapsedMilliseconds} ms');
-
-    final direct = [for (var i = 0; i < photos.length; i++) if (prepared[i].shrunk != null && prepared[i].thumbnail != null) i];
-    final ids = <int, String>{for (final i in direct) i: _newUuid()};
-    for (final i in direct) {
-      onMediaItemCreated?.call(i, ids[i]!);
-    }
-    String displayPath(int i) => '$channelId/${ids[i]}_display.jpg';
-    String thumbPath(int i) => '$channelId/${ids[i]}_thumb.jpg';
+    String displayPath(int i) => '$channelId/${photos[i].id}_display.jpg';
+    String thumbPath(int i) => '$channelId/${photos[i].id}_thumb.jpg';
 
     // The files: four photos at a time, each photo with its thumbnail.
     final uploaded = <int>[];
     var next = 0;
     Future<void> worker() async {
-      while (next < direct.length) {
-        final i = direct[next++];
+      while (next < photos.length) {
+        final i = next++;
         try {
           await Future.wait([
-            _uploadOwn('media-display', displayPath(i), prepared[i].shrunk!, onRetrying),
-            _uploadOwn('media-thumbnails', thumbPath(i), prepared[i].thumbnail!, onRetrying),
+            _uploadOwn('media-display', displayPath(i), photos[i].photo.display, onRetrying),
+            _uploadOwn('media-thumbnails', thumbPath(i), photos[i].photo.thumbnail, onRetrying),
           ]);
           uploaded.add(i);
         } catch (e) {
@@ -252,7 +248,7 @@ class MediaService {
       }
     }
 
-    await Future.wait(List.generate(direct.length < 4 ? direct.length : 4, (_) => worker()));
+    await Future.wait(List.generate(photos.length < 4 ? photos.length : 4, (_) => worker()));
     uploaded.sort();
     debugPrint('SmilePhoto: uploaded in ${clock.elapsedMilliseconds} ms');
 
@@ -265,7 +261,7 @@ class MediaService {
               await supabase.from('media_items').insert([
                 for (final i in uploaded)
                   {
-                    'id': ids[i],
+                    'id': photos[i].id,
                     'channel_id': channelId,
                     'sender_id': userId,
                     'media_type': 'photo',
@@ -274,10 +270,10 @@ class MediaService {
                     'storage_path_display': displayPath(i),
                     'storage_path_thumbnail': thumbPath(i),
                     'processing_status': 'ready',
-                    'file_size_bytes': prepared[i].shrunk!.length,
-                    'width': ?prepared[i].size?.$1,
-                    'height': ?prepared[i].size?.$2,
-                    'preview_data_url': ?prepared[i].preview,
+                    'file_size_bytes': photos[i].photo.display.length,
+                    'width': ?photos[i].photo.size?.$1,
+                    'height': ?photos[i].photo.size?.$2,
+                    'preview_data_url': ?photos[i].photo.preview,
                   },
               ]);
             } on PostgrestException catch (e) {
@@ -288,38 +284,23 @@ class MediaService {
           },
           onRetry: onRetrying,
         );
-        for (final i in uploaded) {
-          onReady?.call(i);
-        }
+        LocalChanges.saved(tablesChanged({'media_items', 'channels'}, channelIds: {channelId}));
       } catch (e) {
         for (final i in uploaded) {
           errors[i] = e;
         }
-        // Not in the album: take the files back again (no leftovers).
-        try {
-          await supabase.storage.from('media-display').remove([for (final i in uploaded) displayPath(i)]);
-          await supabase.storage.from('media-thumbnails').remove([for (final i in uploaded) thumbPath(i)]);
-        } catch (_) {}
+        // Refused: take the files back again (no leftovers). Not when the
+        // connection broke -- the rows may be in after all, and the queue
+        // tries again with the same ids anyway.
+        if (!Offline.isConnectionError(e)) {
+          try {
+            await supabase.storage.from('media-display').remove([for (final i in uploaded) displayPath(i)]);
+            await supabase.storage.from('media-thumbnails').remove([for (final i in uploaded) thumbPath(i)]);
+          } catch (_) {}
+        }
       }
     }
     debugPrint('SmilePhoto: ${uploaded.length} ready in ${clock.elapsedMilliseconds} ms');
-
-    // Couldn't be prepared here: through the server, as before.
-    final viaServer = [for (var i = 0; i < photos.length; i++) if (!direct.contains(i)) i];
-    if (viaServer.isNotEmpty) {
-      final serverErrors = await _uploadPhotosViaServer(
-        channelId: channelId,
-        photos: [for (final i in viaServer) photos[i]],
-        onMediaItemCreated: (j, id) => onMediaItemCreated?.call(viaServer[j], id),
-        onReady: (j) => onReady?.call(viaServer[j]),
-        onRetrying: onRetrying,
-      );
-      for (final (j, error) in serverErrors.indexed) {
-        errors[viaServer[j]] = error;
-      }
-    } else if (uploaded.isNotEmpty) {
-      LocalChanges.saved(tablesChanged({'media_items', 'channels'}, channelIds: {channelId}));
-    }
     return errors;
   }
 
@@ -343,7 +324,7 @@ class MediaService {
       );
 
   /// A random (version 4) UUID -- the phone names its photos itself.
-  static String _newUuid() {
+  static String newUuid() {
     final random = Random.secure();
     final b = List<int>.generate(16, (_) => random.nextInt(256));
     b[6] = (b[6] & 0x0f) | 0x40;
@@ -364,7 +345,7 @@ class MediaService {
   /// [onMediaItemCreated] (index, id) as soon as the ids are known. Returns
   /// one entry per photo: null when it worked, else the error -- a failed
   /// photo is removed again and doesn't hold up the others.
-  Future<List<Object?>> _uploadPhotosViaServer({
+  Future<List<Object?>> uploadPhotosViaServer({
     required String channelId,
     required List<({Uint8List bytes, String fileExtension, String mimeType})> photos,
     void Function(int index, String mediaItemId)? onMediaItemCreated,
@@ -520,87 +501,98 @@ class MediaService {
     };
   }
 
-  /// A video of any length (decision 2026-10-01): same two-step flow as
-  /// [uploadPhoto], but the bytes go up resumably in chunks straight from
-  /// disk (ResumableUpload) -- a multi-GB file is never held in memory, and
-  /// a dropped connection resumes instead of starting over. The feed
-  /// placeholder is a frame taken from the video on the phone itself.
-  Future<void> uploadVideo({
-    required String channelId,
-    required File file,
-    required String fileExtension,
+  /// A video made ready on the phone -- no connection needed (2026-10-11,
+  /// UploadQueue): re-encoded like WhatsApp (MediaShrink, 2026-10-09: ~15
+  /// MB per minute instead of 100-700 MB) plus its poster frame. If the
+  /// phone can't, the original goes up later and the server shrinks it.
+  Future<PreparedVideo> prepareVideo(
+    File original, {
     required String mimeType,
+    void Function(int percent)? onPreparing,
+    // Its preview is known (before converting starts).
+    void Function(String? previewDataUrl)? onFramed,
+  }) async {
+    final frame = await videoPosterBytes(original);
+    final previewDataUrl = frame == null ? null : await _buildPreviewDataUrl(frame);
+    onFramed?.call(previewDataUrl);
+    final shrunk = await MediaShrink.video(original, onProgress: onPreparing);
+    // Its own poster frame goes up with it, so the server can take both as
+    // they are (complete-upload, client_encoded). The frame already taken
+    // from the original is the same picture.
+    final posterFrame = shrunk == null ? null : (frame ?? await videoPosterBytes(shrunk.file));
+    final poster = posterFrame == null ? null : await MediaShrink.poster(posterFrame);
+    return PreparedVideo(
+      file: shrunk?.file ?? original,
+      mimeType: shrunk != null ? 'video/mp4' : mimeType,
+      shrunk: poster == null ? null : shrunk,
+      poster: poster,
+      frame: frame,
+      previewDataUrl: previewDataUrl,
+    );
+  }
+
+  /// Registers a video with the server (create-upload) -- its row, and the
+  /// instant blurry preview for the others, exist from here on.
+  Future<Map<String, dynamic>> createVideoUpload({
+    required String channelId,
+    required int fileSizeBytes,
+    String? previewDataUrl,
+    void Function(int attempt, int maxAttempts)? onRetrying,
+  }) =>
+      _withRetry(
+        () => _createUpload(
+          channelId: channelId,
+          mediaType: 'video',
+          mimeType: 'video/mp4',
+          fileExtension: 'mp4',
+          fileSizeBytes: fileSizeBytes,
+          previewDataUrl: previewDataUrl,
+          clientEncoded: true,
+        ),
+        onRetry: onRetrying,
+      );
+
+  /// Sends a prepared video; [createData] if it was already registered
+  /// (the queue does that while the phone converts -- one round trip
+  /// less). Returns its media id. A video the server refused or that
+  /// couldn't be finished is removed again (no ghost rows).
+  Future<String> sendPreparedVideo({
+    required String channelId,
+    required PreparedVideo video,
+    Map<String, dynamic>? createData,
     void Function(String mediaItemId)? onMediaItemCreated,
     void Function(int attempt, int maxAttempts)? onRetrying,
     void Function(int sentBytes, int totalBytes)? onProgress,
-    void Function(int percent)? onPreparing,
-    // Converted on the phone; only the network part is left.
-    void Function()? onPrepared,
   }) async {
-    final frame = await videoPosterBytes(file);
-    final previewDataUrl = frame == null ? null : await _buildPreviewDataUrl(frame);
-    final clock = Stopwatch()..start();
-    // Registering with the server runs while the phone converts -- one
-    // round trip less (2026-10-09). The real size follows in complete-upload.
-    final created = _withRetry(
-      () => _createUpload(
-        channelId: channelId,
-        mediaType: 'video',
-        mimeType: 'video/mp4',
-        fileExtension: 'mp4',
-        fileSizeBytes: file.lengthSync(),
-        previewDataUrl: previewDataUrl,
-        clientEncoded: true,
-      ),
-      onRetry: onRetrying,
-    )..ignore(); // awaited below; this only keeps an early failure from counting as unhandled
-    // Re-encoded on the phone first, like WhatsApp (MediaShrink,
-    // 2026-10-09): ~15 MB per minute instead of 100-700 MB. If the phone
-    // can't, the original goes up and the server shrinks it as before.
-    final shrunk = await MediaShrink.video(file, onProgress: onPreparing);
-    if (shrunk != null) onPrepared?.call();
-    debugPrint('SmileUpload: shrunk in ${clock.elapsedMilliseconds} ms');
-    final upload = shrunk?.file ?? file;
-    // Its own poster frame goes up with it, so the server can take both
-    // as they are (complete-upload, client_encoded). The frame already
-    // taken from the original is the same picture.
-    final posterFrame = shrunk == null ? null : (frame ?? await videoPosterBytes(shrunk.file));
-    final poster = posterFrame == null ? null : await MediaShrink.poster(posterFrame);
-    // From here on it is uploading -- the status says so.
-    onProgress?.call(0, upload.lengthSync());
-    final uploadMime = shrunk != null ? 'video/mp4' : mimeType;
-    String? mediaItemId;
-    var uploaded = false;
+    final size = video.file.lengthSync();
+    final created = createData ??
+        await createVideoUpload(
+          channelId: channelId,
+          fileSizeBytes: size,
+          previewDataUrl: video.previewDataUrl,
+          onRetrying: onRetrying,
+        );
+    onProgress?.call(0, size);
+    await _uploadVideoFile(
+      channelId: channelId,
+      createData: created,
+      upload: video.file,
+      shrunk: video.shrunk,
+      poster: video.poster,
+      mimeType: video.mimeType,
+      onMediaItemCreated: onMediaItemCreated,
+      onRetrying: onRetrying,
+      onProgress: onProgress,
+    );
+    return created['media_item_id'] as String;
+  }
+
+  /// Removes a video's row again -- one registered by an earlier try that
+  /// never finished (best effort).
+  Future<void> dropUnfinished(String mediaItemId) async {
     try {
-      await _uploadVideoFile(
-        channelId: channelId,
-        createData: await created,
-        upload: upload,
-        shrunk: poster == null ? null : shrunk,
-        poster: poster,
-        mimeType: uploadMime,
-        onMediaItemCreated: (id) {
-          mediaItemId = id;
-          onMediaItemCreated?.call(id);
-        },
-        onRetrying: onRetrying,
-        onProgress: onProgress,
-      );
-      uploaded = true;
-    } finally {
-      // The converted copy is the video as it now is on the server: kept on
-      // the phone, it plays at once and offline (VideoCache, 2026-10-10).
-      if (shrunk != null) {
-        final id = mediaItemId;
-        if (uploaded && id != null) {
-          await VideoCache.keep(id, shrunk.file);
-        } else {
-          try {
-            await shrunk.file.delete();
-          } catch (_) {}
-        }
-      }
-    }
+      await _applyAction([mediaItemId], 'delete');
+    } catch (_) {}
   }
 
   Future<void> _uploadVideoFile({

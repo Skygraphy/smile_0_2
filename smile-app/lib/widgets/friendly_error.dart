@@ -1,4 +1,3 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
@@ -8,13 +7,7 @@ import '../services/offline.dart';
 /// a short, friendly note like WhatsApp's; the raw error only in the log.
 
 /// Whether the phone has any network at all (Wi-Fi or mobile data).
-Future<bool> hasNetwork() async {
-  try {
-    return !(await Connectivity().checkConnectivity()).contains(ConnectivityResult.none);
-  } catch (_) {
-    return true;
-  }
-}
+Future<bool> hasNetwork() => Offline.hasNetwork();
 
 /// "Keine Internetverbindung – prüfe deine Verbindung …" with an OK button.
 Future<void> showNoConnection(BuildContext context) {

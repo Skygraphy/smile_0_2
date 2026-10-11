@@ -12,7 +12,7 @@ import '../widgets/local_display.dart';
 
 import '../services/channel_picker_service.dart';
 import '../services/media_service.dart';
-import '../services/offline.dart';
+import '../services/upload_queue.dart';
 import '../services/sync_bus.dart';
 import 'channel_feed_screen.dart';
 
@@ -48,9 +48,6 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
   Map<String, ChannelWithActivity> _covers = const {};
   /// The photo itself, or a frame taken from the video.
   Uint8List? _preview;
-  int? _videoPercent;
-  /// The video is first shrunk on the phone (MediaShrink), then uploaded.
-  bool _videoPreparing = false;
 
   @override
   void initState() {
@@ -84,67 +81,23 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
     }
   }
 
+  /// Into the album at once, like WhatsApp (2026-10-11): the upload
+  /// queue sends it -- right away, or with a clock once there is a
+  /// connection again, even with Smile closed.
   Future<void> _sendTo(UploadableChannel channel) async {
-    // No network: a friendly note right away instead of an error later.
-    if (!await hasNetwork()) {
-      if (mounted) unawaited(showNoConnection(context));
-      return;
-    }
-    if (!mounted) return;
     // A short tick when it's sent, like WhatsApp (2026-10-10).
     unawaited(HapticFeedback.lightImpact());
     setState(() {
       _uploadingTo = channel;
       _errorMessage = null;
     });
-    try {
-      final extension = widget.file.path.split(".").last.toLowerCase();
-      if (widget.isVideo) {
-        await widget.mediaService.uploadVideo(
-          channelId: channel.channelId,
-          file: File(widget.file.path),
-          fileExtension: extension,
-          mimeType: extension == "mov" ? "video/quicktime" : "video/$extension",
-          onPreparing: (percent) {
-            if (mounted) {
-              setState(() {
-                _videoPreparing = true;
-                _videoPercent = percent;
-              });
-            }
-          },
-          onProgress: (sent, total) {
-            if (!mounted || total == 0) return;
-            setState(() {
-              _videoPreparing = false;
-              _videoPercent = (sent * 100 / total).floor();
-            });
-          },
-        );
-      } else {
-        await widget.mediaService.uploadPhoto(
-          channelId: channel.channelId,
-          bytes: await widget.file.readAsBytes(),
-          fileExtension: extension,
-          mimeType: extension == "png" ? "image/png" : "image/jpeg",
-        );
-      }
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => ChannelFeedScreen(channelId: channel.channelId, channelName: channel.channelName),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _uploadingTo = null;
-        _videoPercent = null;
-        _errorMessage = Offline.isConnectionError(e) ? null : SmileTexts.of(context).sendFailed;
-      });
-      debugPrint('SmileUpload failed: $e');
-      if (Offline.isConnectionError(e)) unawaited(showNoConnection(context));
-    }
+    await UploadQueue.instance.enqueue(channel.channelId, [widget.file]);
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => ChannelFeedScreen(channelId: channel.channelId, channelName: channel.channelName),
+      ),
+    );
   }
 
   @override
@@ -192,13 +145,7 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
                               subtitleIcon: SmileIcons.space,
                               subtitle: channel.spaceName,
                               trailing: _uploadingTo == channel
-                                  ? (_videoPercent != null
-                                      ? Text(_videoPreparing ? "Vorbereiten ${_videoPercent!} %" : "${_videoPercent!} %")
-                                      : const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(strokeWidth: 2),
-                                        ))
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                                   : null,
                               onTap: _uploadingTo != null ? null : () => _sendTo(channel),
                             ),

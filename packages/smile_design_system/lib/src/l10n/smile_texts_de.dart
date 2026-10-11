@@ -977,4 +977,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get ok => 'OK';
+
+  @override
+  String get dontSend => 'Nicht senden';
 }

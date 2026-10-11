@@ -13,6 +13,7 @@ import '../services/sync_bus.dart';
 import '../widgets/avatar_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../widgets/friendly_error.dart';
+import '../services/upload_queue.dart';
 import '../widgets/top_bar_actions.dart';
 import 'avatar_viewer_screen.dart';
 
@@ -175,6 +176,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
     }
     if (!mounted) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
+    await UploadQueue.instance.clear();
     await supabase.auth.signOut(scope: SignOutScope.local);
   }
 
@@ -187,6 +189,8 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
         // Best-effort -- signing out must not get stuck on this.
       }
     }
+    // Whatever still waits to be sent belongs to this account.
+    await UploadQueue.instance.clear();
     await supabase.auth.signOut();
   }
 

@@ -23,6 +23,8 @@ import 'services/offline.dart';
 import 'services/offline_http_client.dart';
 import 'widgets/offline_hint.dart';
 import 'services/video_prefetcher.dart';
+import 'services/upload_queue.dart';
+import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import 'widgets/friendly_error.dart';
 
@@ -82,6 +84,7 @@ Future<void> main() async {
   _resumeListener = AppLifecycleListener(
     onResume: () {
       SyncBus.emit(const SyncEvent.everything());
+      unawaited(UploadQueue.instance.process());
       unawaited(ForegroundNotifications.clearAll());
     },
   );
@@ -92,7 +95,29 @@ Future<void> main() async {
   LiveSyncChannel.start();
   // In WLAN, new videos are downloaded ahead of time for offline (2026-10-10).
   VideoPrefetcher.start();
+  // Photos/videos still waiting to be sent go out (2026-10-11).
+  unawaited(UploadQueue.instance.start());
   runApp(const SmileApp());
+}
+
+/// Started by Android's WorkManager (UploadWorker.kt) when Smile itself
+/// isn't running: sends what still waits in the upload queue, like
+/// WhatsApp does with messages written offline (2026-10-11).
+@pragma('vm:entry-point')
+Future<void> uploadQueueWorker() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  var left = 1;
+  try {
+    await Supabase.initialize(
+      url: SupabaseConfig.url,
+      publishableKey: SupabaseConfig.publishableKey,
+      authOptions: const FlutterAuthClientOptions(detectSessionInUri: false),
+    );
+    left = await UploadQueue.instance.runInBackground();
+  } catch (e) {
+    debugPrint('SmileQueue: background run failed: $e');
+  }
+  await const MethodChannel('smile/upload_queue').invokeMethod<void>('finished', left);
 }
 
 // ignore: unused_element -- held only so the listener isn't garbage-collected.

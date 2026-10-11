@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
-import 'dart:ui' as ui;
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -25,49 +23,11 @@ import '../widgets/capture_choice.dart';
 import '../widgets/album_covers.dart';
 import '../widgets/local_display.dart';
 import '../services/offline.dart';
+import '../services/upload_queue.dart';
 import '../services/local_changes.dart';
 import '../services/channel_picker_service.dart';
 import 'photo_viewer_screen.dart';
 import 'video_player_screen.dart';
-
-/// A picked photo shown in the grid immediately, before the network upload
-/// (let alone server-side processing) has even started -- WhatsApp-style
-/// optimistic UI. `mediaItemId` fills in once create-upload responds, so the
-/// upload loop can tell when the real, fully-processed item has taken its
-/// place in `_items` and this placeholder can be dropped.
-class _PendingUpload {
-  _PendingUpload(this.bytes, {this.aspectRatio, this.isVideo = false});
-  /// The photo itself, or for a video a frame taken from it on the phone.
-  final Uint8List? bytes;
-  final bool isVideo;
-  String? mediaItemId;
-  /// Its own progress ring in the album, like WhatsApp (2026-10-10):
-  /// 0..1 while known (a video being converted and sent), null = spinning.
-  double? progress;
-  /// Prepared on the phone with a connection: from here on it almost
-  /// always goes through, so no more ring (decided 2026-10-10) -- if it
-  /// fails after all, it disappears again with a message.
-  bool sure = false;
-  // Decoded once up front (see _pickAndUpload) so the placeholder shows
-  // at the photo's real aspect ratio from the very first frame instead
-  // of a square that reflows once the real item arrives.
-  final double? aspectRatio;
-}
-
-/// Best-effort -- a decode failure just falls back to a square
-/// placeholder for the transient pre-upload moment, not a real problem.
-Future<double?> _decodeAspectRatio(Uint8List bytes) async {
-  try {
-    final codec = await ui.instantiateImageCodec(bytes);
-    final frame = await codec.getNextFrame();
-    final width = frame.image.width;
-    final height = frame.image.height;
-    frame.image.dispose();
-    return height > 0 ? width / height : null;
-  } catch (_) {
-    return null;
-  }
-}
 
 /// WhatsApp-style chat feed: sorted chronologically top(oldest) to
 /// bottom(newest), other members' photos on the left with their avatar
@@ -95,7 +55,12 @@ class ChannelFeedScreen extends StatefulWidget {
 class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   List<MediaItem>? _items;
   late String _channelName = widget.channelName;
-  final List<_PendingUpload> _pendingUploads = [];
+  /// This phone's own photos/videos on their way (UploadQueue), newest
+  /// first -- shown at once, the server's copy takes over once it's there.
+  List<QueuedUpload> get _pendingUploads => UploadQueue.instance.itemsFor(widget.channelId);
+  StreamSubscription<QueuedUpload>? _queueFailures;
+  /// Each one ticks once, when its ring goes (or it is sent).
+  final Set<String> _ticked = {};
   String? _errorMessage;
   String? _statusMessage;
   final Set<String> _selectedIds = {};
@@ -137,6 +102,22 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     _loadCover();
     unawaited(_loadMyStatus());
     _scrollController.addListener(_updateStickyDate);
+    _ticked.addAll(_pendingUploads.where((p) => p.sure).map((p) => p.id));
+    UploadQueue.instance.addListener(_onQueue);
+    _queueFailures = UploadQueue.instance.failures.listen((item) {
+      if (mounted && item.channelId == widget.channelId) {
+        setState(() => _errorMessage = SmileTexts.of(context).sendFailed);
+      }
+    });
+  }
+
+  void _onQueue() {
+    if (!mounted) return;
+    setState(() {});
+    for (final item in _pendingUploads) {
+      if (item.sure && _ticked.add(item.id)) _tick(() => setState(() {}));
+    }
+    if (_pendingUploads.any((p) => p.done)) unawaited(_handOver());
   }
 
   // Other members' uploads/processing completions/deletes, a hide on this
@@ -276,6 +257,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     // Only clear it if no other feed took over in the meantime.
     if (ForegroundNotifications.openAlbumId == widget.channelId) ForegroundNotifications.openAlbumId = null;
     _scrollController.dispose();
+    UploadQueue.instance.removeListener(_onQueue);
+    unawaited(_queueFailures?.cancel());
     super.dispose();
   }
 
@@ -354,19 +337,19 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       if (!mounted) return;
     }
 
-    setState(() {
-      _items = items;
-      if (!_showingHidden) {
-        // Keep showing the full-quality local bytes (no spinner, no interim
-        // blurry preview) for as long as *this device's own* upload isn't
-        // actually ready yet -- only swap to the real thumbnail once it
-        // truly is, so there's exactly one clean handoff instead of
-        // local-preview -> blurry-server-preview -> real-thumbnail.
-        _pendingUploads.removeWhere(
-          (p) => p.mediaItemId != null && items.any((i) => i.id == p.mediaItemId && i.isReady),
-        );
+    setState(() => _items = items);
+    if (!_showingHidden) {
+      // Keep showing the full-quality local bytes (no spinner, no interim
+      // blurry preview) for as long as *this device's own* upload isn't
+      // actually ready yet -- only swap to the real thumbnail once it
+      // truly is, so there's exactly one clean handoff instead of
+      // local-preview -> blurry-server-preview -> real-thumbnail.
+      for (final p in _pendingUploads) {
+        if (p.done && p.mediaItemId != null && items.any((i) => i.id == p.mediaItemId && i.isReady)) {
+          UploadQueue.instance.forget(p);
+        }
       }
-    });
+    }
     if (!_showingHidden) unawaited(MediaCacheService.save(widget.channelId, items));
     // The date separators this data produces don't have a RenderBox yet
     // until after this frame lays them out.
@@ -384,7 +367,6 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     unawaited(_load());
   }
 
-  static const _videoExtensions = {'mp4', 'mov', 'm4v', '3gp', 'mkv', 'webm', 'avi'};
 
   Future<void> _pickAndUpload() async {
     // Photos and videos, several at once, one picker (decisions 2026-10-01:
@@ -439,195 +421,56 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// delete goes to the server (LocalChanges then keeps them hidden).
   final Set<String> _leaving = {};
 
+  /// Like WhatsApp (decided 2026-10-11): into the queue and the album at
+  /// once; without a connection they wait there with a clock and go out by
+  /// themselves later, even with Smile closed (UploadQueue).
   Future<void> _uploadFiles(List<XFile> picked) async {
-    // No network at all: say so right away, like WhatsApp, instead of
-    // trying for a while and then showing a technical error (2026-10-11).
-    if (!await hasNetwork()) {
-      if (mounted) unawaited(showNoConnection(context));
-      return;
-    }
-    if (!mounted) return;
-    // The buttons stay free: more photos and videos can be sent while these
-    // go up -- each shows its own progress in the album (2026-10-10).
     setState(() {
       _errorMessage = null;
       _statusMessage = null;
     });
-    // Without a connection we can't be sure -- the ring stays then.
-    final connected = !Offline.isOffline.value &&
-        !(await Connectivity().checkConnectivity()).contains(ConnectivityResult.none);
-
-    // Show every picked photo/video frame in the feed *before* any network
-    // call -- the slow part (upload + server-side processing) happens behind
-    // these placeholders instead of blocking what the user sees.
-    final batch = <({XFile file, String extension, bool isVideo, Uint8List? photoBytes, _PendingUpload pending})>[];
-    for (final (index, file) in picked.indexed) {
-      final extension = file.path.split('.').last.toLowerCase();
-      final isVideo = _videoExtensions.contains(extension);
-      final Uint8List? photoBytes = isVideo ? null : await file.readAsBytes();
-      final Uint8List? previewBytes = isVideo ? await MediaService.videoPosterBytes(File(file.path)) : photoBytes;
-      double? aspectRatio;
-      if (previewBytes != null) {
+    var index = 0;
+    await UploadQueue.instance.enqueue(
+      widget.channelId,
+      picked,
+      beforeShow: (item) async {
         // Decode before it's ever shown: Image.memory doesn't paint anything
         // for the frame or two it takes to decode a several-MB original,
         // which otherwise reads as a black flash the instant you tap upload.
         // Only the newest few are on screen right away -- decoding all of a
         // big batch up front would just eat memory.
-        if (mounted && index >= picked.length - 3) await precacheImage(MemoryImage(previewBytes), context);
-        aspectRatio = await _decodeAspectRatio(previewBytes);
-      }
-      final pending = _PendingUpload(previewBytes, aspectRatio: aspectRatio, isVideo: isVideo);
-      batch.add((file: file, extension: extension, isVideo: isVideo, photoBytes: photoBytes, pending: pending));
-      if (!mounted) return;
-      setState(() => _pendingUploads.insert(0, pending));
-    }
-
-    var failed = 0;
-    Object? lastError;
-
-    Future<void> uploadOne(
-      int index,
-      ({XFile file, String extension, bool isVideo, Uint8List? photoBytes, _PendingUpload pending}) item, {
-      void Function()? onCreated,
-    }) async {
-      if (!mounted) return;
-      final counter = batch.length > 1 ? ' (${index + 1}/${batch.length})' : '';
-      // A dropped connection (e.g. switching WiFi networks mid-upload) is
-      // retried automatically -- this just keeps the user informed while
-      // it's happening instead of the tile silently sitting there.
-      void onRetrying(int attempt, int maxAttempts) {
-        if (!mounted) return;
-        setState(() => _statusMessage = 'Verbindung unterbrochen, versuche erneut ($attempt/$maxAttempts)…$counter');
-      }
-
-      try {
-        if (item.isVideo) {
-          await widget.mediaService.uploadVideo(
-            channelId: widget.channelId,
-            file: File(item.file.path),
-            fileExtension: item.extension,
-            mimeType: item.extension == 'mov' ? 'video/quicktime' : 'video/${item.extension}',
-            onMediaItemCreated: (id) {
-              item.pending.mediaItemId = id;
-              onCreated?.call();
-            },
-            onRetrying: onRetrying,
-            // First shrunk on the phone (MediaShrink), then uploaded.
-            // Converting is the first third of its ring, sending the rest.
-            onPreparing: (percent) {
-              if (mounted) setState(() => item.pending.progress = percent / 100);
-            },
-            onPrepared: () => _tick(() {
-              if (connected) setState(() => item.pending.sure = true);
-            }),
-            onProgress: (sent, total) {
-              if (!mounted || total == 0) return;
-              setState(() => item.pending.progress = sent / total);
-            },
-          );
-          // Its sharp frame from the phone stays until the server's poster
-          // is loaded (_load) -- no blurry preview in between (2026-10-09).
-        } else {
-          await widget.mediaService.uploadPhoto(
-            channelId: widget.channelId,
-            bytes: item.photoBytes!,
-            fileExtension: item.extension,
-            mimeType: item.extension == 'png' ? 'image/png' : 'image/jpeg',
-            onMediaItemCreated: (id) {
-              item.pending.mediaItemId = id;
-              onCreated?.call();
-            },
-            onRetrying: onRetrying,
-          );
+        final position = index++;
+        final bytes = item.tileBytes;
+        if (mounted && bytes != null && position >= picked.length - 3) {
+          await precacheImage(MemoryImage(bytes), context);
         }
-      } catch (e) {
-        failed++;
-        lastError = e;
-        if (mounted) setState(() => _pendingUploads.remove(item.pending));
-      }
-    }
+      },
+    );
+  }
 
-    // All photos of the selection in one go, like WhatsApp (2026-10-10):
-    // registered together, uploaded in parallel, marked ready together
-    // (MediaService.uploadPhotos). Videos then one by one (each is
-    // converted on the phone first).
-    final photoItems = batch.where((b) => !b.isVideo).toList();
-    if (photoItems.isNotEmpty) {
-      void onRetrying(int attempt, int maxAttempts) {
-        if (mounted) setState(() => _statusMessage = 'Verbindung unterbrochen, versuche erneut ($attempt/$maxAttempts)…');
-      }
-
-      final errors = await widget.mediaService.uploadPhotos(
-        channelId: widget.channelId,
-        photos: [
-          for (final item in photoItems)
-            (
-              bytes: item.photoBytes!,
-              fileExtension: item.extension,
-              mimeType: item.extension == 'png' ? 'image/png' : 'image/jpeg',
-            ),
-        ],
-        onMediaItemCreated: (i, id) => photoItems[i].pending.mediaItemId = id,
-        onPrepared: (i) => _tick(() {
-          if (connected) setState(() => photoItems[i].pending.sure = true);
-        }),
-        onRetrying: onRetrying,
-      );
-      for (final (i, error) in errors.indexed) {
-        if (error == null) continue;
-        failed++;
-        lastError = error;
-        if (mounted) setState(() => _pendingUploads.remove(photoItems[i].pending));
-      }
-    }
-    for (final (index, item) in batch.indexed) {
-      if (!mounted) return;
-      if (item.isVideo) await uploadOne(index, item);
-    }
-    if (!mounted) return;
-    setState(() {
-      _statusMessage = null;
-      // Friendly words only; the technical reason goes to the log.
-      if (failed > 0 && !Offline.isConnectionError(lastError!)) {
-        debugPrint('SmileUpload failed: $lastError');
-        final t = SmileTexts.of(context);
-        _errorMessage = batch.length == 1 ? t.sendFailed : t.sendFailedSome(failed, batch.length);
-      }
-    });
-    if (failed > 0 && Offline.isConnectionError(lastError!)) {
-      debugPrint('SmileUpload offline: $lastError');
-      unawaited(showNoConnection(context));
-    }
-
+  /// Sent: each swaps to the server's copy as soon as that is loaded --
+  /// one clean handoff, no blurry step in between.
+  bool _handingOver = false;
+  Future<void> _handOver() async {
+    if (_handingOver) return;
+    _handingOver = true;
     try {
-      // Processing (resize/thumbnail) happens asynchronously in the
-      // media-processing-service, so the real items may not be 'ready' yet
-      // right after upload -- give them a few short retries. `_load` drops
-      // each placeholder as soon as its real item is ready; the placeholders
-      // cover this wait for the user.
       for (var attempt = 0; attempt < 8; attempt++) {
         await _load();
         if (!mounted) return;
-        final waiting = batch.where((b) => _pendingUploads.contains(b.pending)).toList();
-        if (waiting.isEmpty) break;
+        if (!_pendingUploads.any((p) => p.done)) return;
         await Future<void>.delayed(const Duration(seconds: 1));
       }
-    } catch (_) {
-      // The sync push brings the items in anyway.
-    } finally {
-      if (mounted) {
-        setState(() {
-          for (final b in batch) {
-            // A video still converting on the server (the fallback when the
-            // phone couldn't) keeps its sharp frame until it's ready --
-            // _load drops it then.
-            final waitingVideo = b.isVideo &&
-                b.pending.mediaItemId != null &&
-                !(_items ?? const <MediaItem>[]).any((i) => i.id == b.pending.mediaItemId && i.isReady);
-            if (!waitingVideo) _pendingUploads.remove(b.pending);
-          }
-        });
+      // A video still converting on the server (the fallback when the
+      // phone couldn't) keeps its sharp frame until it's ready -- the sync
+      // push brings it; photos don't wait any longer.
+      for (final p in _pendingUploads.where((p) => p.done && !p.isVideo).toList()) {
+        UploadQueue.instance.forget(p);
       }
+    } catch (_) {
+      // The sync push brings them anyway.
+    } finally {
+      _handingOver = false;
     }
   }
 
@@ -770,9 +613,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   List<Widget> _buildFeedRows(int pendingCount, List<MediaItem> visibleItems) {
     final myUserId = supabase.auth.currentUser?.id;
     final total = pendingCount + visibleItems.length;
+    final queued = pendingCount == 0 ? const <QueuedUpload>[] : _pendingUploads;
 
     String? senderIdAt(int i) => i < pendingCount ? myUserId : visibleItems[i - pendingCount].senderId;
-    DateTime createdAtAt(int i) => i < pendingCount ? DateTime.now() : visibleItems[i - pendingCount].createdAt;
+    DateTime createdAtAt(int i) => i < pendingCount ? queued[i].createdAt : visibleItems[i - pendingCount].createdAt;
     bool sameDay(DateTime a, DateTime b) {
       final la = a.toLocal();
       final lb = b.toLocal();
@@ -790,21 +634,30 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       final isFirstInRun = olderSenderId != senderIdAt(i);
 
       if (i < pendingCount) {
-        final pending = _pendingUploads[i];
-        // Keyed by the upload attempt itself (stable across rebuilds) --
+        final pending = queued[i];
+        final picture = _PhotoTile(bytes: pending.tileBytes);
+        final still = pending.isVideo ? _VideoBadge(playable: false, child: picture) : picture;
+        // Keyed by the queue item itself (stable across rebuilds) --
         // without a key, Flutter would tear this tile down and recreate
         // it on every sync-triggered rebuild instead of recognizing
         // it as unchanged.
         rows.add(_ChatRow(
-          key: ValueKey(pending),
+          key: ValueKey('queued_${pending.id}'),
           isMine: true,
           showTail: isFirstInRun,
           aspectRatio: pending.aspectRatio,
-          photo: pending.sure
-              ? (pending.isVideo
-                  ? _VideoBadge(playable: false, child: _PhotoTile(bytes: pending.bytes))
-                  : _PhotoTile(bytes: pending.bytes))
-              : _UploadProgress(progress: pending.progress, child: _PhotoTile(bytes: pending.bytes)),
+          time: pending.createdAt,
+          // No connection: a clock, slightly darker, and "Nicht senden".
+          waiting: pending.waiting,
+          onCancelSend: pending.waiting ? () => unawaited(UploadQueue.instance.cancel(pending)) : null,
+          photo: pending.waiting
+              ? Stack(fit: StackFit.passthrough, children: [
+                  still,
+                  Positioned.fill(child: ColoredBox(color: Colors.black.withValues(alpha: 0.2))),
+                ])
+              : (pending.sure || pending.done)
+                  ? still
+                  : _UploadProgress(progress: pending.progress, child: picture),
         ));
       } else {
         final item = visibleItems[i - pendingCount];
@@ -1063,7 +916,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                     // server-side preview. Never applies in the hidden view.
                     final visibleItems = (_showingHidden
                             ? _items!
-                            : _items!.where((item) => item.isReady || !pendingIds.contains(item.id)))
+                            : _items!.where((item) => !pendingIds.contains(item.id)))
                         .where((item) => !_isGoneHere(item.id))
                         .toList();
                     if (visibleItems.isEmpty && pendingCount == 0) {
@@ -1257,9 +1110,15 @@ class _ChatRow extends StatelessWidget {
     this.isSelected = false,
     this.onTap,
     this.onLongPress,
+    this.waiting = false,
+    this.onCancelSend,
   });
 
   final bool isMine;
+  /// Waiting for a connection to be sent: a clock next to the time.
+  final bool waiting;
+  /// "Nicht senden" in its menu (three dots), while it waits.
+  final VoidCallback? onCancelSend;
   final Widget photo;
   // Any channel, however many members it has right now, can grow (an
   // owner can invite more people at any time) -- so a received photo
@@ -1369,7 +1228,31 @@ class _ChatRow extends StatelessWidget {
                   color: Colors.black.withValues(alpha: 0.55),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(_formatTime(time!), style: const TextStyle(color: Colors.white, fontSize: 11)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (waiting) ...[
+                      const Icon(SmileIcons.waiting, color: Colors.white, size: 12),
+                      const SizedBox(width: 3),
+                    ],
+                    Text(_formatTime(time!), style: const TextStyle(color: Colors.white, fontSize: 11)),
+                  ],
+                ),
+              ),
+            ),
+          if (onCancelSend != null)
+            Positioned(
+              top: 2,
+              right: 2,
+              child: PopupMenuButton<void>(
+                icon: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), shape: BoxShape.circle),
+                  child: const Icon(SmileIcons.more, color: Colors.white, size: 18),
+                ),
+                itemBuilder: (context) => [
+                  PopupMenuItem<void>(onTap: onCancelSend, child: Text(SmileTexts.of(context).dontSend)),
+                ],
               ),
             ),
         ],

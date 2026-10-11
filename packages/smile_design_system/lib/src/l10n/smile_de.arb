@@ -645,5 +645,6 @@
       "total": {"type": "int"}
     }
   },
-  "ok": "OK"
+  "ok": "OK",
+  "dontSend": "Nicht senden"
 }
