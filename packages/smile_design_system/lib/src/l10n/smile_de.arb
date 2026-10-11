@@ -74,7 +74,7 @@
   "actionConfirm": "OK",
   "firstStepsWelcome": "Willkommen bei Smile",
   "firstStepsInvited": "Ich wurde eingeladen",
-  "firstStepsInvitedHint": "Deine Einladung findest du unter Neuigkeiten",
+  "firstStepsInvitedHint": "QR-Code scannen oder Code eintippen",
   "firstStepsSetup": "Ich richte Smile ein",
   "firstStepsSetupHint": "Space für dein Zuhause oder deinen Betrieb anlegen",
   "firstStepsQuestion": "Hier erscheinen deine Alben. Wie möchtest du anfangen?",
@@ -673,5 +673,84 @@
   "deleteForEveryoneHint": "Bei allen und auf allen Frames, endgültig",
   "deleteForMe": "Für mich löschen",
   "deleteForMeHint": "Nur bei dir weg, unter „Ausgeblendet“ zurückholbar",
-  "deleteOnlyOwn": "Für alle löschen kannst du nur deine eigenen Fotos."
+  "deleteOnlyOwn": "Für alle löschen kannst du nur deine eigenen Fotos.",
+  "inviteToNamed": "In „{name}“ einladen",
+  "@inviteToNamed": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "coAdminFor": "Co-Admin für „{name}“",
+  "@coAdminFor": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "searchName": "Name suchen",
+  "noKnownPeople": "Noch niemand, den du in Smile kennst. Lade per QR-Code oder Link ein.",
+  "showQrCode": "QR-Code zeigen",
+  "shareInviteLink": "Einladungslink teilen",
+  "inviteByEmail": "Per E-Mail einladen",
+  "inviteSentTo": "Einladung an {name} gesendet",
+  "@inviteSentTo": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "managesASpace": "Verwaltet einen Space",
+  "qrScanHint": "Mit der Smile-App scannen: Neuigkeiten → Code scannen. Oder den Code eintippen.",
+  "qrScanHintCoAdmin": "Mit der Smile-App scannen: Neuigkeiten → Code scannen. Co-Admin wird man nur per QR-Code vor Ort.",
+  "qrValid": "Gilt 24 Stunden.",
+  "newCode": "Neuen Code erstellen",
+  "inviteMessageMember": "Komm in mein Smile-Album „{album}“! Smile öffnen → Neuigkeiten → Code scannen → Code eintippen: {code}",
+  "@inviteMessageMember": {
+    "placeholders": {
+      "album": {"type": "String"},
+      "code": {"type": "String"}
+    }
+  },
+  "inviteMessageShare": "Ich möchte mein Smile-Album „{album}“ mit deinem Space teilen. Smile öffnen → Neuigkeiten → Code scannen → Code eintippen: {code}",
+  "@inviteMessageShare": {
+    "placeholders": {
+      "album": {"type": "String"},
+      "code": {"type": "String"}
+    }
+  },
+  "scanCode": "Code scannen",
+  "scanHint": "QR-Code in den Rahmen halten",
+  "typeCode": "Code eintippen",
+  "codeFieldHint": "z. B. K7P-2QX",
+  "redeemJoinedAlbum": "Du bist jetzt im Album „{name}“.",
+  "@redeemJoinedAlbum": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "redeemJoinedShare": "„{album}“ ist jetzt in deinem Space „{space}“ zu sehen.",
+  "@redeemJoinedShare": {
+    "placeholders": {
+      "album": {"type": "String"},
+      "space": {"type": "String"}
+    }
+  },
+  "redeemJoinedCoAdmin": "Du bist jetzt Co-Admin von „{space}“.",
+  "@redeemJoinedCoAdmin": {
+    "placeholders": {
+      "space": {"type": "String"}
+    }
+  },
+  "redeemRequestedTitle": "Anfrage gesendet",
+  "redeemRequested": "Die Admins von „{name}“ entscheiden. Du bekommst Bescheid.",
+  "@redeemRequested": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "redeemAlready": "Du bist schon dabei.",
+  "redeemPickSpace": "Mit welchem Space teilen?",
+  "codeInvalid": "Dieser Code ist ungültig.",
+  "codeExpired": "Der Code ist abgelaufen. Lass dir einen neuen zeigen.",
+  "codeQrOnly": "Co-Admin wirst du nur, indem du den QR-Code vor Ort scannst.",
+  "codeNoSpace": "Du verwaltest keinen Space, mit dem du das Album teilen kannst.",
+  "cameraUnavailable": "Die Kamera ist nicht verfügbar. Du kannst den Code eintippen."
 }

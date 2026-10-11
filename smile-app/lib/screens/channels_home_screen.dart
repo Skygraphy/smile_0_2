@@ -11,7 +11,7 @@ import '../widgets/album_covers.dart';
 import '../widgets/top_bar_actions.dart';
 import '../services/offline.dart';
 import 'channel_feed_screen.dart';
-import 'news_screen.dart';
+import 'scan_code_screen.dart';
 import 'space_info_screen.dart';
 
 /// The app's new landing screen. WhatsApp's chat list shows conversations
@@ -73,10 +73,12 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
 
   /// "Ich wurde eingeladen": invitations arrive by email address and wait
   /// in Neuigkeiten -- there is no invite code to type in.
-  Future<void> _openNews() async {
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => NewsScreen()));
+  /// "Ich wurde eingeladen": scan the QR code or type the code (2026-10-11).
+  Future<void> _scanCode() async {
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ScanCodeScreen()));
     await _load();
   }
+
 
   /// "Ich richte Smile ein": name a Space, then land on its info page,
   /// whose empty sections offer the next steps (album, Frame).
@@ -142,7 +144,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
     return channels == null
           ? const Center(child: CircularProgressIndicator())
           : channels.isEmpty
-              ? _FirstSteps(errorMessage: _errorMessage, onInvited: _openNews, onSetUp: _setUpSpace)
+              ? _FirstSteps(errorMessage: _errorMessage, onInvited: _scanCode, onSetUp: _setUpSpace)
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView(

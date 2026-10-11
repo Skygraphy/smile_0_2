@@ -17,7 +17,9 @@ const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 interface RequestBody {
   channel_id: string;
-  email: string;
+  email?: string;
+  // By name (2026-10-11): a person from known_people() instead of an email.
+  user_id?: string;
 }
 
 Deno.serve(async (req) => {
@@ -40,7 +42,7 @@ Deno.serve(async (req) => {
   } catch {
     return jsonResponse({ error: "invalid_json" }, 400);
   }
-  if (!body.channel_id || !body.email) return jsonResponse({ error: "channel_id_and_email_required" }, 400);
+  if (!body.channel_id || (!body.email && !body.user_id)) return jsonResponse({ error: "channel_id_and_email_required" }, 400);
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
@@ -53,7 +55,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "not_channel_sco" }, 403);
   }
 
-  const inviteeId = await findUserIdByEmail(supabaseAdmin, body.email);
+  const inviteeId = body.user_id ?? (await findUserIdByEmail(supabaseAdmin, body.email!));
   if (!inviteeId) return jsonResponse({ error: "user_not_found" }, 404);
 
   const { data: existingMembership } = await supabaseAdmin

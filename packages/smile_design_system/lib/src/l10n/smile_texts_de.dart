@@ -158,8 +158,7 @@ class SmileTextsDe extends SmileTexts {
   String get firstStepsInvited => 'Ich wurde eingeladen';
 
   @override
-  String get firstStepsInvitedHint =>
-      'Deine Einladung findest du unter Neuigkeiten';
+  String get firstStepsInvitedHint => 'QR-Code scannen oder Code eintippen';
 
   @override
   String get firstStepsSetup => 'Ich richte Smile ein';
@@ -1026,4 +1025,122 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get deleteOnlyOwn =>
       'Für alle löschen kannst du nur deine eigenen Fotos.';
+
+  @override
+  String inviteToNamed(String name) {
+    return 'In „$name“ einladen';
+  }
+
+  @override
+  String coAdminFor(String name) {
+    return 'Co-Admin für „$name“';
+  }
+
+  @override
+  String get searchName => 'Name suchen';
+
+  @override
+  String get noKnownPeople =>
+      'Noch niemand, den du in Smile kennst. Lade per QR-Code oder Link ein.';
+
+  @override
+  String get showQrCode => 'QR-Code zeigen';
+
+  @override
+  String get shareInviteLink => 'Einladungslink teilen';
+
+  @override
+  String get inviteByEmail => 'Per E-Mail einladen';
+
+  @override
+  String inviteSentTo(String name) {
+    return 'Einladung an $name gesendet';
+  }
+
+  @override
+  String get managesASpace => 'Verwaltet einen Space';
+
+  @override
+  String get qrScanHint =>
+      'Mit der Smile-App scannen: Neuigkeiten → Code scannen. Oder den Code eintippen.';
+
+  @override
+  String get qrScanHintCoAdmin =>
+      'Mit der Smile-App scannen: Neuigkeiten → Code scannen. Co-Admin wird man nur per QR-Code vor Ort.';
+
+  @override
+  String get qrValid => 'Gilt 24 Stunden.';
+
+  @override
+  String get newCode => 'Neuen Code erstellen';
+
+  @override
+  String inviteMessageMember(String album, String code) {
+    return 'Komm in mein Smile-Album „$album“! Smile öffnen → Neuigkeiten → Code scannen → Code eintippen: $code';
+  }
+
+  @override
+  String inviteMessageShare(String album, String code) {
+    return 'Ich möchte mein Smile-Album „$album“ mit deinem Space teilen. Smile öffnen → Neuigkeiten → Code scannen → Code eintippen: $code';
+  }
+
+  @override
+  String get scanCode => 'Code scannen';
+
+  @override
+  String get scanHint => 'QR-Code in den Rahmen halten';
+
+  @override
+  String get typeCode => 'Code eintippen';
+
+  @override
+  String get codeFieldHint => 'z. B. K7P-2QX';
+
+  @override
+  String redeemJoinedAlbum(String name) {
+    return 'Du bist jetzt im Album „$name“.';
+  }
+
+  @override
+  String redeemJoinedShare(String album, String space) {
+    return '„$album“ ist jetzt in deinem Space „$space“ zu sehen.';
+  }
+
+  @override
+  String redeemJoinedCoAdmin(String space) {
+    return 'Du bist jetzt Co-Admin von „$space“.';
+  }
+
+  @override
+  String get redeemRequestedTitle => 'Anfrage gesendet';
+
+  @override
+  String redeemRequested(String name) {
+    return 'Die Admins von „$name“ entscheiden. Du bekommst Bescheid.';
+  }
+
+  @override
+  String get redeemAlready => 'Du bist schon dabei.';
+
+  @override
+  String get redeemPickSpace => 'Mit welchem Space teilen?';
+
+  @override
+  String get codeInvalid => 'Dieser Code ist ungültig.';
+
+  @override
+  String get codeExpired =>
+      'Der Code ist abgelaufen. Lass dir einen neuen zeigen.';
+
+  @override
+  String get codeQrOnly =>
+      'Co-Admin wirst du nur, indem du den QR-Code vor Ort scannst.';
+
+  @override
+  String get codeNoSpace =>
+      'Du verwaltest keinen Space, mit dem du das Album teilen kannst.';
+
+  @override
+  String get cameraUnavailable =>
+      'Die Kamera ist nicht verfügbar. Du kannst den Code eintippen.';
 }

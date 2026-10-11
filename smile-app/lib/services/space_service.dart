@@ -164,10 +164,12 @@ class SpaceService {
   /// app creates (channel membership, channel sharing), unlike this
   /// method's short-lived predecessor (addCoOwner), which granted co-owner
   /// status directly with no say from the recipient.
-  Future<void> inviteCoOwner({required String spaceId, required String email}) async {
+  /// By email, or by name ([userId] from known_people, 2026-10-11).
+  Future<void> inviteCoOwner({required String spaceId, String? email, String? userId}) async {
     final response = await invokeEdge('invite-space-co-owner', body: {
       'space_id': spaceId,
-      'email': email,
+      'email': ?email,
+      'user_id': ?userId,
     });
     final data = response.data as Map<String, dynamic>?;
     final status = data?['status'] as String?;

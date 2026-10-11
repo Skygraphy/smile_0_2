@@ -192,11 +192,13 @@ class MembershipService {
     LocalChanges.saved(tablesChanged({'channel_members'}, channelIds: {channelId}));
   }
 
-  /// SCO invites a known person (by email) to become a posting member.
-  Future<void> inviteMember({required String channelId, required String email}) async {
+  /// SCO invites a person to become a posting member -- by email, or by
+  /// name ([userId] of someone from known_people, 2026-10-11).
+  Future<void> inviteMember({required String channelId, String? email, String? userId}) async {
     final response = await invokeEdge('invite-channel-member', body: {
       'channel_id': channelId,
-      'email': email,
+      'email': ?email,
+      'user_id': ?userId,
     });
     final data = response.data as Map<String, dynamic>?;
     final status = data?['status'] as String?;
@@ -209,10 +211,11 @@ class MembershipService {
   /// SCO invites a known person (by email) to view-share this channel with
   /// one of their own Spaces (which one is chosen by the invitee at
   /// accept time).
-  Future<void> inviteShare({required String channelId, required String email}) async {
+  Future<void> inviteShare({required String channelId, String? email, String? userId}) async {
     final response = await invokeEdge('invite-channel-share', body: {
       'channel_id': channelId,
-      'email': email,
+      'email': ?email,
+      'user_id': ?userId,
     });
     final data = response.data as Map<String, dynamic>?;
     if (data?['status'] != 'invited') {

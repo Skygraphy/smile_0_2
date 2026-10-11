@@ -12,6 +12,9 @@ import '../services/membership_service.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/email_dialog.dart';
+import '../widgets/invite_sheet.dart';
+import '../services/invite_service.dart';
+import 'invite_code_screen.dart';
 import '../widgets/album_covers.dart';
 import '../widgets/local_display.dart';
 import '../services/local_changes.dart';
@@ -151,7 +154,51 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     await _load();
   }
 
+  /// By name or by QR code in person (decided 2026-10-11) -- deliberately
+  /// no code to send: a forwarded message must never make anyone Co-Admin.
   Future<void> _inviteCoAdmin() async {
+    final t = SmileTexts.of(context);
+    final admins = _admins;
+    final already = {
+      if (admins != null) admins.founderUserId,
+      for (final c in admins?.coOwners ?? const <SpaceCoOwner>[]) c.userId,
+    };
+    await showInviteSheet(
+      context,
+      title: t.coAdminFor(_shownName),
+      people: InviteService().knownPeople().then((all) => all.where((p) => !already.contains(p.userId)).toList()),
+      onPerson: (person) => _invitePerson(
+        person,
+        () => widget.spaceService.inviteCoOwner(spaceId: widget.spaceId, userId: person.userId),
+      ),
+      onShowQr: () => _showCode(InviteKind.spaceCoOwner, t.coAdminFor(_shownName), t.qrScanHintCoAdmin),
+      onEmail: _inviteCoAdminByEmail,
+    );
+  }
+
+  /// "QR-Code zeigen": in person, in at once.
+  Future<void> _showCode(InviteKind kind, String title, String hint) => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => InviteCodeScreen(kind: kind, targetId: widget.spaceId, title: title, hint: hint),
+        ),
+      );
+
+
+  /// By name: the invite goes out, a short note says so.
+  Future<void> _invitePerson(KnownPerson person, Future<void> Function() invite) async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await invite();
+      messenger.showSnackBar(SnackBar(content: Text(t.inviteSentTo(person.name))));
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _errorMessage = e is ChannelRequestException ? e.message : t.actionFailed(errorReasonIn(t, e)));
+    }
+  }
+
+  Future<void> _inviteCoAdminByEmail() async {
     final t = SmileTexts.of(context);
     final email = await showDialog<String>(
       context: context,

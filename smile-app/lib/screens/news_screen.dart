@@ -10,6 +10,7 @@ import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../services/trash_service.dart';
 import '../services/channel_picker_service.dart';
+import 'scan_code_screen.dart';
 import '../widgets/album_covers.dart';
 
 /// "Neuigkeiten" (navigation decision A, 2026-10-05): everything waiting
@@ -160,6 +161,17 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
       appBar: AppBar(
         leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).maybePop()),
         title: Text(t.news),
+        actions: [
+          // Joining by an invite's QR code or typed code (2026-10-11).
+          IconButton(
+            icon: const Icon(SmileIcons.scan),
+            tooltip: t.scanCode,
+            onPressed: () async {
+              await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ScanCodeScreen()));
+              await _load();
+            },
+          ),
+        ],
       ),
       body: inbox == null
           ? Center(child: _errorMessage != null ? Text(_errorMessage!) : const CircularProgressIndicator())

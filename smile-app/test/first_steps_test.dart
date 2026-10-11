@@ -37,7 +37,7 @@ void main() {
 
     expect(find.text('Willkommen bei Smile'), findsOneWidget);
     expect(find.text('Ich wurde eingeladen'), findsOneWidget);
-    expect(find.text('Deine Einladung findest du unter Neuigkeiten'), findsOneWidget);
+    expect(find.text('QR-Code scannen oder Code eintippen'), findsOneWidget);
     expect(find.text('Ich richte Smile ein'), findsOneWidget);
   });
 }

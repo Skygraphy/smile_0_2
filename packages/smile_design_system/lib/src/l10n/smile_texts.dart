@@ -325,7 +325,7 @@ abstract class SmileTexts {
   /// No description provided for @firstStepsInvitedHint.
   ///
   /// In de, this message translates to:
-  /// **'Deine Einladung findest du unter Neuigkeiten'**
+  /// **'QR-Code scannen oder Code eintippen'**
   String get firstStepsInvitedHint;
 
   /// No description provided for @firstStepsSetup.
@@ -1737,6 +1737,192 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Für alle löschen kannst du nur deine eigenen Fotos.'**
   String get deleteOnlyOwn;
+
+  /// No description provided for @inviteToNamed.
+  ///
+  /// In de, this message translates to:
+  /// **'In „{name}“ einladen'**
+  String inviteToNamed(String name);
+
+  /// No description provided for @coAdminFor.
+  ///
+  /// In de, this message translates to:
+  /// **'Co-Admin für „{name}“'**
+  String coAdminFor(String name);
+
+  /// No description provided for @searchName.
+  ///
+  /// In de, this message translates to:
+  /// **'Name suchen'**
+  String get searchName;
+
+  /// No description provided for @noKnownPeople.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch niemand, den du in Smile kennst. Lade per QR-Code oder Link ein.'**
+  String get noKnownPeople;
+
+  /// No description provided for @showQrCode.
+  ///
+  /// In de, this message translates to:
+  /// **'QR-Code zeigen'**
+  String get showQrCode;
+
+  /// No description provided for @shareInviteLink.
+  ///
+  /// In de, this message translates to:
+  /// **'Einladungslink teilen'**
+  String get shareInviteLink;
+
+  /// No description provided for @inviteByEmail.
+  ///
+  /// In de, this message translates to:
+  /// **'Per E-Mail einladen'**
+  String get inviteByEmail;
+
+  /// No description provided for @inviteSentTo.
+  ///
+  /// In de, this message translates to:
+  /// **'Einladung an {name} gesendet'**
+  String inviteSentTo(String name);
+
+  /// No description provided for @managesASpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Verwaltet einen Space'**
+  String get managesASpace;
+
+  /// No description provided for @qrScanHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit der Smile-App scannen: Neuigkeiten → Code scannen. Oder den Code eintippen.'**
+  String get qrScanHint;
+
+  /// No description provided for @qrScanHintCoAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit der Smile-App scannen: Neuigkeiten → Code scannen. Co-Admin wird man nur per QR-Code vor Ort.'**
+  String get qrScanHintCoAdmin;
+
+  /// No description provided for @qrValid.
+  ///
+  /// In de, this message translates to:
+  /// **'Gilt 24 Stunden.'**
+  String get qrValid;
+
+  /// No description provided for @newCode.
+  ///
+  /// In de, this message translates to:
+  /// **'Neuen Code erstellen'**
+  String get newCode;
+
+  /// No description provided for @inviteMessageMember.
+  ///
+  /// In de, this message translates to:
+  /// **'Komm in mein Smile-Album „{album}“! Smile öffnen → Neuigkeiten → Code scannen → Code eintippen: {code}'**
+  String inviteMessageMember(String album, String code);
+
+  /// No description provided for @inviteMessageShare.
+  ///
+  /// In de, this message translates to:
+  /// **'Ich möchte mein Smile-Album „{album}“ mit deinem Space teilen. Smile öffnen → Neuigkeiten → Code scannen → Code eintippen: {code}'**
+  String inviteMessageShare(String album, String code);
+
+  /// No description provided for @scanCode.
+  ///
+  /// In de, this message translates to:
+  /// **'Code scannen'**
+  String get scanCode;
+
+  /// No description provided for @scanHint.
+  ///
+  /// In de, this message translates to:
+  /// **'QR-Code in den Rahmen halten'**
+  String get scanHint;
+
+  /// No description provided for @typeCode.
+  ///
+  /// In de, this message translates to:
+  /// **'Code eintippen'**
+  String get typeCode;
+
+  /// No description provided for @codeFieldHint.
+  ///
+  /// In de, this message translates to:
+  /// **'z. B. K7P-2QX'**
+  String get codeFieldHint;
+
+  /// No description provided for @redeemJoinedAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Du bist jetzt im Album „{name}“.'**
+  String redeemJoinedAlbum(String name);
+
+  /// No description provided for @redeemJoinedShare.
+  ///
+  /// In de, this message translates to:
+  /// **'„{album}“ ist jetzt in deinem Space „{space}“ zu sehen.'**
+  String redeemJoinedShare(String album, String space);
+
+  /// No description provided for @redeemJoinedCoAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Du bist jetzt Co-Admin von „{space}“.'**
+  String redeemJoinedCoAdmin(String space);
+
+  /// No description provided for @redeemRequestedTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfrage gesendet'**
+  String get redeemRequestedTitle;
+
+  /// No description provided for @redeemRequested.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Admins von „{name}“ entscheiden. Du bekommst Bescheid.'**
+  String redeemRequested(String name);
+
+  /// No description provided for @redeemAlready.
+  ///
+  /// In de, this message translates to:
+  /// **'Du bist schon dabei.'**
+  String get redeemAlready;
+
+  /// No description provided for @redeemPickSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit welchem Space teilen?'**
+  String get redeemPickSpace;
+
+  /// No description provided for @codeInvalid.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieser Code ist ungültig.'**
+  String get codeInvalid;
+
+  /// No description provided for @codeExpired.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Code ist abgelaufen. Lass dir einen neuen zeigen.'**
+  String get codeExpired;
+
+  /// No description provided for @codeQrOnly.
+  ///
+  /// In de, this message translates to:
+  /// **'Co-Admin wirst du nur, indem du den QR-Code vor Ort scannst.'**
+  String get codeQrOnly;
+
+  /// No description provided for @codeNoSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Du verwaltest keinen Space, mit dem du das Album teilen kannst.'**
+  String get codeNoSpace;
+
+  /// No description provided for @cameraUnavailable.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Kamera ist nicht verfügbar. Du kannst den Code eintippen.'**
+  String get cameraUnavailable;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {
