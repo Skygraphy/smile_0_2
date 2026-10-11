@@ -343,7 +343,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
     final Widget body;
     if (_entries.isEmpty || _cacheDirPath == null) {
-      body = SmileEmptyState(icon: SmileIcons.album, title: t.frameNoPhotos);
+      // Which album is empty, and where to change it (2026-10-12).
+      body = _channelName == null
+          ? SmileEmptyState(icon: SmileIcons.album, title: t.frameNoPhotos)
+          : SmileEmptyState(icon: SmileIcons.album, title: t.frameAlbumEmpty(_channelName!), message: t.frameAlbumEmptyHint);
     } else if (_showGrid) {
       body = _buildGrid();
     } else {

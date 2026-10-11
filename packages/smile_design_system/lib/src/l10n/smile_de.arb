@@ -524,7 +524,7 @@
   "profileSetupQuestion": "Wie sollen wir dich nennen?",
   "next": "Weiter",
   "framePairTitle": "Frame verbinden",
-  "framePairHint": "Gib den Code ein, den die Smile-App beim Verbinden dieses Frames anzeigt.",
+  "framePairHint": "Halte den QR-Code aus der Smile-App vor die Kamera – oder tippe den Code ein, der darunter steht.",
   "framePairButton": "Verbinden",
   "framePairInvalid": "Dieser Code ist ungültig.",
   "framePairExpired": "Der Code ist abgelaufen. Lass dir in der Smile-App einen neuen anzeigen.",
@@ -826,5 +826,12 @@
   "connectOtherDevice": "Anderes Gerät verbinden",
   "reconnectHint": "Auf dem neuen Gerät: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.",
   "done": "Fertig",
-  "playSlideshow": "Diashow"
+  "playSlideshow": "Diashow",
+  "frameAlbumEmpty": "In „{album}“ sind noch keine Fotos.",
+  "@frameAlbumEmpty": {
+    "placeholders": {
+      "album": {"type": "String"}
+    }
+  },
+  "frameAlbumEmptyHint": "Ein anderes Album wählst du in der Smile-App unter Frames – oder hier unten rechts."
 }

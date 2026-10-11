@@ -1369,7 +1369,7 @@ abstract class SmileTexts {
   /// No description provided for @framePairHint.
   ///
   /// In de, this message translates to:
-  /// **'Gib den Code ein, den die Smile-App beim Verbinden dieses Frames anzeigt.'**
+  /// **'Halte den QR-Code aus der Smile-App vor die Kamera – oder tippe den Code ein, der darunter steht.'**
   String get framePairHint;
 
   /// No description provided for @framePairButton.
@@ -2187,6 +2187,18 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Diashow'**
   String get playSlideshow;
+
+  /// No description provided for @frameAlbumEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'In „{album}“ sind noch keine Fotos.'**
+  String frameAlbumEmpty(String album);
+
+  /// No description provided for @frameAlbumEmptyHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein anderes Album wählst du in der Smile-App unter Frames – oder hier unten rechts.'**
+  String get frameAlbumEmptyHint;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

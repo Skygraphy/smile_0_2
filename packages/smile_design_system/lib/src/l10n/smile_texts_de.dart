@@ -787,7 +787,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get framePairHint =>
-      'Gib den Code ein, den die Smile-App beim Verbinden dieses Frames anzeigt.';
+      'Halte den QR-Code aus der Smile-App vor die Kamera – oder tippe den Code ein, der darunter steht.';
 
   @override
   String get framePairButton => 'Verbinden';
@@ -1302,4 +1302,13 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get playSlideshow => 'Diashow';
+
+  @override
+  String frameAlbumEmpty(String album) {
+    return 'In „$album“ sind noch keine Fotos.';
+  }
+
+  @override
+  String get frameAlbumEmptyHint =>
+      'Ein anderes Album wählst du in der Smile-App unter Frames – oder hier unten rechts.';
 }
