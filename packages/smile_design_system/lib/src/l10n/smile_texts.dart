@@ -1677,6 +1677,66 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Nicht senden'**
   String get dontSend;
+
+  /// No description provided for @allSelected.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle {count} ausgewählt'**
+  String allSelected(int count);
+
+  /// No description provided for @selectAll.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle'**
+  String get selectAll;
+
+  /// No description provided for @selectNone.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine'**
+  String get selectNone;
+
+  /// No description provided for @coverShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Titelbild'**
+  String get coverShort;
+
+  /// No description provided for @deletePhotosTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{Foto löschen?} other{{count} Fotos löschen?}}'**
+  String deletePhotosTitle(int count);
+
+  /// No description provided for @deleteForEveryone.
+  ///
+  /// In de, this message translates to:
+  /// **'Für alle löschen'**
+  String get deleteForEveryone;
+
+  /// No description provided for @deleteForEveryoneHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Bei allen und auf allen Frames, endgültig'**
+  String get deleteForEveryoneHint;
+
+  /// No description provided for @deleteForMe.
+  ///
+  /// In de, this message translates to:
+  /// **'Für mich löschen'**
+  String get deleteForMe;
+
+  /// No description provided for @deleteForMeHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Nur bei dir weg, unter „Ausgeblendet“ zurückholbar'**
+  String get deleteForMeHint;
+
+  /// No description provided for @deleteOnlyOwn.
+  ///
+  /// In de, this message translates to:
+  /// **'Für alle löschen kannst du nur deine eigenen Fotos.'**
+  String get deleteOnlyOwn;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

@@ -647,5 +647,31 @@
     }
   },
   "ok": "OK",
-  "dontSend": "Nicht senden"
+  "dontSend": "Nicht senden",
+  "selectedCount": "{count} ausgewählt",
+  "@selectedCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "allSelected": "Alle {count} ausgewählt",
+  "@allSelected": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "selectAll": "Alle",
+  "selectNone": "Keine",
+  "coverShort": "Titelbild",
+  "deletePhotosTitle": "{count, plural, =1{Foto löschen?} other{{count} Fotos löschen?}}",
+  "@deletePhotosTitle": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "deleteForEveryone": "Für alle löschen",
+  "deleteForEveryoneHint": "Bei allen und auf allen Frames, endgültig",
+  "deleteForMe": "Für mich löschen",
+  "deleteForMeHint": "Nur bei dir weg, unter „Ausgeblendet“ zurückholbar",
+  "deleteOnlyOwn": "Für alle löschen kannst du nur deine eigenen Fotos."
 }

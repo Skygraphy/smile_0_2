@@ -234,18 +234,21 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       final box = entry.value.currentContext?.findRenderObject() as RenderBox?;
       if (box == null || !box.attached) continue;
       final dy = box.localToGlobal(Offset.zero).dy - stackTop;
+      // Its pill is still visible until the whole box has passed the top
+      // (2026-10-11: counting only its top edge put both on screen).
+      final bottom = dy + box.size.height;
       final date = DateTime.parse(entry.key);
       // Already scrolled to/past the top -- among those, the one closest
       // to it (largest dy that's still <= the small threshold) is the
       // section currently pinned.
-      if (dy <= 4 && dy > passedBestDy) {
+      if (bottom <= 4 && dy > passedBestDy) {
         passedBestDy = dy;
         passedCandidate = date;
       }
       // A separator that hasn't fully passed yet but is already within
       // the floating pill's own footprint would sit right where the
       // float renders -- showing both would visually collide.
-      if (dy > 4 && dy <= _stickyOverlayFootprintPx) anotherSeparatorCrowdsTheTop = true;
+      if (bottom > 4 && dy <= _stickyOverlayFootprintPx) anotherSeparatorCrowdsTheTop = true;
     }
 
     final next = anotherSeparatorCrowdsTheTop ? null : passedCandidate;
@@ -478,9 +481,21 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     setState(() {
       if (!_selectedIds.remove(id)) _selectedIds.add(id);
     });
+    _remeasureStickyDate();
   }
 
-  void _clearSelection() => setState(_selectedIds.clear);
+  void _clearSelection() {
+    setState(_selectedIds.clear);
+    _remeasureStickyDate();
+  }
+
+  /// The selection bar changes the list's height: the floating date has to
+  /// be measured again, or it sits on top of the inline one.
+  void _remeasureStickyDate() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _updateStickyDate();
+    });
+  }
 
   bool get _canSetCover {
     if (_showingHidden || _selectedIds.length != 1 || !(_myStatus?.isSco ?? false)) return false;
@@ -506,45 +521,93 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     if (saved) messenger.showSnackBar(SnackBar(content: Text(t.coverSet(_shownName))));
   }
 
-  /// Destructive and permanent: gone from the DB, every storage bucket,
-  /// every other member's feed, and every Smile-Frame the moment it's
-  /// confirmed (see supabase/functions/delete-media). No undo, no
-  /// placeholder -- just a plain yes/no confirmation. A denied id (someone
-  /// else's photo without admin/staff rights) doesn't block the rest of
-  /// the batch.
-  Future<void> _confirmAndDeleteSelection() async {
-    // delete-media/index.ts only ever allows the sender, the channel's SCO,
-    // or staff to actually delete a given photo -- checking that client-
-    // side too means a non-SCO who selects someone else's photo never even
-    // sees a confirmation dialog for a delete that was always going to be
-    // denied. Staff isn't checked here (no cheap client-side signal for
-    // it), so a staff member deleting someone else's photo still goes
-    // through the server-side deniedIds path below, same as before.
+  /// Every photo/video of this view -- not the ones still on their way.
+  List<String> get _selectableIds {
+    final queued = _showingHidden ? const <String?>{} : _pendingUploads.map((p) => p.mediaItemId).toSet();
+    return (_items ?? const <MediaItem>[])
+        .where((i) => !_isGoneHere(i.id) && !queued.contains(i.id))
+        .map((i) => i.id)
+        .toList();
+  }
+
+  bool get _allSelected {
+    final all = _selectableIds;
+    return all.isNotEmpty && all.every(_selectedIds.contains);
+  }
+
+  /// "Alle" / "Keine" (decided 2026-10-11).
+  void _toggleSelectAll() {
+    setState(() {
+      if (_allSelected) {
+        _selectedIds.clear();
+      } else {
+        _selectedIds.addAll(_selectableIds);
+      }
+    });
+    _remeasureStickyDate();
+  }
+
+  /// Like WhatsApp (decided 2026-10-11): "Für alle löschen" -- gone for
+  /// everyone and from every Frame, permanently (delete-media) -- only
+  /// when the caller may for every selected one (own photos, or the
+  /// album's admin; the server checks too). "Für mich löschen" is the
+  /// personal, reversible hide ("Ausgeblendet").
+  Future<void> _deleteSelection() async {
+    final t = SmileTexts.of(context);
     final myUserId = supabase.auth.currentUser?.id;
     final isSco = _myStatus?.isSco ?? false;
-    final deletableIds = _selectedIds.where((id) {
-      if (isSco) return true;
-      final item = _items!.firstWhere((i) => i.id == id);
-      return item.senderId == myUserId;
-    }).toList();
-
-    if (deletableIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Du darfst nur eigene Fotos löschen.')),
-      );
+    final ids = _selectedIds.toList();
+    final forEveryone =
+        isSco || ids.every((id) => (_items ?? const <MediaItem>[]).any((i) => i.id == id && i.senderId == myUserId));
+    final forMe = !_showingHidden;
+    if (!forEveryone && !forMe) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.deleteOnlyOwn)));
       return;
     }
-
-    final confirmed = await showSmileConfirmDialog(
-      context,
-      title: '${deletableIds.length} Foto(s) endgültig löschen?',
-      message: 'Sie verschwinden für alle Personen im Album und auf allen Frames.',
-      confirmLabel: SmileTexts.of(context).actionDelete,
-      destructive: true,
+    final scheme = Theme.of(context).colorScheme;
+    Widget option(String label, String? hint, bool value) => Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () => Navigator.of(context).pop(value),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(label),
+                if (hint != null)
+                  Text(hint, style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant, fontWeight: FontWeight.w400)),
+              ],
+            ),
+          ),
+        );
+    // true = for everyone, false = for me.
+    final everyone = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.deletePhotosTitle(ids.length)),
+        contentPadding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (forEveryone) option(t.deleteForEveryone, t.deleteForEveryoneHint, true),
+            if (forMe) option(t.deleteForMe, t.deleteForMeHint, false),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.actionCancel)),
+            ),
+          ],
+        ),
+      ),
     );
-    if (!confirmed) return;
+    if (everyone == null || !mounted) return;
+    if (everyone) {
+      await _deleteForEveryone(ids);
+    } else {
+      await _applyHideToggleToSelection();
+    }
+  }
 
-    final ids = deletableIds;
+  Future<void> _deleteForEveryone(List<String> ids) async {
     _clearSelection();
     // One after the other, each photo disappears with its own short tick,
     // like WhatsApp (2026-10-10).
@@ -569,6 +632,46 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       _errorMessage = denied.isEmpty ? null : '${denied.length} Foto(s) konnten nicht gelöscht werden (nicht eigenes Foto).';
     });
     await _load();
+  }
+
+  /// The actions for the marked photos, each with its name, at the bottom
+  /// (decided 2026-10-11) -- room at the top for "3 ausgewählt".
+  Widget _selectionBar(SmileTexts t) {
+    final scheme = Theme.of(context).colorScheme;
+    Widget action(IconData icon, String label, VoidCallback onTap, {bool danger = false}) {
+      final color = danger ? scheme.primary : scheme.onSurface;
+      return Expanded(
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: color),
+                const SizedBox(height: 4),
+                Text(label, style: TextStyle(fontSize: 12, color: color)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Material(
+      color: scheme.surfaceContainer,
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            action(SmileIcons.selectAll, _allSelected ? t.selectNone : t.selectAll, _toggleSelectAll),
+            if (_showingHidden) action(SmileIcons.unhide, t.actionUnhide, _applyHideToggleToSelection),
+            if (_canSetCover) action(SmileIcons.picture, t.coverShort, _setSelectedAsCover),
+            action(SmileIcons.delete, t.actionDelete, _deleteSelection, danger: true),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Which list a just-removed photo disappears from (normal or hidden).
@@ -770,30 +873,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       appBar: _selectionMode
           ? AppBar(
               leading: IconButton(icon: const Icon(SmileIcons.close), onPressed: _clearSelection),
-              // Just the number, like WhatsApp -- "1 ausgewählt" got cut off.
-              title: Text('${_selectedIds.length}'),
-              actions: [
-                IconButton(
-                  icon: Icon(_showingHidden ? SmileIcons.unhide : SmileIcons.hide),
-                  tooltip: _showingHidden ? t.actionUnhide : t.actionHide,
-                  onPressed: _applyHideToggleToSelection,
-                ),
-                IconButton(
-                  icon: const Icon(SmileIcons.delete),
-                  tooltip: t.actionDelete,
-                  onPressed: _confirmAndDeleteSelection,
-                ),
-                // Rarer actions behind three dots (2026-10-09). "Als
-                // Titelbild": exactly one ready photo, and only for the
-                // album's managers (RLS checks it as well).
-                if (_canSetCover)
-                  PopupMenuButton<void>(
-                    icon: const Icon(SmileIcons.more),
-                    itemBuilder: (_) => [
-                      PopupMenuItem<void>(onTap: _setSelectedAsCover, child: Text(t.setAsCover)),
-                    ],
-                  ),
-              ],
+              // In words (2026-10-11) -- the actions are in the bar below.
+              title: Text(_allSelected ? t.allSelected(_selectedIds.length) : t.selectedCount(_selectedIds.length)),
             )
           : _showingHidden
               ? AppBar(
@@ -847,6 +928,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                     ),
                   ],
                 ),
+      bottomNavigationBar: _selectionMode ? _selectionBar(t) : null,
       floatingActionButton: _selectionMode || _showingHidden || _myStatus == null
           ? null
           : _myStatus!.isMember

@@ -983,4 +983,47 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get dontSend => 'Nicht senden';
+
+  @override
+  String allSelected(int count) {
+    return 'Alle $count ausgewählt';
+  }
+
+  @override
+  String get selectAll => 'Alle';
+
+  @override
+  String get selectNone => 'Keine';
+
+  @override
+  String get coverShort => 'Titelbild';
+
+  @override
+  String deletePhotosTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Fotos löschen?',
+      one: 'Foto löschen?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get deleteForEveryone => 'Für alle löschen';
+
+  @override
+  String get deleteForEveryoneHint =>
+      'Bei allen und auf allen Frames, endgültig';
+
+  @override
+  String get deleteForMe => 'Für mich löschen';
+
+  @override
+  String get deleteForMeHint =>
+      'Nur bei dir weg, unter „Ausgeblendet“ zurückholbar';
+
+  @override
+  String get deleteOnlyOwn =>
+      'Für alle löschen kannst du nur deine eigenen Fotos.';
 }

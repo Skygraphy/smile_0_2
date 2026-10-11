@@ -71,6 +71,8 @@ class SmileIcons {
   static const IconData recordVideo = IconData(0xe4da, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   /// Phosphor `wifi-slash`: no connection (the offline hint).
   static const IconData offline = IconData(0xe4f2, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// Phosphor `selection-all`: mark every photo of an album.
+  static const IconData selectAll = IconData(0xe746, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   /// Phosphor `clock`: a photo/video waiting for a connection to be sent.
   static const IconData waiting = IconData(0xe19a, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   /// Phosphor `paper-plane-right`: send a photo just taken.
