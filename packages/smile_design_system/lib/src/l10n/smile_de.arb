@@ -752,5 +752,50 @@
   "codeExpired": "Der Code ist abgelaufen. Lass dir einen neuen zeigen.",
   "codeQrOnly": "Co-Admin wirst du nur, indem du den QR-Code vor Ort scannst.",
   "codeNoSpace": "Du verwaltest keinen Space, mit dem du das Album teilen kannst.",
-  "cameraUnavailable": "Die Kamera ist nicht verfügbar. Du kannst den Code eintippen."
+  "cameraUnavailable": "Die Kamera ist nicht verfügbar. Du kannst den Code eintippen.",
+  "frameOnline": "Online",
+  "frameOfflineSince": "Offline seit {time}",
+  "@frameOfflineSince": {
+    "placeholders": {
+      "time": {"type": "String"}
+    }
+  },
+  "frameNeverOnline": "Noch nicht verbunden",
+  "batteryShort": "Akku {level} %",
+  "@batteryShort": {
+    "placeholders": {
+      "level": {"type": "int"}
+    }
+  },
+  "durationMinutes": "{count} Min.",
+  "@durationMinutes": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "durationHours": "{count} Std.",
+  "@durationHours": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "durationDays": "{count, plural, =1{1 Tag} other{{count} Tagen}}",
+  "@durationDays": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "nowShowingLabel": "Läuft gerade",
+  "switchAlbum": "Album wechseln",
+  "soundOn": "Ton an",
+  "soundOff": "Ton aus",
+  "tileVideoSound": "Ton bei Videos",
+  "tileAlbumSwitch": "Wechsel am Frame",
+  "valueOn": "An",
+  "valueOff": "Aus",
+  "valueAllowed": "Erlaubt",
+  "manageAlbums": "Alben verwalten",
+  "settingsAndDevice": "Einstellungen & Gerät",
+  "openRemote": "Frame steuern",
+  "pickFrame": "Welcher Frame?"
 }

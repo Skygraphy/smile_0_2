@@ -23,7 +23,7 @@ import '../services/object_picture_service.dart';
 import '../widgets/picture_sheet.dart';
 import 'channel_feed_screen.dart';
 import 'create_frame_screen.dart';
-import 'frame_settings_screen.dart';
+import 'frame_remote_screen.dart';
 import 'trash_screen.dart';
 
 /// A Space's info page, same pattern as the album's (decision 5,
@@ -473,11 +473,13 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
                 onTap: () async {
                   await Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => FrameSettingsScreen(
+                      // The remote control first (2026-10-11); settings and
+                      // device are one tap further (gear icon).
+                      builder: (_) => FrameRemoteScreen(
+                        frameId: frame.id,
                         frame: frame,
                         spaceId: widget.spaceId,
                         spaceName: _name,
-                        frameService: widget.frameService,
                       ),
                     ),
                   );

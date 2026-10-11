@@ -1143,4 +1143,80 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get cameraUnavailable =>
       'Die Kamera ist nicht verfügbar. Du kannst den Code eintippen.';
+
+  @override
+  String get frameOnline => 'Online';
+
+  @override
+  String frameOfflineSince(String time) {
+    return 'Offline seit $time';
+  }
+
+  @override
+  String get frameNeverOnline => 'Noch nicht verbunden';
+
+  @override
+  String batteryShort(int level) {
+    return 'Akku $level %';
+  }
+
+  @override
+  String durationMinutes(int count) {
+    return '$count Min.';
+  }
+
+  @override
+  String durationHours(int count) {
+    return '$count Std.';
+  }
+
+  @override
+  String durationDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Tagen',
+      one: '1 Tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get nowShowingLabel => 'Läuft gerade';
+
+  @override
+  String get switchAlbum => 'Album wechseln';
+
+  @override
+  String get soundOn => 'Ton an';
+
+  @override
+  String get soundOff => 'Ton aus';
+
+  @override
+  String get tileVideoSound => 'Ton bei Videos';
+
+  @override
+  String get tileAlbumSwitch => 'Wechsel am Frame';
+
+  @override
+  String get valueOn => 'An';
+
+  @override
+  String get valueOff => 'Aus';
+
+  @override
+  String get valueAllowed => 'Erlaubt';
+
+  @override
+  String get manageAlbums => 'Alben verwalten';
+
+  @override
+  String get settingsAndDevice => 'Einstellungen & Gerät';
+
+  @override
+  String get openRemote => 'Frame steuern';
+
+  @override
+  String get pickFrame => 'Welcher Frame?';
 }

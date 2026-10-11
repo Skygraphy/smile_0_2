@@ -1923,6 +1923,126 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Die Kamera ist nicht verfügbar. Du kannst den Code eintippen.'**
   String get cameraUnavailable;
+
+  /// No description provided for @frameOnline.
+  ///
+  /// In de, this message translates to:
+  /// **'Online'**
+  String get frameOnline;
+
+  /// No description provided for @frameOfflineSince.
+  ///
+  /// In de, this message translates to:
+  /// **'Offline seit {time}'**
+  String frameOfflineSince(String time);
+
+  /// No description provided for @frameNeverOnline.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch nicht verbunden'**
+  String get frameNeverOnline;
+
+  /// No description provided for @batteryShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Akku {level} %'**
+  String batteryShort(int level);
+
+  /// No description provided for @durationMinutes.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} Min.'**
+  String durationMinutes(int count);
+
+  /// No description provided for @durationHours.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} Std.'**
+  String durationHours(int count);
+
+  /// No description provided for @durationDays.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 Tag} other{{count} Tagen}}'**
+  String durationDays(int count);
+
+  /// No description provided for @nowShowingLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Läuft gerade'**
+  String get nowShowingLabel;
+
+  /// No description provided for @switchAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Album wechseln'**
+  String get switchAlbum;
+
+  /// No description provided for @soundOn.
+  ///
+  /// In de, this message translates to:
+  /// **'Ton an'**
+  String get soundOn;
+
+  /// No description provided for @soundOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Ton aus'**
+  String get soundOff;
+
+  /// No description provided for @tileVideoSound.
+  ///
+  /// In de, this message translates to:
+  /// **'Ton bei Videos'**
+  String get tileVideoSound;
+
+  /// No description provided for @tileAlbumSwitch.
+  ///
+  /// In de, this message translates to:
+  /// **'Wechsel am Frame'**
+  String get tileAlbumSwitch;
+
+  /// No description provided for @valueOn.
+  ///
+  /// In de, this message translates to:
+  /// **'An'**
+  String get valueOn;
+
+  /// No description provided for @valueOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Aus'**
+  String get valueOff;
+
+  /// No description provided for @valueAllowed.
+  ///
+  /// In de, this message translates to:
+  /// **'Erlaubt'**
+  String get valueAllowed;
+
+  /// No description provided for @manageAlbums.
+  ///
+  /// In de, this message translates to:
+  /// **'Alben verwalten'**
+  String get manageAlbums;
+
+  /// No description provided for @settingsAndDevice.
+  ///
+  /// In de, this message translates to:
+  /// **'Einstellungen & Gerät'**
+  String get settingsAndDevice;
+
+  /// No description provided for @openRemote.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame steuern'**
+  String get openRemote;
+
+  /// No description provided for @pickFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Welcher Frame?'**
+  String get pickFrame;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

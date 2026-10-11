@@ -73,6 +73,11 @@ class SmileIcons {
   static const IconData offline = IconData(0xe4f2, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   /// Phosphor `selection-all`: mark every photo of an album.
   static const IconData selectAll = IconData(0xe746, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// Phosphor `speaker-high` / `speaker-slash`: a Frame's video sound.
+  static const IconData soundOn = IconData(0xe44a, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  static const IconData soundOff = IconData(0xe45a, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// Phosphor `gear-six`: a Frame's settings and device page.
+  static const IconData settings = IconData(0xe272, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   /// Phosphor `scan`: scan an invite's QR code (Neuigkeiten).
   static const IconData scan = IconData(0xebb6, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   /// Phosphor `share-network`: send an invite code as a message.

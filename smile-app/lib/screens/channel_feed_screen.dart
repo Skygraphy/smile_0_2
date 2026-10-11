@@ -27,6 +27,7 @@ import '../services/upload_queue.dart';
 import '../services/local_changes.dart';
 import '../services/channel_picker_service.dart';
 import 'photo_viewer_screen.dart';
+import 'frame_remote_screen.dart';
 import 'video_player_screen.dart';
 
 /// WhatsApp-style chat feed: sorted chronologically top(oldest) to
@@ -67,6 +68,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// For the album's own cover next to its name in the top bar, as
   /// WhatsApp shows the group picture (2026-10-09).
   Map<String, ChannelWithActivity> _covers = const {};
+  /// The Frames this album is on (only those the caller manages, RLS) --
+  /// the Frame symbol in the top bar opens their remote (2026-10-11).
+  List<FrameShowing> _frames = const [];
   // WhatsApp's own "floating" date header: pinned at the top of the
   // visible feed, updating to whichever day's messages are currently
   // scrolled to the top. Not a real sliver-pinned header (that needs
@@ -100,6 +104,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     ForegroundNotifications.openAlbumId = widget.channelId;
     _loadFromCacheThenRefresh();
     _loadCover();
+    _loadFrames();
     unawaited(_loadMyStatus());
     _scrollController.addListener(_updateStickyDate);
     _ticked.addAll(_pendingUploads.where((p) => p.sure).map((p) => p.id));
@@ -140,6 +145,31 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     if (await closeIfGone(context, table: 'channels', id: widget.channelId)) return;
     await _refreshAll();
     _loadCover();
+    _loadFrames();
+  }
+
+  void _loadFrames() {
+    unawaited(ChannelService().listFramesShowing(widget.channelId).then((frames) {
+      if (mounted) setState(() => _frames = frames);
+    }).catchError((Object _) {}));
+  }
+
+  Future<void> _openFrame() async {
+    final t = SmileTexts.of(context);
+    var frame = _frames.length == 1 ? _frames.single : null;
+    frame ??= await showDialog<FrameShowing>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(t.pickFrame),
+        children: [
+          for (final f in _frames)
+            SimpleDialogOption(onPressed: () => Navigator.of(context).pop(f), child: Text(frameNameOf(f.frameId, f.frameName))),
+        ],
+      ),
+    );
+    if (frame == null || !mounted) return;
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => FrameRemoteScreen(frameId: frame!.frameId)));
+    _loadFrames();
   }
 
   void _loadCover() {
@@ -940,6 +970,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                     ),
                   ),
                   actions: [
+                    if (_frames.isNotEmpty)
+                      IconButton(icon: const Icon(SmileIcons.frame), tooltip: t.openRemote, onPressed: _openFrame),
                     IconButton(
                       icon: const Icon(SmileIcons.hide),
                       tooltip: t.hiddenPhotos,

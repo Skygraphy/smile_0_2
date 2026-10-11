@@ -9,7 +9,7 @@ import '../services/channel_service.dart';
 import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
 import '../services/frame_service.dart';
-import 'frame_settings_screen.dart';
+import 'frame_remote_screen.dart';
 import '../widgets/email_dialog.dart';
 import '../widgets/invite_sheet.dart';
 import '../services/invite_service.dart';
@@ -252,25 +252,10 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   String? _frameShows(FrameShowing frame) =>
       LocalChanges.instance.text(LocalChanges.frameAlbum(frame.frameId)) ?? frame.currentChannelId;
 
+  /// The Frame's remote control (2026-10-11).
   Future<void> _openFrame(String frameId) async {
-    final frameService = FrameService();
-    try {
-      final found = await frameService.getFrameWithSpace(frameId);
-      if (!mounted) return;
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => FrameSettingsScreen(
-            frame: found.frame,
-            spaceId: found.spaceId,
-            spaceName: found.spaceName,
-            frameService: frameService,
-          ),
-        ),
-      );
-      if (mounted) await _load();
-    } catch (e) {
-      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).actionFailed(errorReason(context, e)));
-    }
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => FrameRemoteScreen(frameId: frameId)));
+    if (mounted) await _load();
   }
 
   Future<void> _removeFromFrame(String frameId) async {

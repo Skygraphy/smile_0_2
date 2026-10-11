@@ -90,6 +90,16 @@ class SmileFrame {
       );
 }
 
+/// A Frame on the "Frames" tab: with its Space and what it shows.
+class ManagedFrame {
+  const ManagedFrame({required this.frame, required this.spaceId, required this.spaceName, this.currentAlbumName});
+
+  final SmileFrame frame;
+  final String spaceId;
+  final String spaceName;
+  final String? currentAlbumName;
+}
+
 class FrameChannelAssignment {
   FrameChannelAssignment({required this.channelId, required this.channelName});
 
@@ -119,6 +129,24 @@ class FrameService {
   Future<List<SmileFrame>> listFrames(String spaceId) async {
     final rows = await supabase.from('frames').select(_frameColumns).eq('space_id', spaceId).order('created_at');
     return (rows as List).cast<Map<String, dynamic>>().map(SmileFrame.fromJson).toList();
+  }
+
+  /// Every Frame the caller manages, across Spaces (RLS) -- the "Frames"
+  /// tab (2026-10-11), with the name of the album each shows right now.
+  Future<List<ManagedFrame>> listMyFrames() async {
+    final rows = await supabase
+        .from('frames')
+        .select('$_frameColumns, space_id, spaces(name), current:channels!frames_current_channel_id_fkey(name)')
+        .neq('lifecycle_state', 'revoked')
+        .order('created_at');
+    return (rows as List).cast<Map<String, dynamic>>().map((row) {
+      return ManagedFrame(
+        frame: SmileFrame.fromJson(row),
+        spaceId: row['space_id'] as String,
+        spaceName: (row['spaces'] as Map?)?['name'] as String? ?? '',
+        currentAlbumName: (row['current'] as Map?)?['name'] as String?,
+      );
+    }).toList();
   }
 
   Future<SmileFrame> getFrame(String frameId) async {
@@ -194,10 +222,16 @@ class FrameService {
         // Same order as the Frame itself (frame_visible_channels).
         .order('sort_order')
         .order('created_at');
-    return (rows as List).cast<Map<String, dynamic>>().map((row) {
-      final channel = row['channels'] as Map<String, dynamic>;
-      return FrameChannelAssignment(channelId: row['channel_id'] as String, channelName: channel['name'] as String);
-    }).toList();
+    // An album the caller may not see (e.g. in the trash, or someone
+    // else's) comes without its channel row -- left out, like on the Frame.
+    return (rows as List)
+        .cast<Map<String, dynamic>>()
+        .where((row) => row['channels'] != null)
+        .map((row) => FrameChannelAssignment(
+              channelId: row['channel_id'] as String,
+              channelName: (row['channels'] as Map<String, dynamic>)['name'] as String,
+            ))
+        .toList();
   }
 
   /// A Frame may show any channel its own Space can view: the Space's own
