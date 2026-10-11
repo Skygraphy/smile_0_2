@@ -59,18 +59,61 @@ Future<void> main() async {
       }
     }),
   );
-  await Firebase.initializeApp();
-  // Monitoring stage 2 (2026-10-07): crashes and uncaught errors reach
-  // Firebase Crashlytics, so we learn about them without anyone reporting.
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
-  unawaited(FirebaseCrashlytics.instance.setCustomKey('app', 'smile-app'));
-  await ForegroundNotifications.init(onTap: openNotificationTarget);
+  // Never stuck at the start (2026-10-12: on the P610 Firebase failed to
+  // start and the app hung on its splash): without Firebase it runs on,
+  // only without push and crash reports.
+  var firebaseReady = false;
+  try {
+    await Firebase.initializeApp();
+    firebaseReady = true;
+    // Monitoring stage 2 (2026-10-07): crashes and uncaught errors reach
+    // Firebase Crashlytics, so we learn about them without anyone reporting.
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+    unawaited(FirebaseCrashlytics.instance.setCustomKey('app', 'smile-app'));
+  } catch (e) {
+    debugPrint('SmileStart: Firebase failed: $e');
+  }
+  try {
+    await ForegroundNotifications.init(onTap: openNotificationTarget);
+  } catch (e) {
+    debugPrint('SmileStart: notifications failed: $e');
+  }
   // One app for person and Frame (2026-10-11).
   await frame.FrameMode.detect();
+  if (firebaseReady) {
+    try {
+      await _listenToPushes();
+    } catch (e) {
+      debugPrint('SmileStart: push failed: $e');
+    }
+  }
+  // Silent sync pushes only reach onMessage while in the foreground --
+  // anything that changed while backgrounded is caught up here instead.
+  _resumeListener = AppLifecycleListener(
+    onResume: () {
+      SyncBus.emit(const SyncEvent.everything());
+      unawaited(UploadQueue.instance.process());
+      unawaited(ForegroundNotifications.clearAll());
+    },
+  );
+  // Opening the app counts as having seen its notifications (icon badge).
+  unawaited(ForegroundNotifications.clearAll());
+  // While open: the same sync signals, live (works where silent pushes are
+  // throttled -- iOS). Push above stays for when the app is closed.
+  LiveSyncChannel.start();
+  // In WLAN, new videos are downloaded ahead of time for offline (2026-10-10).
+  VideoPrefetcher.start();
+  // Photos/videos still waiting to be sent go out (2026-10-11).
+  unawaited(UploadQueue.instance.start());
+  runApp(const SmileRoot());
+}
+
+/// Pushes: a Frame just syncs, a person's phone reloads or shows them.
+Future<void> _listenToPushes() async {
   FirebaseMessaging.onBackgroundMessage(frame.firebaseMessagingBackgroundHandler);
   FirebaseMessaging.onMessage.listen((message) {
     // A Frame: every push just means "sync now".
@@ -94,25 +137,6 @@ Future<void> main() async {
   // so this has to be checked once explicitly rather than via a stream.
   final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
   if (initialMessage != null) openNotificationTarget(initialMessage.data);
-  // Silent sync pushes only reach onMessage while in the foreground --
-  // anything that changed while backgrounded is caught up here instead.
-  _resumeListener = AppLifecycleListener(
-    onResume: () {
-      SyncBus.emit(const SyncEvent.everything());
-      unawaited(UploadQueue.instance.process());
-      unawaited(ForegroundNotifications.clearAll());
-    },
-  );
-  // Opening the app counts as having seen its notifications (icon badge).
-  unawaited(ForegroundNotifications.clearAll());
-  // While open: the same sync signals, live (works where silent pushes are
-  // throttled -- iOS). Push above stays for when the app is closed.
-  LiveSyncChannel.start();
-  // In WLAN, new videos are downloaded ahead of time for offline (2026-10-10).
-  VideoPrefetcher.start();
-  // Photos/videos still waiting to be sent go out (2026-10-11).
-  unawaited(UploadQueue.instance.start());
-  runApp(const SmileRoot());
 }
 
 /// Started by Android's WorkManager (UploadWorker.kt) when Smile itself

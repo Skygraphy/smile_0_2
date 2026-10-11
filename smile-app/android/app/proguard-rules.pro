@@ -6,3 +6,10 @@
 -keep class androidx.work.** { <init>(...); }
 # Our own worker is created by name from WorkManager's database.
 -keep class com.smile.smile_app.UploadWorker { <init>(...); }
+# Firebase finds its parts (Crashlytics, Messaging, ...) by reflection from
+# the manifest -- on the P610 the shrunk build missed Crashlytics and the
+# app hung at its start (2026-10-12).
+-keep class * implements com.google.firebase.components.ComponentRegistrar { *; }
+-keep class com.google.firebase.components.ComponentDiscoveryService { *; }
+-keep class com.google.firebase.crashlytics.** { *; }
+-keep class com.google.firebase.messaging.** { *; }
