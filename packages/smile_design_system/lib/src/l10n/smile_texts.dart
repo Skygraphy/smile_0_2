@@ -2181,6 +2181,12 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Fertig'**
   String get done;
+
+  /// No description provided for @playSlideshow.
+  ///
+  /// In de, this message translates to:
+  /// **'Diashow'**
+  String get playSlideshow;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

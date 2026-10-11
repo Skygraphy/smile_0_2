@@ -39,6 +39,18 @@ class MainActivity : FlutterActivity() {
             if (call.method == "setFrameMode") setFrameWindow(call.arguments == true)
             result.success(null)
         }
+        // The app's own slideshow keeps the screen on while it plays
+        // (album_slideshow_screen.dart) -- separate from the Frame's window.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "smile/screen").setMethodCallHandler { call, result ->
+            if (call.method == "keepOn" && !isFrame(this)) {
+                if (call.arguments == true) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                }
+            }
+            result.success(null)
+        }
         // Videos are shrunk on the phone before uploading (VideoCompressor).
         val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "smile/video_compress")
         channel.setMethodCallHandler(VideoCompressor(applicationContext, channel))

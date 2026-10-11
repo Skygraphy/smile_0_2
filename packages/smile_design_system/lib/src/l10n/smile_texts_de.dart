@@ -1299,4 +1299,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get done => 'Fertig';
+
+  @override
+  String get playSlideshow => 'Diashow';
 }

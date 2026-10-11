@@ -28,6 +28,7 @@ import '../services/local_changes.dart';
 import '../services/channel_picker_service.dart';
 import 'photo_viewer_screen.dart';
 import 'frame_remote_screen.dart';
+import 'album_slideshow_screen.dart';
 import 'video_player_screen.dart';
 
 /// WhatsApp-style chat feed: sorted chronologically top(oldest) to
@@ -152,6 +153,16 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     unawaited(ChannelService().listFramesShowing(widget.channelId).then((frames) {
       if (mounted) setState(() => _frames = frames);
     }).catchError((Object _) {}));
+  }
+
+  /// Newest first, only what is ready (and not just removed here).
+  Future<void> _playSlideshow() async {
+    final items = (_items ?? const <MediaItem>[]).where((i) => i.isReady && !_isGoneHere(i.id)).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (items.isEmpty) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => AlbumSlideshowScreen(albumName: _shownName, items: items)),
+    );
   }
 
   Future<void> _openFrame() async {
@@ -969,6 +980,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                     ),
                   ),
                   actions: [
+                    // The album as a slideshow, like on a Frame (2026-10-11).
+                    if ((_items ?? const <MediaItem>[]).any((i) => i.isReady))
+                      IconButton(icon: const Icon(SmileIcons.slideshow), tooltip: t.playSlideshow, onPressed: _playSlideshow),
                     if (_frames.isNotEmpty)
                       IconButton(icon: const Icon(SmileIcons.frame), tooltip: t.openRemote, onPressed: _openFrame),
                     IconButton(

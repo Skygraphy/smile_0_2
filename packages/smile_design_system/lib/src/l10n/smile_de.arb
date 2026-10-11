@@ -825,5 +825,6 @@
   "pickSpaceForFrame": "Für welchen Space?",
   "connectOtherDevice": "Anderes Gerät verbinden",
   "reconnectHint": "Auf dem neuen Gerät: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.",
-  "done": "Fertig"
+  "done": "Fertig",
+  "playSlideshow": "Diashow"
 }
