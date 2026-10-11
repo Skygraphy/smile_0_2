@@ -2067,6 +2067,120 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Welcher Frame?'**
   String get pickFrame;
+
+  /// No description provided for @useAsFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieses Gerät als Frame verwenden'**
+  String get useAsFrame;
+
+  /// No description provided for @setUpFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame einrichten'**
+  String get setUpFrame;
+
+  /// No description provided for @connectNamedFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'„{name}“ verbinden'**
+  String connectNamedFrame(String name);
+
+  /// No description provided for @connectFrameHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Auf dem Tablet: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Gilt 15 Minuten.'**
+  String get connectFrameHint;
+
+  /// No description provided for @waitingForFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Warte auf den Frame …'**
+  String get waitingForFrame;
+
+  /// No description provided for @frameNameQuestion.
+  ///
+  /// In de, this message translates to:
+  /// **'Wie soll der neue Frame heißen, z. B. „Küche“?'**
+  String get frameNameQuestion;
+
+  /// No description provided for @anotherDevice.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein anderes Gerät'**
+  String get anotherDevice;
+
+  /// No description provided for @anotherDeviceHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Tablet scannt den QR-Code oder bekommt den Code.'**
+  String get anotherDeviceHint;
+
+  /// No description provided for @thisDevice.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieses Gerät'**
+  String get thisDevice;
+
+  /// No description provided for @thisDeviceHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieses Gerät wird sofort zum Frame. Deine Anmeldung hier endet.'**
+  String get thisDeviceHint;
+
+  /// No description provided for @thisDeviceTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieses Gerät zum Frame machen?'**
+  String get thisDeviceTitle;
+
+  /// No description provided for @thisDeviceMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Danach läuft hier nur noch die Diashow, und du wirst auf diesem Gerät abgemeldet. Deine Alben und Fotos bleiben natürlich erhalten.'**
+  String get thisDeviceMessage;
+
+  /// No description provided for @thisDeviceConfirm.
+  ///
+  /// In de, this message translates to:
+  /// **'Zum Frame machen'**
+  String get thisDeviceConfirm;
+
+  /// No description provided for @frameScanHint.
+  ///
+  /// In de, this message translates to:
+  /// **'QR-Code aus der Smile-App in den Rahmen halten'**
+  String get frameScanHint;
+
+  /// No description provided for @frameScanInstead.
+  ///
+  /// In de, this message translates to:
+  /// **'QR-Code scannen'**
+  String get frameScanInstead;
+
+  /// No description provided for @pickSpaceForFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Für welchen Space?'**
+  String get pickSpaceForFrame;
+
+  /// No description provided for @connectOtherDevice.
+  ///
+  /// In de, this message translates to:
+  /// **'Anderes Gerät verbinden'**
+  String get connectOtherDevice;
+
+  /// No description provided for @reconnectHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Auf dem neuen Gerät: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.'**
+  String get reconnectHint;
+
+  /// No description provided for @done.
+  ///
+  /// In de, this message translates to:
+  /// **'Fertig'**
+  String get done;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

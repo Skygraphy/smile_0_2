@@ -801,5 +801,29 @@
   "manageAlbums": "Alben verwalten",
   "settingsAndDevice": "Einstellungen & Gerät",
   "openRemote": "Frame steuern",
-  "pickFrame": "Welcher Frame?"
+  "pickFrame": "Welcher Frame?",
+  "useAsFrame": "Dieses Gerät als Frame verwenden",
+  "setUpFrame": "Frame einrichten",
+  "connectNamedFrame": "„{name}“ verbinden",
+  "@connectNamedFrame": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "connectFrameHint": "Auf dem Tablet: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Gilt 15 Minuten.",
+  "waitingForFrame": "Warte auf den Frame …",
+  "frameNameQuestion": "Wie soll der neue Frame heißen, z. B. „Küche“?",
+  "anotherDevice": "Ein anderes Gerät",
+  "anotherDeviceHint": "Das Tablet scannt den QR-Code oder bekommt den Code.",
+  "thisDevice": "Dieses Gerät",
+  "thisDeviceHint": "Dieses Gerät wird sofort zum Frame. Deine Anmeldung hier endet.",
+  "thisDeviceTitle": "Dieses Gerät zum Frame machen?",
+  "thisDeviceMessage": "Danach läuft hier nur noch die Diashow, und du wirst auf diesem Gerät abgemeldet. Deine Alben und Fotos bleiben natürlich erhalten.",
+  "thisDeviceConfirm": "Zum Frame machen",
+  "frameScanHint": "QR-Code aus der Smile-App in den Rahmen halten",
+  "frameScanInstead": "QR-Code scannen",
+  "pickSpaceForFrame": "Für welchen Space?",
+  "connectOtherDevice": "Anderes Gerät verbinden",
+  "reconnectHint": "Auf dem neuen Gerät: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.",
+  "done": "Fertig"
 }

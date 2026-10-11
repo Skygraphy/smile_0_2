@@ -24,10 +24,7 @@ import 'services/offline_http_client.dart';
 import 'widgets/offline_hint.dart';
 import 'services/video_prefetcher.dart';
 import 'services/upload_queue.dart';
-import 'frame/frame_app.dart';
-import 'frame/frame_mode.dart';
-import 'frame/services/push_service.dart' as frame_push;
-import 'frame/services/push_sync_signal.dart';
+import 'frame/frame.dart' as frame;
 import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import 'widgets/friendly_error.dart';
@@ -73,12 +70,12 @@ Future<void> main() async {
   unawaited(FirebaseCrashlytics.instance.setCustomKey('app', 'smile-app'));
   await ForegroundNotifications.init(onTap: openNotificationTarget);
   // One app for person and Frame (2026-10-11).
-  await FrameMode.detect();
-  FirebaseMessaging.onBackgroundMessage(frame_push.firebaseMessagingBackgroundHandler);
+  await frame.FrameMode.detect();
+  FirebaseMessaging.onBackgroundMessage(frame.firebaseMessagingBackgroundHandler);
   FirebaseMessaging.onMessage.listen((message) {
     // A Frame: every push just means "sync now".
-    if (FrameMode.active.value == true) {
-      PushSyncSignal.requestSync();
+    if (frame.FrameMode.active.value == true) {
+      frame.PushSyncSignal.requestSync();
       return;
     }
     // Silent cross-device sync (sync-fanout) -- never shown, just reloads
@@ -146,8 +143,8 @@ class SmileRoot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool?>(
-      valueListenable: FrameMode.active,
-      builder: (context, frame, _) => frame == true ? const FrameModeApp() : const SmileApp(),
+      valueListenable: frame.FrameMode.active,
+      builder: (context, isFrame, _) => isFrame == true ? const frame.FrameModeApp() : const SmileApp(),
     );
   }
 }

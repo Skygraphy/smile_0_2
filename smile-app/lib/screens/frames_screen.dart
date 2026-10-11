@@ -14,6 +14,7 @@ import '../widgets/frame_status.dart';
 import '../widgets/friendly_error.dart';
 import '../widgets/local_display.dart';
 import '../widgets/top_bar_actions.dart';
+import 'create_frame_screen.dart';
 import 'frame_remote_screen.dart';
 
 /// The "Frames" tab (decided 2026-10-11): every Frame one manages as a
@@ -76,6 +77,34 @@ class _FramesScreenState extends State<FramesScreen> with SyncReload {
         ),
       ),
     );
+    if (mounted) await _load();
+  }
+
+  /// A new Frame: for which Space (if one manages several), then the
+  /// setup (another device by QR code, or this device).
+  Future<void> _setUpFrame() async {
+    final t = SmileTexts.of(context);
+    final List<({String id, String name})> spaces;
+    try {
+      spaces = await _service.listManagedSpaces();
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReasonIn(t, e)));
+      return;
+    }
+    if (!mounted || spaces.isEmpty) return;
+    var spaceId = spaces.length == 1 ? spaces.single.id : null;
+    spaceId ??= await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(t.pickSpaceForFrame),
+        children: [
+          for (final s in spaces)
+            SimpleDialogOption(onPressed: () => Navigator.of(context).pop(s.id), child: Text(spaceNameOf(s.id, s.name))),
+        ],
+      ),
+    );
+    if (spaceId == null || !mounted) return;
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => CreateFrameScreen(spaceId: spaceId!)));
     if (mounted) await _load();
   }
 
@@ -146,6 +175,11 @@ class _FramesScreenState extends State<FramesScreen> with SyncReload {
     final frames = _frames;
     return Scaffold(
       appBar: AppBar(title: Text(t.frames), actions: smileTopBarActions()),
+      floatingActionButton: FloatingActionButton(
+        tooltip: t.setUpFrame,
+        onPressed: _setUpFrame,
+        child: const Icon(SmileIcons.add),
+      ),
       body: frames == null
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(

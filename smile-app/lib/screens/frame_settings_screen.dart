@@ -14,6 +14,7 @@ import '../services/object_picture_service.dart';
 import '../widgets/picture_sheet.dart';
 import '../services/sync_bus.dart';
 import 'channel_feed_screen.dart';
+import 'create_frame_screen.dart';
 
 /// A Frame's info page, same pattern as Album and Space: icon + name
 /// (tap to rename), status (device, last seen, app version, battery),
@@ -416,6 +417,17 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                   ),
                   SmileInfoSection(
                     children: [
+                      // A new tablet takes over this Frame (2026-10-11).
+                      if (!_frame.isRevoked && _frame.pairingCode != null)
+                        SmileActionRow(
+                          icon: SmileIcons.inviteCode,
+                          label: t.connectOtherDevice,
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => CreateFrameScreen(spaceId: widget.spaceId, existingFrame: _frame),
+                            ),
+                          ),
+                        ),
                       SmileActionRow(
                         icon: _frame.isRevoked ? SmileIcons.restore : SmileIcons.close,
                         label: _frame.isRevoked ? t.reactivateFrame : t.revokeFrame,

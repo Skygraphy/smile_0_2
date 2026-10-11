@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/frame_credentials_store.dart';
@@ -28,15 +31,34 @@ class _PairingScreenState extends State<PairingScreen> {
   final _codeController = TextEditingController();
   bool _isSubmitting = false;
   String? _errorMessage;
+  /// The QR code shown by the Smile app first (2026-10-11); typing the
+  /// code is the alternative.
+  bool _typing = false;
+  final _scanner = MobileScannerController(formats: const [BarcodeFormat.qrCode]);
 
   @override
   void dispose() {
     _codeController.dispose();
+    unawaited(_scanner.dispose());
     super.dispose();
   }
 
+  void _onDetect(BarcodeCapture capture) {
+    if (_isSubmitting) return;
+    for (final barcode in capture.barcodes) {
+      var value = (barcode.rawValue ?? '').trim();
+      if (value.toLowerCase().startsWith('smile:frame:')) value = value.substring(12);
+      value = value.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+      if (value.length >= 6 && value.length <= 10) {
+        _codeController.text = value;
+        unawaited(_submit());
+        return;
+      }
+    }
+  }
+
   Future<void> _submit() async {
-    final code = _codeController.text.trim().toUpperCase();
+    final code = _codeController.text.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
     if (code.isEmpty) return;
     setState(() {
       _isSubmitting = true;
@@ -104,6 +126,50 @@ class _PairingScreenState extends State<PairingScreen> {
                     style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 32),
+                  if (!_typing) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(SmileRadius.l),
+                      child: SizedBox(
+                        width: 280,
+                        height: 280,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            MobileScanner(
+                              controller: _scanner,
+                              onDetect: _onDetect,
+                              errorBuilder: (context, error) => Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(SmileSpacing.m),
+                                  child: Text(t.cameraUnavailable, textAlign: TextAlign.center),
+                                ),
+                              ),
+                            ),
+                            IgnorePointer(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
+                                  borderRadius: BorderRadius.circular(SmileRadius.l),
+                                ),
+                              ),
+                            ),
+                            if (_isSubmitting) const Center(child: CircularProgressIndicator()),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(t.frameScanHint, textAlign: TextAlign.center),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
+                        unawaited(_scanner.stop());
+                        setState(() => _typing = true);
+                      },
+                      child: Text(t.typeCode),
+                    ),
+                  ],
+                  if (_typing) ...[
                   TextField(
                     controller: _codeController,
                     autofocus: true,
@@ -120,6 +186,14 @@ class _PairingScreenState extends State<PairingScreen> {
                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                         : Text(t.framePairButton),
                   ),
+                  TextButton(
+                    onPressed: () {
+                      setState(() => _typing = false);
+                      unawaited(_scanner.start());
+                    },
+                    child: Text(t.frameScanInstead),
+                  ),
+                  ],
                   if (_errorMessage != null) ...[
                     const SizedBox(height: 16),
                     Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error), textAlign: TextAlign.center),

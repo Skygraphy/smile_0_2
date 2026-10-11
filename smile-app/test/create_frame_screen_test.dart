@@ -33,12 +33,15 @@ void main() {
     ));
 
     await tester.enterText(find.byType(TextField), 'Küche');
-    await tester.tap(find.text('Erstellen'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    // "Ein anderes Gerät": the code to scan or type (2026-10-11).
+    await tester.tap(find.text('Ein anderes Gerät'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     verify(() => service.createFrame(spaceId: 'space-1', name: 'Küche')).called(1);
-    expect(find.text('ABCD1234'), findsOneWidget);
-    expect(find.text('"Küche" wurde angelegt.'), findsOneWidget);
+    expect(find.text('ABCD 1234'), findsOneWidget);
+    expect(find.text('„Küche“ verbinden'), findsOneWidget);
   });
 
   testWidgets('shows an error message on failure', (tester) async {
@@ -54,9 +57,12 @@ void main() {
     ));
 
     await tester.enterText(find.byType(TextField), 'Küche');
-    await tester.tap(find.text('Erstellen'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    // "Ein anderes Gerät": the code to scan or type (2026-10-11).
+    await tester.tap(find.text('Ein anderes Gerät'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
-    expect(find.textContaining('Frame konnte nicht erstellt werden'), findsOneWidget);
+    expect(find.textContaining('Das hat leider nicht geklappt'), findsOneWidget);
   });
 }

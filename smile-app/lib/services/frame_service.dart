@@ -149,6 +149,26 @@ class FrameService {
     }).toList();
   }
 
+  /// The Spaces the caller manages (Admin or Co-Admin) -- where a new
+  /// Frame can be set up.
+  Future<List<({String id, String name})>> listManagedSpaces() async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return const [];
+    final results = await Future.wait<dynamic>([
+      supabase.from('spaces').select('id, name').eq('owner_id', userId).isFilter('deleted_at', null),
+      supabase.from('space_co_owners').select('spaces!inner(id, name, deleted_at)').eq('user_id', userId),
+    ]);
+    final byId = <String, String>{};
+    for (final row in (results[0] as List).cast<Map<String, dynamic>>()) {
+      byId[row['id'] as String] = row['name'] as String;
+    }
+    for (final row in (results[1] as List).cast<Map<String, dynamic>>()) {
+      final space = row['spaces'] as Map<String, dynamic>;
+      if (space['deleted_at'] == null) byId[space['id'] as String] = space['name'] as String;
+    }
+    return [for (final e in byId.entries) (id: e.key, name: e.value)];
+  }
+
   Future<SmileFrame> getFrame(String frameId) async {
     final row = await supabase.from('frames').select(_frameColumns).eq('id', frameId).single();
     return SmileFrame.fromJson(row);

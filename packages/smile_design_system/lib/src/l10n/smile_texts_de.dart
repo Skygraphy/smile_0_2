@@ -1234,4 +1234,69 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get pickFrame => 'Welcher Frame?';
+
+  @override
+  String get useAsFrame => 'Dieses Gerät als Frame verwenden';
+
+  @override
+  String get setUpFrame => 'Frame einrichten';
+
+  @override
+  String connectNamedFrame(String name) {
+    return '„$name“ verbinden';
+  }
+
+  @override
+  String get connectFrameHint =>
+      'Auf dem Tablet: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Gilt 15 Minuten.';
+
+  @override
+  String get waitingForFrame => 'Warte auf den Frame …';
+
+  @override
+  String get frameNameQuestion =>
+      'Wie soll der neue Frame heißen, z. B. „Küche“?';
+
+  @override
+  String get anotherDevice => 'Ein anderes Gerät';
+
+  @override
+  String get anotherDeviceHint =>
+      'Das Tablet scannt den QR-Code oder bekommt den Code.';
+
+  @override
+  String get thisDevice => 'Dieses Gerät';
+
+  @override
+  String get thisDeviceHint =>
+      'Dieses Gerät wird sofort zum Frame. Deine Anmeldung hier endet.';
+
+  @override
+  String get thisDeviceTitle => 'Dieses Gerät zum Frame machen?';
+
+  @override
+  String get thisDeviceMessage =>
+      'Danach läuft hier nur noch die Diashow, und du wirst auf diesem Gerät abgemeldet. Deine Alben und Fotos bleiben natürlich erhalten.';
+
+  @override
+  String get thisDeviceConfirm => 'Zum Frame machen';
+
+  @override
+  String get frameScanHint => 'QR-Code aus der Smile-App in den Rahmen halten';
+
+  @override
+  String get frameScanInstead => 'QR-Code scannen';
+
+  @override
+  String get pickSpaceForFrame => 'Für welchen Space?';
+
+  @override
+  String get connectOtherDevice => 'Anderes Gerät verbinden';
+
+  @override
+  String get reconnectHint =>
+      'Auf dem neuen Gerät: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.';
+
+  @override
+  String get done => 'Fertig';
 }
