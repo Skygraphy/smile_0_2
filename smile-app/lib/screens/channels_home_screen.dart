@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import '../services/perf.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../widgets/friendly_error.dart';
 
@@ -43,7 +46,10 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
     super.initState();
     // The list as last loaded shows at once (also offline), then refreshes.
     widget.channelPickerService.cachedMyChannels().then((cached) {
-      if (cached != null && mounted && _channels == null) setState(() => _channels = cached);
+      if (cached != null && mounted && _channels == null) {
+        setState(() => _channels = cached);
+        Perf.mark('album list shown (from the phone)');
+      }
     });
     _load();
   }
@@ -52,8 +58,11 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   Future<void> onSync() => _load();
 
   Future<void> _load() async {
+    Perf.start('album list');
     try {
       final channels = await widget.channelPickerService.listMyChannelsWithActivity();
+      Perf.end('album list', '${channels.length} albums');
+      Perf.mark('album list shown');
       if (!mounted) return;
       setState(() {
         _channels = channels;

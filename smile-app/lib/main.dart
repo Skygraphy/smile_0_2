@@ -5,6 +5,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'services/perf.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
@@ -41,6 +42,7 @@ final navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Perf.mark('main');
   // Never Flutter's red error screen for people (2026-10-11): a part that
   // fails to build stays empty; the error goes to the log (and Crashlytics).
   ErrorWidget.builder = (details) {
@@ -59,6 +61,7 @@ Future<void> main() async {
       }
     }),
   );
+  Perf.mark('supabase ready');
   // Never stuck at the start (2026-10-12: on the P610 Firebase failed to
   // start and the app hung on its splash): without Firebase it runs on,
   // only without push and crash reports.
@@ -82,6 +85,7 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('SmileStart: notifications failed: $e');
   }
+  Perf.mark('firebase + notifications ready');
   // One app for person and Frame (2026-10-11).
   await frame.FrameMode.detect();
   if (firebaseReady) {
@@ -109,6 +113,7 @@ Future<void> main() async {
   VideoPrefetcher.start();
   // Photos/videos still waiting to be sent go out (2026-10-11).
   unawaited(UploadQueue.instance.start());
+  Perf.mark('runApp');
   runApp(const SmileRoot());
 }
 
@@ -335,8 +340,22 @@ class _ProfileGateState extends State<_ProfileGate> {
     });
     final userId = supabase.auth.currentUser?.id;
     final okKey = 'profile_ok_$userId';
+    // Set up before on this phone: straight to the albums, the check runs
+    // behind (2026-10-12: it held the start up by ~0.5 s every time).
+    if (await Offline.read(okKey) == 'yes' && mounted) {
+      setState(() {
+        _hasProfile = true;
+        _isLoading = false;
+      });
+      unawaited(_profileService.getMyProfile().then((profile) {
+        // Gone on the server after all (e.g. reset): set it up again.
+        if (profile == null && mounted) setState(() => _hasProfile = false);
+      }).catchError((Object _) {}));
+      return;
+    }
     try {
       final profile = await _profileService.getMyProfile();
+      Perf.mark('profile loaded');
       if (profile != null) unawaited(Offline.write(okKey, 'yes'));
       if (!mounted) return;
       setState(() {

@@ -1,6 +1,4 @@
 import '../main.dart';
-import 'membership_service.dart';
-import 'space_service.dart';
 import 'local_changes.dart';
 
 /// What the Neuigkeiten icon shows.
@@ -22,31 +20,20 @@ class NewsStatus {
 /// else. unseenNews: anything in the Verlauf newer than news_reads.seen_at
 /// (migrations/0063).
 class NewsService {
-  NewsService({MembershipService? membershipService, SpaceService? spaceService})
-      : _membershipService = membershipService ?? MembershipService(),
-        _spaceService = spaceService ?? SpaceService();
+  NewsService();
 
-  final MembershipService _membershipService;
-  final SpaceService _spaceService;
+  /// Every tab's Neuigkeiten icon asks at the same moment: one round of
+  /// requests, the same answer for all (2026-10-12: it was six at start).
+  Future<NewsStatus> status() => _inflight ??= _status().whenComplete(() => _inflight = null);
 
-  Future<NewsStatus> status() async {
-    final results = await Future.wait<dynamic>([
-      _membershipService.listMyInvites(includeManaged: true),
-      _spaceService.listMyCoOwnerInvites(),
-      supabase.from('news_reads').select('seen_at').maybeSingle(),
-    ]);
-    final inbox = results[0] as MyInvitesInbox;
-    final coAdminInvites = results[1] as List<MyCoOwnerInvite>;
-    final seenAt = (results[2] as Map<String, dynamic>?)?['seen_at'] as String?;
-    var newer = supabase.from('user_notifications').select('id');
-    if (seenAt != null) newer = newer.gt('created_at', seenAt);
-    final unseen = await newer.limit(1);
+  static Future<NewsStatus>? _inflight;
+
+  /// One query (migrations/0074) instead of the whole inbox.
+  Future<NewsStatus> _status() async {
+    final data = await supabase.rpc('my_news_status') as Map<String, dynamic>;
     return NewsStatus(
-      needsAnswer: coAdminInvites.isNotEmpty ||
-          inbox.managedMembershipRequests.isNotEmpty ||
-          inbox.managedShareRequests.isNotEmpty ||
-          [...inbox.membershipRequests, ...inbox.shareRequests].any((r) => r.direction == RequestDirection.invite),
-      unseenNews: (unseen as List).isNotEmpty,
+      needsAnswer: data['needs_answer'] == true,
+      unseenNews: data['unseen_news'] == true,
     );
   }
 

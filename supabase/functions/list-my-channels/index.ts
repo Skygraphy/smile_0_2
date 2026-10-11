@@ -12,6 +12,17 @@ import { avatarPublicUrl, fetchProfilesByUserId } from "../_shared/profiles.ts";
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
+/** The `sub` of a bearer JWT, unverified -- only used together with getUser(). */
+function userIdFromToken(authHeader: string): string | null {
+  try {
+    const payload = authHeader.replace(/^Bearers+/i, "").split(".")[1];
+    const json = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof json.sub === "string" ? json.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
@@ -22,41 +33,64 @@ Deno.serve(async (req) => {
   const supabaseAsUser = createClient(supabaseUrl, serviceRoleKey, {
     global: { headers: { Authorization: authHeader } },
   });
-  const { data: userData, error: userError } = await supabaseAsUser.auth.getUser();
-  if (userError || !userData.user) return jsonResponse({ error: "invalid_session" }, 401);
-  const userId = userData.user.id;
-
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
+  // The session check and the first query at once (2026-10-12): the user
+  // id is read from the token right away, and nothing is answered unless
+  // the server confirms exactly that user.
+  const claimedUserId = userIdFromToken(authHeader);
+  if (!claimedUserId) return jsonResponse({ error: "invalid_session" }, 401);
   // Everything this person can see -- own/co-owned Spaces' channels,
   // channels they post in, channels shared into a Space they manage. The
   // single source (migrations/0047); before, this list forgot co-owners.
-  const channelIds = await visibleChannelIds(supabaseAdmin, userId);
+  const [{ data: userData, error: userError }, channelIds] = await Promise.all([
+    supabaseAsUser.auth.getUser(),
+    visibleChannelIds(supabaseAdmin, claimedUserId),
+  ]);
+  if (userError || !userData.user || userData.user.id !== claimedUserId) {
+    return jsonResponse({ error: "invalid_session" }, 401);
+  }
+  const userId = claimedUserId;
   if (channelIds.length === 0) return jsonResponse({ channels: [] });
 
-  // Only for the "nur ansehen" label -- posting rights are membership.
-  const { data: memberships } = await supabaseAdmin.from("channel_members").select("channel_id").eq("user_id", userId);
-  const memberChannelIds = (memberships ?? []).map((m) => m.channel_id as string);
-
-  const [{ data: channels, error: channelsError }, { data: shareRows }] = await Promise.all([
+  // Everything else at once (2026-10-12: these ran one after another --
+  // eight round trips, 1.5-1.8 s for the album list at every start).
+  const [
+    { data: memberships },
+    { data: channels, error: channelsError },
+    { data: shareRows },
+    { data: mediaRows },
+    { data: hideRows },
+    { data: readRows },
+  ] = await Promise.all([
+    // Only for the "nur ansehen" label -- posting rights are membership.
+    supabaseAdmin.from("channel_members").select("channel_id").eq("user_id", userId),
     // The explicit `!channels_space_id_fkey` hint is required: PostgREST
     // can also reach `spaces` from `channels` indirectly through
     // `channel_shares` (which has FKs to both), so a bare `spaces(...)`
-    // embed is ambiguous (PGRST201: "more than one relationship was
-    // found") the moment PostgREST's schema cache has picked up
-    // channel_shares' FKs -- independent of whether any row actually
-    // exists in it. This is why it wasn't caught during Phase 1-3
-    // testing (done shortly after the schema reset, likely before
-    // PostgREST's cache had settled) but broke on the very first real
-    // walkthrough afterward.
+    // embed is ambiguous (PGRST201).
     supabaseAdmin.from("channels").select("id, name, space_id, cover_path, cover_media_id, spaces!channels_space_id_fkey(id, name, avatar_path), created_at").in("id", channelIds),
     // Every Space this channel is shared into (not just the caller's own)
-    // -- a shared channel shows both households' Space names, the same
-    // reason WhatsApp shows every member of a group, not just the ones
-    // you personally know.
+    // -- a shared channel shows both households' Space names.
     supabaseAdmin.from("channel_shares").select("channel_id, spaces(id, name, deleted_at)").in("channel_id", channelIds),
+    // Cheap fetch across every candidate channel, not paged -- reducing to
+    // "latest per channel_id" below is only correct if this isn't silently
+    // truncated by a default row limit.
+    supabaseAdmin
+      .from("media_items")
+      .select("id, channel_id, created_at, sender_id, media_type, storage_path_thumbnail")
+      .in("channel_id", channelIds)
+      .eq("processing_status", "ready")
+      .order("created_at", { ascending: false })
+      .limit(20000),
+    // Photos the caller hid for themselves don't count, like a WhatsApp
+    // message deleted "for me" no longer shows in the chat list.
+    supabaseAdmin.from("media_item_hides").select("media_item_id").eq("user_id", userId),
+    // Unread counter (migrations/0058): the caller's "last opened" markers.
+    supabaseAdmin.from("album_reads").select("channel_id, last_seen_at").eq("user_id", userId).in("channel_id", channelIds),
   ]);
   if (channelsError) return jsonResponse({ error: "fetch_failed" }, 500);
+  const memberChannelIds = (memberships ?? []).map((m) => m.channel_id as string);
 
   const sharedSpacesByChannel = new Map<string, { id: string; name: string }[]>();
   for (const row of shareRows ?? []) {
@@ -69,31 +103,10 @@ Deno.serve(async (req) => {
     sharedSpacesByChannel.set(channelId, list);
   }
 
-  // Cheap two-column fetch across every candidate channel, not paged --
-  // reducing to "latest per channel_id" client-side (below) is only
-  // correct if this isn't silently truncated by a default row limit.
-  const [{ data: mediaRows }, { data: hideRows }] = await Promise.all([
-    supabaseAdmin
-      .from("media_items")
-      .select("id, channel_id, created_at, sender_id, media_type, storage_path_thumbnail")
-      .in("channel_id", channelIds)
-      .eq("processing_status", "ready")
-      .order("created_at", { ascending: false })
-      .limit(20000),
-    // Photos the caller hid for themselves don't count, like a WhatsApp
-    // message deleted "for me" no longer shows in the chat list.
-    supabaseAdmin.from("media_item_hides").select("media_item_id").eq("user_id", userId),
-  ]);
   const hidden = new Set((hideRows ?? []).map((r) => r.media_item_id as string));
 
-  // Unread counter (migrations/0058): everything newer than the caller's
-  // "last opened" marker, except their own posts. No marker = they never
-  // opened the album since joining, so everything in it is new to them.
-  const { data: readRows } = await supabaseAdmin
-    .from("album_reads")
-    .select("channel_id, last_seen_at")
-    .eq("user_id", userId)
-    .in("channel_id", channelIds);
+  // Unread: everything newer than the caller's marker, except their own
+  // posts. No marker = never opened since joining: everything is new.
   const lastSeen = new Map((readRows ?? []).map((r) => [r.channel_id as string, r.last_seen_at as string]));
   const unreadByChannel = new Map<string, number>();
   for (const row of mediaRows ?? []) {
@@ -145,15 +158,15 @@ Deno.serve(async (req) => {
   }
   const coverPaths = [...coverByChannel.values()].map((c) => c.path);
   const coverUrlByPath = new Map<string, string>();
-  if (coverPaths.length > 0) {
-    const { data: signed } = await supabaseAdmin.storage.from("media-thumbnails").createSignedUrls(coverPaths, 3600);
-    for (const s of signed ?? []) if (s.path && s.signedUrl) coverUrlByPath.set(s.path, s.signedUrl);
-  }
-
-  const senderProfiles = await fetchProfilesByUserId(
-    supabaseAdmin,
-    [...new Set([...lastByChannel.values()].map((l) => l.senderId))],
-  );
+  // Cover links and sender names at once, too.
+  const [signedResult, senderProfiles] = await Promise.all([
+    coverPaths.length > 0
+      ? supabaseAdmin.storage.from("media-thumbnails").createSignedUrls(coverPaths, 3600)
+      : Promise.resolve({ data: [] }),
+    fetchProfilesByUserId(supabaseAdmin, [...new Set([...lastByChannel.values()].map((l) => l.senderId))]),
+  ]);
+  // deno-lint-ignore no-explicit-any
+  for (const s of (signedResult.data ?? []) as any[]) if (s.path && s.signedUrl) coverUrlByPath.set(s.path, s.signedUrl);
 
   const resolved = (channels ?? []).map((c) => {
     // deno-lint-ignore no-explicit-any

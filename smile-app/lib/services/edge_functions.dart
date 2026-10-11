@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
@@ -18,8 +19,10 @@ class EdgeResponse {
 /// raw "FunctionsHttpException(... user_not_found ...)" text on screen
 /// (found in the 2026-10-06 walkthrough). Network failures still throw.
 Future<EdgeResponse> invokeEdge(String name, {Object? body}) async {
+  final watch = Stopwatch()..start();
   try {
     final response = await supabase.functions.invoke(name, body: body);
+    debugPrint('SmilePerf: edge $name took ${watch.elapsedMilliseconds} ms');
     return EdgeResponse(response.data);
   } on FunctionException catch (e) {
     final details = e.details;

@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../services/perf.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -312,10 +313,13 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// cached paint is only ever a brief placeholder until `_load()` replaces
   /// it with fresh data.
   Future<void> _loadFromCacheThenRefresh() async {
+    Perf.start('feed cache');
+    Perf.start('feed network');
     final cached = await MediaCacheService.load(widget.channelId);
     if (cached != null && mounted && _items == null) {
       setState(() => _items = cached);
     }
+    Perf.end('feed cache', '${cached?.length ?? 0} items');
     await _load();
   }
 
@@ -342,6 +346,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       return;
     }
     Offline.reachedServer();
+    Perf.end('feed network', '${items.length} items');
     if (!mounted) return;
 
     if (!_showingHidden) {

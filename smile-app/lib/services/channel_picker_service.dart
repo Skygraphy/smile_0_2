@@ -132,7 +132,15 @@ class ChannelPickerService {
   ///
   /// Kept on the phone after every successful load: offline (2026-10-09)
   /// the last list is returned instead of an error.
-  Future<List<ChannelWithActivity>> listMyChannelsWithActivity() async {
+  Future<List<ChannelWithActivity>> listMyChannelsWithActivity() {
+    // Several screens ask at the same moment (album list, covers, video
+    // prefetch): one request, the same answer for all (2026-10-12).
+    return _inflight ??= _listMyChannelsWithActivity().whenComplete(() => _inflight = null);
+  }
+
+  static Future<List<ChannelWithActivity>>? _inflight;
+
+  Future<List<ChannelWithActivity>> _listMyChannelsWithActivity() async {
     final Map<String, dynamic> data;
     try {
       final response = await invokeEdge('list-my-channels');
