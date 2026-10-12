@@ -1090,6 +1090,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                             ? _items!
                             : _items!.where((item) => !pendingIds.contains(item.id)))
                         .where((item) => !_isGoneHere(item.id))
+                        // Still not ready after an hour: a send that broke
+                        // off -- it never becomes anything (2026-10-12).
+                        .where((item) => item.isReady || DateTime.now().difference(item.createdAt) < const Duration(hours: 1))
                         .toList();
                     if (visibleItems.isEmpty && pendingCount == 0) {
                       return RefreshIndicator(

@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../widgets/friendly_error.dart';
 
 import '../main.dart';
 import 'avatar_upload.dart';
+import 'offline.dart';
 import 'sync_bus.dart';
 
 /// A picture shown before the server has it (decided 2026-10-09): the
@@ -95,13 +97,67 @@ class LocalChanges extends ChangeNotifier {
     try {
       await commit();
     } catch (e) {
-      for (final key in overrides.keys) {
-        if (identical(_values[key], overrides[key])) _values.remove(key);
+      if (Offline.isConnectionError(e)) {
+        // No connection: it stays done here and goes to the server as soon
+        // as there is one again -- no message, like WhatsApp (2026-10-12:
+        // "Für mich löschen" offline said "Ausblenden fehlgeschlagen").
+        unawaited(_retryWhenOnline(overrides, commit, affects, failureText));
+        return false;
       }
-      notifyListeners();
+      _undo(overrides);
       _showFailure(failureText, e);
       return false;
     }
+    await _settle(overrides, affects, warmUp);
+    return true;
+  }
+
+  void _undo(Map<String, Object> overrides) {
+    for (final key in overrides.keys) {
+      if (identical(_values[key], overrides[key])) _values.remove(key);
+    }
+    notifyListeners();
+  }
+
+  /// Tries again whenever the network comes back (and every so often),
+  /// while the app runs; a real refusal by the server takes it back.
+  Future<void> _retryWhenOnline(
+    Map<String, Object> overrides,
+    Future<void> Function() commit,
+    SyncEvent affects,
+    String? failureText,
+  ) async {
+    for (var attempt = 0; attempt < 200; attempt++) {
+      await _networkOrTimeout(Duration(seconds: attempt < 10 ? 10 : 60));
+      // Something newer replaced it here meanwhile: that one counts.
+      if (!overrides.entries.every((e) => identical(_values[e.key], e.value))) return;
+      if (!await Offline.hasNetwork()) continue;
+      try {
+        await commit();
+      } catch (e) {
+        if (Offline.isConnectionError(e)) continue;
+        _undo(overrides);
+        _showFailure(failureText, e);
+        return;
+      }
+      await _settle(overrides, affects, null);
+      return;
+    }
+  }
+
+  static Future<void> _networkOrTimeout(Duration max) async {
+    final back = Completer<void>();
+    StreamSubscription<List<ConnectivityResult>>? sub;
+    try {
+      sub = Connectivity().onConnectivityChanged.listen((r) {
+        if (!r.contains(ConnectivityResult.none) && !back.isCompleted) back.complete();
+      });
+    } catch (_) {}
+    await back.future.timeout(max, onTimeout: () {});
+    await sub?.cancel();
+  }
+
+  Future<void> _settle(Map<String, Object> overrides, SyncEvent affects, Future<void> Function()? warmUp) async {
     if (warmUp != null) {
       try {
         await warmUp().timeout(const Duration(seconds: 15));
@@ -121,7 +177,6 @@ class LocalChanges extends ChangeNotifier {
         }
       });
     }
-    return true;
   }
 
   /// Takes back some overrides of a saved change at once -- the part the

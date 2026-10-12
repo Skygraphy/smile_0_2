@@ -179,8 +179,9 @@ class UploadQueue extends ChangeNotifier {
             : (extension == 'png' ? 'image/png' : 'image/jpeg'),
       };
       if (isVideo) {
-        // The video itself stays where the picker put it until it is
-        // converted (copying a long original would take a while).
+        // From where the picker put it at first; a copy of its own follows
+        // right after (_keepCopy) -- the picker's file may be gone later
+        // (2026-10-12: a waiting video couldn't be played or sent).
         meta['source'] = file.path;
         tile = await MediaService.videoPosterBytes(File(file.path));
         if (tile != null) await File('${dir.path}/tile.jpg').writeAsBytes(tile);
@@ -195,10 +196,27 @@ class UploadQueue extends ChangeNotifier {
       _items.add(item);
       _adding.remove(id);
       notifyListeners();
+      if (isVideo) unawaited(_keepCopy(item, file.path, extension));
       // The first one starts at once -- not only after all were put in.
       unawaited(process());
     }
     unawaited(_scheduleBackground(true));
+  }
+
+  /// A waiting video gets its own copy in the queue, so nothing outside
+  /// can take it away before it is converted.
+  Future<void> _keepCopy(QueuedUpload item, String path, String extension) async {
+    try {
+      final copy = await File(path).copy('${item.dir.path}/original.$extension');
+      if (!_items.contains(item) || item.prepared) {
+        await _tryDelete(copy);
+        return;
+      }
+      item.meta['source'] = copy.path;
+      await _writeMeta(item.dir, item.meta);
+    } catch (e) {
+      debugPrint('SmileQueue: copy failed: $e');
+    }
   }
 
   /// "Nicht senden": only while it waits.
@@ -271,7 +289,11 @@ class UploadQueue extends ChangeNotifier {
           await _ensurePrepared(item, online: online);
         }
         final ready = run.where((i) => _items.contains(i) && i.prepared).toList();
-        if (ready.isEmpty) continue;
+        if (ready.isEmpty) {
+          // In the background a video still to convert waits for the app.
+          if (_inBackground) break;
+          continue;
+        }
         online = await Offline.hasNetwork();
         if (!online) {
           // Everything else can at least be made ready meanwhile.
@@ -326,6 +348,9 @@ class UploadQueue extends ChangeNotifier {
 
   Future<void> _ensurePrepared(QueuedUpload item, {required bool online}) {
     if (item.prepared || !_items.contains(item)) return Future.value();
+    // Videos are converted in the app only -- in the background worker the
+    // conversion never started and the queue hung (2026-10-12).
+    if (_inBackground && item.isVideo) return Future.value();
     // A block body: `() => _preparing.remove(..)` would return this very
     // future, and whenComplete would wait for itself forever (2026-10-12).
     return _preparing[item.id] ??= _prepareOrDrop(item, online: online).whenComplete(() {
@@ -342,7 +367,9 @@ class UploadQueue extends ChangeNotifier {
     try {
       while (true) {
         final me = Supabase.instance.client.auth.currentUser?.id;
-        final next = (_items.where((i) => !i.done && !i.prepared && i.userId == me).toList()
+        final next = (_items
+                .where((i) => !i.done && !i.prepared && i.userId == me && !(_inBackground && i.isVideo))
+                .toList()
               ..sort((a, b) => a.createdAt.compareTo(b.createdAt)))
             .firstOrNull;
         if (next == null) break;
@@ -619,7 +646,18 @@ class UploadQueue extends ChangeNotifier {
       }
       final id = meta['id'] as String;
       onDisk.add(id);
-      if (_adding.contains(id) || _items.any((i) => i.id == id)) continue;
+      if (_adding.contains(id)) continue;
+      final known = _items.where((i) => i.id == id).firstOrNull;
+      if (known != null) {
+        // What the other side did meanwhile counts -- above all a video it
+        // already registered on the server (2026-10-12: the app didn't
+        // know, sent it again, and the half-sent first one hung blurred in
+        // the album).
+        meta.forEach((key, value) {
+          if (value != null) known.meta.putIfAbsent(key, () => value);
+        });
+        continue;
+      }
       Uint8List? tile;
       for (final name in ['display.jpg', 'original', 'tile.jpg']) {
         final file = File('${entry.path}/$name');

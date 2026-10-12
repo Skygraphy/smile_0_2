@@ -690,8 +690,10 @@ class MediaService {
   /// placeholder while it uploads. Best-effort: null if it can't be read.
   static Future<Uint8List?> videoPosterBytes(File file) async {
     try {
+      // Never waits forever (2026-10-12).
       return await FcNativeVideoThumbnail()
-          .saveThumbnailToBytes(srcFile: file.path, width: 1280, height: 1280, format: 'jpeg', quality: 85);
+          .saveThumbnailToBytes(srcFile: file.path, width: 1280, height: 1280, format: 'jpeg', quality: 85)
+          .timeout(const Duration(seconds: 20));
     } catch (_) {
       return null;
     }

@@ -113,13 +113,19 @@ class MediaShrink {
       // The person's "Videos senden" setting (2026-10-12).
       await VideoQuality.load();
       final quality = VideoQuality.current.value;
-      final result = await _videoChannel.invokeMapMethod<String, Object?>(
-        'compress',
-        {'input': original.path, 'output': output, 'shortSide': quality.shortSide,
-          'bitrate': quality.bitrate,
-          'audioBitrate': quality.audioBitrate,
-        },
-      );
+      final result = await _videoChannel
+          .invokeMapMethod<String, Object?>(
+            'compress',
+            {
+              'input': original.path,
+              'output': output,
+              'shortSide': quality.shortSide,
+              'bitrate': quality.bitrate,
+              'audioBitrate': quality.audioBitrate,
+            },
+            // Never waits forever (2026-10-12): stuck, the original goes up.
+          )
+          .timeout(const Duration(minutes: 10));
       final path = result?['path'] as String?;
       if (path == null) return null;
       final file = File(path);
