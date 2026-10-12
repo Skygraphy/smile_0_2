@@ -18,6 +18,7 @@ import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.ProgressHolder
 import androidx.media3.transformer.Transformer
+import androidx.media3.transformer.AudioEncoderSettings
 import androidx.media3.transformer.VideoEncoderSettings
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -82,14 +83,21 @@ class VideoCompressor(private val context: Context, private val channel: MethodC
             result.error("bad_arguments", "input and output are required", null)
             return
         }
-        // The person's choice "Videos senden" (2026-10-12): Hoch 720p 1.8
-        // Mbit/s, Mittel 720p 1.1 Mbit/s, Niedrig 480p 0.6 Mbit/s.
+        // The person's choice "Videos senden" (2026-10-12, video_quality.dart).
         val shortSide = call.argument<Int>("shortSide") ?: TARGET_SHORT_SIDE
         val bitrate = call.argument<Int>("bitrate") ?: 1_800_000
-        compress(input, output, shortSide, bitrate, result)
+        val audioBitrate = call.argument<Int>("audioBitrate") ?: 128_000
+        compress(input, output, shortSide, bitrate, audioBitrate, result)
     }
 
-    private fun compress(input: String, output: String, targetShortSide: Int, bitrate: Int, result: MethodChannel.Result) {
+    private fun compress(
+        input: String,
+        output: String,
+        targetShortSide: Int,
+        bitrate: Int,
+        audioBitrate: Int,
+        result: MethodChannel.Result,
+    ) {
         var finished = false
         lateinit var transformer: Transformer
         val progressHolder = ProgressHolder()
@@ -110,6 +118,9 @@ class VideoCompressor(private val context: Context, private val channel: MethodC
                 DefaultEncoderFactory.Builder(context)
                     .setRequestedVideoEncoderSettings(
                         VideoEncoderSettings.Builder().setBitrate(bitrate).build()
+                    )
+                    .setRequestedAudioEncoderSettings(
+                        AudioEncoderSettings.Builder().setBitrate(audioBitrate).build()
                     )
                     .build()
             )

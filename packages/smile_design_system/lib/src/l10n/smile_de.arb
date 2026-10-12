@@ -838,7 +838,7 @@
   "qualityHigh": "Hoch",
   "qualityMedium": "Mittel",
   "qualityLow": "Niedrig",
-  "qualityHighHint": "Sehr scharf, rund 18 MB pro Minute Video.",
-  "qualityMediumHint": "Scharf, rund 12 MB pro Minute Video. Wie bei WhatsApp.",
-  "qualityLowHint": "Für kleine Bildschirme, rund 7 MB pro Minute Video. Am schnellsten gesendet."
+  "qualityHighHint": "720p, sehr scharf – rund 24 MB pro Minute Video.",
+  "qualityMediumHint": "Genau wie WhatsApp (480p) – rund 12 MB pro Minute Video.",
+  "qualityLowHint": "360p, für kleine Bildschirme – rund 6 MB pro Minute Video. Am schnellsten gesendet."
 }

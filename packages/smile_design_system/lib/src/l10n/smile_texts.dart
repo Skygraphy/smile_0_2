@@ -2227,19 +2227,19 @@ abstract class SmileTexts {
   /// No description provided for @qualityHighHint.
   ///
   /// In de, this message translates to:
-  /// **'Sehr scharf, rund 18 MB pro Minute Video.'**
+  /// **'720p, sehr scharf – rund 24 MB pro Minute Video.'**
   String get qualityHighHint;
 
   /// No description provided for @qualityMediumHint.
   ///
   /// In de, this message translates to:
-  /// **'Scharf, rund 12 MB pro Minute Video. Wie bei WhatsApp.'**
+  /// **'Genau wie WhatsApp (480p) – rund 12 MB pro Minute Video.'**
   String get qualityMediumHint;
 
   /// No description provided for @qualityLowHint.
   ///
   /// In de, this message translates to:
-  /// **'Für kleine Bildschirme, rund 7 MB pro Minute Video. Am schnellsten gesendet.'**
+  /// **'360p, für kleine Bildschirme – rund 6 MB pro Minute Video. Am schnellsten gesendet.'**
   String get qualityLowHint;
 }
 
