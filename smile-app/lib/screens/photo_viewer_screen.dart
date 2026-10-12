@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
@@ -10,9 +11,14 @@ import '../services/media_service.dart';
 /// at once while the full one loads; offline it stays when the full one
 /// was never loaded.
 class PhotoViewerScreen extends StatefulWidget {
-  const PhotoViewerScreen({super.key, required this.item});
+  const PhotoViewerScreen({super.key, required MediaItem this.item}) : localBytes = null;
 
-  final MediaItem item;
+  /// A photo still on its way to the server (2026-10-12): straight from
+  /// the phone.
+  const PhotoViewerScreen.local({super.key, required Uint8List this.localBytes}) : item = null;
+
+  final MediaItem? item;
+  final Uint8List? localBytes;
 
   @override
   State<PhotoViewerScreen> createState() => _PhotoViewerScreenState();
@@ -42,7 +48,9 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final item = widget.item;
+    final local = widget.localBytes;
+    if (local != null) return _viewer(context, Image.memory(local, fit: BoxFit.contain));
+    final item = widget.item!;
     final thumbnail = item.thumbnailUrl == null
         ? null
         : CachedNetworkImage(
@@ -53,7 +61,25 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
             errorWidget: (_, _, _) => const SizedBox.shrink(),
           );
     final full = item.displayUrl ?? item.thumbnailUrl;
-    TapDownDetails? lastTap;
+    return _viewer(
+      context,
+      full == null
+          ? (thumbnail ?? const SizedBox.shrink())
+          : CachedNetworkImage(
+              imageUrl: full,
+              // Stable per photo -- the signed URL changes every time.
+              cacheKey: '${item.id}_display',
+              fit: BoxFit.contain,
+              fadeInDuration: Duration.zero,
+              placeholder: (_, _) => thumbnail ?? const Center(child: CircularProgressIndicator()),
+              errorWidget: (_, _, _) => thumbnail ?? const SizedBox.shrink(),
+            ),
+    );
+  }
+
+  TapDownDetails? _lastTap;
+
+  Widget _viewer(BuildContext context, Widget image) {
     return Scaffold(
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
@@ -63,27 +89,15 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
         leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).pop()),
       ),
       body: GestureDetector(
-        onDoubleTapDown: (d) => lastTap = d,
+        onDoubleTapDown: (d) => _lastTap = d,
         onDoubleTap: () {
-          if (lastTap != null) _toggleZoom(lastTap!);
+          if (_lastTap != null) _toggleZoom(_lastTap!);
         },
         child: InteractiveViewer(
           transformationController: _zoom,
           minScale: 1,
           maxScale: 5,
-          child: SizedBox.expand(
-            child: full == null
-                ? (thumbnail ?? const SizedBox.shrink())
-                : CachedNetworkImage(
-                    imageUrl: full,
-                    // Stable per photo -- the signed URL changes every time.
-                    cacheKey: '${item.id}_display',
-                    fit: BoxFit.contain,
-                    fadeInDuration: Duration.zero,
-                    placeholder: (_, _) => thumbnail ?? const Center(child: CircularProgressIndicator()),
-                    errorWidget: (_, _, _) => thumbnail ?? const SizedBox.shrink(),
-                  ),
-          ),
+          child: SizedBox.expand(child: image),
         ),
       ),
     );

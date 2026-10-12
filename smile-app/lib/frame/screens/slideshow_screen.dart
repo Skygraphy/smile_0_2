@@ -353,16 +353,22 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       final entry = _entries[_currentIndex % _entries.length];
       body = GestureDetector(
         onTapDown: (details) => _handleTap(details, MediaQuery.of(context).size.width),
-        child: SizedBox.expand(
-          child: entry.isVideo
-              ? VideoSlide(
-                  key: ValueKey('${entry.fileName}#$_slideNumber'),
-                  entry: entry,
-                  cacheStore: widget.cacheStore,
-                  onFinished: _onVideoFinished,
-                  withSound: _settings?.videoSound ?? true,
-                )
-              : _photo(entry, BoxFit.contain),
+        // A soft cross-fade between all slides (2026-10-12: every change was
+        // a hard cut -- most noticeable when a video started over).
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 600),
+          child: SizedBox.expand(
+            key: ValueKey(_slideNumber),
+            child: entry.isVideo
+                ? VideoSlide(
+                    key: ValueKey('${entry.fileName}#$_slideNumber'),
+                    entry: entry,
+                    cacheStore: widget.cacheStore,
+                    onFinished: _onVideoFinished,
+                    withSound: _settings?.videoSound ?? true,
+                  )
+                : _photo(entry, BoxFit.contain),
+          ),
         ),
       );
     }

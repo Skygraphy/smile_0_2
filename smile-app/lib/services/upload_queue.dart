@@ -34,6 +34,9 @@ class QueuedUpload {
   double? get aspectRatio => (meta['aspect_ratio'] as num?)?.toDouble();
   bool get prepared => meta['prepared'] == true;
 
+  /// The video on the phone (converted copy, else the picked original).
+  String? get localVideoPath => meta['video_path'] as String? ?? meta['source'] as String?;
+
   /// Its id on the server once known: a photo brings its own, a video gets
   /// one from create-upload.
   String? get mediaItemId => meta['server_media_id'] as String? ?? (isVideo || meta['via_server'] == true ? null : id);

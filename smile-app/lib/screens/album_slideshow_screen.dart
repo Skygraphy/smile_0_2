@@ -54,7 +54,10 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
     super.dispose();
   }
 
-  MediaItem get _current => widget.items[_index];
+  /// Endless: page [_index] shows item _index % length -- from the last
+  /// one it simply goes on to the first, as softly as everywhere else
+  /// (2026-10-12: the jump back to the start was abrupt).
+  MediaItem get _current => widget.items[_index % widget.items.length];
 
   /// Photos move on by time; a video moves on when it has ended.
   void _schedule() {
@@ -65,12 +68,7 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
 
   void _advance() {
     if (!mounted || widget.items.length < 2) return;
-    final next = (_index + 1) % widget.items.length;
-    if (next == 0) {
-      _pages.jumpToPage(0);
-    } else {
-      unawaited(_pages.nextPage(duration: const Duration(milliseconds: 600), curve: Curves.easeInOut));
-    }
+    unawaited(_pages.nextPage(duration: const Duration(milliseconds: 600), curve: Curves.easeInOut));
   }
 
   void _toggleChrome() {
@@ -91,16 +89,17 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
           children: [
             PageView.builder(
               controller: _pages,
-              itemCount: items.length,
+              // No itemCount: endless (see _current).
               onPageChanged: (i) {
                 setState(() => _index = i);
                 _schedule();
               },
               itemBuilder: (context, i) {
-                final item = items[i];
+                if (items.isEmpty) return const SizedBox.shrink();
+                final item = items[i % items.length];
                 if (item.isVideo) {
                   return _VideoSlide(
-                    key: ValueKey(item.id),
+                    key: ValueKey('${item.id}#$i'),
                     item: item,
                     active: i == _index,
                     onEnded: () {

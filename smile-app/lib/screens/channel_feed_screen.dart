@@ -159,6 +159,21 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     }).catchError((Object _) {}));
   }
 
+  /// A photo/video still on its way: full screen straight from the phone.
+  Future<void> _openQueued(QueuedUpload item) async {
+    final Widget screen;
+    if (item.isVideo) {
+      final path = item.localVideoPath;
+      if (path == null) return;
+      screen = VideoPlayerScreen(mediaId: item.mediaItemId ?? item.id, url: null, localPath: path);
+    } else {
+      final bytes = item.tileBytes;
+      if (bytes == null) return;
+      screen = PhotoViewerScreen.local(localBytes: bytes);
+    }
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+  }
+
   /// Newest first, only what is ready (and not just removed here).
   Future<void> _playSlideshow() async {
     final items = (_items ?? const <MediaItem>[]).where((i) => i.isReady && !_isGoneHere(i.id)).toList()
@@ -817,8 +832,11 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           showTail: isFirstInRun,
           aspectRatio: pending.aspectRatio,
           time: pending.createdAt,
-          // No connection: a clock, slightly darker, and "Nicht senden".
-          waiting: pending.waiting,
+          // A clock until it is on the server (2026-10-12, like WhatsApp);
+          // without a connection also slightly darker, with "Nicht senden".
+          waiting: !pending.done,
+          // Opens at once from the phone -- before it is on the server, too.
+          onTap: () => _openQueued(pending),
           onCancelSend: pending.waiting ? () => unawaited(UploadQueue.instance.cancel(pending)) : null,
           photo: pending.waiting
               ? Stack(fit: StackFit.passthrough, children: [

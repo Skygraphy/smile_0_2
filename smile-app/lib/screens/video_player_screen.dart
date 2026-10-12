@@ -13,10 +13,13 @@ import '../services/video_cache.dart';
 /// from its signed display URL (a 720p H.264 MP4), so even an hour-long
 /// video starts at once, and is downloaded meanwhile for next time.
 class VideoPlayerScreen extends StatefulWidget {
-  const VideoPlayerScreen({super.key, required this.mediaId, required this.url});
+  const VideoPlayerScreen({super.key, required this.mediaId, required this.url, this.localPath});
 
   final String mediaId;
   final String? url;
+
+  /// A video still on its way to the server (2026-10-12): from the phone.
+  final String? localPath;
 
   @override
   State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
@@ -33,7 +36,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   Future<void> _start() async {
-    final local = await VideoCache.cached(widget.mediaId);
+    final ownFile = widget.localPath;
+    final local = ownFile != null && File(ownFile).existsSync() ? File(ownFile) : await VideoCache.cached(widget.mediaId);
     final url = widget.url;
     if (local == null && url == null) {
       if (mounted) setState(() => _error = SmileTexts.of(context).videoNotOnPhone);
