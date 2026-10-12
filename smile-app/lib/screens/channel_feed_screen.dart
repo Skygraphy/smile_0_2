@@ -62,7 +62,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// first -- shown at once, the server's copy takes over once it's there.
   List<QueuedUpload> get _pendingUploads => UploadQueue.instance.itemsFor(widget.channelId);
   StreamSubscription<QueuedUpload>? _queueFailures;
-  /// Each one ticks once, when its ring goes (or it is sent).
+  /// Each one ticks once, the moment it appears in the album.
   final Set<String> _ticked = {};
   String? _errorMessage;
   String? _statusMessage;
@@ -109,7 +109,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     _loadFrames();
     unawaited(_loadMyStatus());
     _scrollController.addListener(_updateStickyDate);
-    _ticked.addAll(_pendingUploads.where((p) => p.sure).map((p) => p.id));
+    // Already there (e.g. waiting from before): no tick for those.
+    _ticked.addAll(_pendingUploads.map((p) => p.id));
     UploadQueue.instance.addListener(_onQueue);
     _queueFailures = UploadQueue.instance.failures.listen((item) {
       if (mounted && item.channelId == widget.channelId) {
@@ -122,7 +123,9 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     if (!mounted) return;
     setState(() {});
     for (final item in _pendingUploads) {
-      if (item.sure && _ticked.add(item.id)) _tickNow();
+      // The tick comes the moment it appears in the album (decided
+      // 2026-10-12), one per photo/video -- not when its ring goes.
+      if (_ticked.add(item.id)) _tickNow();
     }
     if (_pendingUploads.any((p) => p.done)) unawaited(_handOver());
   }
@@ -465,8 +468,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     });
   }
 
-  /// The tick of a sent photo/video, in the very frame its ring goes --
-  /// like WhatsApp (2026-10-11: the queued ticks above lagged behind).
+  /// The tick of a sent photo/video, in the very frame it appears in the
+  /// album (2026-10-12; before: when its ring went).
   /// The first one at once, each further one at least 150 ms after the
   /// previous, so they never overlap (decided 2026-10-11).
   DateTime _nextTickAt = DateTime(0);
