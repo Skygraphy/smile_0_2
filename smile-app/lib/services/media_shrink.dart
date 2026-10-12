@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'video_quality.dart';
+
 /// A video converted on the phone, with what the server would otherwise
 /// have measured itself.
 class ShrunkVideo {
@@ -108,9 +110,12 @@ class MediaShrink {
       if (call.method == 'progress') onProgress?.call(call.arguments as int);
     });
     try {
+      // The person's "Videos senden" setting (2026-10-12).
+      await VideoQuality.load();
+      final quality = VideoQuality.current.value;
       final result = await _videoChannel.invokeMapMethod<String, Object?>(
         'compress',
-        {'input': original.path, 'output': output},
+        {'input': original.path, 'output': output, 'shortSide': quality.shortSide, 'bitrate': quality.bitrate},
       );
       final path = result?['path'] as String?;
       if (path == null) return null;

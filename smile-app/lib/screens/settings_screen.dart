@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,6 +15,7 @@ import '../services/sync_bus.dart';
 import '../widgets/avatar_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../widgets/friendly_error.dart';
+import '../services/video_quality.dart';
 import '../services/upload_queue.dart';
 import '../widgets/top_bar_actions.dart';
 import 'avatar_viewer_screen.dart';
@@ -44,6 +47,8 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
   void initState() {
     super.initState();
     _load();
+    // The stored "Videos senden" choice.
+    unawaited(VideoQuality.load());
   }
 
   @override
@@ -274,6 +279,42 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                     child: Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(color: scheme.error)),
                   ),
                 const SizedBox(height: SmileSpacing.l),
+                // "Videos senden" (2026-10-12): how much videos are shrunk.
+                SmileInfoSection(
+                  title: t.sendVideos,
+                  children: [
+                    ValueListenableBuilder<VideoQuality>(
+                      valueListenable: VideoQuality.current,
+                      builder: (context, quality, _) => Padding(
+                        padding: const EdgeInsets.fromLTRB(SmileSpacing.l, 0, SmileSpacing.l, SmileSpacing.m),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SegmentedButton<VideoQuality>(
+                              showSelectedIcon: false,
+                              segments: [
+                                ButtonSegment(value: VideoQuality.high, label: Text(t.qualityHigh)),
+                                ButtonSegment(value: VideoQuality.medium, label: Text(t.qualityMedium)),
+                                ButtonSegment(value: VideoQuality.low, label: Text(t.qualityLow)),
+                              ],
+                              selected: {quality},
+                              onSelectionChanged: (chosen) => VideoQuality.choose(chosen.first),
+                            ),
+                            const SizedBox(height: SmileSpacing.s),
+                            Text(
+                              switch (quality) {
+                                VideoQuality.high => t.qualityHighHint,
+                                VideoQuality.medium => t.qualityMediumHint,
+                                VideoQuality.low => t.qualityLowHint,
+                              },
+                              style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 SmileInfoSection(
                   title: t.account,
                   children: [

@@ -2199,6 +2199,48 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Ein anderes Album wählst du in der Smile-App unter Frames – oder hier unten rechts.'**
   String get frameAlbumEmptyHint;
+
+  /// No description provided for @sendVideos.
+  ///
+  /// In de, this message translates to:
+  /// **'Videos senden'**
+  String get sendVideos;
+
+  /// No description provided for @qualityHigh.
+  ///
+  /// In de, this message translates to:
+  /// **'Hoch'**
+  String get qualityHigh;
+
+  /// No description provided for @qualityMedium.
+  ///
+  /// In de, this message translates to:
+  /// **'Mittel'**
+  String get qualityMedium;
+
+  /// No description provided for @qualityLow.
+  ///
+  /// In de, this message translates to:
+  /// **'Niedrig'**
+  String get qualityLow;
+
+  /// No description provided for @qualityHighHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Sehr scharf, rund 17 MB pro Minute Video.'**
+  String get qualityHighHint;
+
+  /// No description provided for @qualityMediumHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Scharf, rund 10 MB pro Minute Video. Wie bei WhatsApp.'**
+  String get qualityMediumHint;
+
+  /// No description provided for @qualityLowHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Für kleine Bildschirme, rund 5 MB pro Minute Video. Am schnellsten gesendet.'**
+  String get qualityLowHint;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

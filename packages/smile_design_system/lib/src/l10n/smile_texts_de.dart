@@ -1311,4 +1311,27 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get frameAlbumEmptyHint =>
       'Ein anderes Album wählst du in der Smile-App unter Frames – oder hier unten rechts.';
+
+  @override
+  String get sendVideos => 'Videos senden';
+
+  @override
+  String get qualityHigh => 'Hoch';
+
+  @override
+  String get qualityMedium => 'Mittel';
+
+  @override
+  String get qualityLow => 'Niedrig';
+
+  @override
+  String get qualityHighHint => 'Sehr scharf, rund 17 MB pro Minute Video.';
+
+  @override
+  String get qualityMediumHint =>
+      'Scharf, rund 10 MB pro Minute Video. Wie bei WhatsApp.';
+
+  @override
+  String get qualityLowHint =>
+      'Für kleine Bildschirme, rund 5 MB pro Minute Video. Am schnellsten gesendet.';
 }

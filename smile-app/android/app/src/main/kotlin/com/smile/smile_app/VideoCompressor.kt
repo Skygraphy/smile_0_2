@@ -82,10 +82,14 @@ class VideoCompressor(private val context: Context, private val channel: MethodC
             result.error("bad_arguments", "input and output are required", null)
             return
         }
-        compress(input, output, result)
+        // The person's choice "Videos senden" (2026-10-12): Hoch 720p 1.8
+        // Mbit/s, Mittel 720p 1.1 Mbit/s, Niedrig 480p 0.6 Mbit/s.
+        val shortSide = call.argument<Int>("shortSide") ?: TARGET_SHORT_SIDE
+        val bitrate = call.argument<Int>("bitrate") ?: 1_800_000
+        compress(input, output, shortSide, bitrate, result)
     }
 
-    private fun compress(input: String, output: String, result: MethodChannel.Result) {
+    private fun compress(input: String, output: String, targetShortSide: Int, bitrate: Int, result: MethodChannel.Result) {
         var finished = false
         lateinit var transformer: Transformer
         val progressHolder = ProgressHolder()
@@ -105,7 +109,7 @@ class VideoCompressor(private val context: Context, private val channel: MethodC
             .setEncoderFactory(
                 DefaultEncoderFactory.Builder(context)
                     .setRequestedVideoEncoderSettings(
-                        VideoEncoderSettings.Builder().setBitrate(1_800_000).build()
+                        VideoEncoderSettings.Builder().setBitrate(bitrate).build()
                     )
                     .build()
             )
@@ -146,8 +150,8 @@ class VideoCompressor(private val context: Context, private val channel: MethodC
         // letterboxed square (found 2026-10-09). Smaller videos stay as
         // they are -- never scaled up.
         val shortSide = shortSideOf(input)
-        val effects = if (shortSide != null && shortSide > TARGET_SHORT_SIDE) {
-            Effects(listOf(), listOf(Presentation.createForShortSide(TARGET_SHORT_SIDE)))
+        val effects = if (shortSide != null && shortSide > targetShortSide) {
+            Effects(listOf(), listOf(Presentation.createForShortSide(targetShortSide)))
         } else {
             Effects.EMPTY
         }

@@ -833,5 +833,12 @@
       "album": {"type": "String"}
     }
   },
-  "frameAlbumEmptyHint": "Ein anderes Album wählst du in der Smile-App unter Frames – oder hier unten rechts."
+  "frameAlbumEmptyHint": "Ein anderes Album wählst du in der Smile-App unter Frames – oder hier unten rechts.",
+  "sendVideos": "Videos senden",
+  "qualityHigh": "Hoch",
+  "qualityMedium": "Mittel",
+  "qualityLow": "Niedrig",
+  "qualityHighHint": "Sehr scharf, rund 17 MB pro Minute Video.",
+  "qualityMediumHint": "Scharf, rund 10 MB pro Minute Video. Wie bei WhatsApp.",
+  "qualityLowHint": "Für kleine Bildschirme, rund 5 MB pro Minute Video. Am schnellsten gesendet."
 }
