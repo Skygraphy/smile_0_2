@@ -140,6 +140,22 @@ class ChannelPickerService {
 
   static Future<List<ChannelWithActivity>>? _inflight;
 
+  /// The last list from the server and when it came (for the album covers
+  /// every screen shows -- 2026-10-12: nine requests while clicking through).
+  static List<ChannelWithActivity>? _recent;
+  static DateTime? _recentAt;
+  static String? _recentUser;
+
+  /// A list at most [maxAge] old, else a fresh one.
+  Future<List<ChannelWithActivity>> recentMyChannels({Duration maxAge = const Duration(seconds: 30)}) async {
+    final recent = _recent;
+    final at = _recentAt;
+    if (recent != null && at != null && _recentUser == supabase.auth.currentUser?.id && DateTime.now().difference(at) < maxAge) {
+      return recent;
+    }
+    return listMyChannelsWithActivity();
+  }
+
   Future<List<ChannelWithActivity>> _listMyChannelsWithActivity() async {
     final Map<String, dynamic> data;
     try {
@@ -156,7 +172,11 @@ class ChannelPickerService {
     if (data['error'] != null) throw ChannelPickerException(data['error'] as String);
     final channels = (data['channels'] as List).cast<Map<String, dynamic>>();
     unawaited(Offline.write(_cacheKey(), jsonEncode(channels)));
-    return channels.map(ChannelWithActivity.fromJson).toList();
+    final list = channels.map(ChannelWithActivity.fromJson).toList();
+    _recent = list;
+    _recentAt = DateTime.now();
+    _recentUser = supabase.auth.currentUser?.id;
+    return list;
   }
 
   /// The list as last loaded (null: never loaded on this phone).

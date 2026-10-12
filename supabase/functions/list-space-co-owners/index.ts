@@ -3,6 +3,7 @@
 // policy anywhere exposes profiles across users (see _shared/profiles.ts).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { guardedResponder, userIdFromToken, verifyUser } from "../_shared/fast-auth.ts";
 import { fetchProfilesByUserId } from "../_shared/profiles.ts";
 import { isSpaceOwnerOrCoOwner, isStaff as checkStaff } from "../_shared/space-access.ts";
 
@@ -23,31 +24,28 @@ Deno.serve(async (req) => {
   const supabaseAsUser = createClient(supabaseUrl, serviceRoleKey, {
     global: { headers: { Authorization: authHeader } },
   });
-  const { data: userData, error: userError } = await supabaseAsUser.auth.getUser();
-  if (userError || !userData.user) return jsonResponse({ error: "invalid_session" }, 401);
-  const userId = userData.user.id;
+  // Session check and work at once (_shared/fast-auth.ts, 2026-10-12).
+  const claimedUserId = userIdFromToken(authHeader);
+  if (!claimedUserId) return jsonResponse({ error: "invalid_session" }, 401);
+  const respond = guardedResponder(verifyUser(supabaseAsUser, claimedUserId), jsonResponse);
+  const userId = claimedUserId;
 
   let body: RequestBody;
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: "invalid_json" }, 400);
+    return await respond({ error: "invalid_json" }, 400);
   }
-  if (!body.space_id) return jsonResponse({ error: "space_id_required" }, 400);
+  if (!body.space_id) return await respond({ error: "space_id_required" }, 400);
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-  const isStaff = await checkStaff(supabaseAdmin, userId);
-
-  const { data: space } = await supabaseAdmin.from("spaces").select("owner_id").eq("id", body.space_id).maybeSingle();
-  if (!space) return jsonResponse({ error: "space_not_found" }, 404);
-  if (!isStaff && !(await isSpaceOwnerOrCoOwner(supabaseAdmin, body.space_id, userId))) {
-    return jsonResponse({ error: "not_space_owner" }, 403);
-  }
-
-  const isCallerFounder = space.owner_id === userId;
-
-  const [{ data: coOwnerRows, error: fetchError }, { data: pendingInviteRows }] = await Promise.all([
+  // Rights and data at once (2026-10-12); nothing is answered before the
+  // rights are checked.
+  const [isStaff, { data: space }, manages, { data: coOwnerRows, error: fetchError }, { data: pendingInviteRows }] = await Promise.all([
+    checkStaff(supabaseAdmin, userId),
+    supabaseAdmin.from("spaces").select("owner_id").eq("id", body.space_id).maybeSingle(),
+    isSpaceOwnerOrCoOwner(supabaseAdmin, body.space_id, userId),
     supabaseAdmin.from("space_co_owners").select("user_id, created_at").eq("space_id", body.space_id).order("created_at"),
     // Only meaningful to the founder (who invited whom) -- fetched
     // regardless so a co-owner's response just comes back empty, rather
@@ -59,7 +57,11 @@ Deno.serve(async (req) => {
       .eq("status", "pending")
       .order("requested_at"),
   ]);
-  if (fetchError) return jsonResponse({ error: "fetch_failed" }, 500);
+  if (!space) return await respond({ error: "space_not_found" }, 404);
+  if (!isStaff && !manages) return await respond({ error: "not_space_owner" }, 403);
+  if (fetchError) return await respond({ error: "fetch_failed" }, 500);
+
+  const isCallerFounder = space.owner_id === userId;
 
   const profilesByUserId = await fetchProfilesByUserId(supabaseAdmin, [
     space.owner_id as string,
@@ -90,7 +92,7 @@ Deno.serve(async (req) => {
       })
     : [];
 
-  return jsonResponse({
+  return await respond({
     founder_user_id: space.owner_id,
     founder_display_name: founderProfile?.display_name ?? null,
     founder_avatar_url: founderProfile?.avatar_url ?? null,

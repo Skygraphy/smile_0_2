@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../services/offline_http_client.dart';
 import '../widgets/friendly_error.dart';
 
 import '../services/frame_service.dart';
@@ -48,12 +49,19 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
   @override
   void initState() {
     super.initState();
-    _load();
+    unawaited(_loadFromPhoneThenServer());
   }
 
   @override
   Future<void> onSync() async {
     if (await closeIfGone(context, table: 'frames', id: widget.frame.id)) return;
+    await _load();
+  }
+
+  /// What it showed last, at once from the phone -- then from the server
+  /// (2026-10-12: every info page opened with a spinner first).
+  Future<void> _loadFromPhoneThenServer() async {
+    await OfflineCachingClient.fromPhone(_load);
     await _load();
   }
 
@@ -73,6 +81,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
         _errorMessage = null;
       });
     } catch (e) {
+      if (CacheMissException.isIn(e)) return;
       if (!mounted) return;
       setState(() {
         _assignments ??= const [];

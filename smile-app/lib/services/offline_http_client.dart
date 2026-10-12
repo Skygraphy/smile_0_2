@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -34,11 +35,35 @@ class OfflineCachingClient extends http.BaseClient {
     return false;
   }
 
+  static const _phoneOnly = #smilePhoneOnly;
+
+  /// Runs [load] answered only from the phone (2026-10-12): a screen shows
+  /// what it showed last within milliseconds, then loads from the server
+  /// as usual. A request the phone has no answer for -- and any write --
+  /// throws [CacheMissException] here; screens ignore that.
+  static Future<T> fromPhone<T>(Future<T> Function() load) =>
+      runZoned(load, zoneValues: {_phoneOnly: true});
+
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    if (!isReading(request)) return _inner.send(request);
+    final phoneOnly = Zone.current[_phoneOnly] == true;
+    if (!isReading(request)) {
+      if (phoneOnly) throw const CacheMissException();
+      return _inner.send(request);
+    }
     final body = request is http.Request ? request.body : '';
     final key = _key('${currentUserId()}|${request.method}|${request.url}|$body');
+    if (phoneOnly) {
+      final cached = await _load(key);
+      if (cached == null) throw const CacheMissException();
+      return http.StreamedResponse(
+        Stream.value(cached.bytes),
+        cached.status,
+        contentLength: cached.bytes.length,
+        request: request,
+        headers: cached.headers,
+      );
+    }
     try {
       final response = await _inner.send(request);
       final bytes = await response.stream.toBytes();
@@ -112,4 +137,16 @@ class OfflineCachingClient extends http.BaseClient {
 
   @override
   void close() => _inner.close();
+}
+
+/// No answer on the phone for a "from the phone" load (see
+/// OfflineCachingClient.fromPhone) -- never shown to anyone.
+class CacheMissException implements Exception {
+  const CacheMissException();
+
+  /// Also when a library wrapped it into its own exception.
+  static bool isIn(Object error) => error is CacheMissException || '$error'.contains('CacheMissException');
+
+  @override
+  String toString() => 'CacheMissException';
 }

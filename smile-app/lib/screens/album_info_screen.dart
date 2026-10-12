@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../services/offline_http_client.dart';
 import '../widgets/friendly_error.dart';
 
 import '../main.dart';
@@ -68,12 +69,19 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   @override
   void initState() {
     super.initState();
-    _load();
+    unawaited(_loadFromPhoneThenServer());
   }
 
   @override
   Future<void> onSync() async {
     if (await closeIfGone(context, table: 'channels', id: widget.channelId)) return;
+    await _load();
+  }
+
+  /// What it showed last, at once from the phone -- then from the server
+  /// (2026-10-12: every info page opened with a spinner first).
+  Future<void> _loadFromPhoneThenServer() async {
+    await OfflineCachingClient.fromPhone(_load);
     await _load();
   }
 
@@ -107,6 +115,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         _errorMessage = null;
       });
     } catch (e) {
+      if (CacheMissException.isIn(e)) return;
       if (!mounted) return;
       setState(() => _errorMessage = SmileTexts.of(context).albumInfoLoadError(errorReason(context, e)));
     }

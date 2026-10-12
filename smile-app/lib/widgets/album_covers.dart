@@ -9,7 +9,8 @@ import '../services/local_changes.dart';
 /// simply show initials.
 Future<Map<String, ChannelWithActivity>> loadAlbumCovers([ChannelPickerService? service]) async {
   try {
-    final albums = await (service ?? ChannelPickerService()).listMyChannelsWithActivity();
+    // Shared by every screen, at most 30 s old (2026-10-12).
+    final albums = await (service ?? ChannelPickerService()).recentMyChannels();
     return {for (final a in albums) a.channelId: a};
   } catch (_) {
     return const {};

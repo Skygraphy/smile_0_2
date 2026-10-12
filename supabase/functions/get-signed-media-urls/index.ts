@@ -11,6 +11,7 @@
 // older left.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { guardedResponder, userIdFromToken, verifyUser } from "../_shared/fast-auth.ts";
 import { fetchProfilesByUserId } from "../_shared/profiles.ts";
 import { resolveChannelAccess } from "../_shared/channel-access.ts";
 
@@ -40,16 +41,18 @@ Deno.serve(async (req) => {
   const supabaseAsUser = createClient(supabaseUrl, serviceRoleKey, {
     global: { headers: { Authorization: authHeader } },
   });
-  const { data: userData, error: userError } = await supabaseAsUser.auth.getUser();
-  if (userError || !userData.user) return jsonResponse({ error: "invalid_session" }, 401);
+  // Session check and work at once (_shared/fast-auth.ts, 2026-10-12).
+  const claimedUserId = userIdFromToken(authHeader);
+  if (!claimedUserId) return jsonResponse({ error: "invalid_session" }, 401);
+  const respond = guardedResponder(verifyUser(supabaseAsUser, claimedUserId), jsonResponse);
 
   let body: RequestBody;
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: "invalid_json" }, 400);
+    return await respond({ error: "invalid_json" }, 400);
   }
-  if (!body.channel_id) return jsonResponse({ error: "channel_id_required" }, 400);
+  if (!body.channel_id) return await respond({ error: "channel_id_required" }, 400);
   const limit = Math.min(Math.max(body.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
@@ -59,8 +62,12 @@ Deno.serve(async (req) => {
   // change from the pre-reset schema -- see can_view_channel()'s comment
   // in migrations/0031_architecture_reset.sql), so this checks the same
   // broader "can view" condition RLS itself would, not just channel_members.
-  const access = await resolveChannelAccess(supabaseAdmin, body.channel_id, userData.user.id);
-  if (!access.canView) return jsonResponse({ error: "not_a_channel_member" }, 403);
+  // Access and the caller's hides at once.
+  const [access, { data: hiddenRows }] = await Promise.all([
+    resolveChannelAccess(supabaseAdmin, body.channel_id, claimedUserId),
+    supabaseAdmin.from("media_item_hides").select("media_item_id").eq("user_id", claimedUserId),
+  ]);
+  if (!access.canView) return await respond({ error: "not_a_channel_member" }, 403);
 
   // A "hide" (migrations/0018_media_delete.sql, delete-media's "hide"
   // action) only ever affects the caller's own feed -- fetch it before the
@@ -68,14 +75,10 @@ Deno.serve(async (req) => {
   // to power the Smile-App "Ausgeblendet" view. A "delete" (delete-media's
   // "delete" action) removes the row outright, so it needs no filter here
   // at all -- it's simply gone, in both views.
-  const { data: hiddenRows } = await supabaseAdmin
-    .from("media_item_hides")
-    .select("media_item_id")
-    .eq("user_id", userData.user.id);
   const hiddenIds = (hiddenRows ?? []).map((r) => r.media_item_id);
 
   if (body.only_hidden && hiddenIds.length === 0) {
-    return jsonResponse({ items: [], next_cursor: null });
+    return await respond({ items: [], next_cursor: null });
   }
 
   // No `processing_status = 'ready'` filter here anymore: a not-yet-ready
@@ -99,7 +102,7 @@ Deno.serve(async (req) => {
     : query;
 
   const { data: items, error: itemsError } = await query;
-  if (itemsError) return jsonResponse({ error: "fetch_failed" }, 500);
+  if (itemsError) return await respond({ error: "fetch_failed" }, 500);
 
   // Batch-sign per bucket (one round trip each) instead of one signed-URL
   // call per item -- with N items that was 2N sequential round trips and
@@ -112,13 +115,15 @@ Deno.serve(async (req) => {
     .map((item) => item.storage_path_thumbnail)
     .filter((path): path is string => Boolean(path));
 
-  const [displaySigned, thumbnailSigned] = await Promise.all([
+  // Links and sender names at once.
+  const [displaySigned, thumbnailSigned, profilesBySenderId] = await Promise.all([
     displayPaths.length > 0
       ? supabaseAdmin.storage.from("media-display").createSignedUrls(displayPaths, SIGNED_URL_TTL_SECONDS)
       : Promise.resolve({ data: [] as { path: string | null; signedUrl: string }[] }),
     thumbnailPaths.length > 0
       ? supabaseAdmin.storage.from("media-thumbnails").createSignedUrls(thumbnailPaths, SIGNED_URL_TTL_SECONDS)
       : Promise.resolve({ data: [] as { path: string | null; signedUrl: string }[] }),
+    fetchProfilesByUserId(supabaseAdmin, (items ?? []).map((item) => item.sender_id as string)),
   ]);
 
   const displayUrlByPath = new Map((displaySigned.data ?? []).map((s) => [s.path, s.signedUrl]));
@@ -127,7 +132,6 @@ Deno.serve(async (req) => {
   // Powers the chat-style feed's left/right + avatar+name layout
   // (channel_feed_screen.dart) -- who sent each photo, resolved the same
   // way every other roster already resolves a member's name/avatar.
-  const profilesBySenderId = await fetchProfilesByUserId(supabaseAdmin, (items ?? []).map((item) => item.sender_id as string));
 
   const results = (items ?? []).map((item) => {
     const profile = profilesBySenderId.get(item.sender_id as string);
@@ -150,5 +154,5 @@ Deno.serve(async (req) => {
 
   const nextCursor = results.length === limit ? results[results.length - 1].created_at : null;
 
-  return jsonResponse({ items: results, next_cursor: nextCursor });
+  return await respond({ items: results, next_cursor: nextCursor });
 });

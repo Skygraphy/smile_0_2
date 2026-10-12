@@ -5,6 +5,7 @@
 // what the caller's own view already allows.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { guardedResponder, userIdFromToken, verifyUser } from "../_shared/fast-auth.ts";
 import { avatarPublicUrl, fetchProfilesByUserId } from "../_shared/profiles.ts";
 import { resolveChannelAccess } from "../_shared/channel-access.ts";
 
@@ -25,35 +26,31 @@ Deno.serve(async (req) => {
   const supabaseAsUser = createClient(supabaseUrl, serviceRoleKey, {
     global: { headers: { Authorization: authHeader } },
   });
-  const { data: userData, error: userError } = await supabaseAsUser.auth.getUser();
-  if (userError || !userData.user) return jsonResponse({ error: "invalid_session" }, 401);
-  const userId = userData.user.id;
+  // Session check and work at once (_shared/fast-auth.ts, 2026-10-12).
+  const claimedUserId = userIdFromToken(authHeader);
+  if (!claimedUserId) return jsonResponse({ error: "invalid_session" }, 401);
+  const respond = guardedResponder(verifyUser(supabaseAsUser, claimedUserId), jsonResponse);
+  const userId = claimedUserId;
 
   let body: RequestBody;
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: "invalid_json" }, 400);
+    return await respond({ error: "invalid_json" }, 400);
   }
-  if (!body.channel_id) return jsonResponse({ error: "channel_id_required" }, 400);
+  if (!body.channel_id) return await respond({ error: "channel_id_required" }, 400);
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-  const access = await resolveChannelAccess(supabaseAdmin, body.channel_id, userId);
-  if (!access.exists) return jsonResponse({ error: "channel_not_found" }, 404);
-  if (!access.canView) return jsonResponse({ error: "not_a_channel_member" }, 403);
-
-  const { data: memberships, error: membersError } = await supabaseAdmin
-    .from("channel_members")
-    .select("user_id, created_at")
-    .eq("channel_id", body.channel_id)
-    .order("created_at");
-  if (membersError) return jsonResponse({ error: "fetch_failed" }, 500);
-
-  const { data: shareRows } = await supabaseAdmin
-    .from("channel_shares")
-    .select("space_id, spaces(id, name, deleted_at, avatar_path)")
-    .eq("channel_id", body.channel_id);
+  // Access, members and shares at once (2026-10-12).
+  const [access, { data: memberships, error: membersError }, { data: shareRows }] = await Promise.all([
+    resolveChannelAccess(supabaseAdmin, body.channel_id, userId),
+    supabaseAdmin.from("channel_members").select("user_id, created_at").eq("channel_id", body.channel_id).order("created_at"),
+    supabaseAdmin.from("channel_shares").select("space_id, spaces(id, name, deleted_at, avatar_path)").eq("channel_id", body.channel_id),
+  ]);
+  if (!access.exists) return await respond({ error: "channel_not_found" }, 404);
+  if (!access.canView) return await respond({ error: "not_a_channel_member" }, 403);
+  if (membersError) return await respond({ error: "fetch_failed" }, 500);
   const sharedSpaces = (shareRows ?? [])
     // deno-lint-ignore no-explicit-any
     .map((row) => row.spaces as any)
@@ -64,21 +61,15 @@ Deno.serve(async (req) => {
   // The home Space's Administrator can't be removed by a co-owner
   // (migrations/0045) -- the client needs to know who that is to hide the
   // remove button for them.
-  const { data: homeSpace } = await supabaseAdmin
-    .from("spaces")
-    .select("owner_id, name")
-    .eq("id", access.homeSpaceId)
-    .maybeSingle();
 
   // For the album info page: the home Space's name ("Album in Bergoma")
   // and its Co-Admins (role badges next to members). A viewer can't read
   // the home Space via RLS, hence resolved here.
-  const { data: coOwnerRows } = await supabaseAdmin
-    .from("space_co_owners")
-    .select("user_id")
-    .eq("space_id", access.homeSpaceId);
-
-  const profilesByUserId = await fetchProfilesByUserId(supabaseAdmin, (memberships ?? []).map((m) => m.user_id as string));
+  const [{ data: homeSpace }, { data: coOwnerRows }, profilesByUserId] = await Promise.all([
+    supabaseAdmin.from("spaces").select("owner_id, name").eq("id", access.homeSpaceId).maybeSingle(),
+    supabaseAdmin.from("space_co_owners").select("user_id").eq("space_id", access.homeSpaceId),
+    fetchProfilesByUserId(supabaseAdmin, (memberships ?? []).map((m) => m.user_id as string)),
+  ]);
 
   const members = (memberships ?? []).map((m) => {
     const profile = profilesByUserId.get(m.user_id as string);
@@ -90,7 +81,7 @@ Deno.serve(async (req) => {
     };
   });
 
-  return jsonResponse({
+  return await respond({
     members,
     shared_spaces: sharedSpaces,
     caller_is_sco: access.isSco,
