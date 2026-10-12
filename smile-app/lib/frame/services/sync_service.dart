@@ -236,7 +236,9 @@ class SyncService {
       _syncAgain = true;
       return _running!;
     }
-    return _running = _syncUntilCurrent(fcmToken).whenComplete(() => _running = null);
+    return _running = _syncUntilCurrent(fcmToken).whenComplete(() {
+      _running = null;
+    });
   }
 
   bool _syncAgain = false;

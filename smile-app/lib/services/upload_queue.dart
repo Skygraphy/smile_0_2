@@ -323,7 +323,11 @@ class UploadQueue extends ChangeNotifier {
 
   Future<void> _ensurePrepared(QueuedUpload item, {required bool online}) {
     if (item.prepared || !_items.contains(item)) return Future.value();
-    return _preparing[item.id] ??= _prepareOrDrop(item, online: online).whenComplete(() => _preparing.remove(item.id));
+    // A block body: `() => _preparing.remove(..)` would return this very
+    // future, and whenComplete would wait for itself forever (2026-10-12).
+    return _preparing[item.id] ??= _prepareOrDrop(item, online: online).whenComplete(() {
+      _preparing.remove(item.id);
+    });
   }
 
   /// Makes every waiting item ready, oldest first, one at a time (the
@@ -694,14 +698,23 @@ class _QueueLock {
       await file.create(exclusive: true);
     } on FileSystemException {
       try {
+        // Left by a process that is gone (killed, updated): free at once
+        // (2026-10-12: after an update the queue waited 90 s). Another
+        // isolate of this very process (the background worker) holds it
+        // for real.
+        final holder = int.tryParse((await file.readAsString()).trim());
+        final holderGone = holder != null && holder != pid && !Directory('/proc/$holder').existsSync();
         final age = DateTime.now().difference(await file.lastModified());
-        if (age < _stale) return false;
+        if (!holderGone && age < _stale) return false;
         await file.delete();
         await file.create(exclusive: true);
       } catch (_) {
         return false;
       }
     }
+    try {
+      await file.writeAsString('$pid');
+    } catch (_) {}
     _heartbeat = Timer.periodic(const Duration(seconds: 30), (_) {
       file.setLastModified(DateTime.now()).catchError((Object _) {});
     });

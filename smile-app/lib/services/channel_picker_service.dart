@@ -135,7 +135,9 @@ class ChannelPickerService {
   Future<List<ChannelWithActivity>> listMyChannelsWithActivity() {
     // Several screens ask at the same moment (album list, covers, video
     // prefetch): one request, the same answer for all (2026-10-12).
-    return _inflight ??= _listMyChannelsWithActivity().whenComplete(() => _inflight = null);
+    return _inflight ??= _listMyChannelsWithActivity().whenComplete(() {
+          _inflight = null;
+        });
   }
 
   static Future<List<ChannelWithActivity>>? _inflight;

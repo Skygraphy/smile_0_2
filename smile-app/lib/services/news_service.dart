@@ -24,7 +24,9 @@ class NewsService {
 
   /// Every tab's Neuigkeiten icon asks at the same moment: one round of
   /// requests, the same answer for all (2026-10-12: it was six at start).
-  Future<NewsStatus> status() => _inflight ??= _status().whenComplete(() => _inflight = null);
+  Future<NewsStatus> status() => _inflight ??= _status().whenComplete(() {
+          _inflight = null;
+        });
 
   static Future<NewsStatus>? _inflight;
 
