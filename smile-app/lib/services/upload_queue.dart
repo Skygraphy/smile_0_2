@@ -261,8 +261,11 @@ class UploadQueue extends ChangeNotifier {
             ? [head]
             : todo.takeWhile((i) => !i.isVideo && i.channelId == head.channelId).take(10).toList();
         var online = await Offline.hasNetwork();
+        // The next ones are made ready while this one goes up (2026-10-12:
+        // several videos waited for each other's upload before converting).
+        unawaited(_prepareAhead());
         for (final item in run.where((i) => !i.prepared).toList()) {
-          await _prepareOrDrop(item, online: online);
+          await _ensurePrepared(item, online: online);
         }
         final ready = run.where((i) => _items.contains(i) && i.prepared).toList();
         if (ready.isEmpty) continue;
@@ -270,7 +273,7 @@ class UploadQueue extends ChangeNotifier {
         if (!online) {
           // Everything else can at least be made ready meanwhile.
           for (final item in todo.where((i) => _items.contains(i) && !i.prepared).toList()) {
-            await _prepareOrDrop(item, online: false);
+            await _ensurePrepared(item, online: false);
           }
           _markWaiting();
           break;
@@ -311,6 +314,48 @@ class UploadQueue extends ChangeNotifier {
       item.waiting = true;
       item.progress = null;
     }
+    notifyListeners();
+  }
+
+  /// One preparation per item, whoever asks for it (the send loop or
+  /// [_prepareAhead]) -- never two conversions of the same video.
+  final Map<String, Future<void>> _preparing = {};
+
+  Future<void> _ensurePrepared(QueuedUpload item, {required bool online}) {
+    if (item.prepared || !_items.contains(item)) return Future.value();
+    return _preparing[item.id] ??= _prepareOrDrop(item, online: online).whenComplete(() => _preparing.remove(item.id));
+  }
+
+  /// Makes every waiting item ready, oldest first, one at a time (the
+  /// phone's video encoder does one video at a time anyway).
+  bool _preparingAhead = false;
+  Future<void> _prepareAhead() async {
+    if (_preparingAhead) return;
+    _preparingAhead = true;
+    try {
+      while (true) {
+        final me = Supabase.instance.client.auth.currentUser?.id;
+        final next = (_items.where((i) => !i.done && !i.prepared && i.userId == me).toList()
+              ..sort((a, b) => a.createdAt.compareTo(b.createdAt)))
+            .firstOrNull;
+        if (next == null) break;
+        await _ensurePrepared(next, online: await Offline.hasNetwork());
+      }
+    } finally {
+      _preparingAhead = false;
+    }
+  }
+
+  /// Progress is drawn at most ~10 times a second (2026-10-12: every
+  /// percent redrew the whole album, the phone fell behind and the ticks
+  /// came late).
+  final Map<String, DateTime> _lastProgressAt = {};
+  void _progress(QueuedUpload item, double value) {
+    item.progress = value;
+    final now = DateTime.now();
+    final last = _lastProgressAt[item.id];
+    if (last != null && now.difference(last) < const Duration(milliseconds: 100) && value < 1) return;
+    _lastProgressAt[item.id] = now;
     notifyListeners();
   }
 
@@ -358,10 +403,7 @@ class UploadQueue extends ChangeNotifier {
     final video = await _mediaService.prepareVideo(
       source,
       mimeType: item.meta['mime_type'] as String,
-      onPreparing: (percent) {
-        item.progress = percent / 100;
-        notifyListeners();
-      },
+      onPreparing: (percent) => _progress(item, percent / 100),
       onFramed: (preview) {
         // Registered while the phone converts (2026-10-09).
         if (online && item.meta['server_media_id'] == null) {
@@ -509,8 +551,7 @@ class UploadQueue extends ChangeNotifier {
           if (item.sure || total == 0) return;
           // Bytes are flowing: the connection is really there.
           if (sent > 0) item.waiting = false;
-          item.progress = sent / total;
-          notifyListeners();
+          _progress(item, sent / total);
         },
       );
       // The converted copy is the video as it now is on the server: kept
