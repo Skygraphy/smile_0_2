@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart' show Icons, IconData;
 
 /// The one place that maps Smile concepts to icons (decided with the user
 /// 2026-10-05, see the smile-ui-backlog memory). Screens only ever use
@@ -52,7 +52,9 @@ class SmileIcons {
   /// trash). No counter: the icon is tinted coral while something waits.
   static const IconData news = IconData(0xe6fa, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData back = IconData(0xe058, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
-  static const IconData more = IconData(0xe208, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// The three dots: Material's `more_vert` -- Phosphor's dots were too
+  /// thin next to WhatsApp's (user, 2026-10-13).
+  static const IconData more = Icons.more_vert;
   static const IconData chevron = IconData(0xe13a, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 
   // --- Actions (same icon for the same action everywhere) --------------
