@@ -49,10 +49,12 @@ Future<String?> showSmileNameDialog(
   required String confirmLabel,
   String initialValue = '',
   String? hint,
+  String? subtitle,
 }) async {
   final result = await showDialog<String>(
     context: context,
-    builder: (context) => _NameDialog(title: title, confirmLabel: confirmLabel, initialValue: initialValue, hint: hint),
+    builder: (context) =>
+        _NameDialog(title: title, confirmLabel: confirmLabel, initialValue: initialValue, hint: hint, subtitle: subtitle),
   );
   final trimmed = result?.trim() ?? '';
   if (trimmed.isEmpty || trimmed == initialValue.trim()) return null;
@@ -60,12 +62,15 @@ Future<String?> showSmileNameDialog(
 }
 
 class _NameDialog extends StatefulWidget {
-  const _NameDialog({required this.title, required this.confirmLabel, required this.initialValue, this.hint});
+  const _NameDialog({required this.title, required this.confirmLabel, required this.initialValue, this.hint, this.subtitle});
 
   final String title;
   final String confirmLabel;
   final String initialValue;
   final String? hint;
+
+  /// A quiet line under the title, e.g. which Space a new album goes to.
+  final String? subtitle;
 
   @override
   State<_NameDialog> createState() => _NameDialogState();
@@ -84,7 +89,20 @@ class _NameDialogState extends State<_NameDialog> {
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
     return AlertDialog(
-      title: Text(widget.title),
+      title: widget.subtitle == null
+          ? Text(widget.title)
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(widget.title),
+                const SizedBox(height: 4),
+                Text(
+                  widget.subtitle!,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
       content: TextField(
         controller: _controller,
         autofocus: true,

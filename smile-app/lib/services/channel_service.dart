@@ -22,9 +22,11 @@ class ChannelService {
     return (rows as List).cast<Map<String, dynamic>>();
   }
 
-  Future<void> createChannel({required String spaceId, required String name}) async {
-    await supabase.from('channels').insert({'space_id': spaceId, 'name': name});
+  /// Returns the new album's id (to open it right away).
+  Future<String> createChannel({required String spaceId, required String name}) async {
+    final row = await supabase.from('channels').insert({'space_id': spaceId, 'name': name}).select('id').single();
     LocalChanges.saved(tablesChanged({'channels'}, spaceIds: {spaceId}));
+    return row['id'] as String;
   }
 
   /// Home Space Admin and Co-Admins only (RLS channels_owner_update).

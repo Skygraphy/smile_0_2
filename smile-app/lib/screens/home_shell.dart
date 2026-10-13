@@ -73,7 +73,10 @@ class _HomeShellState extends State<HomeShell> with SyncReload {
         children: [
           for (final tab in tabs)
             switch (tab) {
-              _Tab.albums => ChannelsHomeScreen(key: const ValueKey(_Tab.albums)),
+              _Tab.albums => ChannelsHomeScreen(
+                  key: const ValueKey(_Tab.albums),
+                  onOpenSettings: () => setState(() => _selected = _Tab.profile),
+                ),
               _Tab.frames => const FramesScreen(key: ValueKey(_Tab.frames)),
               _Tab.spaces => SpacesScreen(key: const ValueKey(_Tab.spaces)),
               _Tab.profile => SettingsScreen(key: const ValueKey(_Tab.profile)),

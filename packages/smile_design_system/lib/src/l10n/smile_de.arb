@@ -228,6 +228,15 @@
     }
   },
   "createAlbum": "Album anlegen",
+  "newAlbum": "Neues Album",
+  "moreOptions": "Weitere Optionen",
+  "newAlbumWhere": "Neues Album in …",
+  "inSpaceLine": "in {space}",
+  "@inSpaceLine": {
+    "placeholders": {
+      "space": {"type": "String"}
+    }
+  },
   "createAlbumHint": "Name, z. B. „Enkelkinder“ oder „Lobby“",
   "noAlbumYet": "Noch kein Album",
   "sharedIntoSpace": "Mit diesem Space geteilt",

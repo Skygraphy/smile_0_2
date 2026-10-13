@@ -6,7 +6,10 @@ import 'package:smile_design_system/smile_design_system.dart';
 import '../widgets/friendly_error.dart';
 
 import '../main.dart';
+import '../services/avatar_upload.dart';
 import '../services/channel_picker_service.dart';
+import '../services/channel_service.dart';
+import '../services/local_changes.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/local_display.dart';
@@ -27,19 +30,39 @@ import 'space_info_screen.dart';
 /// most recent activity -- see project_ui-redesign-concepts memory for
 /// the reasoning behind this.
 class ChannelsHomeScreen extends StatefulWidget {
-  ChannelsHomeScreen({super.key, ChannelPickerService? channelPickerService})
+  ChannelsHomeScreen({super.key, ChannelPickerService? channelPickerService, this.onOpenSettings})
       : channelPickerService = channelPickerService ?? ChannelPickerService();
 
   final ChannelPickerService channelPickerService;
+
+  /// "Einstellungen" in the ⋮ menu: HomeShell switches to the Profil tab.
+  final VoidCallback? onOpenSettings;
 
 
   @override
   State<ChannelsHomeScreen> createState() => _ChannelsHomeScreenState();
 }
 
+/// A Space the caller manages -- where "Neues Album" can put an album.
+class _ManagedSpace {
+  const _ManagedSpace({required this.id, required this.name, required this.albums, required this.frames, this.avatarPath});
+
+  final String id;
+  final String name;
+  final int albums;
+  final int frames;
+  final String? avatarPath;
+}
+
+enum _MenuItem { newAlbum, scanCode, settings }
+
 class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload {
   List<ChannelWithActivity>? _channels;
   String? _errorMessage;
+
+  /// Spaces the caller manages (Admin or Co-Admin -- spaces_select returns
+  /// only those); empty for a plain Member, who then gets no "Neues Album".
+  List<_ManagedSpace> _managed = const [];
 
   @override
   void initState() {
@@ -58,6 +81,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   Future<void> onSync() => _load();
 
   Future<void> _load() async {
+    unawaited(_loadManaged());
     Perf.start('album list');
     try {
       final channels = await widget.channelPickerService.listMyChannelsWithActivity();
@@ -79,6 +103,125 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
     }
   }
 
+
+  Future<void> _loadManaged() async {
+    try {
+      final results = await Future.wait<dynamic>([
+        supabase.from('spaces').select('id, name, avatar_path').order('created_at'),
+        supabase.from('channels').select('space_id'),
+        supabase.from('frames').select('space_id'),
+      ]);
+      Map<String, int> countBySpace(List rows) {
+        final counts = <String, int>{};
+        for (final row in rows.cast<Map<String, dynamic>>()) {
+          final id = row['space_id'] as String;
+          counts[id] = (counts[id] ?? 0) + 1;
+        }
+        return counts;
+      }
+
+      final albums = countBySpace(results[1] as List);
+      final frames = countBySpace(results[2] as List);
+      if (!mounted) return;
+      setState(() {
+        _managed = [
+          for (final row in (results[0] as List).cast<Map<String, dynamic>>())
+            _ManagedSpace(
+              id: row['id'] as String,
+              name: row['name'] as String,
+              albums: albums[row['id']] ?? 0,
+              frames: frames[row['id']] ?? 0,
+              avatarPath: row['avatar_path'] as String?,
+            ),
+        ];
+      });
+    } catch (_) {
+      // Offline or the like: the menu keeps what it knew.
+    }
+  }
+
+  /// "Neues Album" from the ⋮ menu (2026-10-13, like WhatsApp's "Neue
+  /// Gruppe"): straight to the name with one Space, else first which
+  /// Space; the new album opens right away.
+  Future<void> _newAlbum() async {
+    final t = SmileTexts.of(context);
+    final navigator = Navigator.of(context);
+    final spaces = _managed;
+    if (spaces.isEmpty) return;
+    final space = spaces.length == 1 ? spaces.single : await _pickSpace(spaces);
+    if (space == null || !mounted) return;
+    final shownSpace = spaceNameOf(space.id, space.name);
+    final name = await showSmileNameDialog(
+      context,
+      title: t.newAlbum,
+      subtitle: t.inSpaceLine(shownSpace),
+      confirmLabel: t.create,
+      hint: t.createAlbumHint,
+    );
+    if (name == null) return;
+    try {
+      final channelId = await ChannelService().createChannel(spaceId: space.id, name: name);
+      unawaited(_load());
+      await navigator.push(MaterialPageRoute(builder: (_) => ChannelFeedScreen(channelId: channelId, channelName: name)));
+      await _load();
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
+    }
+  }
+
+  Future<_ManagedSpace?> _pickSpace(List<_ManagedSpace> spaces) {
+    final t = SmileTexts.of(context);
+    return showModalBottomSheet<_ManagedSpace>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(SmileSpacing.l, 0, SmileSpacing.l, SmileSpacing.s),
+              child: Text(t.newAlbumWhere, style: Theme.of(context).textTheme.titleMedium),
+            ),
+            for (final space in spaces)
+              SmileObjectTile(
+                leading: objectPicture(
+                  key: LocalChanges.spacePicture(space.id),
+                  name: spaceNameOf(space.id, space.name),
+                  serverUrl: avatarPathToUrl(space.avatarPath),
+                ),
+                title: spaceNameOf(space.id, space.name),
+                subtitle: [t.albumCount(space.albums), t.frameCount(space.frames)].join(' · '),
+                onTap: () => Navigator.of(context).pop(space),
+              ),
+            const SizedBox(height: SmileSpacing.s),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _menu() {
+    final t = SmileTexts.of(context);
+    PopupMenuItem<_MenuItem> item(_MenuItem value, IconData icon, String label) => PopupMenuItem(
+          value: value,
+          child: Row(children: [Icon(icon, size: 20), const SizedBox(width: SmileSpacing.m), Text(label)]),
+        );
+    return PopupMenuButton<_MenuItem>(
+      icon: const Icon(SmileIcons.more),
+      tooltip: t.moreOptions,
+      onSelected: (choice) => switch (choice) {
+        _MenuItem.newAlbum => _newAlbum(),
+        _MenuItem.scanCode => _scanCode(),
+        _MenuItem.settings => widget.onOpenSettings?.call(),
+      },
+      itemBuilder: (context) => [
+        if (_managed.isNotEmpty) item(_MenuItem.newAlbum, SmileIcons.add, t.newAlbum),
+        item(_MenuItem.scanCode, SmileIcons.scan, t.scanCode),
+        if (widget.onOpenSettings != null) item(_MenuItem.settings, SmileIcons.settings, t.settings),
+      ],
+    );
+  }
 
   /// "Ich wurde eingeladen": invitations arrive by email address and wait
   /// in Neuigkeiten -- there is no invite code to type in.
@@ -143,7 +286,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
     return Scaffold(
       appBar: AppBar(
         title: const SmileWordmark(fontSize: 20),
-        actions: smileTopBarActions(onPhotoSent: _load),
+        actions: [...smileTopBarActions(onPhotoSent: _load), _menu()],
       ),
       body: _body(channels),
     );

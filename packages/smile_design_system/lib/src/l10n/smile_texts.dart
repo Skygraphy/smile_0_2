@@ -724,6 +724,30 @@ abstract class SmileTexts {
   /// **'Album anlegen'**
   String get createAlbum;
 
+  /// No description provided for @newAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Neues Album'**
+  String get newAlbum;
+
+  /// No description provided for @moreOptions.
+  ///
+  /// In de, this message translates to:
+  /// **'Weitere Optionen'**
+  String get moreOptions;
+
+  /// No description provided for @newAlbumWhere.
+  ///
+  /// In de, this message translates to:
+  /// **'Neues Album in …'**
+  String get newAlbumWhere;
+
+  /// No description provided for @inSpaceLine.
+  ///
+  /// In de, this message translates to:
+  /// **'in {space}'**
+  String inSpaceLine(String space);
+
   /// No description provided for @createAlbumHint.
   ///
   /// In de, this message translates to:

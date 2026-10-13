@@ -395,6 +395,20 @@ class SmileTextsDe extends SmileTexts {
   String get createAlbum => 'Album anlegen';
 
   @override
+  String get newAlbum => 'Neues Album';
+
+  @override
+  String get moreOptions => 'Weitere Optionen';
+
+  @override
+  String get newAlbumWhere => 'Neues Album in …';
+
+  @override
+  String inSpaceLine(String space) {
+    return 'in $space';
+  }
+
+  @override
   String get createAlbumHint => 'Name, z. B. „Enkelkinder“ oder „Lobby“';
 
   @override
