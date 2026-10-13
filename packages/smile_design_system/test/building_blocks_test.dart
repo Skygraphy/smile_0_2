@@ -104,7 +104,7 @@ void main() {
     expect(t.albumCount(1), '1 Album');
     expect(t.albumCount(3), '3 Alben');
     expect(t.personCount(4), '4 Personen');
-    expect(t.sharedWithSpace('Davidopa'), 'Shared with Davidopa');
+    expect(t.sharedWithSpace('Davidopa'), 'Geteilt mit Davidopa');
     expect(t.news, 'Neuigkeiten');
   });
 

@@ -211,13 +211,13 @@ abstract class SmileTexts {
   /// No description provided for @sharedWith.
   ///
   /// In de, this message translates to:
-  /// **'Shared with'**
+  /// **'Geteilt mit'**
   String get sharedWith;
 
   /// No description provided for @sharedWithSpace.
   ///
   /// In de, this message translates to:
-  /// **'Shared with {space}'**
+  /// **'Geteilt mit {space}'**
   String sharedWithSpace(String space);
 
   /// No description provided for @news.

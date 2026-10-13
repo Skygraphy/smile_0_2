@@ -99,11 +99,11 @@ class SmileTextsDe extends SmileTexts {
   String get admins => 'Admins';
 
   @override
-  String get sharedWith => 'Shared with';
+  String get sharedWith => 'Geteilt mit';
 
   @override
   String sharedWithSpace(String space) {
-    return 'Shared with $space';
+    return 'Geteilt mit $space';
   }
 
   @override

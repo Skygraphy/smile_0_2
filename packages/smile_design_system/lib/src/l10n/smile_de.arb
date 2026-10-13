@@ -48,8 +48,8 @@
   "roleMember": "Member",
   "roleViewer": "Viewer",
   "admins": "Admins",
-  "sharedWith": "Shared with",
-  "sharedWithSpace": "Shared with {space}",
+  "sharedWith": "Geteilt mit",
+  "sharedWithSpace": "Geteilt mit {space}",
   "@sharedWithSpace": {
     "placeholders": {
       "space": {
