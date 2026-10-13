@@ -3,16 +3,66 @@ import 'package:smile_design_system/smile_design_system.dart';
 
 import '../screens/news_screen.dart';
 import '../screens/quick_capture_channel_picker_screen.dart';
+import '../screens/scan_code_screen.dart';
+import '../screens/settings_screen.dart';
 import '../services/news_service.dart';
 import '../services/sync_bus.dart';
 import 'capture_choice.dart';
 
-/// Camera + Neuigkeiten: the two actions every tab's top bar carries
-/// (navigation decision A, 2026-10-05).
-List<Widget> smileTopBarActions({VoidCallback? onPhotoSent}) => [
+/// Camera + Neuigkeiten + ⋮: what every tab's top bar carries
+/// (navigation decision A, 2026-10-05; the ⋮ menu 2026-10-13, like
+/// WhatsApp). [primary] is the tab's own first menu entry ("Neues Album",
+/// "Frame verbinden", "Space anlegen"); [onChanged] runs after a scanned code.
+List<Widget> smileTopBarActions({VoidCallback? onPhotoSent, SmileMenuEntry? primary, VoidCallback? onChanged}) => [
       QuickCaptureButton(onDone: onPhotoSent),
       NewsButton(),
+      SmileOverflowMenu(primary: primary, onChanged: onChanged),
     ];
+
+/// One entry of the ⋮ menu.
+class SmileMenuEntry {
+  const SmileMenuEntry({required this.icon, required this.label, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+}
+
+/// The ⋮ menu of every tab: the tab's own entry first, then "Code
+/// scannen" and "Einstellungen" (there is no Profil tab any more,
+/// 2026-10-13 -- the settings open as a page from here, like WhatsApp).
+class SmileOverflowMenu extends StatelessWidget {
+  const SmileOverflowMenu({super.key, this.primary, this.onChanged});
+
+  final SmileMenuEntry? primary;
+  final VoidCallback? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = SmileTexts.of(context);
+    PopupMenuItem<VoidCallback> item(IconData icon, String label, VoidCallback onTap) => PopupMenuItem(
+          value: onTap,
+          child: Row(children: [Icon(icon, size: 20), const SizedBox(width: SmileSpacing.m), Text(label)]),
+        );
+    final navigator = Navigator.of(context);
+    final entry = primary;
+    return PopupMenuButton<VoidCallback>(
+      icon: const Icon(SmileIcons.more),
+      tooltip: t.moreOptions,
+      onSelected: (action) => action(),
+      itemBuilder: (context) => [
+        if (entry != null) item(entry.icon, entry.label, entry.onTap),
+        item(SmileIcons.scan, t.scanCode, () async {
+          await navigator.push(MaterialPageRoute(builder: (_) => const ScanCodeScreen()));
+          onChanged?.call();
+        }),
+        item(SmileIcons.settings, t.settings, () {
+          navigator.push(MaterialPageRoute(builder: (_) => SettingsScreen()));
+        }),
+      ],
+    );
+  }
+}
 
 /// Take a photo or video right away, then pick the album to send it to.
 class QuickCaptureButton extends StatelessWidget {

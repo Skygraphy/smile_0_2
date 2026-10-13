@@ -17,7 +17,6 @@ import 'package:smile_design_system/smile_design_system.dart';
 import '../widgets/friendly_error.dart';
 import '../services/video_quality.dart';
 import '../services/upload_queue.dart';
-import '../widgets/top_bar_actions.dart';
 import 'avatar_viewer_screen.dart';
 
 /// WhatsApp's own Settings screen layout: avatar with a small camera badge
@@ -206,7 +205,8 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
     final scheme = Theme.of(context).colorScheme;
     final email = supabase.auth.currentUser?.email;
     return Scaffold(
-      appBar: AppBar(title: Text(t.profile), actions: smileTopBarActions()),
+      // A page of its own from the ⋮ menu (2026-10-13), with its back arrow.
+      appBar: AppBar(title: Text(t.settings)),
       body: profile == null
           ? Center(
               child: _errorMessage != null

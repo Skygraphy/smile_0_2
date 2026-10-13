@@ -30,13 +30,10 @@ import 'space_info_screen.dart';
 /// most recent activity -- see project_ui-redesign-concepts memory for
 /// the reasoning behind this.
 class ChannelsHomeScreen extends StatefulWidget {
-  ChannelsHomeScreen({super.key, ChannelPickerService? channelPickerService, this.onOpenSettings})
+  ChannelsHomeScreen({super.key, ChannelPickerService? channelPickerService})
       : channelPickerService = channelPickerService ?? ChannelPickerService();
 
   final ChannelPickerService channelPickerService;
-
-  /// "Einstellungen" in the ⋮ menu: HomeShell switches to the Profil tab.
-  final VoidCallback? onOpenSettings;
 
 
   @override
@@ -53,8 +50,6 @@ class _ManagedSpace {
   final int frames;
   final String? avatarPath;
 }
-
-enum _MenuItem { newAlbum, scanCode, settings }
 
 class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload {
   List<ChannelWithActivity>? _channels;
@@ -201,28 +196,6 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
     );
   }
 
-  Widget _menu() {
-    final t = SmileTexts.of(context);
-    PopupMenuItem<_MenuItem> item(_MenuItem value, IconData icon, String label) => PopupMenuItem(
-          value: value,
-          child: Row(children: [Icon(icon, size: 20), const SizedBox(width: SmileSpacing.m), Text(label)]),
-        );
-    return PopupMenuButton<_MenuItem>(
-      icon: const Icon(SmileIcons.more),
-      tooltip: t.moreOptions,
-      onSelected: (choice) => switch (choice) {
-        _MenuItem.newAlbum => _newAlbum(),
-        _MenuItem.scanCode => _scanCode(),
-        _MenuItem.settings => widget.onOpenSettings?.call(),
-      },
-      itemBuilder: (context) => [
-        if (_managed.isNotEmpty) item(_MenuItem.newAlbum, SmileIcons.add, t.newAlbum),
-        item(_MenuItem.scanCode, SmileIcons.scan, t.scanCode),
-        if (widget.onOpenSettings != null) item(_MenuItem.settings, SmileIcons.settings, t.settings),
-      ],
-    );
-  }
-
   /// "Ich wurde eingeladen": invitations arrive by email address and wait
   /// in Neuigkeiten -- there is no invite code to type in.
   /// "Ich wurde eingeladen": scan the QR code or type the code (2026-10-11).
@@ -286,7 +259,11 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
     return Scaffold(
       appBar: AppBar(
         title: const SmileWordmark(fontSize: 20),
-        actions: [...smileTopBarActions(onPhotoSent: _load), _menu()],
+        actions: smileTopBarActions(
+          onPhotoSent: _load,
+          primary: _managed.isEmpty ? null : SmileMenuEntry(icon: SmileIcons.add, label: SmileTexts.of(context).newAlbum, onTap: _newAlbum),
+          onChanged: _load,
+        ),
       ),
       body: _body(channels),
     );

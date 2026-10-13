@@ -8,14 +8,14 @@ import '../services/offline.dart';
 import '../services/sync_bus.dart';
 import 'channels_home_screen.dart';
 import 'frames_screen.dart';
-import 'settings_screen.dart';
 import 'spaces_screen.dart';
 
-enum _Tab { albums, frames, spaces, profile }
+enum _Tab { albums, frames, spaces }
 
-/// The signed-in app's frame: a bottom bar with Alben / Frames / Spaces /
-/// Profil (navigation decision A, 2026-10-05; "Frames" added 2026-10-11 --
-/// only for someone who manages a Frame). Invitations and the trash are
+/// The signed-in app's frame: a bottom bar with Alben / Frames / Spaces
+/// (navigation decision A, 2026-10-05; "Frames" added 2026-10-11 -- only
+/// for someone who manages a Frame; the Profil tab went into every tab's
+/// ⋮ menu as "Einstellungen" 2026-10-13, like WhatsApp). Invitations and the trash are
 /// not a tab -- they sit behind the Neuigkeiten icon in each tab's top
 /// bar. An IndexedStack keeps every tab alive, so switching back keeps
 /// the scroll position and nothing reloads needlessly.
@@ -60,7 +60,7 @@ class _HomeShellState extends State<HomeShell> with SyncReload {
     }
   }
 
-  List<_Tab> get _tabs => [_Tab.albums, if (_hasFrames) _Tab.frames, _Tab.spaces, _Tab.profile];
+  List<_Tab> get _tabs => [_Tab.albums, if (_hasFrames) _Tab.frames, _Tab.spaces];
 
   @override
   Widget build(BuildContext context) {
@@ -73,13 +73,9 @@ class _HomeShellState extends State<HomeShell> with SyncReload {
         children: [
           for (final tab in tabs)
             switch (tab) {
-              _Tab.albums => ChannelsHomeScreen(
-                  key: const ValueKey(_Tab.albums),
-                  onOpenSettings: () => setState(() => _selected = _Tab.profile),
-                ),
+              _Tab.albums => ChannelsHomeScreen(key: const ValueKey(_Tab.albums)),
               _Tab.frames => const FramesScreen(key: ValueKey(_Tab.frames)),
               _Tab.spaces => SpacesScreen(key: const ValueKey(_Tab.spaces)),
-              _Tab.profile => SettingsScreen(key: const ValueKey(_Tab.profile)),
             },
         ],
       ),
@@ -103,11 +99,6 @@ class _HomeShellState extends State<HomeShell> with SyncReload {
                   icon: const Icon(SmileIcons.space),
                   selectedIcon: const Icon(SmileIcons.spaceFilled),
                   label: t.spaces,
-                ),
-              _Tab.profile => NavigationDestination(
-                  icon: const Icon(SmileIcons.person),
-                  selectedIcon: const Icon(SmileIcons.personFilled),
-                  label: t.profile,
                 ),
             },
         ],

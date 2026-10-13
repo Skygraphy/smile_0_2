@@ -118,10 +118,13 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
     final spaces = _spaces;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Scaffold(
-      appBar: AppBar(title: Text(t.spaces), actions: smileTopBarActions()),
-      floatingActionButton: spaces == null || spaces.isEmpty
-          ? null
-          : FloatingActionButton(heroTag: null, tooltip: t.createSpace, onPressed: _createSpace, child: const Icon(SmileIcons.add)),
+      appBar: AppBar(
+        title: Text(t.spaces),
+        actions: smileTopBarActions(
+          primary: SmileMenuEntry(icon: SmileIcons.add, label: t.createSpace, onTap: _createSpace),
+          onChanged: _load,
+        ),
+      ),
       body: spaces == null
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
