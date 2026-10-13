@@ -185,6 +185,9 @@ class _FramesScreenState extends State<FramesScreen> with SyncReload {
     return Scaffold(
       appBar: AppBar(title: Text(t.frames), actions: smileTopBarActions()),
       floatingActionButton: FloatingActionButton(
+        // Tabs live side by side (IndexedStack): two buttons with the same
+        // default tag crashed every page change (Crashlytics 2026-10-12).
+        heroTag: null,
         tooltip: t.setUpFrame,
         onPressed: _setUpFrame,
         child: const Icon(SmileIcons.add),

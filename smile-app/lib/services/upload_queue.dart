@@ -483,7 +483,40 @@ class UploadQueue extends ChangeNotifier {
   /// the server removes just that item.
   Future<bool> _send(List<QueuedUpload> run) async {
     if (!run.first.isVideo) return _sendPhotos(run);
-    return _sendVideo(run.single);
+    return _sendVideos(run.single);
+  }
+
+  /// Several videos go up side by side (2026-10-13: one after the other,
+  /// the line stood idle during each one's registering and confirming):
+  /// next to [head], every further video that is ready joins at once, up
+  /// to [_videosAtOnce] -- and the next one moves up as soon as one is done.
+  static const _videosAtOnce = 3;
+
+  Future<bool> _sendVideos(QueuedUpload head) async {
+    final inFlight = <QueuedUpload, Future<bool>>{head: _sendVideoSafely(head)};
+    var connected = true;
+    while (inFlight.isNotEmpty) {
+      if (connected) {
+        final me = Supabase.instance.client.auth.currentUser?.id;
+        final more = _items
+            .where((i) => i.isVideo && i.prepared && !i.done && i.userId == me && !inFlight.containsKey(i))
+            .toList()
+          ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        for (final item in more.take(_videosAtOnce - inFlight.length)) {
+          inFlight[item] = _sendVideoSafely(item);
+        }
+      }
+      // Done -- or half a second passed, so a video that just became ready
+      // can join.
+      final finished = await Future.any<(QueuedUpload, bool)?>([
+        for (final entry in inFlight.entries) entry.value.then((ok) => (entry.key, ok)),
+        Future.delayed(const Duration(milliseconds: 500), () => null),
+      ]);
+      if (finished == null) continue;
+      inFlight.remove(finished.$1);
+      if (!finished.$2) connected = false;
+    }
+    return connected;
   }
 
   Future<bool> _sendPhotos(List<QueuedUpload> run) async {
@@ -538,6 +571,16 @@ class UploadQueue extends ChangeNotifier {
       }
     }
     return connected;
+  }
+
+  /// A video that can't be sent at all is dropped; the others go on.
+  Future<bool> _sendVideoSafely(QueuedUpload item) async {
+    try {
+      return await _sendVideo(item);
+    } catch (e) {
+      await _fail(item, e);
+      return true;
+    }
   }
 
   Future<bool> _sendVideo(QueuedUpload item) async {

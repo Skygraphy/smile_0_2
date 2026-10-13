@@ -121,7 +121,7 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
       appBar: AppBar(title: Text(t.spaces), actions: smileTopBarActions()),
       floatingActionButton: spaces == null || spaces.isEmpty
           ? null
-          : FloatingActionButton(tooltip: t.createSpace, onPressed: _createSpace, child: const Icon(SmileIcons.add)),
+          : FloatingActionButton(heroTag: null, tooltip: t.createSpace, onPressed: _createSpace, child: const Icon(SmileIcons.add)),
       body: spaces == null
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
