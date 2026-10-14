@@ -5,13 +5,16 @@ class FrameControlLevels {
   FrameControlLevels._();
 
   /// In the order the app lists them.
-  static const keys = ['next', 'back', 'pause', 'newest', 'overview', 'album', 'duration', 'playback'];
+  static const keys = ['next', 'back', 'pause', 'newest', 'favorite', 'favorites', 'overview', 'album', 'duration', 'playback'];
 
   static const _onFrom = {
     'next': 2,
     'pause': 2,
     'back': 3,
     'newest': 3,
+    // Lieblingsbilder (migrations/0076).
+    'favorite': 3,
+    'favorites': 3,
     'overview': 4,
     'album': 4,
     'duration': 4,

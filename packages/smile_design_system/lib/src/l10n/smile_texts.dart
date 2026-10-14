@@ -2697,6 +2697,132 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'„{album}“ gehört zum Space {space}. Ein Frame zeigt nur Alben aus seinem eigenen Space oder solche, die mit seinem Space geteilt sind. Ein Admin von {space} kann das Album über „Mit einem Space teilen“ mit deinem Space teilen – danach geht es hier mit einem Tipp.'**
   String frameOtherSpaceHint(String album, String space);
+
+  /// No description provided for @favorites.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbilder'**
+  String get favorites;
+
+  /// No description provided for @favoriteMarked.
+  ///
+  /// In de, this message translates to:
+  /// **'Gemerkt'**
+  String get favoriteMarked;
+
+  /// No description provided for @favoriteUnmarked.
+  ///
+  /// In de, this message translates to:
+  /// **'Nicht mehr gemerkt'**
+  String get favoriteUnmarked;
+
+  /// No description provided for @ctrlFavorite.
+  ///
+  /// In de, this message translates to:
+  /// **'Merken'**
+  String get ctrlFavorite;
+
+  /// No description provided for @allowFavorite.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbilder merken'**
+  String get allowFavorite;
+
+  /// No description provided for @allowFavorites.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbilder abspielen'**
+  String get allowFavorites;
+
+  /// No description provided for @contentFavorites.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbilder'**
+  String get contentFavorites;
+
+  /// No description provided for @favoritesSeeAll.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle ansehen'**
+  String get favoritesSeeAll;
+
+  /// No description provided for @favoritesCount.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbilder · {n}'**
+  String favoritesCount(int n);
+
+  /// No description provided for @favoriteOnFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Frame'**
+  String get favoriteOnFrame;
+
+  /// No description provided for @favoriteToday.
+  ///
+  /// In de, this message translates to:
+  /// **'heute {time}'**
+  String favoriteToday(String time);
+
+  /// No description provided for @favoriteYesterday.
+  ///
+  /// In de, this message translates to:
+  /// **'gestern {time}'**
+  String favoriteYesterday(String time);
+
+  /// No description provided for @favoriteFor.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbild für den Frame'**
+  String get favoriteFor;
+
+  /// No description provided for @favoriteAddedTo.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbild von „{frame}“'**
+  String favoriteAddedTo(String frame);
+
+  /// No description provided for @favoritesEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Lieblingsbilder'**
+  String get favoritesEmpty;
+
+  /// No description provided for @favoritesEmptyHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Frame mit dem Herz merken – oder hier in einem Album beim Foto über das Herz oben rechts.'**
+  String get favoritesEmptyHint;
+
+  /// No description provided for @favoritesRemove.
+  ///
+  /// In de, this message translates to:
+  /// **'Entfernen'**
+  String get favoritesRemove;
+
+  /// No description provided for @favoritesRemoveAll.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle entfernen'**
+  String get favoritesRemoveAll;
+
+  /// No description provided for @favoritesRemoveAllQuestion.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle Lieblingsbilder von „{frame}“ entfernen?'**
+  String favoritesRemoveAllQuestion(String frame);
+
+  /// No description provided for @favoritesRemoveHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Fotos selbst bleiben in ihren Alben.'**
+  String get favoritesRemoveHint;
+
+  /// No description provided for @favoritesSelected.
+  ///
+  /// In de, this message translates to:
+  /// **'{n} ausgewählt'**
+  String favoritesSelected(int n);
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

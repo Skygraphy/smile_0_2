@@ -2,6 +2,7 @@ import '../main.dart';
 import 'edge_functions.dart';
 import 'frame_controls.dart';
 import 'local_changes.dart';
+import 'media_service.dart';
 
 class SmileFrame {
   SmileFrame({
@@ -144,6 +145,17 @@ class ManagedFrame {
   final String spaceId;
   final String spaceName;
   final String? currentAlbumName;
+}
+
+/// One of a Frame's Lieblingsbilder (migrations/0076): the photo/video,
+/// who marked it (null name and [onFrame]: on the Frame itself) and when.
+class FrameFavorite {
+  const FrameFavorite({required this.item, required this.onFrame, required this.markedAt, this.markedByName});
+
+  final MediaItem item;
+  final bool onFrame;
+  final String? markedByName;
+  final DateTime markedAt;
 }
 
 class FrameChannelAssignment {
@@ -300,6 +312,37 @@ class FrameService {
   /// Frame is woken by the change and takes it over at once.
   Future<void> updateSettings({required String frameId, required Map<String, dynamic> changes}) async {
     await supabase.from('frames').update(changes).eq('id', frameId);
+  }
+
+  /// A Frame's Lieblingsbilder, newest marked first (list-frame-favorites).
+  Future<List<FrameFavorite>> listFavorites(String frameId) async {
+    final response = await invokeEdge('list-frame-favorites', body: {'frame_id': frameId});
+    final items = ((response.data as Map<String, dynamic>)['items'] as List).cast<Map<String, dynamic>>();
+    return [
+      for (final row in items)
+        FrameFavorite(
+          item: MediaItem.fromJson(row['media'] as Map<String, dynamic>),
+          onFrame: row['added_by'] == null,
+          markedByName: row['added_by_name'] as String?,
+          markedAt: DateTime.parse(row['favorited_at'] as String),
+        ),
+    ];
+  }
+
+  /// A Lieblingsbild added in the app (the Frame is woken by it).
+  Future<void> addFavorite({required String frameId, required String mediaItemId}) async {
+    await supabase.from('frame_favorites').upsert(
+      {'frame_id': frameId, 'media_item_id': mediaItemId, 'added_by': supabase.auth.currentUser?.id},
+      onConflict: 'frame_id,media_item_id',
+      ignoreDuplicates: true,
+    );
+  }
+
+  /// Several at once -- or all of them ([mediaItemIds] null).
+  Future<void> removeFavorites({required String frameId, List<String>? mediaItemIds}) async {
+    var query = supabase.from('frame_favorites').delete().eq('frame_id', frameId);
+    if (mediaItemIds != null) query = query.inFilter('media_item_id', mediaItemIds);
+    await query;
   }
 
   /// The app's remote control (notify-frame, 2026-10-14): "pause", "play",

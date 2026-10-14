@@ -38,6 +38,8 @@ interface RequestBody {
   // A change made on the Frame itself (2026-10-14) -- only what its
   // controls allow: "duration" the display time, "playback" the rest.
   set_settings?: Record<string, unknown>;
+  // A Lieblingsbild marked (on: true) or taken back on the Frame (0076).
+  favorite?: { media_item_id: string; on: boolean };
 }
 
 const FRAME_COLUMNS =
@@ -51,7 +53,7 @@ const SETTABLE: Record<string, { control: string; ok: (v: unknown) => boolean }>
   slideshow_interval_seconds: { control: "duration", ok: (v) => typeof v === "number" && v >= 3 && v <= 600 },
   play_order: { control: "playback", ok: (v) => ["newest", "oldest", "shuffle"].includes(v as string) },
   end_behavior: { control: "playback", ok: (v) => ["loop", "overview"].includes(v as string) },
-  content_mode: { control: "playback", ok: (v) => ["album", "rotate", "recent"].includes(v as string) },
+  content_mode: { control: "playback", ok: (v) => ["album", "rotate", "recent", "favorites"].includes(v as string) },
   video_sound: { control: "playback", ok: (v) => typeof v === "boolean" },
   show_clock: { control: "playback", ok: (v) => typeof v === "boolean" },
   show_sender: { control: "playback", ok: (v) => typeof v === "boolean" },
@@ -194,6 +196,42 @@ Deno.serve(async (req) => {
     settings.content_mode = "album";
   }
 
+  // Lieblingsbilder (migrations/0076): marked on the Frame -- only when its
+  // controls allow it, and only photos of its own albums. The list goes
+  // with every first page (the Frame filters by what it has cached).
+  let favorites: string[] | undefined;
+  if (firstPage && !body.fetch_channel_id) {
+    const mark = body.favorite;
+    if (mark && typeof mark.media_item_id === "string" && (frame.controls ?? {}).favorite === true) {
+      if (mark.on) {
+        const { data: media } = await supabase
+          .from("media_items")
+          .select("channel_id")
+          .eq("id", mark.media_item_id)
+          .maybeSingle();
+        if (media && isAssigned(media.channel_id)) {
+          await supabase
+            .from("frame_favorites")
+            .upsert({ frame_id: claims.frame_id, media_item_id: mark.media_item_id, added_by: null }, {
+              onConflict: "frame_id,media_item_id",
+              ignoreDuplicates: true,
+            });
+        }
+      } else {
+        await supabase.from("frame_favorites").delete().eq("frame_id", claims.frame_id).eq(
+          "media_item_id",
+          mark.media_item_id,
+        );
+      }
+    }
+    const { data: favoriteRows } = await supabase
+      .from("frame_favorites")
+      .select("media_item_id")
+      .eq("frame_id", claims.frame_id)
+      .order("created_at", { ascending: false });
+    favorites = (favoriteRows ?? []).map((r: { media_item_id: string }) => r.media_item_id);
+  }
+
   if (!channelId) {
     return jsonResponse({
       channel_id: null,
@@ -202,6 +240,7 @@ Deno.serve(async (req) => {
       settings,
       assigned_channels: assignedChannels,
       space_name: spaceName,
+      favorites,
     });
   }
 
@@ -262,5 +301,6 @@ Deno.serve(async (req) => {
     settings,
     assigned_channels: assignedChannels,
     space_name: spaceName,
+    favorites,
   });
 });

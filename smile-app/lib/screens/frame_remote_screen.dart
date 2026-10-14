@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
@@ -16,6 +17,7 @@ import '../widgets/frame_status.dart';
 import '../widgets/friendly_error.dart';
 import '../widgets/local_display.dart';
 import 'frame_controls_screen.dart';
+import 'frame_favorites_screen.dart';
 import 'frame_playback_screen.dart';
 import 'frame_settings_screen.dart';
 
@@ -54,7 +56,10 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
 
   @override
   bool isSyncRelevant(SyncEvent event) =>
-      event.tables.contains('frames') || event.tables.contains('frame_channels') || event.tables.contains('channels');
+      event.tables.contains('frames') ||
+      event.tables.contains('frame_channels') ||
+      event.tables.contains('channels') ||
+      event.tables.contains('frame_favorites');
 
   @override
   Future<void> onSync() async {
@@ -73,6 +78,10 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     unawaited(loadAlbumCovers().then((c) {
       if (mounted) setState(() => _covers = c);
     }));
+    // Best effort: without it the section just doesn't show yet.
+    unawaited(_service.listFavorites(widget.frameId).then((f) {
+      if (mounted) setState(() => _favorites = f);
+    }).catchError((Object _) {}));
     try {
       final results = await Future.wait<dynamic>([
         _service.getFrameWithSpace(widget.frameId),
@@ -128,6 +137,18 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     if (frame == null) return;
     setState(() => _frame = frame.copyWith(videoSound: value));
     await _save(() => _service.setVideoSound(frameId: widget.frameId, enabled: value));
+  }
+
+  /// The Frame's Lieblingsbilder (newest marked first); null until loaded.
+  List<FrameFavorite>? _favorites;
+
+  Future<void> _openFavorites() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FrameFavoritesScreen(frameId: widget.frameId, frameName: _shownName, frameService: _service),
+      ),
+    );
+    if (mounted) await _load();
   }
 
   /// The album strip always shows the running album (2026-10-14): it
@@ -252,6 +273,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
         switch (frame.contentMode) {
           'rotate' => t.contentRotate,
           'recent' => t.recentLast(frame.recentCount),
+          'favorites' => t.contentFavorites,
           _ => t.contentAlbum,
         },
         switch (frame.playOrder) {
@@ -443,6 +465,66 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                           onPressed: () => _command('newest'),
                         ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: SmileSpacing.m),
+
+                  // --- Lieblingsbilder (2026-10-14) -----------------------------
+                  _Card(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: _Label(t.favoritesCount((_favorites ?? const []).length))),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: SmileSpacing.s),
+                            child: InkWell(
+                              onTap: _openFavorites,
+                              child: Text(t.favoritesSeeAll, style: TextStyle(color: scheme.primary, fontSize: 13.5)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if ((_favorites ?? const []).isEmpty)
+                        Text(t.favoritesEmptyHint, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13))
+                      else
+                        InkWell(
+                          onTap: _openFavorites,
+                          child: Row(
+                            children: [
+                              for (final favorite in _favorites!.take(4))
+                                Padding(
+                                  padding: const EdgeInsets.only(right: SmileSpacing.s),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(SmileRadius.m),
+                                    child: SizedBox(
+                                      width: 56,
+                                      height: 56,
+                                      child: favorite.item.thumbnailUrl == null
+                                          ? ColoredBox(color: scheme.surfaceContainerHighest)
+                                          : CachedNetworkImage(
+                                              imageUrl: favorite.item.thumbnailUrl!,
+                                              cacheKey: '${favorite.item.id}_grid',
+                                              fit: BoxFit.cover,
+                                              fadeInDuration: Duration.zero,
+                                              errorWidget: (_, _, _) => ColoredBox(color: scheme.surfaceContainerHighest),
+                                            ),
+                                    ),
+                                  ),
+                                ),
+                              if (_favorites!.length > 4)
+                                Container(
+                                  width: 56,
+                                  height: 56,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    color: scheme.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(SmileRadius.m),
+                                  ),
+                                  child: Text('+${_favorites!.length - 4}', style: TextStyle(color: scheme.onSurfaceVariant)),
+                                ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: SmileSpacing.m),

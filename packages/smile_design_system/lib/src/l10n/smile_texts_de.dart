@@ -1580,4 +1580,80 @@ class SmileTextsDe extends SmileTexts {
   String frameOtherSpaceHint(String album, String space) {
     return '„$album“ gehört zum Space $space. Ein Frame zeigt nur Alben aus seinem eigenen Space oder solche, die mit seinem Space geteilt sind. Ein Admin von $space kann das Album über „Mit einem Space teilen“ mit deinem Space teilen – danach geht es hier mit einem Tipp.';
   }
+
+  @override
+  String get favorites => 'Lieblingsbilder';
+
+  @override
+  String get favoriteMarked => 'Gemerkt';
+
+  @override
+  String get favoriteUnmarked => 'Nicht mehr gemerkt';
+
+  @override
+  String get ctrlFavorite => 'Merken';
+
+  @override
+  String get allowFavorite => 'Lieblingsbilder merken';
+
+  @override
+  String get allowFavorites => 'Lieblingsbilder abspielen';
+
+  @override
+  String get contentFavorites => 'Lieblingsbilder';
+
+  @override
+  String get favoritesSeeAll => 'Alle ansehen';
+
+  @override
+  String favoritesCount(int n) {
+    return 'Lieblingsbilder · $n';
+  }
+
+  @override
+  String get favoriteOnFrame => 'Am Frame';
+
+  @override
+  String favoriteToday(String time) {
+    return 'heute $time';
+  }
+
+  @override
+  String favoriteYesterday(String time) {
+    return 'gestern $time';
+  }
+
+  @override
+  String get favoriteFor => 'Lieblingsbild für den Frame';
+
+  @override
+  String favoriteAddedTo(String frame) {
+    return 'Lieblingsbild von „$frame“';
+  }
+
+  @override
+  String get favoritesEmpty => 'Noch keine Lieblingsbilder';
+
+  @override
+  String get favoritesEmptyHint =>
+      'Am Frame mit dem Herz merken – oder hier in einem Album beim Foto über das Herz oben rechts.';
+
+  @override
+  String get favoritesRemove => 'Entfernen';
+
+  @override
+  String get favoritesRemoveAll => 'Alle entfernen';
+
+  @override
+  String favoritesRemoveAllQuestion(String frame) {
+    return 'Alle Lieblingsbilder von „$frame“ entfernen?';
+  }
+
+  @override
+  String get favoritesRemoveHint => 'Die Fotos selbst bleiben in ihren Alben.';
+
+  @override
+  String favoritesSelected(int n) {
+    return '$n ausgewählt';
+  }
 }

@@ -197,6 +197,22 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     } catch (_) {}
   }
 
+  /// "Lieblingsbild für den Frame" (2026-10-14): onto the Frame's
+  /// Lieblingsbilder (on several Frames, which one first).
+  Future<void> _addFavorite(String mediaItemId) async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final frame = await _pickFrame();
+    if (frame == null) return;
+    unawaited(HapticFeedback.selectionClick());
+    final saved = await LocalChanges.instance.run(
+      overrides: const {},
+      commit: () => FrameService().addFavorite(frameId: frame.frameId, mediaItemId: mediaItemId),
+      affects: tablesChanged({'frame_favorites'}),
+    );
+    if (saved) messenger.showSnackBar(SnackBar(content: Text(t.favoriteAddedTo(frameNameOf(frame.frameId, frame.frameName)))));
+  }
+
   Future<FrameShowing?> _pickFrame() async {
     final t = SmileTexts.of(context);
     if (_frames.length == 1) return _frames.single;
@@ -956,6 +972,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                             mediaId: item.id,
                             url: item.displayUrl,
                             onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
+                            onFavorite: _frames.isEmpty ? null : () => _addFavorite(item.id),
                           ),
                         ),
                       )
@@ -966,6 +983,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                               builder: (_) => PhotoViewerScreen(
                                 item: item,
                                 onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
+                                onFavorite: _frames.isEmpty ? null : () => _addFavorite(item.id),
                               ),
                             ),
                           )

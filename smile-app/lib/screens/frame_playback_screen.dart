@@ -114,7 +114,11 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
           ),
           card([
             label(t.whatPlays),
-            chips([('album', t.contentAlbum), ('rotate', t.contentRotate), ('recent', t.contentRecent)], f.contentMode, 'content_mode'),
+            chips(
+              [('album', t.contentAlbum), ('rotate', t.contentRotate), ('recent', t.contentRecent), ('favorites', t.contentFavorites)],
+              f.contentMode,
+              'content_mode',
+            ),
             if (f.contentMode == 'recent') ...[
               label(t.recentMeans),
               chips([for (final n in const [10, 20, 50, 100]) (n, t.recentLast(n))], f.recentCount, 'recent_count'),

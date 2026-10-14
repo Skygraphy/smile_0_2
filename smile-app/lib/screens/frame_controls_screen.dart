@@ -74,6 +74,8 @@ class _FrameControlsScreenState extends State<FrameControlsScreen> with SyncRelo
       ('back', t.allowBack, SmileIcons.previous),
       ('pause', t.allowPause, SmileIcons.pause),
       ('newest', t.allowNewest, SmileIcons.newest),
+      ('favorite', t.allowFavorite, SmileIcons.heartFilled),
+      ('favorites', t.allowFavorites, SmileIcons.heart),
       ('overview', t.allowOverview, SmileIcons.overview),
       ('album', t.allowAlbum, SmileIcons.switchAlbum),
       ('duration', t.allowDuration, SmileIcons.timer),

@@ -140,4 +140,8 @@ class SmileIcons {
   static const IconData controls = IconData(0xe298, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   /// "Wiedergabe".
   static const IconData playback = IconData(0xe434, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
+  /// Lieblingsbilder (2026-10-14): outline = not marked, filled = marked.
+  static const IconData heart = IconData(0xe2a8, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  static const IconData heartFilled = IconData(0xe2a8, fontFamily: 'PhosphorFill', fontPackage: _pkg);
 }

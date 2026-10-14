@@ -16,6 +16,8 @@ class FrameControls {
     this.back = false,
     this.pause = false,
     this.newest = false,
+    this.favorite = false,
+    this.favorites = false,
     this.overview = false,
     this.album = false,
     this.duration = false,
@@ -26,13 +28,17 @@ class FrameControls {
   final bool back;
   final bool pause;
   final bool newest;
+
+  /// Mark a Lieblingsbild / play the Lieblingsbilder (migrations/0076).
+  final bool favorite;
+  final bool favorites;
   final bool overview;
   final bool album;
   final bool duration;
   final bool playback;
 
   /// Level 1 "Nur zuschauen": touches are ignored.
-  bool get any => next || back || pause || newest || overview || album || duration || playback;
+  bool get any => next || back || pause || newest || favorite || favorites || overview || album || duration || playback;
 
   factory FrameControls.fromJson(Map<String, dynamic>? json) {
     bool on(String key) => json?[key] == true;
@@ -41,6 +47,8 @@ class FrameControls {
       back: on('back'),
       pause: on('pause'),
       newest: on('newest'),
+      favorite: on('favorite'),
+      favorites: on('favorites'),
       overview: on('overview'),
       album: on('album'),
       duration: on('duration'),
@@ -82,7 +90,7 @@ class FrameSettingsInfo {
   final FrameControls? controls;
 
   /// 'album' | 'rotate' (all its albums in turn) | 'recent' (the newest
-  /// [recentCount] of all its albums).
+  /// [recentCount] of all its albums) | 'favorites' (its Lieblingsbilder).
   final String contentMode;
   final int recentCount;
 
@@ -140,6 +148,7 @@ class SyncResult {
     required this.channelId,
     required this.entries,
     this.allEntries = const [],
+    this.favorites,
     required this.settings,
     required this.assignedChannels,
     this.spaceName,
@@ -156,6 +165,7 @@ class SyncResult {
       : channelId = null,
         entries = const [],
         allEntries = const [],
+        favorites = null,
         settings = null,
         assignedChannels = const [],
         spaceName = null,
@@ -170,6 +180,7 @@ class SyncResult {
       : channelId = null,
         entries = const [],
         allEntries = const [],
+        favorites = null,
         settings = null,
         assignedChannels = const [],
         spaceName = null,
@@ -184,6 +195,7 @@ class SyncResult {
       : channelId = null,
         entries = const [],
         allEntries = const [],
+        favorites = null,
         settings = null,
         assignedChannels = const [],
         spaceName = null,
@@ -198,6 +210,10 @@ class SyncResult {
   /// Every album's cached photos -- for "Aktuelles", "Mehrere im Wechsel"
   /// and a photo shown from the app's remote control (2026-10-14).
   final List<CachedMediaEntry> allEntries;
+
+  /// The Frame's Lieblingsbilder (media ids, newest marked first); null
+  /// when not known (an older server, nothing synced yet).
+  final List<String>? favorites;
   final FrameSettingsInfo? settings;
   final List<AssignedChannel> assignedChannels;
   final String? spaceName;
@@ -244,6 +260,20 @@ class SyncService {
   void changeSettings(Map<String, Object> settings) => _pendingSettings.addAll(settings);
   final Map<String, Object> _pendingSettings = {};
 
+  /// A Lieblingsbild marked (true) or taken back (false) on the Frame: sent
+  /// one per sync, which the caller triggers; more waiting run another.
+  void markFavorite(String mediaItemId, bool on) {
+    _pendingFavorites.remove(mediaItemId);
+    _pendingFavorites[mediaItemId] = on;
+  }
+
+  final Map<String, bool> _pendingFavorites = {};
+
+  /// Marks not yet sent -- shown as they will be.
+  Map<String, bool> get pendingFavorites => Map.unmodifiable(_pendingFavorites);
+
+  static List<String>? _favoritesFrom(Map<String, dynamic>? data) => (data?['favorites'] as List?)?.cast<String>();
+
   /// How long a Frame keeps showing its photos without reaching the
   /// server (architecture review 2026-09-29, weakness 7). Without this, a
   /// revoked -- or stolen -- Frame kept offline showed them forever, since
@@ -274,6 +304,7 @@ class SyncService {
       channelId: shown,
       entries: _entriesOf(local, shown),
       allEntries: local,
+      favorites: _favoritesFrom(meta),
       settings: _settingsFrom(meta),
       assignedChannels: _assignedFrom(meta),
       spaceName: meta?['space_name'] as String?,
@@ -365,12 +396,18 @@ class SyncService {
     // stored pick): reported once, then the server's choice applies.
     final pickedChannelId = await _credentialsStore.preferredChannelId;
     final settingsToSend = Map<String, Object>.of(_pendingSettings);
+    final favoriteToSend = _pendingFavorites.entries.firstOrNull;
     var page = await _fetchAllPages(
       accessToken: accessToken,
       fcmToken: fcmToken,
       selectChannelId: pickedChannelId,
       setSettings: settingsToSend,
+      favorite: favoriteToSend,
     );
+    if (!page.failed && favoriteToSend != null) {
+      if (_pendingFavorites[favoriteToSend.key] == favoriteToSend.value) _pendingFavorites.remove(favoriteToSend.key);
+      if (_pendingFavorites.isNotEmpty) _syncAgain = true;
+    }
     if (!page.failed && settingsToSend.isNotEmpty) {
       settingsToSend.forEach((key, value) {
         if (_pendingSettings[key] == value) _pendingSettings.remove(key);
@@ -395,6 +432,7 @@ class SyncService {
       channelId: currentChannelId,
       entries: local.where((e) => e.channelId == currentChannelId).toList(),
       allEntries: local,
+      favorites: _favoritesFrom(data),
       settings: _settingsFrom(data),
       assignedChannels: assignedChannels,
       spaceName: data['space_name'] as String?,
@@ -509,12 +547,14 @@ class SyncService {
       'settings': data['settings'],
       'assigned_channels': data['assigned_channels'],
       'space_name': data['space_name'],
+      'favorites': data['favorites'],
     }));
 
     return SyncResult(
       channelId: currentChannelId,
       entries: finalEntries.where((e) => e.channelId == currentChannelId).toList(),
       allEntries: finalEntries,
+      favorites: _favoritesFrom(data),
       settings: settings,
       assignedChannels: assignedChannels,
       spaceName: data['space_name'] as String?,
@@ -533,6 +573,7 @@ class SyncService {
     required String? selectChannelId,
     String? fetchChannelId,
     Map<String, Object> setSettings = const {},
+    MapEntry<String, bool>? favorite,
   }) async {
     String? channelId;
     Map<String, dynamic>? firstPageData;
@@ -550,6 +591,7 @@ class SyncService {
             if (cursor == null) 'select_channel_id': ?selectChannelId,
             if (cursor == null) 'fetch_channel_id': ?fetchChannelId,
             if (cursor == null && setSettings.isNotEmpty) 'set_settings': setSettings,
+            if (cursor == null && favorite != null) 'favorite': {'media_item_id': favorite.key, 'on': favorite.value},
             if (cursor != null) 'channel_id': ?channelId,
             'cursor': ?cursor,
           }),

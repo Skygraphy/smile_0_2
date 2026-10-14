@@ -97,6 +97,17 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   /// "Neueste": the newest 20 of all albums, newest first, for one round.
   bool _newestRound = false;
 
+  /// "Lieblingsbilder": all of them, newest marked first, for one round.
+  bool _favoritesRound = false;
+
+  /// The Frame's Lieblingsbilder (server, newest marked first) -- see
+  /// _favoriteIds for what is shown, marks not yet sent included.
+  List<String> _favorites = const [];
+
+  /// The big heart after a tap on "Merken": true marked, false taken back.
+  bool? _heartFlash;
+  Timer? _hideHeart;
+
   /// A photo the remote control asked for that isn't in the playlist: shown
   /// until the next move.
   CachedMediaEntry? _spotlight;
@@ -165,6 +176,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     _offlineRetryTimer?.cancel();
     _hideBar?.cancel();
     _hideNewFrom?.cancel();
+    _hideHeart?.cancel();
     _gridTimeout?.cancel();
     _minuteTimer?.cancel();
     if (_quiet) unawaited(_window.invokeMethod<void>('setDim', false).catchError((Object _) {}));
@@ -217,6 +229,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     setState(() {
       if (albumChanged) {
         _newestRound = false;
+        _favoritesRound = false;
         _spotlight = null;
         _showGrid = false;
         _playlist = [];
@@ -233,6 +246,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       _loadedOnce = true;
       _currentChannelId = result.channelId;
       _assignedChannels = result.assignedChannels;
+      if (result.favorites != null) _favorites = result.favorites!;
       _rebuildPlaylist();
     });
     _knownIds = {...?known, for (final e in all) e.mediaItemId};
@@ -250,7 +264,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   void _rebuildPlaylist() {
     final keepId = _playlist.isEmpty ? null : _playlist[_currentIndex % _playlist.length].mediaItemId;
     final settings = _settings;
-    final mode = _newestRound ? 'recent' : settings?.contentMode ?? 'album';
+    final mode = _favoritesRound ? 'favorites' : (_newestRound ? 'recent' : settings?.contentMode ?? 'album');
     final order = _newestRound ? 'newest' : settings?.playOrder ?? 'oldest';
     List<CachedMediaEntry> ordered(List<CachedMediaEntry> list) {
       final copy = [...list];
@@ -273,6 +287,18 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         final count = _newestRound ? 20 : settings?.recentCount ?? 20;
         final newest = ([...all]..sort((a, b) => b.sortOrder.compareTo(a.sortOrder))).take(count).toList();
         _playlist = ordered(newest);
+      case 'favorites':
+        final ids = _favoriteIds;
+        final favorites = all.where((e) => ids.contains(e.mediaItemId)).toList();
+        if (_favoritesRound) {
+          // The round: newest marked first.
+          final rank = {for (final (i, id) in _orderedFavoriteIds.indexed) id: i};
+          _playlist = favorites..sort((a, b) => (rank[a.mediaItemId] ?? 0).compareTo(rank[b.mediaItemId] ?? 0));
+        } else {
+          _playlist = ordered(favorites);
+        }
+        // None (yet) on this Frame: its album instead of a black screen.
+        if (_playlist.isEmpty) _playlist = ordered(_albumEntries);
       case 'rotate':
         final albums = [..._assignedChannels]..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));
         _playlist = [
@@ -284,6 +310,53 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     }
     final keep = keepId == null ? -1 : _playlist.indexWhere((e) => e.mediaItemId == keepId);
     _currentIndex = keep >= 0 ? keep : (_currentIndex < _playlist.length ? _currentIndex : 0);
+  }
+
+  /// Lieblingsbilder as shown: the server's, with marks not yet sent.
+  List<String> get _orderedFavoriteIds {
+    final pending = widget.syncService.pendingFavorites;
+    return [
+      for (final e in pending.entries)
+        if (e.value) e.key,
+      for (final id in _favorites)
+        if (!pending.containsKey(id)) id,
+    ];
+  }
+
+  Set<String> get _favoriteIds => _orderedFavoriteIds.toSet();
+
+  /// Lieblingsbilder this Frame has cached -- the button only shows then.
+  bool get _hasFavorites {
+    final ids = _favoriteIds;
+    return _allEntries.any((e) => ids.contains(e.mediaItemId));
+  }
+
+  /// "Merken": a big heart and "Gemerkt" (or "Nicht mehr gemerkt"), then it
+  /// goes to the server with the next sync, which starts right away.
+  void _toggleFavorite() {
+    final current = _current;
+    if (current == null) return;
+    final on = !_favoriteIds.contains(current.mediaItemId);
+    widget.syncService.markFavorite(current.mediaItemId, on);
+    setState(() => _heartFlash = on);
+    _hideHeart?.cancel();
+    _hideHeart = Timer(const Duration(milliseconds: 1600), () {
+      if (mounted) setState(() => _heartFlash = null);
+    });
+    unawaited(_sync());
+  }
+
+  void _playFavorites() {
+    setState(() {
+      _favoritesRound = true;
+      _newestRound = false;
+      _showGrid = false;
+      _spotlight = null;
+      _rebuildPlaylist();
+      _currentIndex = 0;
+      _slideNumber++;
+    });
+    _restartAdvanceTimer();
   }
 
   CachedMediaEntry? get _current =>
@@ -322,8 +395,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       _spotlight = null;
       if (wrapped) {
         // The end of a round.
-        if (_newestRound) {
+        if (_newestRound || _favoritesRound) {
           _newestRound = false;
+          _favoritesRound = false;
           _rebuildPlaylist();
           _currentIndex = 0;
         } else if (_settings?.endBehavior == 'overview') {
@@ -402,6 +476,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   void _playNewest() {
     setState(() {
       _newestRound = true;
+      _favoritesRound = false;
       _showGrid = false;
       _spotlight = null;
       _rebuildPlaylist();
@@ -574,9 +649,12 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       ),
     );
     _keepBar();
-    final showsJustThat = (_settings?.contentMode ?? 'album') == 'album' && !_newestRound;
+    final showsJustThat = (_settings?.contentMode ?? 'album') == 'album' && !_newestRound && !_favoritesRound;
     if (picked == null || (picked == _currentChannelId && showsJustThat)) return;
-    setState(() => _newestRound = false);
+    setState(() {
+      _newestRound = false;
+      _favoritesRound = false;
+    });
     await widget.syncService.selectChannel(picked);
     await _sync();
   }
@@ -778,7 +856,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
               Positioned(top: 20, left: 0, right: 0, child: Center(child: _newFromPill(t.frameNewFrom(_newFrom!))))
             // So one can see what plays right now (2026-10-14).
             else if (!_showGrid && _newestRound)
-              Positioned(top: 20, left: 0, right: 0, child: Center(child: _newestPill(t))),
+              Positioned(top: 20, left: 0, right: 0, child: Center(child: _newestPill(t)))
+            else if (!_showGrid && _favoritesRound)
+              Positioned(top: 20, left: 0, right: 0, child: Center(child: _favoritesPill(t))),
+            if (!_showGrid && _heartFlash != null) Positioned.fill(child: IgnorePointer(child: _heart(t, _heartFlash!))),
             if (!_showGrid && _paused && !_barVisible)
               Positioned(bottom: 24, left: 0, right: 0, child: Center(child: _pausedPill(t))),
             if (!_showGrid)
@@ -854,6 +935,38 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         child: Text(text, style: const TextStyle(color: Color(0xFF1A0F0E), fontSize: 22, fontWeight: FontWeight.w600)),
       );
 
+  Widget _favoritesPill(SmileTexts t) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(20)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(SmileIcons.heartFilled, color: SmileTheme.primary, size: 26),
+            const SizedBox(width: 10),
+            Text(t.favorites, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      );
+
+  /// After "Merken": big enough to see from the sofa.
+  Widget _heart(SmileTexts t, bool marked) => Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 28),
+          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(28)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(marked ? SmileIcons.heartFilled : SmileIcons.heart, color: SmileTheme.primary, size: 120),
+              const SizedBox(height: 12),
+              Text(
+                marked ? t.favoriteMarked : t.favoriteUnmarked,
+                style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      );
+
   Widget _newestPill(SmileTexts t) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
         decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(20)),
@@ -898,6 +1011,14 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         ),
       if (c.next) _BigButton(icon: SmileIcons.nextItem, label: t.ctrlNext, main: true, onTap: () => act(() => _advance(1))),
       if (c.newest) _BigButton(icon: SmileIcons.newest, label: t.ctrlNewest, onTap: () => act(_playNewest)),
+      if (c.favorite && _current != null)
+        _BigButton(
+          icon: _favoriteIds.contains(_current!.mediaItemId) ? SmileIcons.heartFilled : SmileIcons.heart,
+          label: _favoriteIds.contains(_current!.mediaItemId) ? t.favoriteMarked : t.ctrlFavorite,
+          heart: true,
+          onTap: () => act(_toggleFavorite),
+        ),
+      if (c.favorites && _hasFavorites) _BigButton(icon: SmileIcons.heart, label: t.favorites, onTap: () => act(_playFavorites)),
       if (c.overview) _BigButton(icon: SmileIcons.overview, label: t.ctrlOverview, onTap: () => setState(_openGrid)),
       if (_canSwitchAlbum) _BigButton(icon: SmileIcons.switchAlbum, label: t.ctrlAlbum, onTap: _pickChannel),
       if (c.duration) _BigButton(icon: SmileIcons.timer, label: t.ctrlDuration, onTap: _pickDuration),
@@ -992,13 +1113,23 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
 /// A button for the Frame: big enough to hit without glasses, icon and word.
 class _BigButton extends StatelessWidget {
-  const _BigButton({required this.icon, required this.label, required this.onTap, this.main = false, this.wide = false});
+  const _BigButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.main = false,
+    this.wide = false,
+    this.heart = false,
+  });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final bool main;
   final bool wide;
+
+  /// The "Merken" button: its heart in coral.
+  final bool heart;
 
   @override
   Widget build(BuildContext context) {
@@ -1024,7 +1155,7 @@ class _BigButton extends StatelessWidget {
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(icon, size: 40, color: fg),
+                    Icon(icon, size: 40, color: heart ? SmileTheme.primary : fg),
                     const SizedBox(height: 8),
                     Text(label, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: fg)),
                   ],
