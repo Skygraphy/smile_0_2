@@ -121,9 +121,9 @@ Future<void> main() async {
 Future<void> _listenToPushes() async {
   FirebaseMessaging.onBackgroundMessage(frame.firebaseMessagingBackgroundHandler);
   FirebaseMessaging.onMessage.listen((message) {
-    // A Frame: every push just means "sync now".
+    // A Frame: "sync now", or a command from the app's remote control.
     if (frame.FrameMode.active.value == true) {
-      frame.PushSyncSignal.requestSync();
+      frame.PushSyncSignal.handle(message.data);
       return;
     }
     // Silent cross-device sync (sync-fanout) -- never shown, just reloads

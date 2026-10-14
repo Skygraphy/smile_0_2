@@ -37,6 +37,14 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "smile/frame_window").setMethodCallHandler { call, result ->
             if (call.method == "setFrameMode") setFrameWindow(call.arguments == true)
+            // Nachtruhe (2026-10-14): the display as dark as it goes, the
+            // Frame shows black meanwhile; back to the system's brightness after.
+            if (call.method == "setDim") {
+                val attributes = window.attributes
+                attributes.screenBrightness = if (call.arguments == true) 0.01f
+                    else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                window.attributes = attributes
+            }
             result.success(null)
         }
         // The app's own slideshow keeps the screen on while it plays

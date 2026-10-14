@@ -2265,6 +2265,420 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'360p, für kleine Bildschirme – rund 6 MB pro Minute Video. Am schnellsten gesendet.'**
   String get qualityLowHint;
+
+  /// No description provided for @ctrlBack.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurück'**
+  String get ctrlBack;
+
+  /// No description provided for @ctrlPause.
+  ///
+  /// In de, this message translates to:
+  /// **'Pause'**
+  String get ctrlPause;
+
+  /// No description provided for @ctrlPlay.
+  ///
+  /// In de, this message translates to:
+  /// **'Abspielen'**
+  String get ctrlPlay;
+
+  /// No description provided for @ctrlNext.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiter'**
+  String get ctrlNext;
+
+  /// No description provided for @ctrlNewest.
+  ///
+  /// In de, this message translates to:
+  /// **'Neueste'**
+  String get ctrlNewest;
+
+  /// No description provided for @ctrlOverview.
+  ///
+  /// In de, this message translates to:
+  /// **'Übersicht'**
+  String get ctrlOverview;
+
+  /// No description provided for @ctrlAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Album'**
+  String get ctrlAlbum;
+
+  /// No description provided for @ctrlDuration.
+  ///
+  /// In de, this message translates to:
+  /// **'Dauer'**
+  String get ctrlDuration;
+
+  /// No description provided for @frameNewFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'Neu von {name}'**
+  String frameNewFrom(String name);
+
+  /// No description provided for @frameBackToSlideshow.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurück zur Diashow'**
+  String get frameBackToSlideshow;
+
+  /// No description provided for @durationQuestion.
+  ///
+  /// In de, this message translates to:
+  /// **'Wie lange soll ein Foto zu sehen sein?'**
+  String get durationQuestion;
+
+  /// No description provided for @secondsValue.
+  ///
+  /// In de, this message translates to:
+  /// **'{n} Sekunden'**
+  String secondsValue(int n);
+
+  /// No description provided for @oneMinute.
+  ///
+  /// In de, this message translates to:
+  /// **'1 Minute'**
+  String get oneMinute;
+
+  /// No description provided for @playbackTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Wiedergabe'**
+  String get playbackTitle;
+
+  /// No description provided for @playbackHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Was läuft und wie. Das stellt immer die App ein, egal welche Bedienstufe.'**
+  String get playbackHint;
+
+  /// No description provided for @whatPlays.
+  ///
+  /// In de, this message translates to:
+  /// **'Was läuft'**
+  String get whatPlays;
+
+  /// No description provided for @contentAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Album'**
+  String get contentAlbum;
+
+  /// No description provided for @contentRotate.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle Alben im Wechsel'**
+  String get contentRotate;
+
+  /// No description provided for @contentRecent.
+  ///
+  /// In de, this message translates to:
+  /// **'Aktuelles'**
+  String get contentRecent;
+
+  /// No description provided for @recentMeans.
+  ///
+  /// In de, this message translates to:
+  /// **'Aktuelles bedeutet'**
+  String get recentMeans;
+
+  /// No description provided for @recentLast.
+  ///
+  /// In de, this message translates to:
+  /// **'Letzte {n} Fotos'**
+  String recentLast(int n);
+
+  /// No description provided for @playOrder.
+  ///
+  /// In de, this message translates to:
+  /// **'Reihenfolge'**
+  String get playOrder;
+
+  /// No description provided for @orderNewest.
+  ///
+  /// In de, this message translates to:
+  /// **'Neueste zuerst'**
+  String get orderNewest;
+
+  /// No description provided for @orderOldest.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Reihe nach'**
+  String get orderOldest;
+
+  /// No description provided for @orderShuffle.
+  ///
+  /// In de, this message translates to:
+  /// **'Zufällig'**
+  String get orderShuffle;
+
+  /// No description provided for @atEnd.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Ende'**
+  String get atEnd;
+
+  /// No description provided for @endLoop.
+  ///
+  /// In de, this message translates to:
+  /// **'Endlosschleife'**
+  String get endLoop;
+
+  /// No description provided for @endOverview.
+  ///
+  /// In de, this message translates to:
+  /// **'Übersicht zeigen'**
+  String get endOverview;
+
+  /// No description provided for @displayTime.
+  ///
+  /// In de, this message translates to:
+  /// **'Anzeigedauer'**
+  String get displayTime;
+
+  /// No description provided for @showNewNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Neue Fotos sofort zeigen'**
+  String get showNewNow;
+
+  /// No description provided for @showNewNowHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Neu von …“ oben im Bild.'**
+  String get showNewNowHint;
+
+  /// No description provided for @bigClock.
+  ///
+  /// In de, this message translates to:
+  /// **'Große Uhr mit Datum'**
+  String get bigClock;
+
+  /// No description provided for @bigClockHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Wochentag, Datum und Uhrzeit oben rechts.'**
+  String get bigClockHint;
+
+  /// No description provided for @showSenderCaption.
+  ///
+  /// In de, this message translates to:
+  /// **'Absender einblenden'**
+  String get showSenderCaption;
+
+  /// No description provided for @showSenderCaptionHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Album und Name oben links im Bild.'**
+  String get showSenderCaptionHint;
+
+  /// No description provided for @quietTime.
+  ///
+  /// In de, this message translates to:
+  /// **'Nachtruhe'**
+  String get quietTime;
+
+  /// No description provided for @quietTimeHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Bildschirm ist in dieser Zeit dunkel.'**
+  String get quietTimeHint;
+
+  /// No description provided for @quietOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Aus'**
+  String get quietOff;
+
+  /// No description provided for @quietRange.
+  ///
+  /// In de, this message translates to:
+  /// **'{from} bis {to}'**
+  String quietRange(String from, String to);
+
+  /// No description provided for @quietFromLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Dunkel ab'**
+  String get quietFromLabel;
+
+  /// No description provided for @quietToLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Hell ab'**
+  String get quietToLabel;
+
+  /// No description provided for @controlsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Bedienung am Frame'**
+  String get controlsTitle;
+
+  /// No description provided for @controlsHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Die App steuert den Frame immer vollständig. Die Bedienstufe legt fest, was die Person vor dem Frame zusätzlich selbst tun darf.'**
+  String get controlsHint;
+
+  /// No description provided for @controlLevel.
+  ///
+  /// In de, this message translates to:
+  /// **'Bedienstufe'**
+  String get controlLevel;
+
+  /// No description provided for @level1.
+  ///
+  /// In de, this message translates to:
+  /// **'Nur zuschauen'**
+  String get level1;
+
+  /// No description provided for @level1Hint.
+  ///
+  /// In de, this message translates to:
+  /// **'Berührungen werden ignoriert. Alles kommt aus der App.'**
+  String get level1Hint;
+
+  /// No description provided for @level2.
+  ///
+  /// In de, this message translates to:
+  /// **'Blättern'**
+  String get level2;
+
+  /// No description provided for @level2Hint.
+  ///
+  /// In de, this message translates to:
+  /// **'Pause und ein großer Knopf „Weiter“.'**
+  String get level2Hint;
+
+  /// No description provided for @level3.
+  ///
+  /// In de, this message translates to:
+  /// **'Einfach'**
+  String get level3;
+
+  /// No description provided for @level3Hint.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurück, Pause, Weiter und „Neueste Fotos“.'**
+  String get level3Hint;
+
+  /// No description provided for @level4.
+  ///
+  /// In de, this message translates to:
+  /// **'Komfort'**
+  String get level4;
+
+  /// No description provided for @level4Hint.
+  ///
+  /// In de, this message translates to:
+  /// **'Dazu Übersicht, Album wechseln und Anzeigedauer.'**
+  String get level4Hint;
+
+  /// No description provided for @level5.
+  ///
+  /// In de, this message translates to:
+  /// **'Alles selbst'**
+  String get level5;
+
+  /// No description provided for @level5Hint.
+  ///
+  /// In de, this message translates to:
+  /// **'Dazu alle Wiedergabe-Einstellungen am Frame.'**
+  String get level5Hint;
+
+  /// No description provided for @levelCustom.
+  ///
+  /// In de, this message translates to:
+  /// **'Eigene Auswahl'**
+  String get levelCustom;
+
+  /// No description provided for @levelCustomHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Einzelne Schalter weichen von den Stufen ab.'**
+  String get levelCustomHint;
+
+  /// No description provided for @allowedOneByOne.
+  ///
+  /// In de, this message translates to:
+  /// **'Einzeln erlaubt'**
+  String get allowedOneByOne;
+
+  /// No description provided for @allowNext.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiter'**
+  String get allowNext;
+
+  /// No description provided for @allowBack.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurück'**
+  String get allowBack;
+
+  /// No description provided for @allowPause.
+  ///
+  /// In de, this message translates to:
+  /// **'Pause'**
+  String get allowPause;
+
+  /// No description provided for @allowNewest.
+  ///
+  /// In de, this message translates to:
+  /// **'Neueste Fotos'**
+  String get allowNewest;
+
+  /// No description provided for @allowOverview.
+  ///
+  /// In de, this message translates to:
+  /// **'Übersicht'**
+  String get allowOverview;
+
+  /// No description provided for @allowAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Album wechseln'**
+  String get allowAlbum;
+
+  /// No description provided for @allowDuration.
+  ///
+  /// In de, this message translates to:
+  /// **'Anzeigedauer'**
+  String get allowDuration;
+
+  /// No description provided for @allowPlayback.
+  ///
+  /// In de, this message translates to:
+  /// **'Wiedergabe-Einstellungen'**
+  String get allowPlayback;
+
+  /// No description provided for @remoteTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Fernbedienung'**
+  String get remoteTitle;
+
+  /// No description provided for @remoteHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Funktioniert auf jeder Bedienstufe.'**
+  String get remoteHint;
+
+  /// No description provided for @remoteNewest.
+  ///
+  /// In de, this message translates to:
+  /// **'Neueste {n} Fotos abspielen'**
+  String remoteNewest(int n);
+
+  /// No description provided for @showOnFrameNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Jetzt am Frame zeigen'**
+  String get showOnFrameNow;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

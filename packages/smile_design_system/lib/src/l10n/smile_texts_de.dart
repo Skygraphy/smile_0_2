@@ -1349,4 +1349,224 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get qualityLowHint =>
       '360p, für kleine Bildschirme – rund 6 MB pro Minute Video. Am schnellsten gesendet.';
+
+  @override
+  String get ctrlBack => 'Zurück';
+
+  @override
+  String get ctrlPause => 'Pause';
+
+  @override
+  String get ctrlPlay => 'Abspielen';
+
+  @override
+  String get ctrlNext => 'Weiter';
+
+  @override
+  String get ctrlNewest => 'Neueste';
+
+  @override
+  String get ctrlOverview => 'Übersicht';
+
+  @override
+  String get ctrlAlbum => 'Album';
+
+  @override
+  String get ctrlDuration => 'Dauer';
+
+  @override
+  String frameNewFrom(String name) {
+    return 'Neu von $name';
+  }
+
+  @override
+  String get frameBackToSlideshow => 'Zurück zur Diashow';
+
+  @override
+  String get durationQuestion => 'Wie lange soll ein Foto zu sehen sein?';
+
+  @override
+  String secondsValue(int n) {
+    return '$n Sekunden';
+  }
+
+  @override
+  String get oneMinute => '1 Minute';
+
+  @override
+  String get playbackTitle => 'Wiedergabe';
+
+  @override
+  String get playbackHint =>
+      'Was läuft und wie. Das stellt immer die App ein, egal welche Bedienstufe.';
+
+  @override
+  String get whatPlays => 'Was läuft';
+
+  @override
+  String get contentAlbum => 'Ein Album';
+
+  @override
+  String get contentRotate => 'Alle Alben im Wechsel';
+
+  @override
+  String get contentRecent => 'Aktuelles';
+
+  @override
+  String get recentMeans => 'Aktuelles bedeutet';
+
+  @override
+  String recentLast(int n) {
+    return 'Letzte $n Fotos';
+  }
+
+  @override
+  String get playOrder => 'Reihenfolge';
+
+  @override
+  String get orderNewest => 'Neueste zuerst';
+
+  @override
+  String get orderOldest => 'Der Reihe nach';
+
+  @override
+  String get orderShuffle => 'Zufällig';
+
+  @override
+  String get atEnd => 'Am Ende';
+
+  @override
+  String get endLoop => 'Endlosschleife';
+
+  @override
+  String get endOverview => 'Übersicht zeigen';
+
+  @override
+  String get displayTime => 'Anzeigedauer';
+
+  @override
+  String get showNewNow => 'Neue Fotos sofort zeigen';
+
+  @override
+  String get showNewNowHint => 'Mit „Neu von …“ oben im Bild.';
+
+  @override
+  String get bigClock => 'Große Uhr mit Datum';
+
+  @override
+  String get bigClockHint => 'Wochentag, Datum und Uhrzeit oben rechts.';
+
+  @override
+  String get showSenderCaption => 'Absender einblenden';
+
+  @override
+  String get showSenderCaptionHint => 'Album und Name oben links im Bild.';
+
+  @override
+  String get quietTime => 'Nachtruhe';
+
+  @override
+  String get quietTimeHint => 'Der Bildschirm ist in dieser Zeit dunkel.';
+
+  @override
+  String get quietOff => 'Aus';
+
+  @override
+  String quietRange(String from, String to) {
+    return '$from bis $to';
+  }
+
+  @override
+  String get quietFromLabel => 'Dunkel ab';
+
+  @override
+  String get quietToLabel => 'Hell ab';
+
+  @override
+  String get controlsTitle => 'Bedienung am Frame';
+
+  @override
+  String get controlsHint =>
+      'Die App steuert den Frame immer vollständig. Die Bedienstufe legt fest, was die Person vor dem Frame zusätzlich selbst tun darf.';
+
+  @override
+  String get controlLevel => 'Bedienstufe';
+
+  @override
+  String get level1 => 'Nur zuschauen';
+
+  @override
+  String get level1Hint =>
+      'Berührungen werden ignoriert. Alles kommt aus der App.';
+
+  @override
+  String get level2 => 'Blättern';
+
+  @override
+  String get level2Hint => 'Pause und ein großer Knopf „Weiter“.';
+
+  @override
+  String get level3 => 'Einfach';
+
+  @override
+  String get level3Hint => 'Zurück, Pause, Weiter und „Neueste Fotos“.';
+
+  @override
+  String get level4 => 'Komfort';
+
+  @override
+  String get level4Hint => 'Dazu Übersicht, Album wechseln und Anzeigedauer.';
+
+  @override
+  String get level5 => 'Alles selbst';
+
+  @override
+  String get level5Hint => 'Dazu alle Wiedergabe-Einstellungen am Frame.';
+
+  @override
+  String get levelCustom => 'Eigene Auswahl';
+
+  @override
+  String get levelCustomHint => 'Einzelne Schalter weichen von den Stufen ab.';
+
+  @override
+  String get allowedOneByOne => 'Einzeln erlaubt';
+
+  @override
+  String get allowNext => 'Weiter';
+
+  @override
+  String get allowBack => 'Zurück';
+
+  @override
+  String get allowPause => 'Pause';
+
+  @override
+  String get allowNewest => 'Neueste Fotos';
+
+  @override
+  String get allowOverview => 'Übersicht';
+
+  @override
+  String get allowAlbum => 'Album wechseln';
+
+  @override
+  String get allowDuration => 'Anzeigedauer';
+
+  @override
+  String get allowPlayback => 'Wiedergabe-Einstellungen';
+
+  @override
+  String get remoteTitle => 'Fernbedienung';
+
+  @override
+  String get remoteHint => 'Funktioniert auf jeder Bedienstufe.';
+
+  @override
+  String remoteNewest(int n) {
+    return 'Neueste $n Fotos abspielen';
+  }
+
+  @override
+  String get showOnFrameNow => 'Jetzt am Frame zeigen';
 }

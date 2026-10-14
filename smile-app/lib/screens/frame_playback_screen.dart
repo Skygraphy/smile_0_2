@@ -1,0 +1,171 @@
+import 'package:flutter/material.dart';
+import 'package:smile_design_system/smile_design_system.dart';
+
+import '../services/frame_service.dart';
+import '../services/local_changes.dart';
+
+/// "Wiedergabe" (decided 2026-10-14): what a Frame plays and how -- always
+/// set here in the app, whatever its control level.
+class FramePlaybackScreen extends StatefulWidget {
+  const FramePlaybackScreen({super.key, required this.frame, this.spaceId, required this.frameService});
+
+  final SmileFrame frame;
+  final String? spaceId;
+  final FrameService frameService;
+
+  @override
+  State<FramePlaybackScreen> createState() => _FramePlaybackScreenState();
+}
+
+class _FramePlaybackScreenState extends State<FramePlaybackScreen> {
+  late SmileFrame _frame = widget.frame;
+
+  /// Shown at once; the Frame follows within seconds.
+  Future<void> _save(Map<String, dynamic> changes) async {
+    final before = _frame;
+    setState(() => _frame = _frame.withSettings(changes));
+    final saved = await LocalChanges.instance.run(
+      overrides: const {},
+      commit: () => widget.frameService.updateSettings(frameId: _frame.id, changes: changes),
+      affects: tablesChanged({'frames'}, spaceIds: {?widget.spaceId}),
+    );
+    if (!saved && mounted) setState(() => _frame = before);
+  }
+
+  static String _hhmm(String? time) => time == null || time.length < 5 ? '' : time.substring(0, 5);
+
+  Future<void> _pickTime({required bool from}) async {
+    final current = from ? _frame.quietFrom : _frame.quietTo;
+    final parts = (current ?? (from ? '22:00' : '07:00')).split(':');
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1])),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
+    if (picked == null) return;
+    final value = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+    await _save({from ? 'quiet_from' : 'quiet_to': value});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = SmileTexts.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final f = _frame;
+    final quietOn = f.quietFrom != null && f.quietTo != null;
+
+    Widget card(List<Widget> children) => Container(
+          margin: const EdgeInsets.only(bottom: SmileSpacing.m),
+          decoration: BoxDecoration(color: scheme.surfaceContainer, borderRadius: BorderRadius.circular(SmileRadius.l)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+        );
+    Widget label(String text) => Padding(
+          padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.m, SmileSpacing.l, SmileSpacing.s),
+          child: Text(text.toUpperCase(), style: TextStyle(fontSize: 11.5, letterSpacing: 0.8, color: scheme.onSurfaceVariant)),
+        );
+    Widget chips<T>(List<(T, String)> options, T selected, String column) => Padding(
+          padding: const EdgeInsets.fromLTRB(SmileSpacing.l, 0, SmileSpacing.l, SmileSpacing.m),
+          child: Wrap(
+            spacing: SmileSpacing.s,
+            runSpacing: SmileSpacing.s,
+            children: [
+              for (final (value, name) in options)
+                ChoiceChip(
+                  label: Text(name),
+                  selected: value == selected,
+                  onSelected: value == selected ? null : (_) => _save({column: value}),
+                ),
+            ],
+          ),
+        );
+
+    return Scaffold(
+      appBar: AppBar(title: Text(t.playbackTitle)),
+      body: ListView(
+        padding: const EdgeInsets.all(SmileSpacing.m),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: SmileSpacing.m),
+            child: Text(t.playbackHint, style: TextStyle(color: scheme.onSurfaceVariant)),
+          ),
+          card([
+            label(t.whatPlays),
+            chips([('album', t.contentAlbum), ('rotate', t.contentRotate), ('recent', t.contentRecent)], f.contentMode, 'content_mode'),
+            if (f.contentMode == 'recent') ...[
+              label(t.recentMeans),
+              chips([for (final n in const [10, 20, 50, 100]) (n, t.recentLast(n))], f.recentCount, 'recent_count'),
+            ],
+          ]),
+          card([
+            label(t.playOrder),
+            chips([('newest', t.orderNewest), ('oldest', t.orderOldest), ('shuffle', t.orderShuffle)], f.playOrder, 'play_order'),
+            label(t.displayTime),
+            chips(
+              [for (final s in const [5, 10, 20, 60]) (s, s == 60 ? t.oneMinute : t.secondsValue(s))],
+              f.intervalSeconds,
+              'slideshow_interval_seconds',
+            ),
+            label(t.atEnd),
+            chips([('loop', t.endLoop), ('overview', t.endOverview)], f.endBehavior, 'end_behavior'),
+          ]),
+          card([
+            SwitchListTile(
+              secondary: const Icon(SmileIcons.newest),
+              title: Text(t.showNewNow),
+              subtitle: Text(t.showNewNowHint),
+              value: f.showNewImmediately,
+              onChanged: (v) => _save({'show_new_immediately': v}),
+            ),
+            SwitchListTile(
+              secondary: const Icon(SmileIcons.waiting),
+              title: Text(t.bigClock),
+              subtitle: Text(t.bigClockHint),
+              value: f.showClock,
+              onChanged: (v) => _save({'show_clock': v}),
+            ),
+            SwitchListTile(
+              secondary: const Icon(SmileIcons.person),
+              title: Text(t.showSenderCaption),
+              subtitle: Text(t.showSenderCaptionHint),
+              value: f.showSender,
+              onChanged: (v) => _save({'show_sender': v}),
+            ),
+            SwitchListTile(
+              secondary: Icon(f.videoSound ? SmileIcons.soundOn : SmileIcons.soundOff),
+              title: Text(t.videoSound),
+              subtitle: Text(t.videoSoundHint),
+              value: f.videoSound,
+              onChanged: (v) => _save({'video_sound': v}),
+            ),
+          ]),
+          card([
+            SwitchListTile(
+              secondary: const Icon(SmileIcons.night),
+              title: Text(t.quietTime),
+              subtitle: Text(quietOn ? t.quietRange(_hhmm(f.quietFrom), _hhmm(f.quietTo)) : t.quietTimeHint),
+              value: quietOn,
+              onChanged: (on) => _save(on ? {'quiet_from': '22:00', 'quiet_to': '07:00'} : {'quiet_from': null, 'quiet_to': null}),
+            ),
+            if (quietOn) ...[
+              ListTile(
+                contentPadding: const EdgeInsets.only(left: 72, right: SmileSpacing.l),
+                title: Text(t.quietFromLabel),
+                trailing: Text(_hhmm(f.quietFrom), style: TextStyle(color: scheme.primary, fontSize: 16)),
+                onTap: () => _pickTime(from: true),
+              ),
+              ListTile(
+                contentPadding: const EdgeInsets.only(left: 72, right: SmileSpacing.l),
+                title: Text(t.quietToLabel),
+                trailing: Text(_hhmm(f.quietTo), style: TextStyle(color: scheme.primary, fontSize: 16)),
+                onTap: () => _pickTime(from: false),
+              ),
+            ],
+          ]),
+        ],
+      ),
+    );
+  }
+}

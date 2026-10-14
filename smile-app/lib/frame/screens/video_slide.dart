@@ -22,6 +22,7 @@ class VideoSlide extends StatefulWidget {
     required this.cacheStore,
     required this.onFinished,
     this.withSound = true,
+    this.paused = false,
   });
 
   final CachedMediaEntry entry;
@@ -30,6 +31,9 @@ class VideoSlide extends StatefulWidget {
 
   /// The Frame's video-sound setting; false plays muted.
   final bool withSound;
+
+  /// Pause on the Frame or from the app's remote control (2026-10-14).
+  final bool paused;
 
   @override
   State<VideoSlide> createState() => _VideoSlideState();
@@ -52,6 +56,13 @@ class _VideoSlideState extends State<VideoSlide> {
     // The setting can change while a video plays (pushed via sync).
     if (oldWidget.withSound != widget.withSound) {
       _controller?.setVolume(widget.withSound ? 1 : 0);
+    }
+    if (oldWidget.paused != widget.paused) {
+      if (widget.paused) {
+        _controller?.pause();
+      } else {
+        _controller?.play();
+      }
     }
   }
 
@@ -83,7 +94,7 @@ class _VideoSlideState extends State<VideoSlide> {
     });
     setState(() => _controller = controller);
     await controller.setVolume(widget.withSound ? 1 : 0);
-    await controller.play();
+    if (!widget.paused) await controller.play();
   }
 
   void _finish() {

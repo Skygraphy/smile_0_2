@@ -8,6 +8,47 @@ import 'media_cache_store.dart';
 import 'media_cache_sync.dart';
 import 'pairing_service.dart';
 
+/// What the person in front of the Frame may do (migrations/0075): the
+/// big buttons it shows. The app sets them, by a level or one by one.
+class FrameControls {
+  const FrameControls({
+    this.next = false,
+    this.back = false,
+    this.pause = false,
+    this.newest = false,
+    this.overview = false,
+    this.album = false,
+    this.duration = false,
+    this.playback = false,
+  });
+
+  final bool next;
+  final bool back;
+  final bool pause;
+  final bool newest;
+  final bool overview;
+  final bool album;
+  final bool duration;
+  final bool playback;
+
+  /// Level 1 "Nur zuschauen": touches are ignored.
+  bool get any => next || back || pause || newest || overview || album || duration || playback;
+
+  factory FrameControls.fromJson(Map<String, dynamic>? json) {
+    bool on(String key) => json?[key] == true;
+    return FrameControls(
+      next: on('next'),
+      back: on('back'),
+      pause: on('pause'),
+      newest: on('newest'),
+      overview: on('overview'),
+      album: on('album'),
+      duration: on('duration'),
+      playback: on('playback'),
+    );
+  }
+}
+
 class FrameSettingsInfo {
   FrameSettingsInfo({
     required this.displayMode,
@@ -15,6 +56,16 @@ class FrameSettingsInfo {
     required this.channelSwitchEnabled,
     this.videoSound = true,
     this.maxLocalCacheGb,
+    this.controls,
+    this.contentMode = 'album',
+    this.recentCount = 20,
+    this.playOrder = 'oldest',
+    this.endBehavior = 'loop',
+    this.showNewImmediately = true,
+    this.showClock = false,
+    this.showSender = true,
+    this.quietFrom,
+    this.quietTo,
   });
 
   final String displayMode; // 'slideshow' | 'manual'
@@ -26,12 +77,47 @@ class FrameSettingsInfo {
   final bool videoSound;
   final double? maxLocalCacheGb;
 
+  /// Null from a server older than migrations/0075: then what the Frame
+  /// did before (overview, and album switching when allowed).
+  final FrameControls? controls;
+
+  /// 'album' | 'rotate' (all its albums in turn) | 'recent' (the newest
+  /// [recentCount] of all its albums).
+  final String contentMode;
+  final int recentCount;
+
+  /// 'newest' | 'oldest' | 'shuffle'
+  final String playOrder;
+
+  /// 'loop' | 'overview' (shows the overview at the end)
+  final String endBehavior;
+  final bool showNewImmediately;
+  final bool showClock;
+  final bool showSender;
+
+  /// Nachtruhe, "HH:MM[:SS]" in the Frame's local time; both null = off.
+  final String? quietFrom;
+  final String? quietTo;
+
+  FrameControls get effectiveControls =>
+      controls ?? FrameControls(next: true, back: true, pause: true, overview: true, album: channelSwitchEnabled);
+
   factory FrameSettingsInfo.fromJson(Map<String, dynamic> json) => FrameSettingsInfo(
         displayMode: json['display_mode'] as String? ?? 'slideshow',
         slideshowIntervalSeconds: json['slideshow_interval_seconds'] as int? ?? 8,
         channelSwitchEnabled: json['channel_switch_enabled'] as bool? ?? false,
         videoSound: json['video_sound'] as bool? ?? true,
         maxLocalCacheGb: (json['max_local_cache_gb'] as num?)?.toDouble(),
+        controls: json['controls'] is Map ? FrameControls.fromJson((json['controls'] as Map).cast<String, dynamic>()) : null,
+        contentMode: json['content_mode'] as String? ?? 'album',
+        recentCount: json['recent_count'] as int? ?? 20,
+        playOrder: json['play_order'] as String? ?? 'oldest',
+        endBehavior: json['end_behavior'] as String? ?? 'loop',
+        showNewImmediately: json['show_new_immediately'] as bool? ?? true,
+        showClock: json['show_clock'] as bool? ?? false,
+        showSender: json['show_sender'] as bool? ?? true,
+        quietFrom: json['quiet_from'] as String?,
+        quietTo: json['quiet_to'] as String?,
       );
 }
 
@@ -53,6 +139,7 @@ class SyncResult {
   SyncResult({
     required this.channelId,
     required this.entries,
+    this.allEntries = const [],
     required this.settings,
     required this.assignedChannels,
     this.spaceName,
@@ -68,6 +155,7 @@ class SyncResult {
   SyncResult.deactivated()
       : channelId = null,
         entries = const [],
+        allEntries = const [],
         settings = null,
         assignedChannels = const [],
         spaceName = null,
@@ -81,6 +169,7 @@ class SyncResult {
   SyncResult.unpaired()
       : channelId = null,
         entries = const [],
+        allEntries = const [],
         settings = null,
         assignedChannels = const [],
         spaceName = null,
@@ -94,6 +183,7 @@ class SyncResult {
   SyncResult.offlineExpired()
       : channelId = null,
         entries = const [],
+        allEntries = const [],
         settings = null,
         assignedChannels = const [],
         spaceName = null,
@@ -104,6 +194,10 @@ class SyncResult {
 
   final String? channelId;
   final List<CachedMediaEntry> entries;
+
+  /// Every album's cached photos -- for "Aktuelles", "Mehrere im Wechsel"
+  /// and a photo shown from the app's remote control (2026-10-14).
+  final List<CachedMediaEntry> allEntries;
   final FrameSettingsInfo? settings;
   final List<AssignedChannel> assignedChannels;
   final String? spaceName;
@@ -144,6 +238,12 @@ class SyncService {
   /// has reported it. Caller still has to trigger a `sync()` afterwards.
   Future<void> selectChannel(String channelId) => _credentialsStore.savePreferredChannelId(channelId);
 
+  /// A setting changed on the Frame itself (display time, playback):
+  /// sent with the next sync, which the caller triggers. The server only
+  /// takes what the Frame's controls allow (get-media-batch).
+  void changeSettings(Map<String, Object> settings) => _pendingSettings.addAll(settings);
+  final Map<String, Object> _pendingSettings = {};
+
   /// How long a Frame keeps showing its photos without reaching the
   /// server (architecture review 2026-09-29, weakness 7). Without this, a
   /// revoked -- or stolen -- Frame kept offline showed them forever, since
@@ -173,6 +273,7 @@ class SyncService {
     return SyncResult(
       channelId: shown,
       entries: _entriesOf(local, shown),
+      allEntries: local,
       settings: _settingsFrom(meta),
       assignedChannels: _assignedFrom(meta),
       spaceName: meta?['space_name'] as String?,
@@ -263,7 +364,18 @@ class SyncService {
     // A switch made on the Frame since the last sync (also an old build's
     // stored pick): reported once, then the server's choice applies.
     final pickedChannelId = await _credentialsStore.preferredChannelId;
-    var page = await _fetchAllPages(accessToken: accessToken, fcmToken: fcmToken, selectChannelId: pickedChannelId);
+    final settingsToSend = Map<String, Object>.of(_pendingSettings);
+    var page = await _fetchAllPages(
+      accessToken: accessToken,
+      fcmToken: fcmToken,
+      selectChannelId: pickedChannelId,
+      setSettings: settingsToSend,
+    );
+    if (!page.failed && settingsToSend.isNotEmpty) {
+      settingsToSend.forEach((key, value) {
+        if (_pendingSettings[key] == value) _pendingSettings.remove(key);
+      });
+    }
     if (page.notAssignedToChosenChannel) {
       // The picked channel is no longer assigned to this Frame -- drop the
       // pick and take the server's choice.
@@ -282,6 +394,7 @@ class SyncService {
     onEarlyResult?.call(SyncResult(
       channelId: currentChannelId,
       entries: local.where((e) => e.channelId == currentChannelId).toList(),
+      allEntries: local,
       settings: _settingsFrom(data),
       assignedChannels: assignedChannels,
       spaceName: data['space_name'] as String?,
@@ -355,6 +468,7 @@ class SyncService {
           cachedAt: DateTime.now(),
           posterFileName: posterFileName,
           channelId: remote.channelId,
+          senderName: remote.senderName,
         ));
       } catch (_) {
         // Skip this item this round; it's retried on the next sync since
@@ -371,7 +485,9 @@ class SyncService {
     final merged = [
       ...local.where((e) => !deleteIds.contains(e.mediaItemId)).map((e) {
         final remote = remoteByMediaId[e.mediaItemId];
-        return remote != null ? e.copyWith(sortOrder: remote.sortOrder, channelId: remote.channelId) : e;
+        return remote != null
+            ? e.copyWith(sortOrder: remote.sortOrder, channelId: remote.channelId, senderName: remote.senderName)
+            : e;
       }),
       ...newEntries,
     ]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
@@ -398,6 +514,7 @@ class SyncService {
     return SyncResult(
       channelId: currentChannelId,
       entries: finalEntries.where((e) => e.channelId == currentChannelId).toList(),
+      allEntries: finalEntries,
       settings: settings,
       assignedChannels: assignedChannels,
       spaceName: data['space_name'] as String?,
@@ -415,6 +532,7 @@ class SyncService {
     required String? fcmToken,
     required String? selectChannelId,
     String? fetchChannelId,
+    Map<String, Object> setSettings = const {},
   }) async {
     String? channelId;
     Map<String, dynamic>? firstPageData;
@@ -431,6 +549,7 @@ class SyncService {
             'fcm_token': ?fcmToken,
             if (cursor == null) 'select_channel_id': ?selectChannelId,
             if (cursor == null) 'fetch_channel_id': ?fetchChannelId,
+            if (cursor == null && setSettings.isNotEmpty) 'set_settings': setSettings,
             if (cursor != null) 'channel_id': ?channelId,
             'cursor': ?cursor,
           }),
@@ -465,6 +584,7 @@ class SyncService {
               displayUrl: e['display_url'] as String?,
               posterUrl: e['poster_url'] as String?,
               channelId: data['channel_id'] as String?,
+              senderName: e['sender_name'] as String?,
             )),
       );
       cursor = data['next_cursor'] as int?;

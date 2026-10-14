@@ -28,7 +28,7 @@ class PushService {
     // point of view; observed in practice to be less reliable for this
     // kiosk app than the background handler above, which is why that path
     // does real work too instead of being a pure no-op.
-    FirebaseMessaging.onMessage.listen((_) => PushSyncSignal.requestSync());
+    FirebaseMessaging.onMessage.listen((message) => PushSyncSignal.handle(message.data));
   }
 
   Future<String?> getToken() async {

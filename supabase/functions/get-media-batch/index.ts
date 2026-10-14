@@ -35,7 +35,27 @@ interface RequestBody {
   fcm_token?: string;
   battery_level?: number;
   is_charging?: boolean;
+  // A change made on the Frame itself (2026-10-14) -- only what its
+  // controls allow: "duration" the display time, "playback" the rest.
+  set_settings?: Record<string, unknown>;
 }
+
+const FRAME_COLUMNS =
+  "id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, " +
+  "max_local_cache_gb, current_channel_id, control_level, controls, content_mode, recent_count, play_order, " +
+  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, spaces(name, deleted_at)";
+
+// What the Frame may change itself, by the control that allows it, and
+// what each value may be.
+const SETTABLE: Record<string, { control: string; ok: (v: unknown) => boolean }> = {
+  slideshow_interval_seconds: { control: "duration", ok: (v) => typeof v === "number" && v >= 3 && v <= 600 },
+  play_order: { control: "playback", ok: (v) => ["newest", "oldest", "shuffle"].includes(v as string) },
+  end_behavior: { control: "playback", ok: (v) => ["loop", "overview"].includes(v as string) },
+  content_mode: { control: "playback", ok: (v) => ["album", "rotate", "recent"].includes(v as string) },
+  video_sound: { control: "playback", ok: (v) => typeof v === "boolean" },
+  show_clock: { control: "playback", ok: (v) => typeof v === "boolean" },
+  show_sender: { control: "playback", ok: (v) => typeof v === "boolean" },
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -56,11 +76,8 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "invalid_or_expired_token" }, 401);
   }
 
-  const { data: frame } = await supabase
-    .from("frames")
-    .select("id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, max_local_cache_gb, current_channel_id, spaces(name, deleted_at)")
-    .eq("id", claims.frame_id)
-    .maybeSingle();
+  // deno-lint-ignore no-explicit-any
+  let { data: frame } = await supabase.from("frames").select(FRAME_COLUMNS).eq("id", claims.frame_id).maybeSingle() as { data: any };
   // Deleted (its Space was deleted) vs. merely revoked: a deleted Frame
   // has to go back to pairing, a revoked one just waits to be reactivated.
   if (!frame) return jsonResponse({ error: "frame_not_found" }, 403);
@@ -72,13 +89,6 @@ Deno.serve(async (req) => {
   }
   // deno-lint-ignore no-explicit-any
   const spaceName = (frame.spaces as any)?.name ?? null;
-  const settings = {
-    display_mode: frame.display_mode,
-    slideshow_interval_seconds: frame.slideshow_interval_seconds,
-    channel_switch_enabled: frame.channel_switch_enabled,
-    video_sound: frame.video_sound,
-    max_local_cache_gb: frame.max_local_cache_gb,
-  };
 
   const { data: credentials } = await supabase
     .from("frame_credentials")
@@ -88,6 +98,40 @@ Deno.serve(async (req) => {
   if (!credentials || credentials.refresh_secret_version !== claims.credential_version) {
     return jsonResponse({ error: "stale_credential_version" }, 401);
   }
+
+  // A change made on the Frame: only what its controls allow, the rest is
+  // ignored. Saved before answering, so the answer already carries it.
+  if (body.set_settings && typeof body.set_settings === "object") {
+    const controls = (frame.controls ?? {}) as Record<string, boolean>;
+    const update: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(body.set_settings)) {
+      const rule = SETTABLE[key];
+      if (rule && controls[rule.control] === true && rule.ok(value)) update[key] = value;
+    }
+    if (Object.keys(update).length > 0) {
+      await supabase.from("frames").update(update).eq("id", claims.frame_id);
+      frame = { ...frame, ...update };
+    }
+  }
+
+  const settings = {
+    display_mode: frame.display_mode,
+    slideshow_interval_seconds: frame.slideshow_interval_seconds,
+    channel_switch_enabled: frame.channel_switch_enabled,
+    video_sound: frame.video_sound,
+    max_local_cache_gb: frame.max_local_cache_gb,
+    control_level: frame.control_level,
+    controls: frame.controls,
+    content_mode: frame.content_mode,
+    recent_count: frame.recent_count,
+    play_order: frame.play_order,
+    end_behavior: frame.end_behavior,
+    show_new_immediately: frame.show_new_immediately,
+    show_clock: frame.show_clock,
+    show_sender: frame.show_sender,
+    quiet_from: frame.quiet_from,
+    quiet_to: frame.quiet_to,
+  };
 
   if (body.fcm_token || body.battery_level !== undefined || body.is_charging !== undefined) {
     await supabase
@@ -172,6 +216,7 @@ Deno.serve(async (req) => {
     storage_path_display: string;
     storage_path_thumbnail: string | null;
     sort_key: number;
+    sender_name: string | null;
   }[];
 
   // Signed in one call per bucket instead of one per photo: with every
@@ -196,6 +241,7 @@ Deno.serve(async (req) => {
     media_item_id: row.media_item_id,
     media_type: row.media_type,
     sort_order: row.sort_key,
+    sender_name: row.sender_name ?? null,
     display_url: displayUrls.get(row.storage_path_display) ?? null,
     poster_url: row.media_type === "video" && row.storage_path_thumbnail
       ? posterUrls.get(row.storage_path_thumbnail) ?? null

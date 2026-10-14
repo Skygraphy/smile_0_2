@@ -11,11 +11,17 @@ import '../services/media_service.dart';
 /// at once while the full one loads; offline it stays when the full one
 /// was never loaded.
 class PhotoViewerScreen extends StatefulWidget {
-  const PhotoViewerScreen({super.key, required MediaItem this.item}) : localBytes = null;
+  const PhotoViewerScreen({super.key, required MediaItem this.item, this.onShowOnFrame}) : localBytes = null;
 
   /// A photo still on its way to the server (2026-10-12): straight from
   /// the phone.
-  const PhotoViewerScreen.local({super.key, required Uint8List this.localBytes}) : item = null;
+  const PhotoViewerScreen.local({super.key, required Uint8List this.localBytes})
+      : item = null,
+        onShowOnFrame = null;
+
+  /// "Jetzt am Frame zeigen" (2026-10-14) -- only when the album runs on a
+  /// Frame the caller manages.
+  final VoidCallback? onShowOnFrame;
 
   final MediaItem? item;
   final Uint8List? localBytes;
@@ -87,6 +93,14 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
         backgroundColor: Colors.black38,
         foregroundColor: Colors.white,
         leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).pop()),
+        actions: [
+          if (widget.onShowOnFrame != null)
+            IconButton(
+              icon: const Icon(SmileIcons.frame),
+              tooltip: SmileTexts.of(context).showOnFrameNow,
+              onPressed: widget.onShowOnFrame,
+            ),
+        ],
       ),
       body: GestureDetector(
         onDoubleTapDown: (d) => _lastTap = d,

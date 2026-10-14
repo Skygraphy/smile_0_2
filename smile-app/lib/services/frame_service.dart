@@ -1,5 +1,6 @@
 import '../main.dart';
 import 'edge_functions.dart';
+import 'frame_controls.dart';
 import 'local_changes.dart';
 
 class SmileFrame {
@@ -18,6 +19,7 @@ class SmileFrame {
     this.batteryLevel,
     this.isCharging,
     this.deviceModel,
+    this.playback = const {},
   });
 
   final String id;
@@ -46,6 +48,45 @@ class SmileFrame {
   // Null until the paired hardware's first heartbeat lands.
   final String? deviceModel;
 
+  /// Control level and playback settings (migrations/0075), as the row
+  /// has them -- read through the getters below.
+  final Map<String, dynamic> playback;
+
+  /// 1..5, or null = "Eigene Auswahl".
+  int? get controlLevel => playback['control_level'] as int?;
+  Map<String, bool> get controls =>
+      {for (final e in ((playback['controls'] as Map?) ?? const {}).entries) e.key as String: e.value == true};
+  String get contentMode => playback['content_mode'] as String? ?? 'album';
+  int get recentCount => playback['recent_count'] as int? ?? 20;
+  String get playOrder => playback['play_order'] as String? ?? 'oldest';
+  String get endBehavior => playback['end_behavior'] as String? ?? 'loop';
+  int get intervalSeconds => playback['slideshow_interval_seconds'] as int? ?? 8;
+  bool get showNewImmediately => playback['show_new_immediately'] as bool? ?? true;
+  bool get showClock => playback['show_clock'] as bool? ?? false;
+  bool get showSender => playback['show_sender'] as bool? ?? true;
+  String? get quietFrom => playback['quiet_from'] as String?;
+  String? get quietTo => playback['quiet_to'] as String?;
+
+  /// The same Frame with some settings changed (shown at once, before the
+  /// server has them).
+  SmileFrame withSettings(Map<String, dynamic> changes) => SmileFrame(
+        id: id,
+        name: name,
+        lifecycleState: lifecycleState,
+        channelSwitchEnabled: changes['channel_switch_enabled'] as bool? ?? channelSwitchEnabled,
+        videoSound: changes['video_sound'] as bool? ?? videoSound,
+        avatarPath: avatarPath,
+        currentChannelId: currentChannelId,
+        pairingCode: pairingCode,
+        pairingCodeExpiresAt: pairingCodeExpiresAt,
+        currentAppVersion: currentAppVersion,
+        lastSeenAt: lastSeenAt,
+        batteryLevel: batteryLevel,
+        isCharging: isCharging,
+        deviceModel: deviceModel,
+        playback: {...playback, ...changes},
+      );
+
   bool get isRevoked => lifecycleState == 'revoked';
 
   /// Frames report in at least every 2 minutes; 10 minutes of silence =
@@ -68,6 +109,7 @@ class SmileFrame {
         batteryLevel: batteryLevel,
         isCharging: isCharging,
         deviceModel: deviceModel,
+        playback: playback,
       );
   bool get isPending => lifecycleState == 'pending';
 
@@ -87,6 +129,10 @@ class SmileFrame {
         batteryLevel: json['battery_level'] as int?,
         isCharging: json['is_charging'] as bool?,
         deviceModel: json['device_model'] as String?,
+        playback: {
+          for (final key in FrameService.playbackColumns)
+            if (json.containsKey(key)) key: json[key],
+        },
       );
 }
 
@@ -123,8 +169,15 @@ class AssignableChannel {
 /// telemetry (last_seen/battery/app_version) and the channel-switch
 /// display setting remain.
 class FrameService {
-  static const _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, video_sound, avatar_path, current_channel_id, pairing_code, '
-      'pairing_code_expires_at, current_app_version, last_seen_at, battery_level, is_charging, device_model';
+  /// Control level and playback (migrations/0075).
+  static const playbackColumns = [
+    'control_level', 'controls', 'content_mode', 'recent_count', 'play_order', 'end_behavior', 'slideshow_interval_seconds',
+    'show_new_immediately', 'show_clock', 'show_sender', 'quiet_from', 'quiet_to',
+  ];
+
+  static final _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, video_sound, avatar_path, current_channel_id, pairing_code, '
+      'pairing_code_expires_at, current_app_version, last_seen_at, battery_level, is_charging, device_model, '
+      '${playbackColumns.join(', ')}';
 
   Future<List<SmileFrame>> listFrames(String spaceId) async {
     final rows = await supabase.from('frames').select(_frameColumns).eq('space_id', spaceId).order('created_at');
@@ -211,8 +264,15 @@ class FrameService {
     LocalChanges.saved(tablesChanged({'frames'}));
   }
 
+  /// The album switch is one of the Frame's controls (migrations/0075):
+  /// changing it here changes the switch there too, and the level.
   Future<void> setChannelSwitchEnabled({required String frameId, required bool enabled}) async {
-    await supabase.from('frames').update({'channel_switch_enabled': enabled}).eq('id', frameId);
+    final row = await supabase.from('frames').select('controls').eq('id', frameId).single();
+    final controls = {
+      for (final e in ((row['controls'] as Map?) ?? const {}).entries) e.key as String: e.value == true,
+      'album': enabled,
+    };
+    await supabase.from('frames').update(FrameControlLevels.update(controls)).eq('id', frameId);
   }
 
   /// For good (delete-frame): the Frame's Space Admin or a Co-Admin. The
@@ -232,6 +292,18 @@ class FrameService {
 
   Future<void> setVideoSound({required String frameId, required bool enabled}) async {
     await supabase.from('frames').update({'video_sound': enabled}).eq('id', frameId);
+  }
+
+  /// Any of the Frame's display settings (control level, playback); the
+  /// Frame is woken by the change and takes it over at once.
+  Future<void> updateSettings({required String frameId, required Map<String, dynamic> changes}) async {
+    await supabase.from('frames').update(changes).eq('id', frameId);
+  }
+
+  /// The app's remote control (notify-frame, 2026-10-14): "pause", "play",
+  /// "next", "back", "newest", or "show" with [mediaItemId].
+  Future<void> sendCommand({required String frameId, required String command, String? mediaItemId}) async {
+    await invokeEdge('notify-frame', body: {'frame_id': frameId, 'command': command, 'media_item_id': ?mediaItemId});
   }
 
   Future<List<FrameChannelAssignment>> listAssignedChannels(String frameId) async {

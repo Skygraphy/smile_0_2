@@ -15,6 +15,7 @@ import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/channel_service.dart';
+import '../services/frame_service.dart';
 import '../services/foreground_notifications.dart';
 import '../services/object_picture_service.dart';
 import 'album_info_screen.dart';
@@ -181,6 +182,33 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     if (items.isEmpty) return;
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => AlbumSlideshowScreen(albumName: _shownName, items: items)),
+    );
+  }
+
+  /// "Jetzt am Frame zeigen" (2026-10-14): the Frame shows this photo at
+  /// once (on several Frames, which one first). Fire and forget, with a
+  /// tick -- a Frame that is offline simply doesn't change.
+  Future<void> _showOnFrame(String mediaItemId) async {
+    final frame = await _pickFrame();
+    if (frame == null) return;
+    unawaited(HapticFeedback.selectionClick());
+    try {
+      await FrameService().sendCommand(frameId: frame.frameId, command: 'show', mediaItemId: mediaItemId);
+    } catch (_) {}
+  }
+
+  Future<FrameShowing?> _pickFrame() async {
+    final t = SmileTexts.of(context);
+    if (_frames.length == 1) return _frames.single;
+    return showDialog<FrameShowing>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(t.pickFrame),
+        children: [
+          for (final f in _frames)
+            SimpleDialogOption(onPressed: () => Navigator.of(context).pop(f), child: Text(frameNameOf(f.frameId, f.frameName))),
+        ],
+      ),
     );
   }
 
@@ -923,12 +951,23 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
               ? () => _toggleSelected(item.id)
               : (item.isVideo && item.isReady && item.displayUrl != null)
                   ? () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => VideoPlayerScreen(mediaId: item.id, url: item.displayUrl)),
+                        MaterialPageRoute(
+                          builder: (_) => VideoPlayerScreen(
+                            mediaId: item.id,
+                            url: item.displayUrl,
+                            onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
+                          ),
+                        ),
                       )
                   // A photo: the whole of it, full screen (the bubble crops).
                   : (!item.isVideo && item.isReady)
                       ? () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => PhotoViewerScreen(item: item)),
+                            MaterialPageRoute(
+                              builder: (_) => PhotoViewerScreen(
+                                item: item,
+                                onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
+                              ),
+                            ),
                           )
                       : null,
           photo: item.isVideo

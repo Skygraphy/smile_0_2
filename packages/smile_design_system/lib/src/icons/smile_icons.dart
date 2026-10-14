@@ -122,4 +122,22 @@ class SmileIcons {
   // --- Media overlays (filled, drawn on top of photos) -----------------
   static const IconData play = IconData(0xe3d2, fontFamily: 'PhosphorFill', fontPackage: _pkg);
   static const IconData selected = IconData(0xe184, fontFamily: 'PhosphorFill', fontPackage: _pkg);
+
+  // --- Frame controls and remote (2026-10-14) ---------------------------
+  static const IconData previous = IconData(0xe138, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  static const IconData nextItem = IconData(0xe13a, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  static const IconData pause = IconData(0xe39e, fontFamily: 'PhosphorFill', fontPackage: _pkg);
+  static const IconData playFilled = IconData(0xe3d0, fontFamily: 'PhosphorFill', fontPackage: _pkg);
+  /// "Neueste Fotos".
+  static const IconData newest = IconData(0xe6a2, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// Display time per photo.
+  static const IconData timer = IconData(0xe492, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  static const IconData shuffle = IconData(0xe422, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  static const IconData repeat = IconData(0xe3f6, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// Nachtruhe.
+  static const IconData night = IconData(0xe58e, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// "Bedienung am Frame".
+  static const IconData controls = IconData(0xe298, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// "Wiedergabe".
+  static const IconData playback = IconData(0xe434, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 }

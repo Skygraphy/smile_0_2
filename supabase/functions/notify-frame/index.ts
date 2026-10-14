@@ -14,7 +14,14 @@ const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 interface RequestBody {
   frame_id: string;
+  // The remote control in the app (2026-10-14): carried out by the Frame at
+  // once. Without it the push just means "sync now", as before.
+  command?: string;
+  // For "show": the photo/video to show.
+  media_item_id?: string;
 }
+
+const COMMANDS = ["pause", "play", "next", "back", "newest", "show"];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -36,6 +43,8 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "invalid_json" }, 400);
   }
   if (!body.frame_id) return jsonResponse({ error: "frame_id_required" }, 400);
+  if (body.command !== undefined && !COMMANDS.includes(body.command)) return jsonResponse({ error: "unknown_command" }, 400);
+  if (body.command === "show" && !body.media_item_id) return jsonResponse({ error: "media_item_id_required" }, 400);
 
   // RLS (frames_select: is_space_owner or staff) does the authorization --
   // a caller who doesn't own this Frame's Space simply gets no row back.
@@ -47,7 +56,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    await sendDataMessage(frame.fcm_token, { type: "sync_now" });
+    await sendDataMessage(
+      frame.fcm_token,
+      body.command
+        ? { type: "command", command: body.command, ...(body.media_item_id ? { media_item_id: body.media_item_id } : {}) }
+        : { type: "sync_now" },
+    );
     return jsonResponse({ status: "sent" });
   } catch (e) {
     return jsonResponse({ status: "send_failed", detail: String(e) });

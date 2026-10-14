@@ -13,7 +13,11 @@ import '../services/video_cache.dart';
 /// from its signed display URL (a 720p H.264 MP4), so even an hour-long
 /// video starts at once, and is downloaded meanwhile for next time.
 class VideoPlayerScreen extends StatefulWidget {
-  const VideoPlayerScreen({super.key, required this.mediaId, required this.url, this.localPath});
+  const VideoPlayerScreen({super.key, required this.mediaId, required this.url, this.localPath, this.onShowOnFrame});
+
+  /// "Jetzt am Frame zeigen" (2026-10-14) -- only when the album runs on a
+  /// Frame the caller manages.
+  final VoidCallback? onShowOnFrame;
 
   final String mediaId;
   final String? url;
@@ -83,7 +87,18 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     final value = controller?.value;
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.black, foregroundColor: Colors.white),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        actions: [
+          if (widget.onShowOnFrame != null)
+            IconButton(
+              icon: const Icon(SmileIcons.frame),
+              tooltip: SmileTexts.of(context).showOnFrameNow,
+              onPressed: widget.onShowOnFrame,
+            ),
+        ],
+      ),
       body: Center(
         child: _error != null
             ? Padding(

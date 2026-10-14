@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/offline_http_client.dart';
 
 import '../services/avatar_upload.dart';
 import '../services/channel_picker_service.dart';
+import '../services/frame_controls.dart';
 import '../services/frame_service.dart';
 import '../services/local_changes.dart';
 import '../services/sync_bus.dart';
@@ -13,6 +15,8 @@ import '../widgets/album_covers.dart';
 import '../widgets/frame_status.dart';
 import '../widgets/friendly_error.dart';
 import '../widgets/local_display.dart';
+import 'frame_controls_screen.dart';
+import 'frame_playback_screen.dart';
 import 'frame_settings_screen.dart';
 
 /// A Frame's remote control (decided 2026-10-11): what it shows, every
@@ -126,12 +130,49 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     await _save(() => _service.setVideoSound(frameId: widget.frameId, enabled: value));
   }
 
-  Future<void> _setAlbumSwitch(bool value) async {
+  /// The remote control (2026-10-14): carried out by the Frame at once,
+  /// whatever its control level. Fire and forget -- a Frame that is
+  /// offline simply doesn't move.
+  bool _remotePaused = false;
+
+  Future<void> _command(String command) async {
+    unawaited(HapticFeedback.selectionClick());
+    if (command == 'pause' || command == 'play') setState(() => _remotePaused = command == 'pause');
+    try {
+      await _service.sendCommand(frameId: widget.frameId, command: command);
+    } catch (_) {}
+  }
+
+  Future<void> _openPage(Widget Function(SmileFrame frame, String? spaceId) page) async {
     final frame = _frame;
     if (frame == null) return;
-    setState(() => _frame = frame.copyWith(channelSwitchEnabled: value));
-    await _save(() => _service.setChannelSwitchEnabled(frameId: widget.frameId, enabled: value));
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => page(frame, _spaceId)));
+    if (mounted) await _load();
   }
+
+  String _levelName(SmileTexts t, SmileFrame frame) =>
+      switch (frame.controlLevel ?? FrameControlLevels.levelOf(frame.controls)) {
+        1 => t.level1,
+        2 => t.level2,
+        3 => t.level3,
+        4 => t.level4,
+        5 => t.level5,
+        _ => t.levelCustom,
+      };
+
+  String _playbackSummary(SmileTexts t, SmileFrame frame) => [
+        switch (frame.contentMode) {
+          'rotate' => t.contentRotate,
+          'recent' => t.recentLast(frame.recentCount),
+          _ => t.contentAlbum,
+        },
+        switch (frame.playOrder) {
+          'newest' => t.orderNewest,
+          'shuffle' => t.orderShuffle,
+          _ => t.orderOldest,
+        },
+        frame.intervalSeconds == 60 ? t.oneMinute : t.secondsValue(frame.intervalSeconds),
+      ].join(' · ');
 
   Future<void> _save(Future<void> Function() save) async {
     final saved = await LocalChanges.instance.run(
@@ -267,7 +308,37 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                   ),
                   const SizedBox(height: SmileSpacing.m),
 
-                  // --- Settings as tiles (more come here) -------------------
+                  // --- Remote control (2026-10-14) ----------------------------
+                  _Card(
+                    children: [
+                      _Label(t.remoteTitle),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _RoundButton(icon: SmileIcons.previous, tooltip: t.ctrlBack, onTap: () => _command('back')),
+                          _RoundButton(
+                            icon: _remotePaused ? SmileIcons.playFilled : SmileIcons.pause,
+                            tooltip: _remotePaused ? t.ctrlPlay : t.ctrlPause,
+                            main: true,
+                            onTap: () => _command(_remotePaused ? 'play' : 'pause'),
+                          ),
+                          _RoundButton(icon: SmileIcons.nextItem, tooltip: t.ctrlNext, onTap: () => _command('next')),
+                        ],
+                      ),
+                      const SizedBox(height: SmileSpacing.m),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.tonalIcon(
+                          icon: const Icon(SmileIcons.newest),
+                          label: Text(t.remoteNewest(20)),
+                          onPressed: () => _command('newest'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: SmileSpacing.m),
+
+                  // --- Settings as tiles --------------------------------------
                   Row(
                     children: [
                       Expanded(
@@ -282,11 +353,13 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                       const SizedBox(width: SmileSpacing.m),
                       Expanded(
                         child: _Tile(
-                          icon: SmileIcons.switchAlbum,
-                          label: t.tileAlbumSwitch,
-                          value: frame.channelSwitchEnabled ? t.valueAllowed : t.valueOff,
-                          on: frame.channelSwitchEnabled,
-                          onTap: () => _setAlbumSwitch(!frame.channelSwitchEnabled),
+                          icon: SmileIcons.controls,
+                          label: t.controlLevel,
+                          value: _levelName(t, frame),
+                          on: true,
+                          onTap: () => _openPage(
+                            (f, spaceId) => FrameControlsScreen(frame: f, spaceId: spaceId, frameService: _service),
+                          ),
                         ),
                       ),
                     ],
@@ -295,6 +368,24 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                   _Card(
                     padding: EdgeInsets.zero,
                     children: [
+                      ListTile(
+                        leading: const Icon(SmileIcons.playback),
+                        title: Text(t.playbackTitle),
+                        subtitle: Text(_playbackSummary(t, frame)),
+                        trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
+                        onTap: () => _openPage(
+                          (f, spaceId) => FramePlaybackScreen(frame: f, spaceId: spaceId, frameService: _service),
+                        ),
+                      ),
+                      ListTile(
+                        leading: const Icon(SmileIcons.controls),
+                        title: Text(t.controlsTitle),
+                        subtitle: Text(_levelName(t, frame)),
+                        trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
+                        onTap: () => _openPage(
+                          (f, spaceId) => FrameControlsScreen(frame: f, spaceId: spaceId, frameService: _service),
+                        ),
+                      ),
                       SmileActionRow(icon: SmileIcons.album, label: t.manageAlbums, onTap: _openSettings),
                       SmileActionRow(icon: SmileIcons.settings, label: t.settingsAndDevice, onTap: _openSettings),
                     ],
@@ -338,6 +429,37 @@ class _Label extends StatelessWidget {
           style: TextStyle(fontSize: 11.5, letterSpacing: 0.8, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       );
+}
+
+/// A remote-control button: round and big; coral for the main one.
+class _RoundButton extends StatelessWidget {
+  const _RoundButton({required this.icon, required this.tooltip, required this.onTap, this.main = false});
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool main;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: main ? scheme.primary : scheme.surfaceContainerHighest,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(
+            width: 64,
+            height: 64,
+            child: Icon(icon, size: 28, color: main ? scheme.onPrimary : scheme.onSurface),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// One setting, big enough to hit without looking twice; coral when on.
