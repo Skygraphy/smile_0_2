@@ -132,7 +132,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
 
   /// The album strip always shows the running album (2026-10-14): it
   /// scrolls there when the page opens and whenever another one runs.
-  static const _albumTileWidth = 84.0;
+  static const _albumTileWidth = 72.0;
   final _albumStrip = ScrollController();
   String? _scrolledTo;
 
@@ -394,10 +394,17 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(fontSize: 11.5, color: current ? scheme.onSurface : scheme.onSurfaceVariant),
                                     ),
+                                    // Always in full -- only the album name is
+                                    // shortened (2026-10-14).
                                     if (current)
-                                      Text(
-                                        t.nowRunning,
-                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: scheme.primary),
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          t.nowRunning,
+                                          maxLines: 1,
+                                          softWrap: false,
+                                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: scheme.primary),
+                                        ),
                                       ),
                                   ],
                                 ),
