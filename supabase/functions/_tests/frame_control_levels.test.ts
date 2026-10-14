@@ -70,6 +70,17 @@ Deno.test("Frame settings: delivered, changed on the Frame only as allowed, remo
     assertEquals((await row()).slideshow_interval_seconds, 20);
     assertEquals((await row()).play_order, "shuffle");
 
+    // Picking an album on the Frame while all albums play in turn: just
+    // that album from now on.
+    await asUser(`frames?id=eq.${frameId}`, accessToken, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ content_mode: "rotate" }),
+    });
+    const picked = await batch({ select_channel_id: album });
+    assertEquals(picked.body.settings.content_mode, "album");
+    assertEquals(picked.body.channel_id, album);
+
     // Remote control: unknown commands and "show" without a photo are refused
     // before anything is sent; a valid one goes through (no FCM token here).
     assertEquals((await invoke("notify-frame", accessToken, { frame_id: frameId, command: "explode" })).status, 400);

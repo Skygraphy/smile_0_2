@@ -187,6 +187,12 @@ Deno.serve(async (req) => {
   if (!body.fetch_channel_id && firstPage && (channelId ?? null) !== (frame.current_channel_id ?? null)) {
     await supabase.from("frames").update({ current_channel_id: channelId ?? null }).eq("id", claims.frame_id);
   }
+  // Picking an album on the Frame means: show this one (2026-10-14) -- also
+  // when it played all albums in turn or the newest.
+  if (body.select_channel_id && frame.content_mode !== "album" && (frame.controls ?? {}).album === true) {
+    await supabase.from("frames").update({ content_mode: "album" }).eq("id", claims.frame_id);
+    settings.content_mode = "album";
+  }
 
   if (!channelId) {
     return jsonResponse({

@@ -527,8 +527,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   }
 
   // Works offline too: every album is in the cache (2026-10-09).
-  bool get _canSwitchAlbum =>
-      _controls.album && _assignedChannels.length > 1 && (_settings?.contentMode ?? 'album') == 'album' && !_newestRound;
+  // Also while all albums play in turn or the newest: picking one shows
+  // just that album (the server switches to "Ein Album", 2026-10-14).
+  bool get _canSwitchAlbum => _controls.album && _assignedChannels.length > 1;
 
   Future<void> _pickChannel() async {
     _hideBar?.cancel();
@@ -573,7 +574,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       ),
     );
     _keepBar();
-    if (picked == null || picked == _currentChannelId) return;
+    final showsJustThat = (_settings?.contentMode ?? 'album') == 'album' && !_newestRound;
+    if (picked == null || (picked == _currentChannelId && showsJustThat)) return;
+    setState(() => _newestRound = false);
     await widget.syncService.selectChannel(picked);
     await _sync();
   }

@@ -286,8 +286,10 @@ class FrameService {
 
   /// "Jetzt zeigen": the Frame switches to this album (it is woken by the
   /// frames change and syncs it).
+  /// Choosing an album means: show this one -- also when the Frame played
+  /// all albums in turn or the newest (2026-10-14).
   Future<void> showChannelNow({required String frameId, required String channelId}) async {
-    await supabase.from('frames').update({'current_channel_id': channelId}).eq('id', frameId);
+    await supabase.from('frames').update({'current_channel_id': channelId, 'content_mode': 'album'}).eq('id', frameId);
   }
 
   Future<void> setVideoSound({required String frameId, required bool enabled}) async {
