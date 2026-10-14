@@ -78,7 +78,15 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
       affects: tablesChanged({'frame_favorites'}),
     );
     if (!mounted) return;
-    if (!saved) setState(() => _removed.removeAll(gone));
+    if (!saved) {
+      setState(() => _removed.removeAll(gone));
+      return;
+    }
+    // The last ones gone: back to the Frame page (2026-10-14).
+    if (_shown.isEmpty) {
+      Navigator.of(context).pop();
+      return;
+    }
     await _load();
   }
 
