@@ -358,7 +358,16 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                   // wechseln" showed the same thing twice).
                   _Card(
                     children: [
-                      _Label(t.albums),
+                      // A round or not one album: said here, and no album is
+                      // marked "läuft gerade" (2026-10-14).
+                      _Label(
+                        framePlaysLabel(t, contentMode: frame.contentMode, playingRound: frame.playingRound) == null
+                            ? t.albums
+                            : [
+                                t.albums,
+                                [t.nowRunning, framePlaysLabel(t, contentMode: frame.contentMode, playingRound: frame.playingRound)!].join(': '),
+                              ].join(' · '),
+                      ),
                       SizedBox(
                         height: 112,
                         child: ListView.separated(
@@ -393,7 +402,8 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                               );
                             }
                             final album = albums[i];
-                            final current = album.channelId == shownId;
+                            final current = album.channelId == shownId &&
+                                framePlaysLabel(t, contentMode: frame.contentMode, playingRound: frame.playingRound) == null;
                             return InkWell(
                               borderRadius: BorderRadius.circular(SmileRadius.m),
                               onTap: () => _showNow(album),

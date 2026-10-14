@@ -389,19 +389,32 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   FrameControls get _controls => _settings?.effectiveControls ?? const FrameControls();
 
+  /// What it last told the server it plays (a round or none).
+  String? _reportedRound = 'unknown';
+
+  /// Called with every change of what plays (through _restartAdvanceTimer):
+  /// a round started or ended goes to the server for the app (0077).
+  void _reportRound() {
+    final round = _favoritesRound ? 'favorites' : (_newestRound ? 'newest' : null);
+    if (round == _reportedRound) return;
+    _reportedRound = round;
+    widget.syncService.reportRound(round);
+    unawaited(_sync());
+  }
+
   void _restartAdvanceTimer() {
+    _reportRound();
     _advanceTimer?.cancel();
     // A video plays to its end and moves on by itself (VideoSlide); the
     // timer only paces photos. Paused, quiet or in the overview: nothing.
     if (_showingVideo || _paused || _quiet || _showGrid) return;
     if (_settings?.displayMode == 'manual') return;
-    // A round ("Neueste", "Lieblingsbilder") ends even with a single photo
-    // (2026-10-14: with one Lieblingsbild it never ended).
+    // "Neueste" ends even with a single photo; "Lieblingsbilder" with one
+    // photo just stays on it (endless, 2026-10-14).
     if (_playlist.length < 2 &&
         _spotlight == null &&
         _settings?.endBehavior != 'overview' &&
-        !_newestRound &&
-        !_favoritesRound) {
+        !_newestRound) {
       return;
     }
     final seconds = _settings?.slideshowIntervalSeconds ?? 8;
@@ -425,10 +438,13 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     setState(() {
       _spotlight = null;
       if (wrapped) {
-        // The end of a round.
-        if (_newestRound || _favoritesRound) {
+        // The end of a round. "Lieblingsbilder" goes on endlessly until it
+        // is tapped again or an album is picked (2026-10-14); "Neueste"
+        // plays once.
+        if (_favoritesRound) {
+          _currentIndex = 0;
+        } else if (_newestRound) {
           _newestRound = false;
-          _favoritesRound = false;
           _rebuildPlaylist();
           _currentIndex = 0;
         } else if (_settings?.endBehavior == 'overview') {

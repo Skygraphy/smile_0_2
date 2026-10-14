@@ -68,6 +68,9 @@ class SmileFrame {
   String? get quietFrom => playback['quiet_from'] as String?;
   String? get quietTo => playback['quiet_to'] as String?;
 
+  /// A round played on the Frame right now (migrations/0077).
+  String? get playingRound => playback['playing_round'] as String?;
+
   /// The same Frame with some settings changed (shown at once, before the
   /// server has them).
   SmileFrame withSettings(Map<String, dynamic> changes) => SmileFrame(
@@ -184,7 +187,7 @@ class FrameService {
   /// Control level and playback (migrations/0075).
   static const playbackColumns = [
     'control_level', 'controls', 'content_mode', 'recent_count', 'play_order', 'end_behavior', 'slideshow_interval_seconds',
-    'show_new_immediately', 'show_clock', 'show_sender', 'quiet_from', 'quiet_to',
+    'show_new_immediately', 'show_clock', 'show_sender', 'quiet_from', 'quiet_to', 'playing_round',
   ];
 
   static final _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, video_sound, avatar_path, current_channel_id, pairing_code, '

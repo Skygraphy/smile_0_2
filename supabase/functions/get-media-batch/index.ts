@@ -40,12 +40,15 @@ interface RequestBody {
   set_settings?: Record<string, unknown>;
   // A Lieblingsbild marked (on: true) or taken back on the Frame (0076).
   favorite?: { media_item_id: string; on: boolean };
+  // The round the Frame plays right now (0077): "newest", "favorites" or
+  // null for none -- only sent when it changed.
+  playing_round?: string | null;
 }
 
 const FRAME_COLUMNS =
   "id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, " +
   "max_local_cache_gb, current_channel_id, control_level, controls, content_mode, recent_count, play_order, " +
-  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, spaces(name, deleted_at)";
+  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, spaces(name, deleted_at)";
 
 // What the Frame may change itself, by the control that allows it, and
 // what each value may be.
@@ -194,6 +197,14 @@ Deno.serve(async (req) => {
   if (body.select_channel_id && frame.content_mode !== "album" && (frame.controls ?? {}).album === true) {
     await supabase.from("frames").update({ content_mode: "album" }).eq("id", claims.frame_id);
     settings.content_mode = "album";
+  }
+
+  // What it plays right now beyond its settings (0077), for the app.
+  if ("playing_round" in body && firstPage && !body.fetch_channel_id) {
+    const round = body.playing_round === "newest" || body.playing_round === "favorites" ? body.playing_round : null;
+    if (round !== (frame.playing_round ?? null)) {
+      await supabase.from("frames").update({ playing_round: round }).eq("id", claims.frame_id);
+    }
   }
 
   // Lieblingsbilder (migrations/0076): marked on the Frame -- only when its

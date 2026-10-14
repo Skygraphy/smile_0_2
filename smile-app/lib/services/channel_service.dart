@@ -14,6 +14,8 @@ typedef FrameShowing = ({
   String? avatarPath,
   String? currentChannelId,
   String? currentAlbumName,
+  String? contentMode,
+  String? playingRound,
 });
 
 class ChannelService {
@@ -41,7 +43,8 @@ class ChannelService {
   Future<List<FrameShowing>> listFramesShowing(String channelId) async {
     final rows = await supabase
         .from('frame_channels')
-        .select('frame_id, frames(name, lifecycle_state, avatar_path, current_channel_id, current:channels!frames_current_channel_id_fkey(name))')
+        .select('frame_id, frames(name, lifecycle_state, avatar_path, current_channel_id, content_mode, playing_round, '
+            'current:channels!frames_current_channel_id_fkey(name))')
         .eq('channel_id', channelId);
     return (rows as List)
         .cast<Map<String, dynamic>>()
@@ -52,6 +55,8 @@ class ChannelService {
               avatarPath: (r['frames'] as Map)['avatar_path'] as String?,
               currentChannelId: (r['frames'] as Map)['current_channel_id'] as String?,
               currentAlbumName: ((r['frames'] as Map)['current'] as Map?)?['name'] as String?,
+              contentMode: (r['frames'] as Map)['content_mode'] as String?,
+              playingRound: (r['frames'] as Map)['playing_round'] as String?,
             ))
         .toList();
   }

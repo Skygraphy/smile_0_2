@@ -25,3 +25,17 @@ String frameStatusLine(SmileTexts t, SmileFrame frame, {String? spaceName}) {
   if (spaceName != null && spaceName.isNotEmpty) parts.add(spaceName);
   return parts.join(' · ');
 }
+
+/// What a Frame plays when that is not just one album (2026-10-14): a round
+/// started on it ("Lieblingsbilder", "Neueste Fotos") or its playback
+/// setting. Null: one album -- its name says it.
+String? framePlaysLabel(SmileTexts t, {String? contentMode, String? playingRound}) => switch (playingRound) {
+      'favorites' => t.favorites,
+      'newest' => t.allowNewest,
+      _ => switch (contentMode) {
+          'favorites' => t.contentFavorites,
+          'recent' => t.contentRecent,
+          'rotate' => t.contentRotate,
+          _ => null,
+        },
+    };

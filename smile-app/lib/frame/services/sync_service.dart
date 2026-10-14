@@ -269,6 +269,16 @@ class SyncService {
 
   final Map<String, bool> _pendingFavorites = {};
 
+  /// The round played right now ("newest", "favorites", null): sent with the
+  /// next sync, so the app can show it (migrations/0077).
+  void reportRound(String? round) {
+    _pendingRound = round;
+    _roundPending = true;
+  }
+
+  String? _pendingRound;
+  bool _roundPending = false;
+
   /// Marks not yet sent -- shown as they will be.
   Map<String, bool> get pendingFavorites => Map.unmodifiable(_pendingFavorites);
 
@@ -397,13 +407,17 @@ class SyncService {
     final pickedChannelId = await _credentialsStore.preferredChannelId;
     final settingsToSend = Map<String, Object>.of(_pendingSettings);
     final favoriteToSend = _pendingFavorites.entries.firstOrNull;
+    final roundPending = _roundPending;
+    final roundToSend = _pendingRound;
     var page = await _fetchAllPages(
       accessToken: accessToken,
       fcmToken: fcmToken,
       selectChannelId: pickedChannelId,
       setSettings: settingsToSend,
       favorite: favoriteToSend,
+      round: roundPending ? (value: roundToSend,) : null,
     );
+    if (!page.failed && roundPending && _pendingRound == roundToSend) _roundPending = false;
     if (!page.failed && favoriteToSend != null) {
       if (_pendingFavorites[favoriteToSend.key] == favoriteToSend.value) _pendingFavorites.remove(favoriteToSend.key);
       if (_pendingFavorites.isNotEmpty) _syncAgain = true;
@@ -574,6 +588,7 @@ class SyncService {
     String? fetchChannelId,
     Map<String, Object> setSettings = const {},
     MapEntry<String, bool>? favorite,
+    ({String? value})? round,
   }) async {
     String? channelId;
     Map<String, dynamic>? firstPageData;
@@ -592,6 +607,7 @@ class SyncService {
             if (cursor == null) 'fetch_channel_id': ?fetchChannelId,
             if (cursor == null && setSettings.isNotEmpty) 'set_settings': setSettings,
             if (cursor == null && favorite != null) 'favorite': {'media_item_id': favorite.key, 'on': favorite.value},
+            if (cursor == null && round != null) 'playing_round': round.value,
             if (cursor != null) 'channel_id': ?channelId,
             'cursor': ?cursor,
           }),

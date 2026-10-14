@@ -323,7 +323,10 @@ class _FrameCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(t.nowShowingLabel, style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
-                          Text(currentName == null ? '…' : albumNameOf(currentId, currentName)),
+                          Text(
+                            framePlaysLabel(t, contentMode: frame.contentMode, playingRound: frame.playingRound) ??
+                                (currentName == null ? '…' : albumNameOf(currentId, currentName)),
+                          ),
                         ],
                       ),
                     ),

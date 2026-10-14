@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/offline_http_client.dart';
+import '../widgets/frame_status.dart';
 import '../widgets/friendly_error.dart';
 
 import '../main.dart';
@@ -189,6 +190,11 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       ),
     );
   }
+
+  /// Exactly this album, no round, not all albums in turn.
+  bool _showsJustThis(FrameShowing frame) =>
+      _frameShows(frame) == widget.channelId &&
+      framePlaysLabel(SmileTexts.of(context), contentMode: frame.contentMode, playingRound: frame.playingRound) == null;
 
   /// "Hier jetzt zeigen": the Frame switches to this album (migrations/0069).
   Future<void> _showHereNow(FrameShowing frame) async {
@@ -760,15 +766,18 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                     size: 40,
                   ),
                   title: frameNameOf(frame.frameId, frame.frameName),
-                  subtitle: _frameShows(frame) == widget.channelId
+                  subtitle: framePlaysLabel(t, contentMode: frame.contentMode, playingRound: frame.playingRound) != null
+                      // A round or not one album (2026-10-14).
+                      ? t.frameShowsAlbum(framePlaysLabel(t, contentMode: frame.contentMode, playingRound: frame.playingRound)!)
+                      : _frameShows(frame) == widget.channelId
                       ? t.frameShowsThisAlbum
                       // Another album: its name is known only for the server's
                       // own state, not for a switch just made elsewhere.
                       : _frameShows(frame) != frame.currentChannelId || frame.currentAlbumName == null
                           ? null
                           : t.frameShowsAlbum(albumNameOf(frame.currentChannelId!, frame.currentAlbumName!)),
-                  subtitleIcon: _frameShows(frame) == widget.channelId ? SmileIcons.play : null,
-                  subtitleHighlight: _frameShows(frame) == widget.channelId,
+                  subtitleIcon: _showsJustThis(frame) ? SmileIcons.play : null,
+                  subtitleHighlight: _showsJustThis(frame),
                   // Same pattern as the albums on the Frame page (2026-10-08).
                   trailing: Icon(SmileIcons.more, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   onTap: () => _showFrameActions(frame),
