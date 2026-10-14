@@ -210,7 +210,19 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final all = result.allEntries.isNotEmpty ? result.allEntries : result.entries;
     final known = _knownIds;
     final arrived = known == null ? const <CachedMediaEntry>[] : all.where((e) => !known.contains(e.mediaItemId)).toList();
+    // Another album (from the app or the Frame): it shows from its first
+    // photo, and a running "Neueste" round ends (2026-10-14: the round kept
+    // going and hid the switch).
+    final albumChanged = _currentChannelId != null && result.channelId != null && result.channelId != _currentChannelId;
     setState(() {
+      if (albumChanged) {
+        _newestRound = false;
+        _spotlight = null;
+        _showGrid = false;
+        _playlist = [];
+        _currentIndex = 0;
+        _slideNumber++;
+      }
       _deactivated = result.deactivated;
       _offlineExpired = result.offlineExpired;
       _offlineRetryTimer?.cancel();
@@ -760,7 +772,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
               Positioned(left: 20, top: 20, child: _caption(channelName, current.senderName)),
             if (!_showGrid && (settings?.showClock ?? false)) Positioned(right: 20, top: 20, child: _clock()),
             if (!_showGrid && _newFrom != null)
-              Positioned(top: 20, left: 0, right: 0, child: Center(child: _newFromPill(t.frameNewFrom(_newFrom!)))),
+              Positioned(top: 20, left: 0, right: 0, child: Center(child: _newFromPill(t.frameNewFrom(_newFrom!))))
+            // So one can see what plays right now (2026-10-14).
+            else if (!_showGrid && _newestRound)
+              Positioned(top: 20, left: 0, right: 0, child: Center(child: _newestPill(t))),
             if (!_showGrid && _paused && !_barVisible)
               Positioned(bottom: 24, left: 0, right: 0, child: Center(child: _pausedPill(t))),
             if (!_showGrid)
@@ -834,6 +849,19 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(color: SmileTheme.primary, borderRadius: BorderRadius.circular(20)),
         child: Text(text, style: const TextStyle(color: Color(0xFF1A0F0E), fontSize: 22, fontWeight: FontWeight.w600)),
+      );
+
+  Widget _newestPill(SmileTexts t) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(20)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(SmileIcons.newest, color: SmileTheme.primary, size: 26),
+            const SizedBox(width: 10),
+            Text(t.allowNewest, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w600)),
+          ],
+        ),
       );
 
   Widget _pausedPill(SmileTexts t) => Container(
