@@ -347,6 +347,28 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     unawaited(_sync());
   }
 
+  /// "Neueste" or "Lieblingsbilder" tapped again: back to what is set.
+  void _endRound() {
+    setState(() {
+      _newestRound = false;
+      _favoritesRound = false;
+      _spotlight = null;
+      _rebuildPlaylist();
+      _slideNumber++;
+    });
+    _restartAdvanceTimer();
+  }
+
+  /// The overview always shows the whole album (or what plays, when that is
+  /// all albums in turn or the newest) -- not just the Lieblingsbilder, so
+  /// more can be marked there (2026-10-14).
+  List<CachedMediaEntry> get _overviewItems {
+    final favoritesOnly = _favoritesRound || (_settings?.contentMode == 'favorites');
+    if (!favoritesOnly && !_newestRound) return _playlist;
+    final album = [..._albumEntries]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    return album.isEmpty ? _playlist : album;
+  }
+
   void _playFavorites() {
     setState(() {
       _favoritesRound = true;
@@ -373,7 +395,15 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     // timer only paces photos. Paused, quiet or in the overview: nothing.
     if (_showingVideo || _paused || _quiet || _showGrid) return;
     if (_settings?.displayMode == 'manual') return;
-    if (_playlist.length < 2 && _spotlight == null && _settings?.endBehavior != 'overview') return;
+    // A round ("Neueste", "Lieblingsbilder") ends even with a single photo
+    // (2026-10-14: with one Lieblingsbild it never ended).
+    if (_playlist.length < 2 &&
+        _spotlight == null &&
+        _settings?.endBehavior != 'overview' &&
+        !_newestRound &&
+        !_favoritesRound) {
+      return;
+    }
     final seconds = _settings?.slideshowIntervalSeconds ?? 8;
     // Never cut a video short (2026-10-09): a video reached any other way
     // than by this timer -- from the overview, after an album switch --
@@ -592,8 +622,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   void _openInSlideshow(CachedMediaEntry entry) {
     setState(() {
-      _spotlight = null;
       final index = _playlist.indexWhere((e) => e.mediaItemId == entry.mediaItemId);
+      // Not in what plays right now (the overview shows the whole album):
+      // shown once, then it goes on as before.
+      _spotlight = index >= 0 ? null : entry;
       if (index >= 0) _currentIndex = index;
       _showGrid = false;
       _slideNumber++;
@@ -1011,7 +1043,14 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           onTap: () => act(() => _setPaused(!_paused)),
         ),
       if (c.next) _BigButton(icon: SmileIcons.nextItem, label: t.ctrlNext, main: true, onTap: () => act(() => _advance(1))),
-      if (c.newest) _BigButton(icon: SmileIcons.newest, label: t.ctrlNewest, onTap: () => act(_playNewest)),
+      // On while its round runs: a tap ends it (2026-10-14).
+      if (c.newest)
+        _BigButton(
+          icon: SmileIcons.newest,
+          label: t.ctrlNewest,
+          active: _newestRound,
+          onTap: () => act(_newestRound ? _endRound : _playNewest),
+        ),
       if (c.favorite && _current != null)
         _BigButton(
           icon: _favoriteIds.contains(_current!.mediaItemId) ? SmileIcons.heartFilled : SmileIcons.heart,
@@ -1019,7 +1058,13 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           heart: true,
           onTap: () => act(() => _toggleFavorite()),
         ),
-      if (c.favorites && _hasFavorites) _BigButton(icon: SmileIcons.heart, label: t.favorites, onTap: () => act(_playFavorites)),
+      if (c.favorites && (_hasFavorites || _favoritesRound))
+        _BigButton(
+          icon: _favoritesRound ? SmileIcons.heartFilled : SmileIcons.heart,
+          label: t.favorites,
+          active: _favoritesRound,
+          onTap: () => act(_favoritesRound ? _endRound : _playFavorites),
+        ),
       if (c.overview) _BigButton(icon: SmileIcons.overview, label: t.ctrlOverview, onTap: () => setState(_openGrid)),
       if (_canSwitchAlbum) _BigButton(icon: SmileIcons.switchAlbum, label: t.ctrlAlbum, onTap: _pickChannel),
       if (c.duration) _BigButton(icon: SmileIcons.timer, label: t.ctrlDuration, onTap: _pickDuration),
@@ -1067,7 +1112,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   }
 
   Widget _buildGrid(SmileTexts t) {
-    final items = _playlist;
+    final items = _overviewItems;
     return Listener(
       onPointerDown: (_) => _armGridTimeout(),
       child: Column(
@@ -1145,6 +1190,7 @@ class _BigButton extends StatelessWidget {
     this.main = false,
     this.wide = false,
     this.heart = false,
+    this.active = false,
   });
 
   final IconData icon;
@@ -1156,12 +1202,19 @@ class _BigButton extends StatelessWidget {
   /// The "Merken" button: its heart in coral.
   final bool heart;
 
+  /// Its round runs right now ("Neueste", "Lieblingsbilder"): framed in
+  /// coral, a tap ends it.
+  final bool active;
+
   @override
   Widget build(BuildContext context) {
-    final fg = main ? const Color(0xFF1A0F0E) : Colors.white;
+    final fg = main ? const Color(0xFF1A0F0E) : (active ? SmileTheme.primary : Colors.white);
     return Material(
       color: main ? SmileTheme.primary : const Color(0xEB1C1A1A),
-      borderRadius: BorderRadius.circular(20),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: active ? const BorderSide(color: SmileTheme.primary, width: 3) : BorderSide.none,
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
