@@ -923,5 +923,9 @@
   "remoteHint": "Funktioniert auf jeder Bedienstufe.",
   "remoteNewest": "Neueste {n} Fotos abspielen",
   "@remoteNewest": {"placeholders": {"n": {"type": "int"}}},
-  "showOnFrameNow": "Jetzt am Frame zeigen"
+  "showOnFrameNow": "Jetzt am Frame zeigen",
+  "nowRunning": "läuft",
+  "addShort": "Hinzufügen",
+  "frameOtherSpaceHint": "„{album}“ gehört zum Space {space}. Ein Frame zeigt nur Alben aus seinem eigenen Space oder solche, die mit seinem Space geteilt sind. Ein Admin von {space} kann das Album über „Mit einem Space teilen“ mit deinem Space teilen – danach geht es hier mit einem Tipp.",
+  "@frameOtherSpaceHint": {"placeholders": {"album": {"type": "String"}, "space": {"type": "String"}}}
 }

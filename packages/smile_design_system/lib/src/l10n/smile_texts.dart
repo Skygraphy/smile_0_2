@@ -2679,6 +2679,24 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Jetzt am Frame zeigen'**
   String get showOnFrameNow;
+
+  /// No description provided for @nowRunning.
+  ///
+  /// In de, this message translates to:
+  /// **'läuft'**
+  String get nowRunning;
+
+  /// No description provided for @addShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Hinzufügen'**
+  String get addShort;
+
+  /// No description provided for @frameOtherSpaceHint.
+  ///
+  /// In de, this message translates to:
+  /// **'„{album}“ gehört zum Space {space}. Ein Frame zeigt nur Alben aus seinem eigenen Space oder solche, die mit seinem Space geteilt sind. Ein Admin von {space} kann das Album über „Mit einem Space teilen“ mit deinem Space teilen – danach geht es hier mit einem Tipp.'**
+  String frameOtherSpaceHint(String album, String space);
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

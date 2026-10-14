@@ -62,6 +62,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   List<FrameShowing> _frames = const [];
   /// Frames it could be put on ("Auf Frame zeigen", 2026-10-11).
   List<({String frameId, String frameName, String? avatarPath, String spaceName})> _possibleFrames = const [];
+  bool _managesFrames = false;
   Map<String, ChannelWithActivity> _covers = const {};
   late String _name = widget.channelName;
   String? _errorMessage;
@@ -103,6 +104,11 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
             .catchError((Object _) => <({String frameId, String frameName, String? avatarPath, String spaceName})>[]),
         supabase.from('channels').select('name').eq('id', widget.channelId).maybeSingle(),
       ]);
+      // Whether the caller manages any Frame at all -- then "Auf Frame
+      // zeigen" explains why an album of another Space can't go there yet.
+      unawaited(FrameService().listMyFrames().then((frames) {
+        if (mounted && frames.isNotEmpty != _managesFrames) setState(() => _managesFrames = frames.isNotEmpty);
+      }).catchError((Object _) {}));
       if (!mounted) return;
       final row = results.last as Map<String, dynamic>?;
       setState(() {
@@ -207,48 +213,67 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     return _possibleFrames.where((f) => !on.contains(f.frameId)).toList();
   }
 
-  /// "Auf Frame zeigen": puts the album into a Frame's album list, like
-  /// "Album hinzufügen" on the Frame page.
-  Future<void> _showOnFrame() async {
+  /// "Auf Frame zeigen" at the top (2026-10-14): one tap and the album runs
+  /// on the Frame -- put on it first if needed; with several Frames, which
+  /// one first. An album no Frame of the caller may show (another Space,
+  /// not shared) says how it can.
+  Future<void> _quickShowOnFrame(String? homeSpace) async {
     final t = SmileTexts.of(context);
-    final picked = await showDialog<String>(
-      context: context,
-      builder: (context) => SimpleDialog(
-        title: Text(t.showOnFrame),
-        children: [
-          for (final frame in _addableFrames)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop(frame.frameId),
-              child: Row(
-                children: [
-                  objectPicture(
-                    key: LocalChanges.framePicture(frame.frameId),
-                    name: frameNameOf(frame.frameId, frame.frameName),
-                    serverUrl: avatarPathToUrl(frame.avatarPath),
-                    size: 32,
-                  ),
-                  const SizedBox(width: SmileSpacing.m),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+    final messenger = ScaffoldMessenger.of(context);
+    final candidates = [
+      for (final f in _visibleFrames) (frameId: f.frameId, frameName: f.frameName, avatarPath: f.avatarPath, onIt: true),
+      for (final f in _addableFrames) (frameId: f.frameId, frameName: f.frameName, avatarPath: f.avatarPath, onIt: false),
+    ];
+    if (candidates.isEmpty) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(t.showOnFrame),
+          content: Text(t.frameOtherSpaceHint(_shownName, homeSpace ?? '')),
+          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.close))],
+        ),
+      );
+      return;
+    }
+    final frame = candidates.length == 1
+        ? candidates.single
+        : await showDialog<({String frameId, String frameName, String? avatarPath, bool onIt})>(
+            context: context,
+            builder: (context) => SimpleDialog(
+              title: Text(t.pickFrame),
+              children: [
+                for (final f in candidates)
+                  SimpleDialogOption(
+                    onPressed: () => Navigator.of(context).pop(f),
+                    child: Row(
                       children: [
-                        Text(frameNameOf(frame.frameId, frame.frameName)),
-                        if (frame.spaceName.isNotEmpty)
-                          Text(
-                            frame.spaceName,
-                            style: TextStyle(fontSize: 12.5, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                          ),
+                        objectPicture(
+                          key: LocalChanges.framePicture(f.frameId),
+                          name: frameNameOf(f.frameId, f.frameName),
+                          serverUrl: avatarPathToUrl(f.avatarPath),
+                          size: 32,
+                        ),
+                        const SizedBox(width: SmileSpacing.m),
+                        Expanded(child: Text(frameNameOf(f.frameId, f.frameName))),
                       ],
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
-        ],
-      ),
+          );
+    if (frame == null) return;
+    final saved = await LocalChanges.instance.run(
+      overrides: {LocalChanges.frameAlbum(frame.frameId): widget.channelId},
+      commit: () async {
+        if (!frame.onIt) await FrameService().assignChannel(frameId: frame.frameId, channelId: widget.channelId);
+        await FrameService().showChannelNow(frameId: frame.frameId, channelId: widget.channelId);
+      },
+      affects: tablesChanged({'frames', 'frame_channels'}, channelIds: {widget.channelId}),
     );
-    if (picked == null) return;
-    await _run(() => FrameService().assignChannel(frameId: picked, channelId: widget.channelId));
+    if (saved) {
+      messenger.showSnackBar(SnackBar(content: Text(t.frameSwitched(frameNameOf(frame.frameId, frame.frameName), _shownName))));
+      if (mounted) await _load();
+    }
   }
 
   /// Frames still showing this album -- one it was just taken off is gone
@@ -609,6 +634,19 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
             SmileQuickAction(icon: SmileIcons.invite, label: t.actionInvite, onTap: _inviteMember),
             SmileQuickAction(icon: SmileIcons.share, label: t.actionShare, onTap: _inviteShare),
           ]),
+        // One tap onto a Frame (2026-10-14).
+        if (_visibleFrames.isNotEmpty || _addableFrames.isNotEmpty || _managesFrames)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.m, SmileSpacing.l, 0),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                icon: const Icon(SmileIcons.frame),
+                label: Text(t.showOnFrame),
+                onPressed: () => _quickShowOnFrame(homeSpace),
+              ),
+            ),
+          ),
         if (_errorMessage != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -735,7 +773,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                   trailing: Icon(SmileIcons.more, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   onTap: () => _showFrameActions(frame),
                 ),
-              if (_addableFrames.isNotEmpty) SmileActionRow(icon: SmileIcons.add, label: t.showOnFrame, onTap: _showOnFrame),
+              // Putting it onto another Frame: the button at the top.
             ],
           ),
 

@@ -130,6 +130,61 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     await _save(() => _service.setVideoSound(frameId: widget.frameId, enabled: value));
   }
 
+  /// "+" in the album strip: another album of the Space (or shared with
+  /// it) onto this Frame -- it runs right away.
+  Future<void> _addAlbum() async {
+    final t = SmileTexts.of(context);
+    final spaceId = _spaceId;
+    if (spaceId == null) return;
+    final List<AssignableChannel> choices;
+    try {
+      choices = await _service.listUnassignedChannelsInSpace(spaceId: spaceId, frameId: widget.frameId);
+    } catch (_) {
+      return;
+    }
+    if (!mounted) return;
+    if (choices.isEmpty) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(t.addAlbumToFrame),
+          content: Text(t.noMoreAlbums),
+          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.close))],
+        ),
+      );
+      return;
+    }
+    final picked = await showDialog<AssignableChannel>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(t.addAlbumToFrame),
+        children: [
+          for (final album in choices)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop(album),
+              child: Row(
+                children: [
+                  albumCover(album.channelId, album.channelName, _covers, size: 32),
+                  const SizedBox(width: SmileSpacing.m),
+                  Expanded(child: Text(album.channelName)),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (picked == null) return;
+    final saved = await LocalChanges.instance.run(
+      overrides: {LocalChanges.frameAlbum(widget.frameId): picked.channelId},
+      commit: () async {
+        await _service.assignChannel(frameId: widget.frameId, channelId: picked.channelId);
+        await _service.showChannelNow(frameId: widget.frameId, channelId: picked.channelId);
+      },
+      affects: tablesChanged({'frames', 'frame_channels'}, spaceIds: {spaceId}),
+    );
+    if (saved && mounted) await _load();
+  }
+
   /// The remote control (2026-10-14): carried out by the Frame at once,
   /// whatever its control level. Fire and forget -- a Frame that is
   /// offline simply doesn't move.
@@ -203,10 +258,6 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     final frame = _frame;
     final albums = _albums;
     final shownId = _shownChannelId;
-    FrameChannelAssignment? shown;
-    for (final a in albums) {
-      if (a.channelId == shownId) shown = a;
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -246,64 +297,80 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                     ),
                   const SizedBox(height: SmileSpacing.l),
 
-                  // --- What it shows, and switching -------------------------
+                  // --- Its albums: the one running marked, a tap runs another,
+                  // "+" adds one (2026-10-14: "Läuft gerade" and "Album
+                  // wechseln" showed the same thing twice).
                   _Card(
                     children: [
-                      _Label(t.nowShowingLabel),
-                      Row(
-                        children: [
-                          if (shown != null) albumCover(shown.channelId, shown.channelName, _covers, size: 64),
-                          const SizedBox(width: SmileSpacing.m),
-                          Expanded(
-                            child: Text(
-                              shown == null ? t.noAlbumAssigned : albumNameOf(shown.channelId, shown.channelName),
-                              style: theme.textTheme.titleMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (albums.length > 1) ...[
-                        const SizedBox(height: SmileSpacing.m),
-                        _Label(t.switchAlbum),
-                        SizedBox(
-                          height: 96,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: albums.length,
-                            separatorBuilder: (_, _) => const SizedBox(width: SmileSpacing.m),
-                            itemBuilder: (context, i) {
-                              final album = albums[i];
-                              final current = album.channelId == shownId;
+                      _Label(t.albums),
+                      SizedBox(
+                        height: 112,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: albums.length + 1,
+                          separatorBuilder: (_, _) => const SizedBox(width: SmileSpacing.m),
+                          itemBuilder: (context, i) {
+                            if (i == albums.length) {
                               return InkWell(
                                 borderRadius: BorderRadius.circular(SmileRadius.m),
-                                onTap: () => _showNow(album),
+                                onTap: _addAlbum,
                                 child: SizedBox(
-                                  width: 68,
+                                  width: 72,
                                   child: Column(
                                     children: [
                                       Container(
-                                        padding: const EdgeInsets.all(3),
+                                        width: 58,
+                                        height: 58,
+                                        margin: const EdgeInsets.all(3),
                                         decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(SmileRadius.m + 3),
-                                          border: Border.all(color: current ? scheme.primary : Colors.transparent, width: 3),
+                                          borderRadius: BorderRadius.circular(SmileRadius.m),
+                                          border: Border.all(color: scheme.outlineVariant, width: 1.5),
                                         ),
-                                        child: albumCover(album.channelId, album.channelName, _covers, size: 52),
+                                        child: Icon(SmileIcons.add, color: scheme.primary, size: 28),
                                       ),
                                       const SizedBox(height: 4),
-                                      Text(
-                                        albumNameOf(album.channelId, album.channelName),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(fontSize: 11.5, color: current ? scheme.onSurface : scheme.onSurfaceVariant),
-                                      ),
+                                      Text(t.addShort, style: TextStyle(fontSize: 11.5, color: scheme.onSurfaceVariant)),
                                     ],
                                   ),
                                 ),
                               );
-                            },
-                          ),
+                            }
+                            final album = albums[i];
+                            final current = album.channelId == shownId;
+                            return InkWell(
+                              borderRadius: BorderRadius.circular(SmileRadius.m),
+                              onTap: () => _showNow(album),
+                              child: SizedBox(
+                                width: 72,
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(3),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(SmileRadius.m + 3),
+                                        border: Border.all(color: current ? scheme.primary : Colors.transparent, width: 3),
+                                      ),
+                                      child: albumCover(album.channelId, album.channelName, _covers, size: 52),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      albumNameOf(album.channelId, album.channelName),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 11.5, color: current ? scheme.onSurface : scheme.onSurfaceVariant),
+                                    ),
+                                    if (current)
+                                      Text(
+                                        t.nowRunning,
+                                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: scheme.primary),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: SmileSpacing.m),
