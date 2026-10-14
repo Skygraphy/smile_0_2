@@ -106,7 +106,7 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
     return Scaffold(
       appBar: AppBar(title: Text(t.playbackTitle)),
       body: ListView(
-        padding: const EdgeInsets.all(SmileSpacing.m),
+        padding: EdgeInsets.fromLTRB(SmileSpacing.m, SmileSpacing.m, SmileSpacing.m, SmileSpacing.m + MediaQuery.paddingOf(context).bottom),
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: SmileSpacing.m),

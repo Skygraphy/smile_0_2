@@ -62,7 +62,7 @@ class _InviteCodeScreenState extends State<InviteCodeScreen> {
       appBar: AppBar(title: Text(widget.title)),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(SmileSpacing.l),
+          padding: EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.l, SmileSpacing.l, SmileSpacing.l + MediaQuery.paddingOf(context).bottom),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

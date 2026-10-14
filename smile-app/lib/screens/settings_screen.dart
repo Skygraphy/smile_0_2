@@ -224,7 +224,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                   : const CircularProgressIndicator(),
             )
           : ListView(
-              padding: const EdgeInsets.only(top: SmileSpacing.xl, bottom: SmileSpacing.xl),
+              padding: EdgeInsets.only(top: SmileSpacing.xl, bottom: SmileSpacing.xl + MediaQuery.paddingOf(context).bottom),
               children: [
                 Center(
                   child: Stack(

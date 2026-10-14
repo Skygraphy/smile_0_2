@@ -154,7 +154,7 @@ class _CreateFrameScreenState extends State<CreateFrameScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(SmileSpacing.l),
+          padding: EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.l, SmileSpacing.l, SmileSpacing.l + MediaQuery.paddingOf(context).bottom),
           child: _created != null ? _buildCode(t, _created!) : _buildForm(t),
         ),
       ),

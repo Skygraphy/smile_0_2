@@ -305,7 +305,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView(
-                padding: const EdgeInsets.all(SmileSpacing.m),
+                padding: EdgeInsets.fromLTRB(SmileSpacing.m, SmileSpacing.m, SmileSpacing.m, SmileSpacing.m + MediaQuery.paddingOf(context).bottom),
                 children: [
                   Center(
                     child: SmileStatusDot(
