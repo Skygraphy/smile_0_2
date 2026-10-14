@@ -4,6 +4,7 @@ import 'package:smile_design_system/smile_design_system.dart';
 import '../services/frame_controls.dart';
 import '../services/frame_service.dart';
 import '../services/local_changes.dart';
+import '../services/sync_bus.dart';
 
 /// "Bedienung am Frame" (decided 2026-10-14): which big buttons the person
 /// in front of the Frame gets -- a level, or the switches one by one. The
@@ -19,19 +20,39 @@ class FrameControlsScreen extends StatefulWidget {
   State<FrameControlsScreen> createState() => _FrameControlsScreenState();
 }
 
-class _FrameControlsScreenState extends State<FrameControlsScreen> {
+class _FrameControlsScreenState extends State<FrameControlsScreen> with SyncReload {
   late SmileFrame _frame = widget.frame;
+
+  /// Saves under way: a reload meanwhile would undo what is shown.
+  int _saving = 0;
+
+  @override
+  bool isSyncRelevant(SyncEvent event) => event.tables.contains('frames');
+
+  /// A change on the Frame itself or from another phone (2026-10-14: an
+  /// album picked on the Frame switched it to "Ein Album", this page kept
+  /// showing "Alle Alben im Wechsel").
+  @override
+  Future<void> onSync() async {
+    if (_saving > 0) return;
+    try {
+      final fresh = await widget.frameService.getFrame(_frame.id);
+      if (mounted && _saving == 0) setState(() => _frame = fresh);
+    } catch (_) {}
+  }
 
   /// Shown at once; the Frame follows within seconds.
   Future<void> _save(Map<String, bool> controls) async {
     final changes = FrameControlLevels.update(controls);
     final before = _frame;
     setState(() => _frame = _frame.withSettings(changes));
+    _saving++;
     final saved = await LocalChanges.instance.run(
       overrides: const {},
       commit: () => widget.frameService.updateSettings(frameId: _frame.id, changes: changes),
       affects: tablesChanged({'frames'}, spaceIds: {?widget.spaceId}),
     );
+    _saving--;
     if (!saved && mounted) setState(() => _frame = before);
   }
 
