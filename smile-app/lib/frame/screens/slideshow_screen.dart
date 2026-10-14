@@ -333,8 +333,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   /// "Merken": a big heart and "Gemerkt" (or "Nicht mehr gemerkt"), then it
   /// goes to the server with the next sync, which starts right away.
-  void _toggleFavorite() {
-    final current = _current;
+  /// The photo on screen, or [entry] (a heart in the overview).
+  void _toggleFavorite([CachedMediaEntry? entry]) {
+    final current = entry ?? _current;
     if (current == null) return;
     final on = !_favoriteIds.contains(current.mediaItemId);
     widget.syncService.markFavorite(current.mediaItemId, on);
@@ -859,7 +860,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
               Positioned(top: 20, left: 0, right: 0, child: Center(child: _newestPill(t)))
             else if (!_showGrid && _favoritesRound)
               Positioned(top: 20, left: 0, right: 0, child: Center(child: _favoritesPill(t))),
-            if (!_showGrid && _heartFlash != null) Positioned.fill(child: IgnorePointer(child: _heart(t, _heartFlash!))),
+            if (_heartFlash != null) Positioned.fill(child: IgnorePointer(child: _heart(t, _heartFlash!))),
             if (!_showGrid && _paused && !_barVisible)
               Positioned(bottom: 24, left: 0, right: 0, child: Center(child: _pausedPill(t))),
             if (!_showGrid)
@@ -1016,7 +1017,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           icon: _favoriteIds.contains(_current!.mediaItemId) ? SmileIcons.heartFilled : SmileIcons.heart,
           label: _favoriteIds.contains(_current!.mediaItemId) ? t.favoriteMarked : t.ctrlFavorite,
           heart: true,
-          onTap: () => act(_toggleFavorite),
+          onTap: () => act(() => _toggleFavorite()),
         ),
       if (c.favorites && _hasFavorites) _BigButton(icon: SmileIcons.heart, label: t.favorites, onTap: () => act(_playFavorites)),
       if (c.overview) _BigButton(icon: SmileIcons.overview, label: t.ctrlOverview, onTap: () => setState(_openGrid)),
@@ -1082,18 +1083,42 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final entry = items[index];
+                final favorite = _favoriteIds.contains(entry.mediaItemId);
                 return GestureDetector(
                   key: ValueKey(entry.mediaItemId),
                   onTap: () => _openInSlideshow(entry),
-                  child: entry.isVideo
-                      ? Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            _photo(entry, BoxFit.cover),
-                            const Center(child: Icon(SmileIcons.play, size: 40, color: Colors.white70)),
-                          ],
-                        )
-                      : _photo(entry, BoxFit.cover),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _photo(entry, BoxFit.cover),
+                      if (entry.isVideo) const Center(child: Icon(SmileIcons.play, size: 40, color: Colors.white70)),
+                      // A heart per photo (2026-10-14): a tap on it marks or
+                      // takes back, a tap on the photo still opens it. Its
+                      // tap area is big, so the photo isn't hit by mistake.
+                      if (_controls.favorite)
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _toggleFavorite(entry),
+                            child: Padding(
+                              padding: const EdgeInsets.all(6),
+                              child: Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.45), shape: BoxShape.circle),
+                                child: Icon(
+                                  favorite ? SmileIcons.heartFilled : SmileIcons.heart,
+                                  color: favorite ? SmileTheme.primary : Colors.white,
+                                  size: 34,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 );
               },
             ),
