@@ -130,6 +130,39 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     await _save(() => _service.setVideoSound(frameId: widget.frameId, enabled: value));
   }
 
+  /// The album strip always shows the running album (2026-10-14): it
+  /// scrolls there when the page opens and whenever another one runs.
+  static const _albumTileWidth = 84.0;
+  final _albumStrip = ScrollController();
+  String? _scrolledTo;
+
+  void _keepShownVisible(List<FrameChannelAssignment> albums, String? shownId) {
+    if (shownId == null || shownId == _scrolledTo) return;
+    final index = albums.indexWhere((a) => a.channelId == shownId);
+    if (index < 0) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_albumStrip.hasClients) return;
+      final position = _albumStrip.position;
+      const step = _albumTileWidth + SmileSpacing.m;
+      final left = index * step;
+      // Already fully in view: leave it where it is.
+      if (left >= position.pixels && left + _albumTileWidth <= position.pixels + position.viewportDimension) {
+        _scrolledTo = shownId;
+        return;
+      }
+      // Otherwise centred, as far as the strip goes.
+      final target = (left - (position.viewportDimension - _albumTileWidth) / 2).clamp(0.0, position.maxScrollExtent);
+      _scrolledTo = shownId;
+      unawaited(_albumStrip.animateTo(target, duration: const Duration(milliseconds: 300), curve: Curves.easeOut));
+    });
+  }
+
+  @override
+  void dispose() {
+    _albumStrip.dispose();
+    super.dispose();
+  }
+
   /// "+" in the album strip: another album of the Space (or shared with
   /// it) onto this Frame -- it runs right away.
   Future<void> _addAlbum() async {
@@ -258,6 +291,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     final frame = _frame;
     final albums = _albums;
     final shownId = _shownChannelId;
+    _keepShownVisible(albums, shownId);
 
     return Scaffold(
       appBar: AppBar(
@@ -306,6 +340,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                       SizedBox(
                         height: 112,
                         child: ListView.separated(
+                          controller: _albumStrip,
                           scrollDirection: Axis.horizontal,
                           itemCount: albums.length + 1,
                           separatorBuilder: (_, _) => const SizedBox(width: SmileSpacing.m),
@@ -315,7 +350,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                                 borderRadius: BorderRadius.circular(SmileRadius.m),
                                 onTap: _addAlbum,
                                 child: SizedBox(
-                                  width: 72,
+                                  width: _albumTileWidth,
                                   child: Column(
                                     children: [
                                       Container(
@@ -341,7 +376,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                               borderRadius: BorderRadius.circular(SmileRadius.m),
                               onTap: () => _showNow(album),
                               child: SizedBox(
-                                width: 72,
+                                width: _albumTileWidth,
                                 child: Column(
                                   children: [
                                     Container(

@@ -1571,7 +1571,7 @@ class SmileTextsDe extends SmileTexts {
   String get showOnFrameNow => 'Jetzt am Frame zeigen';
 
   @override
-  String get nowRunning => 'läuft';
+  String get nowRunning => 'läuft gerade';
 
   @override
   String get addShort => 'Hinzufügen';

@@ -2683,7 +2683,7 @@ abstract class SmileTexts {
   /// No description provided for @nowRunning.
   ///
   /// In de, this message translates to:
-  /// **'läuft'**
+  /// **'läuft gerade'**
   String get nowRunning;
 
   /// No description provided for @addShort.
