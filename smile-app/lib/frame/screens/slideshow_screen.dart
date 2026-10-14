@@ -297,8 +297,17 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         } else {
           _playlist = ordered(favorites);
         }
-        // None (yet) on this Frame: its album instead of a black screen.
-        if (_playlist.isEmpty) _playlist = ordered(_albumEntries);
+        if (_playlist.isEmpty) {
+          if (_favoritesRound) {
+            // All taken back (also from the app): the round is over
+            // (2026-10-14: it went on with the album, button still "on").
+            _favoritesRound = false;
+            _rebuildPlaylist();
+            return;
+          }
+          // None (yet) on this Frame: its album instead of a black screen.
+          _playlist = ordered(_albumEntries);
+        }
       case 'rotate':
         final albums = [..._assignedChannels]..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));
         _playlist = [
