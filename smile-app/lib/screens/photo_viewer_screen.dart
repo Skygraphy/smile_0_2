@@ -11,21 +11,28 @@ import '../services/media_service.dart';
 /// at once while the full one loads; offline it stays when the full one
 /// was never loaded.
 class PhotoViewerScreen extends StatefulWidget {
-  const PhotoViewerScreen({super.key, required MediaItem this.item, this.onShowOnFrame, this.onFavorite}) : localBytes = null;
+  const PhotoViewerScreen({super.key, required MediaItem this.item, this.onShowOnFrame, this.onFavorite, this.favorite = false})
+      : localBytes = null;
 
   /// A photo still on its way to the server (2026-10-12): straight from
   /// the phone.
   const PhotoViewerScreen.local({super.key, required Uint8List this.localBytes})
       : item = null,
         onShowOnFrame = null,
-        onFavorite = null;
+        onFavorite = null,
+        favorite = false;
 
   /// "Jetzt am Frame zeigen" (2026-10-14) -- only when the album runs on a
   /// Frame the caller manages.
   final VoidCallback? onShowOnFrame;
 
-  /// "Lieblingsbild für den Frame" (2026-10-14), same condition.
-  final VoidCallback? onFavorite;
+  /// "Lieblingsbild für den Frame" (2026-10-14), same condition: marks or
+  /// takes back; returns whether it is a Lieblingsbild afterwards (null:
+  /// nothing changed).
+  final Future<bool?> Function()? onFavorite;
+
+  /// A Lieblingsbild already: the heart is filled, in coral.
+  final bool favorite;
 
   final MediaItem? item;
   final Uint8List? localBytes;
@@ -35,6 +42,7 @@ class PhotoViewerScreen extends StatefulWidget {
 }
 
 class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
+  late bool _favorite = widget.favorite;
   final _zoom = TransformationController();
 
   @override
@@ -100,9 +108,15 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
         actions: [
           if (widget.onFavorite != null)
             IconButton(
-              icon: const Icon(SmileIcons.heart),
+              icon: Icon(
+                _favorite ? SmileIcons.heartFilled : SmileIcons.heart,
+                color: _favorite ? SmileTheme.primary : null,
+              ),
               tooltip: SmileTexts.of(context).favoriteFor,
-              onPressed: widget.onFavorite,
+              onPressed: () async {
+                final now = await widget.onFavorite!();
+                if (now != null && mounted) setState(() => _favorite = now);
+              },
             ),
           if (widget.onShowOnFrame != null)
             IconButton(

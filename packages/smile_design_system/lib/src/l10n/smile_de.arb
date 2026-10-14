@@ -954,5 +954,9 @@
   "@favoritesRemoveAllQuestion": {"placeholders": {"frame": {"type": "String"}}},
   "favoritesRemoveHint": "Die Fotos selbst bleiben in ihren Alben.",
   "favoritesSelected": "{n} ausgewählt",
-  "@favoritesSelected": {"placeholders": {"n": {"type": "int"}}}
+  "@favoritesSelected": {"placeholders": {"n": {"type": "int"}}},
+  "favoritesRemoveSelectedQuestion": "{n, plural, =1{1 Lieblingsbild} other{{n} Lieblingsbilder}} von „{frame}“ entfernen?",
+  "@favoritesRemoveSelectedQuestion": {"placeholders": {"n": {"type": "int"}, "frame": {"type": "String"}}},
+  "favoriteRemovedFrom": "Kein Lieblingsbild mehr von „{frame}“",
+  "@favoriteRemovedFrom": {"placeholders": {"frame": {"type": "String"}}}
 }

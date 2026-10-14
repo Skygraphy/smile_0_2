@@ -155,10 +155,16 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   }
 
   void _loadFrames() {
-    unawaited(ChannelService().listFramesShowing(widget.channelId).then((frames) {
+    unawaited(ChannelService().listFramesShowing(widget.channelId).then((frames) async {
       if (mounted) setState(() => _frames = frames);
+      final favorites = await FrameService().favoritesOf(frames.map((f) => f.frameId).toList());
+      if (mounted) setState(() => _favoriteFrames = favorites);
     }).catchError((Object _) {}));
   }
+
+  /// Which photos are Lieblingsbilder of which of this album's Frames --
+  /// the heart in the photo/video viewer shows it (2026-10-14).
+  Map<String, Set<String>> _favoriteFrames = const {};
 
   /// A photo/video still on its way: full screen straight from the phone.
   Future<void> _openQueued(QueuedUpload item) async {
@@ -199,18 +205,35 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
 
   /// "Lieblingsbild für den Frame" (2026-10-14): onto the Frame's
   /// Lieblingsbilder (on several Frames, which one first).
-  Future<void> _addFavorite(String mediaItemId) async {
+  /// The heart marks or takes back -- on the picked Frame. Returns whether
+  /// the photo is a Lieblingsbild of any Frame afterwards (the heart's fill).
+  Future<bool?> _toggleFavorite(String mediaItemId) async {
     final t = SmileTexts.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final frame = await _pickFrame();
-    if (frame == null) return;
+    if (frame == null) return null;
+    final on = !(_favoriteFrames[mediaItemId]?.contains(frame.frameId) ?? false);
     unawaited(HapticFeedback.selectionClick());
+    final before = _favoriteFrames;
+    setState(() {
+      final frames = {...?_favoriteFrames[mediaItemId]};
+      on ? frames.add(frame.frameId) : frames.remove(frame.frameId);
+      _favoriteFrames = {..._favoriteFrames, mediaItemId: frames};
+    });
     final saved = await LocalChanges.instance.run(
       overrides: const {},
-      commit: () => FrameService().addFavorite(frameId: frame.frameId, mediaItemId: mediaItemId),
+      commit: () => on
+          ? FrameService().addFavorite(frameId: frame.frameId, mediaItemId: mediaItemId)
+          : FrameService().removeFavorites(frameId: frame.frameId, mediaItemIds: [mediaItemId]),
       affects: tablesChanged({'frame_favorites'}),
     );
-    if (saved) messenger.showSnackBar(SnackBar(content: Text(t.favoriteAddedTo(frameNameOf(frame.frameId, frame.frameName)))));
+    if (!saved) {
+      if (mounted) setState(() => _favoriteFrames = before);
+      return before[mediaItemId]?.isNotEmpty ?? false;
+    }
+    final name = frameNameOf(frame.frameId, frame.frameName);
+    messenger.showSnackBar(SnackBar(content: Text(on ? t.favoriteAddedTo(name) : t.favoriteRemovedFrom(name))));
+    return _favoriteFrames[mediaItemId]?.isNotEmpty ?? false;
   }
 
   Future<FrameShowing?> _pickFrame() async {
@@ -972,7 +995,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                             mediaId: item.id,
                             url: item.displayUrl,
                             onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
-                            onFavorite: _frames.isEmpty ? null : () => _addFavorite(item.id),
+                            favorite: _favoriteFrames[item.id]?.isNotEmpty ?? false,
+                            onFavorite: _frames.isEmpty ? null : () => _toggleFavorite(item.id),
                           ),
                         ),
                       )
@@ -983,7 +1007,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                               builder: (_) => PhotoViewerScreen(
                                 item: item,
                                 onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
-                                onFavorite: _frames.isEmpty ? null : () => _addFavorite(item.id),
+                                favorite: _favoriteFrames[item.id]?.isNotEmpty ?? false,
+                            onFavorite: _frames.isEmpty ? null : () => _toggleFavorite(item.id),
                               ),
                             ),
                           )

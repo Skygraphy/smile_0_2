@@ -329,6 +329,18 @@ class FrameService {
     ];
   }
 
+  /// Which photos are Lieblingsbilder of which of these Frames
+  /// (media id -> Frame ids) -- for the heart in the viewers.
+  Future<Map<String, Set<String>>> favoritesOf(List<String> frameIds) async {
+    if (frameIds.isEmpty) return const {};
+    final rows = await supabase.from('frame_favorites').select('frame_id, media_item_id').inFilter('frame_id', frameIds);
+    final result = <String, Set<String>>{};
+    for (final row in (rows as List).cast<Map<String, dynamic>>()) {
+      result.putIfAbsent(row['media_item_id'] as String, () => {}).add(row['frame_id'] as String);
+    }
+    return result;
+  }
+
   /// A Lieblingsbild added in the app (the Frame is woken by it).
   Future<void> addFavorite({required String frameId, required String mediaItemId}) async {
     await supabase.from('frame_favorites').upsert(

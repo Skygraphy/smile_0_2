@@ -2823,6 +2823,18 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'{n} ausgewählt'**
   String favoritesSelected(int n);
+
+  /// No description provided for @favoritesRemoveSelectedQuestion.
+  ///
+  /// In de, this message translates to:
+  /// **'{n, plural, =1{1 Lieblingsbild} other{{n} Lieblingsbilder}} von „{frame}“ entfernen?'**
+  String favoritesRemoveSelectedQuestion(int n, String frame);
+
+  /// No description provided for @favoriteRemovedFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'Kein Lieblingsbild mehr von „{frame}“'**
+  String favoriteRemovedFrom(String frame);
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

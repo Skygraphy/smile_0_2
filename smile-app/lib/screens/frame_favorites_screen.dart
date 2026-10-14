@@ -82,6 +82,20 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
     await _load();
   }
 
+  /// Asked first (2026-10-14), like "Alle entfernen".
+  Future<void> _removeSelected() async {
+    final t = SmileTexts.of(context);
+    final ids = _selected.toList();
+    final ok = await showSmileConfirmDialog(
+      context,
+      title: t.favoritesRemoveSelectedQuestion(ids.length, widget.frameName),
+      message: t.favoritesRemoveHint,
+      confirmLabel: t.favoritesRemove,
+      destructive: true,
+    );
+    if (ok) await _remove(ids);
+  }
+
   Future<void> _removeAll() async {
     final t = SmileTexts.of(context);
     final ok = await showSmileConfirmDialog(
@@ -142,7 +156,7 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
                 IconButton(
                   icon: const Icon(SmileIcons.delete),
                   tooltip: t.favoritesRemove,
-                  onPressed: () => _remove(_selected.toList()),
+                  onPressed: _removeSelected,
                 ),
               ],
             )

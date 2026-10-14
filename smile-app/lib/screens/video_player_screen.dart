@@ -20,14 +20,20 @@ class VideoPlayerScreen extends StatefulWidget {
     this.localPath,
     this.onShowOnFrame,
     this.onFavorite,
+    this.favorite = false,
   });
 
   /// "Jetzt am Frame zeigen" (2026-10-14) -- only when the album runs on a
   /// Frame the caller manages.
   final VoidCallback? onShowOnFrame;
 
-  /// "Lieblingsbild für den Frame" (2026-10-14), same condition.
-  final VoidCallback? onFavorite;
+  /// "Lieblingsbild für den Frame" (2026-10-14), same condition: marks or
+  /// takes back; returns whether it is a Lieblingsbild afterwards (null:
+  /// nothing changed).
+  final Future<bool?> Function()? onFavorite;
+
+  /// A Lieblingsbild already: the heart is filled, in coral.
+  final bool favorite;
 
   final String mediaId;
   final String? url;
@@ -40,6 +46,7 @@ class VideoPlayerScreen extends StatefulWidget {
 }
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+  late bool _favorite = widget.favorite;
   VideoPlayerController? _controller;
   String? _error;
 
@@ -103,9 +110,15 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         actions: [
           if (widget.onFavorite != null)
             IconButton(
-              icon: const Icon(SmileIcons.heart),
+              icon: Icon(
+                _favorite ? SmileIcons.heartFilled : SmileIcons.heart,
+                color: _favorite ? SmileTheme.primary : null,
+              ),
               tooltip: SmileTexts.of(context).favoriteFor,
-              onPressed: widget.onFavorite,
+              onPressed: () async {
+                final now = await widget.onFavorite!();
+                if (now != null && mounted) setState(() => _favorite = now);
+              },
             ),
           if (widget.onShowOnFrame != null)
             IconButton(

@@ -1656,4 +1656,20 @@ class SmileTextsDe extends SmileTexts {
   String favoritesSelected(int n) {
     return '$n ausgewählt';
   }
+
+  @override
+  String favoritesRemoveSelectedQuestion(int n, String frame) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n Lieblingsbilder',
+      one: '1 Lieblingsbild',
+    );
+    return '$_temp0 von „$frame“ entfernen?';
+  }
+
+  @override
+  String favoriteRemovedFrom(String frame) {
+    return 'Kein Lieblingsbild mehr von „$frame“';
+  }
 }
