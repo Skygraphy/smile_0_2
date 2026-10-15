@@ -87,6 +87,7 @@ class _CapturePreviewScreenState extends State<CapturePreviewScreen> {
               ),
               const Spacer(),
               FloatingActionButton(
+                heroTag: null,
                 tooltip: t.captureSend,
                 onPressed: () => Navigator.of(context).pop(CaptureDecision.send),
                 child: const Icon(SmileIcons.send),

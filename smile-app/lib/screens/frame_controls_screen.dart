@@ -82,10 +82,16 @@ class _FrameControlsScreenState extends State<FrameControlsScreen> with SyncRelo
       ('playback', t.allowPlayback, SmileIcons.playback),
     ];
 
-    Widget card(List<Widget> children) => Container(
-          margin: const EdgeInsets.only(bottom: SmileSpacing.m),
-          decoration: BoxDecoration(color: scheme.surfaceContainer, borderRadius: BorderRadius.circular(SmileRadius.l)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+    // A Material, not a coloured Container: ListTiles paint their ink on it
+    // (Crashlytics 2026-10-15).
+    Widget card(List<Widget> children) => Padding(
+          padding: const EdgeInsets.only(bottom: SmileSpacing.m),
+          child: Material(
+            color: scheme.surfaceContainer,
+            borderRadius: BorderRadius.circular(SmileRadius.l),
+            clipBehavior: Clip.antiAlias,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+          ),
         );
     Widget label(String text) => Padding(
           padding: const EdgeInsets.fromLTRB(SmileSpacing.m, SmileSpacing.m, SmileSpacing.m, SmileSpacing.xs),

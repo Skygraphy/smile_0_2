@@ -606,13 +606,16 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(SmileRadius.l),
+    // A Material, not a coloured Container: ListTiles paint their ink on it
+    // (Crashlytics 2026-10-15).
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainer,
+      borderRadius: BorderRadius.circular(SmileRadius.l),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: padding,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
     );
   }
 }

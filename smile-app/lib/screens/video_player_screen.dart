@@ -95,7 +95,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   void _togglePlay() {
     final controller = _controller;
     if (controller == null) return;
-    setState(() => controller.value.isPlaying ? controller.pause() : controller.play());
+    // A block body: setState may not get the Future of play()/pause()
+    // (Crashlytics 2026-10-15).
+    if (controller.value.isPlaying) {
+      unawaited(controller.pause());
+    } else {
+      unawaited(controller.play());
+    }
+    setState(() {});
   }
 
   @override

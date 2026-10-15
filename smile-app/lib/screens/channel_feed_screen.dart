@@ -1112,7 +1112,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                     // between photo and video. "+" stays the main button --
                     // most photos for a Frame already exist.
                     FloatingActionButton.small(
-                      heroTag: "capture",
+                      heroTag: null,
                       tooltip: t.captureInAlbum,
                       backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                       foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -1121,7 +1121,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                     ),
                     const SizedBox(height: 12),
                     FloatingActionButton(
-                      heroTag: "add",
+                      heroTag: null,
                       tooltip: t.addMedia,
                       onPressed: _pickAndUpload,
                       child: const Icon(SmileIcons.add),
@@ -1129,6 +1129,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                   ],
                 )
               : FloatingActionButton.extended(
+                  heroTag: null,
                   // Only a Space-shared viewer (never a plain member, that
                   // branch above already covers them) ever lands here --
                   // requesting posting rights for themselves, the other
