@@ -958,5 +958,10 @@
   "favoritesRemoveSelectedQuestion": "{n, plural, =1{1 Lieblingsbild} other{{n} Lieblingsbilder}} von „{frame}“ entfernen?",
   "@favoritesRemoveSelectedQuestion": {"placeholders": {"n": {"type": "int"}, "frame": {"type": "String"}}},
   "favoriteRemovedFrom": "Kein Lieblingsbild mehr von „{frame}“",
-  "@favoriteRemovedFrom": {"placeholders": {"frame": {"type": "String"}}}
+  "@favoriteRemovedFrom": {"placeholders": {"frame": {"type": "String"}}},
+  "favoritesAddTitle": "Lieblingsbilder · {frame}",
+  "@favoritesAddTitle": {"placeholders": {"frame": {"type": "String"}}},
+  "favoriteForWhich": "Lieblingsbild für …",
+  "favoriteStateOn": "gemerkt",
+  "favoriteStateOff": "nicht gemerkt"
 }

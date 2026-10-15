@@ -1672,4 +1672,18 @@ class SmileTextsDe extends SmileTexts {
   String favoriteRemovedFrom(String frame) {
     return 'Kein Lieblingsbild mehr von „$frame“';
   }
+
+  @override
+  String favoritesAddTitle(String frame) {
+    return 'Lieblingsbilder · $frame';
+  }
+
+  @override
+  String get favoriteForWhich => 'Lieblingsbild für …';
+
+  @override
+  String get favoriteStateOn => 'gemerkt';
+
+  @override
+  String get favoriteStateOff => 'nicht gemerkt';
 }

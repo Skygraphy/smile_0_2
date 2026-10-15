@@ -2835,6 +2835,30 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Kein Lieblingsbild mehr von „{frame}“'**
   String favoriteRemovedFrom(String frame);
+
+  /// No description provided for @favoritesAddTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbilder · {frame}'**
+  String favoritesAddTitle(String frame);
+
+  /// No description provided for @favoriteForWhich.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbild für …'**
+  String get favoriteForWhich;
+
+  /// No description provided for @favoriteStateOn.
+  ///
+  /// In de, this message translates to:
+  /// **'gemerkt'**
+  String get favoriteStateOn;
+
+  /// No description provided for @favoriteStateOff.
+  ///
+  /// In de, this message translates to:
+  /// **'nicht gemerkt'**
+  String get favoriteStateOff;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

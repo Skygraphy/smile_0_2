@@ -8,6 +8,7 @@ import 'package:smile_design_system/smile_design_system.dart';
 import '../services/frame_service.dart';
 import '../services/local_changes.dart';
 import '../services/sync_bus.dart';
+import 'frame_favorites_add_screen.dart';
 import 'photo_viewer_screen.dart';
 import 'video_player_screen.dart';
 
@@ -116,6 +117,20 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
     if (ok) await _remove(null);
   }
 
+  /// "Hinzufügen" (2026-10-15): this Frame's albums with a heart per photo.
+  Future<void> _add() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => FrameFavoritesAddScreen(
+          frameId: widget.frameId,
+          frameName: widget.frameName,
+          frameService: widget.frameService,
+        ),
+      ),
+    );
+    if (mounted) await _load();
+  }
+
   Future<void> _open(FrameFavorite favorite) async {
     final item = favorite.item;
     await Navigator.of(context).push(
@@ -171,6 +186,7 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
           : AppBar(
               title: Text(t.favorites),
               actions: [
+                TextButton.icon(onPressed: _add, icon: const Icon(SmileIcons.add), label: Text(t.addShort)),
                 if (shown.isNotEmpty)
                   PopupMenuButton<VoidCallback>(
                     icon: const Icon(SmileIcons.more),
@@ -194,7 +210,14 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
       body: _favorites == null
           ? const Center(child: CircularProgressIndicator())
           : shown.isEmpty
-              ? SmileEmptyState(icon: SmileIcons.heart, title: t.favoritesEmpty, message: t.favoritesEmptyHint)
+              ? SmileEmptyState(
+                  icon: SmileIcons.heart,
+                  title: t.favoritesEmpty,
+                  message: t.favoritesEmptyHint,
+                  actionLabel: t.addShort,
+                  actionIcon: SmileIcons.add,
+                  onAction: _add,
+                )
               : RefreshIndicator(
                   onRefresh: _load,
                   child: GridView.builder(

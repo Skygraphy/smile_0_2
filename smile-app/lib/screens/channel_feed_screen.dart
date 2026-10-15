@@ -15,6 +15,7 @@ import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/channel_service.dart';
+import '../services/avatar_upload.dart';
 import '../services/frame_service.dart';
 import '../services/foreground_notifications.dart';
 import '../services/object_picture_service.dart';
@@ -208,6 +209,11 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// The heart marks or takes back -- on the picked Frame. Returns whether
   /// the photo is a Lieblingsbild of any Frame afterwards (the heart's fill).
   Future<bool?> _toggleFavorite(String mediaItemId) async {
+    // Several Frames: one heart per Frame (2026-10-15).
+    if (_frames.length > 1) {
+      await _favoriteSheet(mediaItemId);
+      return _favoriteFrames[mediaItemId]?.isNotEmpty ?? false;
+    }
     final t = SmileTexts.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final frame = await _pickFrame();
@@ -234,6 +240,75 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     final name = frameNameOf(frame.frameId, frame.frameName);
     messenger.showSnackBar(SnackBar(content: Text(on ? t.favoriteAddedTo(name) : t.favoriteRemovedFrom(name))));
     return _favoriteFrames[mediaItemId]?.isNotEmpty ?? false;
+  }
+
+  /// "Lieblingsbild für …": every Frame of this album with its own heart --
+  /// where the photo is marked shows at once, each one switches on its own.
+  Future<void> _favoriteSheet(String mediaItemId) async {
+    final t = SmileTexts.of(context);
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheet) {
+          Future<void> toggle(FrameShowing frame) async {
+            final on = !(_favoriteFrames[mediaItemId]?.contains(frame.frameId) ?? false);
+            unawaited(HapticFeedback.selectionClick());
+            void apply(bool value) {
+              final frames = {...?_favoriteFrames[mediaItemId]};
+              value ? frames.add(frame.frameId) : frames.remove(frame.frameId);
+              _favoriteFrames = {..._favoriteFrames, mediaItemId: frames};
+              if (mounted) setState(() {});
+              setSheet(() {});
+            }
+
+            apply(on);
+            final saved = await LocalChanges.instance.run(
+              overrides: const {},
+              commit: () => on
+                  ? FrameService().addFavorite(frameId: frame.frameId, mediaItemId: mediaItemId)
+                  : FrameService().removeFavorites(frameId: frame.frameId, mediaItemIds: [mediaItemId]),
+              affects: tablesChanged({'frame_favorites'}),
+            );
+            if (!saved) apply(!on);
+          }
+
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(SmileSpacing.l, 0, SmileSpacing.l, SmileSpacing.s),
+                  child: Text(t.favoriteForWhich, style: Theme.of(context).textTheme.titleMedium),
+                ),
+                for (final frame in _frames)
+                  Builder(builder: (context) {
+                    final marked = _favoriteFrames[mediaItemId]?.contains(frame.frameId) ?? false;
+                    return ListTile(
+                      leading: objectPicture(
+                        key: LocalChanges.framePicture(frame.frameId),
+                        name: frameNameOf(frame.frameId, frame.frameName),
+                        serverUrl: avatarPathToUrl(frame.avatarPath),
+                        size: 40,
+                      ),
+                      title: Text(frameNameOf(frame.frameId, frame.frameName)),
+                      subtitle: Text(marked ? t.favoriteStateOn : t.favoriteStateOff),
+                      trailing: Icon(
+                        marked ? SmileIcons.heartFilled : SmileIcons.heart,
+                        color: marked ? SmileTheme.primary : null,
+                        size: 28,
+                      ),
+                      onTap: () => toggle(frame),
+                    );
+                  }),
+                const SizedBox(height: SmileSpacing.s),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Future<FrameShowing?> _pickFrame() async {
