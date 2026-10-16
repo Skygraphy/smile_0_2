@@ -141,6 +141,23 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
             ),
             label(t.atEnd),
             chips([('loop', t.endLoop), ('overview', t.endOverview)], f.endBehavior, 'end_behavior'),
+            label(t.videoLengthLabel),
+            chips([('full', t.videoFull), ('photo', t.videoAsPhoto(f.intervalSeconds))], f.videoLength, 'video_length'),
+          ]),
+          card([
+            label(t.fillLabel),
+            chips([('fit', t.fillNever), ('auto', t.fillAuto), ('fill', t.fillAlways)], f.fillMode, 'fill_mode'),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(SmileSpacing.l, 0, SmileSpacing.l, SmileSpacing.s),
+              child: Text(t.fillHint, style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant)),
+            ),
+            SwitchListTile(
+              secondary: const Icon(SmileIcons.picture),
+              title: Text(t.slowZoom),
+              subtitle: Text(t.slowZoomHint),
+              value: f.slowZoom,
+              onChanged: (v) => _save({'slow_zoom': v}),
+            ),
           ]),
           card([
             SwitchListTile(

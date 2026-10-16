@@ -1,25 +1,122 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import 'package:video_player/video_player.dart';
 
 import '../services/media_service.dart';
 import '../services/video_cache.dart';
 
+/// How the phone's slideshow plays (decided 2026-10-16: the same settings
+/// as a Frame on its highest level, kept on this phone only).
+class SlideshowPrefs {
+  const SlideshowPrefs({
+    this.seconds = 10,
+    this.order = 'oldest',
+    this.orientation = 'auto',
+    this.videoLength = 'full',
+    this.fillMode = 'auto',
+    this.slowZoom = true,
+    this.sound = true,
+  });
+
+  final int seconds;
+
+  /// 'newest' | 'oldest' | 'shuffle'
+  final String order;
+
+  /// 'auto' | 'portrait' | 'landscape' -- only while the slideshow plays.
+  final String orientation;
+
+  /// 'full' | 'photo'
+  final String videoLength;
+
+  /// 'fit' | 'auto' | 'fill'
+  final String fillMode;
+  final bool slowZoom;
+  final bool sound;
+
+  static const _key = 'phone_slideshow';
+
+  static Future<SlideshowPrefs> load() async {
+    try {
+      final raw = (await SharedPreferences.getInstance()).getString(_key);
+      if (raw == null) return const SlideshowPrefs();
+      final j = jsonDecode(raw) as Map<String, dynamic>;
+      return SlideshowPrefs(
+        seconds: j['seconds'] as int? ?? 10,
+        order: j['order'] as String? ?? 'oldest',
+        orientation: j['orientation'] as String? ?? 'auto',
+        videoLength: j['video_length'] as String? ?? 'full',
+        fillMode: j['fill_mode'] as String? ?? 'auto',
+        slowZoom: j['slow_zoom'] as bool? ?? true,
+        sound: j['sound'] as bool? ?? true,
+      );
+    } catch (_) {
+      return const SlideshowPrefs();
+    }
+  }
+
+  Future<void> save() async {
+    try {
+      await (await SharedPreferences.getInstance()).setString(
+        _key,
+        jsonEncode({
+          'seconds': seconds,
+          'order': order,
+          'orientation': orientation,
+          'video_length': videoLength,
+          'fill_mode': fillMode,
+          'slow_zoom': slowZoom,
+          'sound': sound,
+        }),
+      );
+    } catch (_) {}
+  }
+
+  SlideshowPrefs copyWith({
+    int? seconds,
+    String? order,
+    String? orientation,
+    String? videoLength,
+    String? fillMode,
+    bool? slowZoom,
+    bool? sound,
+  }) =>
+      SlideshowPrefs(
+        seconds: seconds ?? this.seconds,
+        order: order ?? this.order,
+        orientation: orientation ?? this.orientation,
+        videoLength: videoLength ?? this.videoLength,
+        fillMode: fillMode ?? this.fillMode,
+        slowZoom: slowZoom ?? this.slowZoom,
+        sound: sound ?? this.sound,
+      );
+
+  List<DeviceOrientation> get orientations => switch (orientation) {
+        'portrait' => const [DeviceOrientation.portraitUp],
+        'landscape' => const [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight],
+        _ => const [],
+      };
+}
+
 /// Any album as a slideshow on the phone, like on a Frame (decided
 /// 2026-10-11) -- with the person's own sign-in, no Frame involved (and no
-/// Frame code: app and Frame stay separate). Photos change every few
-/// seconds, videos play to the end with sound; swipe to go on by hand, tap
-/// for the name and closing.
+/// Frame code: app and Frame stay separate). Photos change by the set
+/// time, videos play to the end (or as long as a photo), swipe to go on by
+/// hand, tap for the name, the settings and closing.
 class AlbumSlideshowScreen extends StatefulWidget {
   const AlbumSlideshowScreen({super.key, required this.albumName, required this.items});
 
   final String albumName;
-  /// Ready photos and videos, in the order they are shown.
+
+  /// Ready photos and videos, newest first.
   final List<MediaItem> items;
 
   @override
@@ -27,7 +124,6 @@ class AlbumSlideshowScreen extends StatefulWidget {
 }
 
 class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
-  static const _photoDuration = Duration(seconds: 8);
   static const _screen = MethodChannel('smile/screen');
 
   final _pages = PageController();
@@ -35,12 +131,20 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
   Timer? _next;
   bool _chrome = false;
   Timer? _hideChrome;
+  SlideshowPrefs _prefs = const SlideshowPrefs();
+  List<MediaItem> _items = const [];
+  int _shuffleSeed = DateTime.now().millisecondsSinceEpoch;
 
   @override
   void initState() {
     super.initState();
+    _items = _ordered(widget.items);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     unawaited(_screen.invokeMethod<void>('keepOn', true).catchError((Object _) {}));
+    unawaited(SlideshowPrefs.load().then((prefs) {
+      if (!mounted) return;
+      _applyPrefs(prefs);
+    }));
     _schedule();
   }
 
@@ -50,36 +154,156 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
     _hideChrome?.cancel();
     _pages.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    // The rest of the app turns with the phone again.
+    SystemChrome.setPreferredOrientations(const []);
     unawaited(_screen.invokeMethod<void>('keepOn', false).catchError((Object _) {}));
     super.dispose();
+  }
+
+  void _applyPrefs(SlideshowPrefs prefs) {
+    final reorder = prefs.order != _prefs.order;
+    setState(() {
+      _prefs = prefs;
+      if (reorder) _items = _ordered(widget.items);
+    });
+    SystemChrome.setPreferredOrientations(prefs.orientations);
+    _schedule();
+  }
+
+  List<MediaItem> _ordered(List<MediaItem> items) {
+    final list = [...items];
+    switch (_prefs.order) {
+      case 'newest':
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      case 'shuffle':
+        list
+          ..sort((a, b) => a.createdAt.compareTo(b.createdAt))
+          ..shuffle(Random(_shuffleSeed));
+      default:
+        list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    }
+    return list;
   }
 
   /// Endless: page [_index] shows item _index % length -- from the last
   /// one it simply goes on to the first, as softly as everywhere else
   /// (2026-10-12: the jump back to the start was abrupt).
-  MediaItem get _current => widget.items[_index % widget.items.length];
+  MediaItem get _current => _items[_index % _items.length];
 
-  /// Photos move on by time; a video moves on when it has ended.
+  /// Photos move on by time; a video when it has ended -- or by time too,
+  /// when videos may only last as long as a photo.
   void _schedule() {
     _next?.cancel();
-    if (widget.items.isEmpty || _current.isVideo) return;
-    _next = Timer(_photoDuration, _advance);
+    if (_items.isEmpty) return;
+    if (_current.isVideo && _prefs.videoLength != 'photo') return;
+    _next = Timer(Duration(seconds: _prefs.seconds), _advance);
   }
 
   void _advance() {
-    if (!mounted || widget.items.length < 2) return;
+    if (!mounted || _items.length < 2) return;
     unawaited(_pages.nextPage(duration: const Duration(milliseconds: 600), curve: Curves.easeInOut));
   }
 
   void _toggleChrome() {
     setState(() => _chrome = !_chrome);
+    _keepChrome();
+  }
+
+  void _keepChrome() {
     _hideChrome?.cancel();
     if (_chrome) _hideChrome = Timer(const Duration(seconds: 4), () => mounted ? setState(() => _chrome = false) : null);
   }
 
+  Future<void> _openSettings() async {
+    _hideChrome?.cancel();
+    final t = SmileTexts.of(context);
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
+      builder: (context) => StatefulBuilder(builder: (context, setSheet) {
+        final scheme = Theme.of(context).colorScheme;
+        void set(SlideshowPrefs prefs) {
+          setSheet(() {});
+          _applyPrefs(prefs);
+          unawaited(prefs.save());
+        }
+
+        Widget label(String text) => Padding(
+              padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.m, SmileSpacing.l, SmileSpacing.s),
+              child: Text(text.toUpperCase(), style: TextStyle(fontSize: 11.5, letterSpacing: 0.8, color: scheme.onSurfaceVariant)),
+            );
+        Widget chips<T>(List<(T, String)> options, T selected, SlideshowPrefs Function(T) change) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.l),
+              child: Wrap(
+                spacing: SmileSpacing.s,
+                runSpacing: SmileSpacing.s,
+                children: [
+                  for (final (value, name) in options)
+                    ChoiceChip(
+                      label: Text(name),
+                      selected: value == selected,
+                      onSelected: value == selected ? null : (_) => set(change(value)),
+                    ),
+                ],
+              ),
+            );
+        final p = _prefs;
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: SmileSpacing.l),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.l),
+                  child: Text(t.slideshowSettings, style: Theme.of(context).textTheme.titleMedium),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(SmileSpacing.l, 4, SmileSpacing.l, 0),
+                  child: Text(t.slideshowSettingsHint, style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant)),
+                ),
+                label(t.displayTime),
+                chips([for (final s in const [5, 10, 20, 60]) (s, s == 60 ? t.oneMinute : t.secondsValue(s))], p.seconds,
+                    (v) => p.copyWith(seconds: v)),
+                label(t.playOrder),
+                chips([('newest', t.orderNewest), ('oldest', t.orderOldest), ('shuffle', t.orderShuffle)], p.order,
+                    (v) => p.copyWith(order: v)),
+                label(t.orientationLabel),
+                chips([('auto', t.orientAuto), ('portrait', t.orientPortrait), ('landscape', t.orientLandscape)],
+                    p.orientation, (v) => p.copyWith(orientation: v)),
+                label(t.videoLengthLabel),
+                chips([('full', t.videoFull), ('photo', t.videoAsPhoto(p.seconds))], p.videoLength,
+                    (v) => p.copyWith(videoLength: v)),
+                label(t.fillLabel),
+                chips([('fit', t.fillNever), ('auto', t.fillAuto), ('fill', t.fillAlways)], p.fillMode,
+                    (v) => p.copyWith(fillMode: v)),
+                const SizedBox(height: SmileSpacing.s),
+                SwitchListTile(
+                  title: Text(t.slowZoom),
+                  subtitle: Text(t.slowZoomHint),
+                  value: p.slowZoom,
+                  onChanged: (v) => set(p.copyWith(slowZoom: v)),
+                ),
+                SwitchListTile(
+                  title: Text(t.videoSound),
+                  value: p.sound,
+                  onChanged: (v) => set(p.copyWith(sound: v)),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+    _keepChrome();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final items = widget.items;
+    final items = _items;
+    final t = SmileTexts.of(context);
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
@@ -92,6 +316,11 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
               // No itemCount: endless (see _current).
               onPageChanged: (i) {
                 setState(() => _index = i);
+                if (i > 0 && i % max(items.length, 1) == 0 && _prefs.order == 'shuffle') {
+                  // A new round, a new shuffle.
+                  _shuffleSeed++;
+                  _items = _ordered(widget.items);
+                }
                 _schedule();
               },
               itemBuilder: (context, i) {
@@ -102,20 +331,23 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                     key: ValueKey('${item.id}#$i'),
                     item: item,
                     active: i == _index,
+                    withSound: _prefs.sound,
                     onEnded: () {
                       if (i == _index) _advance();
                     },
                   );
                 }
-                return CachedNetworkImage(
-                  cacheKey: '${item.id}_display',
-                  imageUrl: item.displayUrl ?? '',
-                  fit: BoxFit.contain,
-                  fadeInDuration: Duration.zero,
-                  placeholder: (context, url) => item.thumbnailUrl == null
-                      ? const SizedBox.shrink()
-                      : CachedNetworkImage(cacheKey: '${item.id}_grid', imageUrl: item.thumbnailUrl!, fit: BoxFit.contain),
-                  errorWidget: (context, url, error) => const SizedBox.shrink(),
+                final url = item.displayUrl ?? item.thumbnailUrl;
+                if (url == null) return const SizedBox.shrink();
+                return SmilePhotoStage(
+                  key: ValueKey('${item.id}#$i'),
+                  image: CachedNetworkImageProvider(
+                    url,
+                    cacheKey: item.displayUrl != null ? '${item.id}_display' : '${item.id}_grid',
+                  ),
+                  fillMode: SmileFillMode.parse(_prefs.fillMode),
+                  slowZoom: _prefs.slowZoom && i == _index,
+                  duration: Duration(seconds: _prefs.seconds),
                 );
               },
             ),
@@ -131,9 +363,20 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                       children: [
                         Align(
                           alignment: Alignment.topRight,
-                          child: IconButton.filledTonal(
-                            icon: const Icon(SmileIcons.close),
-                            onPressed: () => Navigator.of(context).pop(),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton.filledTonal(
+                                icon: const Icon(SmileIcons.settings),
+                                tooltip: t.slideshowSettings,
+                                onPressed: _openSettings,
+                              ),
+                              const SizedBox(width: SmileSpacing.s),
+                              IconButton.filledTonal(
+                                icon: const Icon(SmileIcons.close),
+                                onPressed: () => Navigator.of(context).pop(),
+                              ),
+                            ],
                           ),
                         ),
                         if (items.isNotEmpty)
@@ -165,13 +408,14 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
 }
 
 /// A video in the slideshow: from the phone if it is there, else streamed;
-/// plays while its page is shown, with sound, and says when it has ended.
+/// plays while its page is shown, and says when it has ended.
 class _VideoSlide extends StatefulWidget {
-  const _VideoSlide({super.key, required this.item, required this.active, required this.onEnded});
+  const _VideoSlide({super.key, required this.item, required this.active, required this.onEnded, this.withSound = true});
 
   final MediaItem item;
   final bool active;
   final VoidCallback onEnded;
+  final bool withSound;
 
   @override
   State<_VideoSlide> createState() => _VideoSlideState();
@@ -216,6 +460,7 @@ class _VideoSlideState extends State<_VideoSlide> {
         widget.onEnded();
       }
     });
+    await controller.setVolume(widget.withSound ? 1 : 0);
     setState(() => _controller = controller);
     if (widget.active) await controller.play();
   }
@@ -224,7 +469,9 @@ class _VideoSlideState extends State<_VideoSlide> {
   void didUpdateWidget(covariant _VideoSlide old) {
     super.didUpdateWidget(old);
     final controller = _controller;
-    if (controller == null || old.active == widget.active) return;
+    if (controller == null) return;
+    if (old.withSound != widget.withSound) unawaited(controller.setVolume(widget.withSound ? 1 : 0));
+    if (old.active == widget.active) return;
     if (widget.active) {
       _ended = false;
       unawaited(controller.seekTo(Duration.zero).then((_) => controller.play()));

@@ -151,6 +151,17 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
 
   String get _shownName => spaceNameOf(widget.spaceId, _name);
 
+  Future<void> _changePicture() async {
+    final changed = await changeObjectPicture(
+      context,
+      kind: ObjectKind.space,
+      id: widget.spaceId,
+      name: _shownName,
+      hasCustomPicture: _avatarPath != null,
+    );
+    if (changed) await _load();
+  }
+
   Future<void> _createAlbum() async {
     final t = SmileTexts.of(context);
     final name = await showSmileNameDialog(context, title: t.createAlbum, confirmLabel: t.create, hint: t.createAlbumHint);
@@ -351,6 +362,27 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).maybePop()),
+        // ⋮ like on every page (2026-10-16).
+        actions: [
+          PopupMenuButton<VoidCallback>(
+            icon: const Icon(SmileIcons.more),
+            tooltip: t.moreOptions,
+            onSelected: (action) => action(),
+            itemBuilder: (context) {
+              PopupMenuItem<VoidCallback> item(IconData icon, String label, VoidCallback onTap) => PopupMenuItem(
+                    value: onTap,
+                    child: Row(children: [Icon(icon, size: 20), const SizedBox(width: SmileSpacing.m), Text(label)]),
+                  );
+              return [
+                item(SmileIcons.member, t.renameSpace, _rename),
+                item(SmileIcons.picture, t.changeObjectPicture, _changePicture),
+                item(SmileIcons.add, t.createAlbum, _createAlbum),
+                item(SmileIcons.frame, t.connectFrame, _connectFrame),
+                if (_admins?.callerIsFounder ?? false) item(SmileIcons.coAdmin, t.inviteCoAdmin, _inviteCoAdmin),
+              ];
+            },
+          ),
+        ],
       ),
       body: albums == null
           ? const Center(child: CircularProgressIndicator())
@@ -371,16 +403,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
           // Managers only ever see this page -- all of them may change it.
           leading: SmileEditablePicture(
             tooltip: t.changeObjectPicture,
-            onEdit: () async {
-              final changed = await changeObjectPicture(
-                context,
-                kind: ObjectKind.space,
-                id: widget.spaceId,
-                name: _shownName,
-                hasCustomPicture: _avatarPath != null,
-              );
-              if (changed) await _load();
-            },
+            onEdit: _changePicture,
             child: objectPicture(
               key: LocalChanges.spacePicture(widget.spaceId),
               name: _shownName,

@@ -16,6 +16,7 @@ import '../widgets/album_covers.dart';
 import '../widgets/frame_status.dart';
 import '../widgets/friendly_error.dart';
 import '../widgets/local_display.dart';
+import 'create_frame_screen.dart';
 import 'frame_controls_screen.dart';
 import 'frame_favorites_screen.dart';
 import 'frame_playback_screen.dart';
@@ -293,6 +294,18 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     if (!saved && mounted) await _load();
   }
 
+  /// Another device takes this Frame's place (its albums, settings and
+  /// Lieblingsbilder stay).
+  Future<void> _connectOther() async {
+    final frame = _frame;
+    final spaceId = _spaceId;
+    if (frame == null || spaceId == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => CreateFrameScreen(spaceId: spaceId, existingFrame: frame)),
+    );
+    if (mounted) await _load();
+  }
+
   Future<void> _openSettings() async {
     final frame = _frame;
     final spaceId = _spaceId;
@@ -318,8 +331,30 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     return Scaffold(
       appBar: AppBar(
         title: Text(_shownName),
+        // ⋮ instead of the gear (2026-10-16), like on every page.
         actions: [
-          IconButton(icon: const Icon(SmileIcons.settings), tooltip: t.settingsAndDevice, onPressed: _openSettings),
+          PopupMenuButton<VoidCallback>(
+            icon: const Icon(SmileIcons.more),
+            tooltip: t.moreOptions,
+            onSelected: (action) => action(),
+            itemBuilder: (context) {
+              PopupMenuItem<VoidCallback> item(IconData icon, String label, VoidCallback onTap) => PopupMenuItem(
+                    value: onTap,
+                    child: Row(children: [Icon(icon, size: 20), const SizedBox(width: SmileSpacing.m), Text(label)]),
+                  );
+              return [
+                item(SmileIcons.settings, t.settingsAndDevice, _openSettings),
+                item(SmileIcons.heart, t.favorites, _openFavorites),
+                item(SmileIcons.playback, t.playbackTitle, () {
+                  unawaited(_openPage((f, spaceId) => FramePlaybackScreen(frame: f, spaceId: spaceId, frameService: _service)));
+                }),
+                item(SmileIcons.controls, t.controlsTitle, () {
+                  unawaited(_openPage((f, spaceId) => FrameControlsScreen(frame: f, spaceId: spaceId, frameService: _service)));
+                }),
+                item(SmileIcons.scan, t.connectOtherDevice, _connectOther),
+              ];
+            },
+          ),
         ],
       ),
       body: frame == null

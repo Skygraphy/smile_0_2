@@ -21,6 +21,7 @@ import '../services/avatar_upload.dart';
 import '../services/channel_picker_service.dart';
 import '../services/object_picture_service.dart';
 import '../widgets/album_covers.dart';
+import 'settings_screen.dart';
 import '../widgets/picture_sheet.dart';
 import '../widgets/local_display.dart';
 import '../services/local_changes.dart';
@@ -316,6 +317,41 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     if (saved && mounted) await _load();
   }
 
+  Future<void> _changePicture() async {
+    final changed = await changeObjectPicture(
+      context,
+      kind: ObjectKind.album,
+      id: widget.channelId,
+      name: _shownName,
+      hasCustomPicture: _covers[widget.channelId]?.coverCustom ?? false,
+    );
+    if (changed) await _load();
+  }
+
+  /// ⋮ (2026-10-16): what one may do with this album, in one place.
+  Widget _menu(SmileTexts t, ChannelRoster roster) {
+    final isManager = roster.callerIsSco;
+    PopupMenuItem<VoidCallback> item(IconData icon, String label, VoidCallback onTap) => PopupMenuItem(
+          value: onTap,
+          child: Row(children: [Icon(icon, size: 20), const SizedBox(width: SmileSpacing.m), Text(label)]),
+        );
+    final onFrame = _visibleFrames.isNotEmpty || _addableFrames.isNotEmpty || _managesFrames;
+    final items = <PopupMenuItem<VoidCallback>>[
+      if (isManager) item(SmileIcons.member, t.renameAlbum, _rename),
+      if (isManager) item(SmileIcons.picture, t.changeObjectPicture, _changePicture),
+      if (isManager) item(SmileIcons.invite, t.inviteToAlbum, _inviteMember),
+      if (isManager) item(SmileIcons.share, t.shareWithSpace, _inviteShare),
+      if (onFrame) item(SmileIcons.frame, t.showOnFrame, () => _quickShowOnFrame(roster.homeSpaceName)),
+    ];
+    if (items.isEmpty) return const SizedBox.shrink();
+    return PopupMenuButton<VoidCallback>(
+      icon: const Icon(SmileIcons.more),
+      tooltip: t.moreOptions,
+      onSelected: (action) => action(),
+      itemBuilder: (context) => items,
+    );
+  }
+
   Future<void> _rename() async {
     final t = SmileTexts.of(context);
     final name = await showSmileNameDialog(context, title: t.renameAlbum, confirmLabel: t.save, initialValue: _shownName);
@@ -496,8 +532,17 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
 
   /// Tapping a removable person offers "Aus dem Album entfernen" in a
   /// bottom sheet, WhatsApp-style, instead of a permanent X on every row.
-  Future<void> _showMemberActions(ChannelMember member) async {
+  /// Every person opens a card (2026-10-16: most rows did nothing): who,
+  /// which role and what it means -- and what one may do here.
+  Future<void> _showMemberActions(ChannelMember member, SmileRole role, {required bool removable, required bool isMe}) async {
     final t = SmileTexts.of(context);
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final hint = switch (role) {
+      SmileRole.admin => t.roleAdminHint,
+      SmileRole.coAdmin => t.roleCoAdminHint,
+      SmileRole.viewer => t.roleViewerHint,
+      _ => t.roleMemberHint,
+    };
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -505,26 +550,42 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: SmileAvatar(name: member.label, avatarUrl: member.avatarUrl, size: 36),
-              title: Text(member.label),
+            SmileAvatar(name: member.label, avatarUrl: member.avatarUrl, size: 72),
+            const SizedBox(height: SmileSpacing.s),
+            Text(isMe ? t.you : member.label, style: Theme.of(sheetContext).textTheme.titleMedium),
+            const SizedBox(height: SmileSpacing.s),
+            SmileRoleBadge(role: role),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(SmileSpacing.xl, SmileSpacing.s, SmileSpacing.xl, SmileSpacing.m),
+              child: Text(hint, textAlign: TextAlign.center, style: TextStyle(color: muted)),
             ),
-            SmileActionRow(
-              icon: SmileIcons.remove,
-              label: t.removeFromAlbum,
-              destructive: true,
-              onTap: () {
-                Navigator.of(sheetContext).pop();
-                _removeMember(member);
-              },
-            ),
+            if (isMe)
+              SmileActionRow(
+                icon: SmileIcons.person,
+                label: t.editProfile,
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => SettingsScreen()));
+                },
+              ),
+            if (removable)
+              SmileActionRow(
+                icon: SmileIcons.remove,
+                label: t.removeFromAlbum,
+                destructive: true,
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  _removeMember(member);
+                },
+              ),
+            const SizedBox(height: SmileSpacing.s),
           ],
         ),
       ),
     );
   }
 
-  Future<void> _showShareActions(SharedSpaceRef space) async {
+  Future<void> _showShareActions(SharedSpaceRef space, {required bool canEnd}) async {
     final t = SmileTexts.of(context);
     await showModalBottomSheet<void>(
       context: context,
@@ -541,7 +602,9 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                 size: 36,
               ),
               title: Text(spaceNameOf(space.id, space.name)),
+              subtitle: Text(t.sharedSpaceHint),
             ),
+            if (canEnd)
             SmileActionRow(
               icon: SmileIcons.shared,
               label: t.endShare,
@@ -587,6 +650,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).maybePop()),
+        actions: [if (roster != null) _menu(t, roster)],
       ),
       body: roster == null
           ? Center(child: _errorMessage != null ? Text(_errorMessage!) : const CircularProgressIndicator())
@@ -612,18 +676,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
           icon: SmileIcons.album,
           leading: SmileEditablePicture(
             tooltip: t.changeObjectPicture,
-            onEdit: isManager
-                ? () async {
-                    final changed = await changeObjectPicture(
-                      context,
-                      kind: ObjectKind.album,
-                      id: widget.channelId,
-                      name: _shownName,
-                      hasCustomPicture: _covers[widget.channelId]?.coverCustom ?? false,
-                    );
-                    if (changed) await _load();
-                  }
-                : null,
+            onEdit: isManager ? _changePicture : null,
             child: albumCover(widget.channelId, _shownName, _covers, size: 80),
           ),
           title: _shownName,
@@ -673,7 +726,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                   leading: SmileAvatar(name: member.label, avatarUrl: member.avatarUrl, size: 40),
                   title: isMe ? t.you : member.label,
                   trailing: SmileRoleBadge(role: _roleOf(member, roster)),
-                  onTap: removable ? () => _showMemberActions(member) : null,
+                  onTap: () => _showMemberActions(member, _roleOf(member, roster), removable: removable, isMe: isMe),
                 );
               }),
             for (final request in membershipRequestsToDecide)
@@ -721,7 +774,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                   title: spaceNameOf(space.id, space.name),
                   subtitleIcon: SmileIcons.viewer,
                   subtitle: t.sharedViewOnly,
-                  onTap: isManager ? () => _showShareActions(space) : null,
+                  onTap: () => _showShareActions(space, canEnd: isManager),
                 ),
               for (final request in shareRequestsToDecide)
                 SmileObjectTile(

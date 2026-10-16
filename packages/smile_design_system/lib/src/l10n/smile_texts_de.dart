@@ -1689,4 +1689,90 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get framePhotosLoading => 'Fotos werden geladen …';
+
+  @override
+  String get videoLengthLabel => 'Videos';
+
+  @override
+  String get videoFull => 'Ganze Länge';
+
+  @override
+  String videoAsPhoto(int seconds) {
+    return 'Wie ein Foto ($seconds s)';
+  }
+
+  @override
+  String get fillLabel => 'Bildschirm füllen';
+
+  @override
+  String get fillNever => 'Nie';
+
+  @override
+  String get fillAuto => 'Wenn passend';
+
+  @override
+  String get fillAlways => 'Immer';
+
+  @override
+  String get fillHint =>
+      'Wenn passend: füllt den Bildschirm, wenn höchstens ein schmaler Rand wegfällt – sonst das ganze Foto auf unscharfem Hintergrund.';
+
+  @override
+  String get slowZoom => 'Langsamer Zoom';
+
+  @override
+  String get slowZoomHint => 'Jedes Foto wird ganz langsam etwas größer.';
+
+  @override
+  String get groupBrowse => 'Blättern';
+
+  @override
+  String get groupPlaying => 'Was läuft';
+
+  @override
+  String get orientationLabel => 'Ausrichtung';
+
+  @override
+  String get orientAuto => 'Automatisch';
+
+  @override
+  String get orientPortrait => 'Hochformat';
+
+  @override
+  String get orientLandscape => 'Querformat';
+
+  @override
+  String get slideshowSettings => 'Diashow-Einstellungen';
+
+  @override
+  String get slideshowSettingsHint => 'Gilt für die Diashow auf diesem Handy.';
+
+  @override
+  String get showHiddenMenu => 'Ausgeblendete anzeigen';
+
+  @override
+  String get showAllMenu => 'Alle Fotos anzeigen';
+
+  @override
+  String get editProfile => 'Profil bearbeiten';
+
+  @override
+  String get roleAdminHint => 'Hat den Space angelegt und verwaltet alles.';
+
+  @override
+  String get roleCoAdminHint =>
+      'Verwaltet den Space mit: Alben, Frames und Personen.';
+
+  @override
+  String get roleMemberHint => 'Stellt Fotos und Videos ins Album.';
+
+  @override
+  String get roleViewerHint => 'Sieht das Album über einen geteilten Space.';
+
+  @override
+  String get sharedSpaceHint =>
+      'Dieser Space sieht das Album auf seinen Frames und Handys, trägt aber nichts bei.';
+
+  @override
+  String get favorites2 => 'Lieblingsbilder';
 }

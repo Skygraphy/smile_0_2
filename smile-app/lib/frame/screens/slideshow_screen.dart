@@ -421,7 +421,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     _advanceTimer?.cancel();
     // A video plays to its end and moves on by itself (VideoSlide); the
     // timer only paces photos. Paused, quiet or in the overview: nothing.
-    if (_showingVideo || _paused || _quiet || _showGrid) return;
+    // A video plays to its end -- unless it may only last as long as a
+    // photo (0079).
+    final videoAsPhoto = _settings?.videoLength == 'photo';
+    if ((_showingVideo && !videoAsPhoto) || _paused || _quiet || _showGrid) return;
     if (_settings?.displayMode == 'manual') return;
     // "Neueste" ends even with a single photo; "Lieblingsbilder" with one
     // photo just stays on it (endless, 2026-10-14).
@@ -436,7 +439,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     // than by this timer -- from the overview, after an album switch --
     // used to be skipped after at most one interval.
     _advanceTimer = Timer(Duration(seconds: seconds), () {
-      if (!_showingVideo) _advance(1, automatic: true);
+      if (!_showingVideo || videoAsPhoto) _advance(1, automatic: true);
     });
   }
 
@@ -776,6 +779,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     var sound = s?.videoSound ?? true;
     var clock = s?.showClock ?? false;
     var sender = s?.showSender ?? true;
+    var videoLength = s?.videoLength ?? 'full';
+    var fill = s?.fillMode ?? 'auto';
+    var zoom = s?.slowZoom ?? true;
+    final seconds = s?.slideshowIntervalSeconds ?? 8;
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -822,7 +829,16 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                     for (final (value, label) in [('loop', t.endLoop), ('overview', t.endOverview)])
                       _BigChoice(label: label, selected: end == value, onTap: () => set('end_behavior', value, () => end = value)),
                   ]),
+                  section(t.videoLengthLabel, [
+                    for (final (value, label) in [('full', t.videoFull), ('photo', t.videoAsPhoto(seconds))])
+                      _BigChoice(label: label, selected: videoLength == value, onTap: () => set('video_length', value, () => videoLength = value)),
+                  ]),
+                  section(t.fillLabel, [
+                    for (final (value, label) in [('fit', t.fillNever), ('auto', t.fillAuto), ('fill', t.fillAlways)])
+                      _BigChoice(label: label, selected: fill == value, onTap: () => set('fill_mode', value, () => fill = value)),
+                  ]),
                   section('', [
+                    _BigChoice(label: t.slowZoom, selected: zoom, onTap: () => set('slow_zoom', !zoom, () => zoom = !zoom)),
                     _BigChoice(label: t.videoSound, selected: sound, onTap: () => set('video_sound', !sound, () => sound = !sound)),
                     _BigChoice(label: t.bigClock, selected: clock, onTap: () => set('show_clock', !clock, () => clock = !clock)),
                     _BigChoice(
@@ -910,7 +926,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                   withSound: _settings?.videoSound ?? true,
                   paused: _paused,
                 )
-              : _photo(current, BoxFit.contain),
+              : _stage(current),
         ),
       );
     }
@@ -1076,7 +1092,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       _keepBar();
     }
 
-    final buttons = <Widget>[
+    // Three groups (2026-10-16): browse -- what plays -- mark and settings.
+    final browse = <Widget>[
       if (c.back) _BigButton(icon: SmileIcons.previous, label: t.ctrlBack, onTap: () => act(() => _advance(-1))),
       if (c.pause)
         _BigButton(
@@ -1085,6 +1102,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           onTap: () => act(() => _setPaused(!_paused)),
         ),
       if (c.next) _BigButton(icon: SmileIcons.nextItem, label: t.ctrlNext, main: true, onTap: () => act(() => _advance(1))),
+    ];
+    final playing = <Widget>[
       // On while its round runs: a tap ends it (2026-10-14).
       if (c.newest)
         _BigButton(
@@ -1093,13 +1112,6 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           active: _newestRound,
           onTap: () => act(_newestRound ? _endRound : _playNewest),
         ),
-      if (c.favorite && _current != null)
-        _BigButton(
-          icon: _favoriteIds.contains(_current!.mediaItemId) ? SmileIcons.heartFilled : SmileIcons.heart,
-          label: _favoriteIds.contains(_current!.mediaItemId) ? t.favoriteMarked : t.ctrlFavorite,
-          heart: true,
-          onTap: () => act(() => _toggleFavorite()),
-        ),
       if (c.favorites && (_hasFavorites || _favoritesRound))
         _BigButton(
           icon: _favoritesRound ? SmileIcons.heartFilled : SmileIcons.heart,
@@ -1107,8 +1119,17 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           active: _favoritesRound,
           onTap: () => act(_favoritesRound ? _endRound : _playFavorites),
         ),
-      if (c.overview) _BigButton(icon: SmileIcons.overview, label: t.ctrlOverview, onTap: () => setState(_openGrid)),
       if (_canSwitchAlbum) _BigButton(icon: SmileIcons.switchAlbum, label: t.ctrlAlbum, onTap: _pickChannel),
+      if (c.overview) _BigButton(icon: SmileIcons.overview, label: t.ctrlOverview, onTap: () => setState(_openGrid)),
+    ];
+    final own = <Widget>[
+      if (c.favorite && _current != null)
+        _BigButton(
+          icon: _favoriteIds.contains(_current!.mediaItemId) ? SmileIcons.heartFilled : SmileIcons.heart,
+          label: _favoriteIds.contains(_current!.mediaItemId) ? t.favoriteMarked : t.ctrlFavorite,
+          heart: true,
+          onTap: () => act(() => _toggleFavorite()),
+        ),
       if (c.duration) _BigButton(icon: SmileIcons.timer, label: t.ctrlDuration, onTap: _pickDuration),
       if (c.playback) _BigButton(icon: SmileIcons.playback, label: t.settings, onTap: _openPlayback),
     ];
@@ -1123,10 +1144,42 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       ),
       child: SafeArea(
         top: false,
-        child: Wrap(alignment: WrapAlignment.center, spacing: 14, runSpacing: 14, children: buttons),
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.end,
+          spacing: 48,
+          runSpacing: 16,
+          children: [
+            if (browse.isNotEmpty) _group(t.groupBrowse, browse),
+            if (playing.isNotEmpty) _group(t.groupPlaying, playing),
+            if (own.isNotEmpty) _group(null, own),
+          ],
+        ),
       ),
     );
   }
+
+  /// A group of big buttons, with a small label above.
+  Widget _group(String? label, List<Widget> buttons) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            (label ?? '').toUpperCase(),
+            style: const TextStyle(color: Colors.white60, fontSize: 13, letterSpacing: 1.2),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final (i, b) in buttons.indexed) ...[
+                if (i > 0) const SizedBox(width: 12),
+                b,
+              ],
+            ],
+          ),
+        ],
+      );
 
   Future<Uint8List?> _bytesFor(String fileName) {
     final existing = _decrypted.remove(fileName);
@@ -1136,6 +1189,26 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       _decrypted.remove(_decrypted.keys.first);
     }
     return future;
+  }
+
+  /// The photo on screen: filling it or whole on a blurred copy, slowly
+  /// zooming -- as set (migrations/0079, 2026-10-16).
+  Widget _stage(CachedMediaEntry entry) {
+    return FutureBuilder<Uint8List?>(
+      key: ValueKey('stage_${entry.fileName}'),
+      future: _bytesFor(entry.fileName),
+      builder: (context, snapshot) {
+        final bytes = snapshot.data;
+        if (bytes == null) return const SizedBox.expand();
+        final settings = _settings;
+        return SmilePhotoStage(
+          image: MemoryImage(bytes),
+          fillMode: SmileFillMode.parse(settings?.fillMode),
+          slowZoom: settings?.slowZoom ?? true,
+          duration: Duration(seconds: settings?.slideshowIntervalSeconds ?? 8),
+        );
+      },
+    );
   }
 
   Widget _photo(CachedMediaEntry entry, BoxFit fit) {

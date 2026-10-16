@@ -74,6 +74,9 @@ class FrameSettingsInfo {
     this.showSender = true,
     this.quietFrom,
     this.quietTo,
+    this.videoLength = 'full',
+    this.fillMode = 'auto',
+    this.slowZoom = true,
   });
 
   final String displayMode; // 'slideshow' | 'manual'
@@ -107,6 +110,13 @@ class FrameSettingsInfo {
   final String? quietFrom;
   final String? quietTo;
 
+  /// 'full' | 'photo' (a video only as long as a photo) -- migrations/0079.
+  final String videoLength;
+
+  /// 'fit' | 'auto' | 'fill' -- see SmileFillMode.
+  final String fillMode;
+  final bool slowZoom;
+
   FrameControls get effectiveControls =>
       controls ?? FrameControls(next: true, back: true, pause: true, overview: true, album: channelSwitchEnabled);
 
@@ -126,6 +136,9 @@ class FrameSettingsInfo {
         showSender: json['show_sender'] as bool? ?? true,
         quietFrom: json['quiet_from'] as String?,
         quietTo: json['quiet_to'] as String?,
+        videoLength: json['video_length'] as String? ?? 'full',
+        fillMode: json['fill_mode'] as String? ?? 'auto',
+        slowZoom: json['slow_zoom'] as bool? ?? true,
       );
 }
 

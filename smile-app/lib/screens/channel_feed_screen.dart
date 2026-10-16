@@ -326,6 +326,26 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     );
   }
 
+  /// The album's info page -- from its name in the bar or from ⋮.
+  Future<void> _openInfo() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AlbumInfoScreen(
+          channelId: widget.channelId,
+          channelName: _channelName,
+          onRenamed: (name) => setState(() => _channelName = name),
+        ),
+      ),
+    );
+    // The cover may have been changed there.
+    _loadCover();
+  }
+
+  PopupMenuItem<VoidCallback> _menuItem(IconData icon, String label, VoidCallback onTap) => PopupMenuItem(
+        value: onTap,
+        child: Row(children: [Icon(icon, size: 20), const SizedBox(width: SmileSpacing.m), Text(label)]),
+      );
+
   Future<void> _openFrame() async {
     final t = SmileTexts.of(context);
     var frame = _frames.length == 1 ? _frames.single : null;
@@ -1137,19 +1157,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                     message: t.albumInfo,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(SmileRadius.m),
-                      onTap: () async {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => AlbumInfoScreen(
-                              channelId: widget.channelId,
-                              channelName: _channelName,
-                              onRenamed: (name) => setState(() => _channelName = name),
-                            ),
-                          ),
-                        );
-                        // The cover may have been changed there.
-                        _loadCover();
-                      },
+                      onTap: _openInfo,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                         child: Row(
@@ -1168,10 +1176,18 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                       IconButton(icon: const Icon(SmileIcons.slideshow), tooltip: t.playSlideshow, onPressed: _playSlideshow),
                     if (_frames.isNotEmpty)
                       IconButton(icon: const Icon(SmileIcons.frame), tooltip: t.openRemote, onPressed: _openFrame),
-                    IconButton(
-                      icon: const Icon(SmileIcons.hide),
-                      tooltip: t.hiddenPhotos,
-                      onPressed: _toggleHiddenView,
+                    // ⋮ like on every page (2026-10-16).
+                    PopupMenuButton<VoidCallback>(
+                      icon: const Icon(SmileIcons.more),
+                      tooltip: t.moreOptions,
+                      onSelected: (action) => action(),
+                      itemBuilder: (context) => [
+                        _menuItem(SmileIcons.album, t.albumInfo, _openInfo),
+                        if ((_items ?? const <MediaItem>[]).any((i) => i.isReady))
+                          _menuItem(SmileIcons.slideshow, t.playSlideshow, _playSlideshow),
+                        if (_frames.isNotEmpty) _menuItem(SmileIcons.frame, t.openRemote, _openFrame),
+                        _menuItem(SmileIcons.hide, t.showHiddenMenu, _toggleHiddenView),
+                      ],
                     ),
                   ],
                 ),

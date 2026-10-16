@@ -2865,6 +2865,168 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Fotos werden geladen …'**
   String get framePhotosLoading;
+
+  /// No description provided for @videoLengthLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Videos'**
+  String get videoLengthLabel;
+
+  /// No description provided for @videoFull.
+  ///
+  /// In de, this message translates to:
+  /// **'Ganze Länge'**
+  String get videoFull;
+
+  /// No description provided for @videoAsPhoto.
+  ///
+  /// In de, this message translates to:
+  /// **'Wie ein Foto ({seconds} s)'**
+  String videoAsPhoto(int seconds);
+
+  /// No description provided for @fillLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Bildschirm füllen'**
+  String get fillLabel;
+
+  /// No description provided for @fillNever.
+  ///
+  /// In de, this message translates to:
+  /// **'Nie'**
+  String get fillNever;
+
+  /// No description provided for @fillAuto.
+  ///
+  /// In de, this message translates to:
+  /// **'Wenn passend'**
+  String get fillAuto;
+
+  /// No description provided for @fillAlways.
+  ///
+  /// In de, this message translates to:
+  /// **'Immer'**
+  String get fillAlways;
+
+  /// No description provided for @fillHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Wenn passend: füllt den Bildschirm, wenn höchstens ein schmaler Rand wegfällt – sonst das ganze Foto auf unscharfem Hintergrund.'**
+  String get fillHint;
+
+  /// No description provided for @slowZoom.
+  ///
+  /// In de, this message translates to:
+  /// **'Langsamer Zoom'**
+  String get slowZoom;
+
+  /// No description provided for @slowZoomHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Jedes Foto wird ganz langsam etwas größer.'**
+  String get slowZoomHint;
+
+  /// No description provided for @groupBrowse.
+  ///
+  /// In de, this message translates to:
+  /// **'Blättern'**
+  String get groupBrowse;
+
+  /// No description provided for @groupPlaying.
+  ///
+  /// In de, this message translates to:
+  /// **'Was läuft'**
+  String get groupPlaying;
+
+  /// No description provided for @orientationLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Ausrichtung'**
+  String get orientationLabel;
+
+  /// No description provided for @orientAuto.
+  ///
+  /// In de, this message translates to:
+  /// **'Automatisch'**
+  String get orientAuto;
+
+  /// No description provided for @orientPortrait.
+  ///
+  /// In de, this message translates to:
+  /// **'Hochformat'**
+  String get orientPortrait;
+
+  /// No description provided for @orientLandscape.
+  ///
+  /// In de, this message translates to:
+  /// **'Querformat'**
+  String get orientLandscape;
+
+  /// No description provided for @slideshowSettings.
+  ///
+  /// In de, this message translates to:
+  /// **'Diashow-Einstellungen'**
+  String get slideshowSettings;
+
+  /// No description provided for @slideshowSettingsHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Gilt für die Diashow auf diesem Handy.'**
+  String get slideshowSettingsHint;
+
+  /// No description provided for @showHiddenMenu.
+  ///
+  /// In de, this message translates to:
+  /// **'Ausgeblendete anzeigen'**
+  String get showHiddenMenu;
+
+  /// No description provided for @showAllMenu.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle Fotos anzeigen'**
+  String get showAllMenu;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In de, this message translates to:
+  /// **'Profil bearbeiten'**
+  String get editProfile;
+
+  /// No description provided for @roleAdminHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Hat den Space angelegt und verwaltet alles.'**
+  String get roleAdminHint;
+
+  /// No description provided for @roleCoAdminHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Verwaltet den Space mit: Alben, Frames und Personen.'**
+  String get roleCoAdminHint;
+
+  /// No description provided for @roleMemberHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Stellt Fotos und Videos ins Album.'**
+  String get roleMemberHint;
+
+  /// No description provided for @roleViewerHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Sieht das Album über einen geteilten Space.'**
+  String get roleViewerHint;
+
+  /// No description provided for @sharedSpaceHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieser Space sieht das Album auf seinen Frames und Handys, trägt aber nichts bei.'**
+  String get sharedSpaceHint;
+
+  /// No description provided for @favorites2.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbilder'**
+  String get favorites2;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

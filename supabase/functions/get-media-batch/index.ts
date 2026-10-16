@@ -48,7 +48,7 @@ interface RequestBody {
 const FRAME_COLUMNS =
   "id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, " +
   "max_local_cache_gb, current_channel_id, control_level, controls, content_mode, recent_count, play_order, " +
-  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, spaces(name, deleted_at)";
+  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, spaces(name, deleted_at)";
 
 // What the Frame may change itself, by the control that allows it, and
 // what each value may be.
@@ -60,6 +60,9 @@ const SETTABLE: Record<string, { control: string; ok: (v: unknown) => boolean }>
   video_sound: { control: "playback", ok: (v) => typeof v === "boolean" },
   show_clock: { control: "playback", ok: (v) => typeof v === "boolean" },
   show_sender: { control: "playback", ok: (v) => typeof v === "boolean" },
+  video_length: { control: "playback", ok: (v) => ["full", "photo"].includes(v as string) },
+  fill_mode: { control: "playback", ok: (v) => ["fit", "auto", "fill"].includes(v as string) },
+  slow_zoom: { control: "playback", ok: (v) => typeof v === "boolean" },
 };
 
 Deno.serve(async (req) => {
@@ -136,6 +139,9 @@ Deno.serve(async (req) => {
     show_sender: frame.show_sender,
     quiet_from: frame.quiet_from,
     quiet_to: frame.quiet_to,
+    video_length: frame.video_length,
+    fill_mode: frame.fill_mode,
+    slow_zoom: frame.slow_zoom,
   };
 
   if (body.fcm_token || body.battery_level !== undefined || body.is_charging !== undefined) {
