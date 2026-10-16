@@ -1324,7 +1324,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get frameAlbumEmptyHint =>
-      'Ein anderes Album wählst du in der Smile-App unter Frames – oder hier unten rechts.';
+      'Ein anderes Album wählst du in der Smile-App unter Frames.';
 
   @override
   String get sendVideos => 'Videos senden';
@@ -1686,4 +1686,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get favoriteStateOff => 'nicht gemerkt';
+
+  @override
+  String get framePhotosLoading => 'Fotos werden geladen …';
 }

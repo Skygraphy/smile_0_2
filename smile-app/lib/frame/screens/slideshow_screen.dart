@@ -208,9 +208,14 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       widget.onUnpaired?.call();
       return;
     }
+    // A whole sync is through (also offline: then the cache is all there
+    // is) -- from now on an empty album really is empty.
+    _syncedOnce = true;
     _apply(result);
     unawaited(widget.heartbeatService.submitHeartbeat(fcmToken: _fcmToken));
   }
+
+  bool _syncedOnce = false;
 
   /// The server's first answer, before the rest of the sync (SyncService.
   /// onEarlyResult): settings and album switches take effect right away.
@@ -871,8 +876,20 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final channelName = _channelName(current?.channelId ?? _currentChannelId);
     final Widget body;
     if (current == null || _cacheDirPath == null) {
-      // Which album is empty, and where to change it (2026-10-12).
-      body = channelName == null
+      // Which album is empty, and where to change it (2026-10-12) -- but
+      // before the first sync is through, it is only still loading.
+      body = !_syncedOnce
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 20),
+                  Text(t.framePhotosLoading, style: const TextStyle(color: Colors.white70, fontSize: 20)),
+                ],
+              ),
+            )
+          : channelName == null
           ? SmileEmptyState(icon: SmileIcons.album, title: t.frameNoPhotos)
           : SmileEmptyState(icon: SmileIcons.album, title: t.frameAlbumEmpty(channelName), message: t.frameAlbumEmptyHint);
     } else if (_showGrid) {

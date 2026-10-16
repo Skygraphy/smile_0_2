@@ -2221,7 +2221,7 @@ abstract class SmileTexts {
   /// No description provided for @frameAlbumEmptyHint.
   ///
   /// In de, this message translates to:
-  /// **'Ein anderes Album wählst du in der Smile-App unter Frames – oder hier unten rechts.'**
+  /// **'Ein anderes Album wählst du in der Smile-App unter Frames.'**
   String get frameAlbumEmptyHint;
 
   /// No description provided for @sendVideos.
@@ -2859,6 +2859,12 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'nicht gemerkt'**
   String get favoriteStateOff;
+
+  /// No description provided for @framePhotosLoading.
+  ///
+  /// In de, this message translates to:
+  /// **'Fotos werden geladen …'**
+  String get framePhotosLoading;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

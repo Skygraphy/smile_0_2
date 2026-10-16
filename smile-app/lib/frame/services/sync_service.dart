@@ -526,6 +526,20 @@ class SyncService {
           channelId: remote.channelId,
           senderName: remote.senderName,
         ));
+        // A photo of the shown album is there: on screen at once, not only
+        // after every album is downloaded (2026-10-16: a newly connected
+        // Frame said "noch keine Fotos" for a minute).
+        if (remote.channelId == currentChannelId) {
+          onEarlyResult?.call(SyncResult(
+            channelId: currentChannelId,
+            entries: [...local, ...newEntries].where((e) => e.channelId == currentChannelId).toList(),
+            allEntries: [...local, ...newEntries],
+            settings: _settingsFrom(data),
+            assignedChannels: assignedChannels,
+            spaceName: data['space_name'] as String?,
+            favorites: _favoritesFrom(data),
+          ));
+        }
       } catch (_) {
         // Skip this item this round; it's retried on the next sync since
         // it stays in toDownload until it succeeds.

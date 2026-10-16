@@ -842,7 +842,7 @@
       "album": {"type": "String"}
     }
   },
-  "frameAlbumEmptyHint": "Ein anderes Album wählst du in der Smile-App unter Frames – oder hier unten rechts.",
+  "frameAlbumEmptyHint": "Ein anderes Album wählst du in der Smile-App unter Frames.",
   "sendVideos": "Videos senden",
   "qualityHigh": "Hoch",
   "qualityMedium": "Mittel",
@@ -963,5 +963,6 @@
   "@favoritesAddTitle": {"placeholders": {"frame": {"type": "String"}}},
   "favoriteForWhich": "Lieblingsbild für …",
   "favoriteStateOn": "gemerkt",
-  "favoriteStateOff": "nicht gemerkt"
+  "favoriteStateOff": "nicht gemerkt",
+  "framePhotosLoading": "Fotos werden geladen …"
 }
