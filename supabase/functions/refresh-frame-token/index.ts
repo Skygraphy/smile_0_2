@@ -55,7 +55,14 @@ Deno.serve(async (req) => {
   if (!credentials || credentials.revoked_at) return jsonResponse({ error: "no_credentials" }, 403);
 
   const providedHash = await hashSecret(body.refresh_secret);
-  if (providedHash !== credentials.refresh_secret_hash) {
+  // The current secret -- or the one before it, as long as the current one
+  // was never used: the Frame missed the answer that carried it (0078,
+  // 2026-10-15: a WLAN blip locked the kitchen Frame out for good). Using
+  // the current one retires the previous for good.
+  const usesCurrent = providedHash === credentials.refresh_secret_hash;
+  const usesPrevious = !usesCurrent && !!credentials.previous_refresh_secret_hash &&
+    providedHash === credentials.previous_refresh_secret_hash;
+  if (!usesCurrent && !usesPrevious) {
     return jsonResponse({ error: "invalid_refresh_secret" }, 401);
   }
 
@@ -63,13 +70,16 @@ Deno.serve(async (req) => {
   const newHash = await hashSecret(newSecret);
   const newVersion = credentials.refresh_secret_version + 1;
 
-  // Guarded on the hash we just verified: if two refresh calls race on the
+  // Guarded on the hash we just read: if two refresh calls race on the
   // same (still-valid-at-read-time) secret, only the first update matches
   // and wins the rotation; the loser's WITH-verified secret is now stale.
   const { data: rotated, error: updateError } = await supabase
     .from("frame_credentials")
     .update({
       refresh_secret_hash: newHash,
+      // Proof the Frame has the current one: it becomes the fallback. A
+      // retry with the previous keeps that previous as the fallback.
+      previous_refresh_secret_hash: usesCurrent ? credentials.refresh_secret_hash : credentials.previous_refresh_secret_hash,
       refresh_secret_version: newVersion,
       rotated_at: new Date().toISOString(),
     })

@@ -389,6 +389,10 @@ class SyncService {
     while (true) {
       _syncAgain = false;
       final result = await _sync(fcmToken: fcmToken);
+      // Unpaired or revoked: final -- another round would find no
+      // credentials and hide it behind an empty "offline" result
+      // (2026-10-16: the kitchen Frame stayed on "Noch keine Fotos").
+      if (result.unpaired || result.deactivated) return result;
       if (!_syncAgain) return result;
     }
   }
@@ -698,6 +702,16 @@ class SyncService {
       // is the one place that still learns *why*.
       if (e.code == 'frame_not_found') return _RefreshOutcome.frameNotFound;
       if (e.code == 'frame_not_active') return _RefreshOutcome.frameNotActive;
+      // Locked out for good (2026-10-15: the kitchen Frame showed only its
+      // cache for days): its secret is no longer known to the server. Back
+      // to the start, so it can be connected again -- but only if no other
+      // sync (the background one) has rotated the secret meanwhile, and its
+      // access is over anyway.
+      if ((e.code == 'invalid_refresh_secret' || e.code == 'no_credentials') &&
+          await _credentialsStore.refreshSecret == refreshSecret &&
+          expiresAt.isBefore(DateTime.now())) {
+        return _RefreshOutcome.frameNotFound;
+      }
       return _RefreshOutcome.failed;
     } catch (_) {
       // Keep using the still-valid old token; a transient refresh failure

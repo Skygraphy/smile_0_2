@@ -88,6 +88,8 @@ async function mintAndReturn(frameId: string, spaceId: string): Promise<Response
   const { error: credError } = await supabase.from("frame_credentials").upsert({
     frame_id: frameId,
     refresh_secret_hash: refreshSecretHash,
+    // A new pairing: no fallback to a secret of the device before (0078).
+    previous_refresh_secret_hash: null,
     refresh_secret_version: nextVersion,
     rotated_at: new Date().toISOString(),
   });
