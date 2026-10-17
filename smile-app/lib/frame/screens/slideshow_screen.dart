@@ -390,8 +390,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   /// all albums in turn or the newest) -- not just the Lieblingsbilder, so
   /// more can be marked there (2026-10-14).
   List<CachedMediaEntry> get _overviewItems {
+    // Lieblingsbilder playing: the overview shows exactly those (2026-10-17).
     final favoritesOnly = _favoritesRound || (_settings?.contentMode == 'favorites');
-    if (!favoritesOnly && !_newestRound) return _playlist;
+    if (favoritesOnly && _playlist.isNotEmpty) return _playlist;
+    if (!_newestRound) return _playlist;
     final album = [..._albumEntries]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     return album.isEmpty ? _playlist : album;
   }
