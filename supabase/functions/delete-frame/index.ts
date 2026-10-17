@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     (await spaceManagerIds(supabaseAdmin, frame.space_id as string)).filter((u) => u !== actorId),
     {
       title: "Frame gelöscht",
-      body: `${profiles.get(actorId)?.display_name ?? "Jemand"} hat den Frame „${frame.name}“ in „${spaceName}“ gelöscht.`,
+      body: `${profiles.get(actorId)?.display_name ?? "Jemand"} hat den Frame ${frame.name} in ${spaceName} gelöscht.`,
     },
     { type: "frame_deleted", space_id: frame.space_id as string, space_name: spaceName, frame_name: frame.name as string },
   );

@@ -53,7 +53,7 @@ class _TrashScreenState extends State<TrashScreen> with SyncReload {
     try {
       await widget.trashService.restore(item);
       await _load();
-      messenger.showSnackBar(SnackBar(content: Text(t.restored(item.name))));
+      messenger.showSnackBar(SnackBar(content: SmileNamedText(t.restored(item.name), names: [item.name])));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(t.actionFailed(errorReasonIn(t, e)))));
     }

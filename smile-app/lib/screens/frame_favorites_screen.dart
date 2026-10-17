@@ -99,6 +99,7 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
       context,
       title: t.favoritesRemoveSelectedQuestion(ids.length, widget.frameName),
       message: t.favoritesRemoveHint,
+      names: [widget.frameName],
       confirmLabel: t.favoritesRemove,
       destructive: true,
     );
@@ -111,6 +112,7 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
       context,
       title: t.favoritesRemoveAllQuestion(widget.frameName),
       message: t.favoritesRemoveHint,
+      names: [widget.frameName],
       confirmLabel: t.favoritesRemoveAll,
       destructive: true,
     );

@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     await pushNotificationToUsers(
       supabaseAdmin,
       [h.successorId],
-      { title: "Du bist jetzt Admin", body: `${name} hat das Smile-Konto gelöscht. Du bist jetzt Admin des Space „${h.spaceName}“.` },
+      { title: "Du bist jetzt Admin", body: `${name} hat das Smile-Konto gelöscht. Du bist jetzt Admin des Space ${h.spaceName}.` },
       { type: "space_ownership_transferred", space_id: h.spaceId, space_name: h.spaceName },
     );
   }
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     await pushNotificationToUsers(
       supabaseAdmin,
       people,
-      { title: "Space gelöscht", body: `${name} hat das Smile-Konto gelöscht. Den Space „${spaceName}“ mit allen Alben gibt es nicht mehr.` },
+      { title: "Space gelöscht", body: `${name} hat das Smile-Konto gelöscht. Den Space ${spaceName} mit allen Alben gibt es nicht mehr.` },
       { type: "space_deleted_with_account" },
     );
   }

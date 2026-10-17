@@ -29,6 +29,7 @@
   .small { font-size: 13px; }
   .hidden { display: none !important; }
   a.plain { color: var(--coral); }
+  .name { color: #FF6F61; }
   .handle { color: #FF6F61; font-weight: 600; margin-top: -6px; }
   .handle:empty { display: none; }
 </style>
@@ -56,7 +57,7 @@
     <a class="btn" id="open-app" href="#">In Smile öffnen</a>
     <a class="btn alt" data-store="android" href="#">Smile für Android holen</a>
     <a class="btn alt" aria-disabled="true">Bald im App Store</a>
-    <p class="small">Nach der Installation bist du automatisch dabei. Falls nicht: In Smile auf ⋮ → „Code scannen“ → „Code eintippen“ und diesen Code eingeben:</p>
+    <p class="small">Nach der Installation bist du automatisch dabei. Falls nicht: In Smile auf ⋮ → Code scannen → Code eintippen und diesen Code eingeben:</p>
     <div class="code" id="code"></div>
   </section>
 
@@ -101,12 +102,21 @@
       }
       if (d.status !== 'ok') return;
       const who = d.inviter || 'Jemand';
-      const what = d.target ? '„' + d.target + '“' : '';
-      document.getElementById('invite-title').textContent = d.kind === 'space_co_owner'
-        ? who + ' lädt dich als Co-Admin von ' + what + ' ein'
+      // The album or Space name in coral instead of „…“ (2026-10-17).
+      const parts = d.kind === 'space_co_owner'
+        ? [who + ' lädt dich als Co-Admin von ', d.target, ' ein']
         : d.kind === 'album_share'
-          ? who + ' möchte das Album ' + what + ' mit deinem Space teilen'
-          : who + ' lädt dich in das Album ' + what + ' ein';
+          ? [who + ' möchte das Album ', d.target, ' mit deinem Space teilen']
+          : [who + ' lädt dich in das Album ', d.target, ' ein'];
+      const title = document.getElementById('invite-title');
+      title.textContent = parts[0];
+      if (parts[1]) {
+        const name = document.createElement('span');
+        name.className = 'name';
+        name.textContent = parts[1];
+        title.append(name);
+      }
+      title.append(parts[2]);
     }).catch(() => {});
   } else if (person) {
     const handle = person[1].toLowerCase();

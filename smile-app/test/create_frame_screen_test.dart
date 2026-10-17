@@ -41,7 +41,7 @@ void main() {
 
     verify(() => service.createFrame(spaceId: 'space-1', name: 'Küche')).called(1);
     expect(find.text('ABCD 1234'), findsOneWidget);
-    expect(find.text('„Küche“ verbinden'), findsOneWidget);
+    expect(find.text('Küche verbinden'), findsOneWidget);
   });
 
   testWidgets('shows an error message on failure', (tester) async {

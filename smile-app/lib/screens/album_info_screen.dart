@@ -208,7 +208,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       affects: tablesChanged({'frames'}, channelIds: {widget.channelId}),
     );
     if (saved) {
-      messenger.showSnackBar(SnackBar(content: Text(t.frameSwitched(frameNameOf(frame.frameId, frame.frameName), _shownName))));
+      messenger.showSnackBar(SnackBar(content: SmileNamedText(t.frameSwitched(frameNameOf(frame.frameId, frame.frameName), _shownName), names: [frameNameOf(frame.frameId, frame.frameName), _shownName])));
       if (mounted) await _load();
     }
   }
@@ -237,7 +237,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(t.showOnFrame),
-          content: Text(t.frameOtherSpaceHint(_shownName, homeSpace ?? '')),
+          content: SmileNamedText(t.frameOtherSpaceHint(_shownName, homeSpace ?? ''), names: [_shownName, homeSpace]),
           actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.close))],
         ),
       );
@@ -279,7 +279,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       affects: tablesChanged({'frames', 'frame_channels'}, channelIds: {widget.channelId}),
     );
     if (saved) {
-      messenger.showSnackBar(SnackBar(content: Text(t.frameSwitched(frameNameOf(frame.frameId, frame.frameName), _shownName))));
+      messenger.showSnackBar(SnackBar(content: SmileNamedText(t.frameSwitched(frameNameOf(frame.frameId, frame.frameName), _shownName), names: [frameNameOf(frame.frameId, frame.frameName), _shownName])));
       if (mounted) await _load();
     }
   }
@@ -306,6 +306,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       context,
       title: t.removeFromFrameTitle(_shownName),
       message: t.removeFromFrameMessage,
+      names: [_shownName],
       confirmLabel: t.actionRemove,
       destructive: true,
     );
@@ -517,6 +518,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       context,
       title: t.endShareTitle(space.name),
       message: t.endShareMessage(space.name, _shownName),
+      names: [space.name, _shownName],
       confirmLabel: t.endShare,
       destructive: true,
     );
@@ -549,6 +551,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       context,
       title: t.deleteAlbumTitle(_shownName),
       message: t.deleteAlbumMessage,
+      names: [_shownName],
       confirmLabel: t.actionDelete,
       destructive: true,
     );

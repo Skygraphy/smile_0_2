@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
   await pushNotificationToUsers(
     supabaseAdmin,
     [inviteeId],
-    { title: "Album mit dir geteilt", body: `Das Album „${channel.name}“ kann jetzt auch dein Space sehen. Annehmen unter Neuigkeiten.` },
+    { title: "Album mit dir geteilt", body: `Das Album ${channel.name} kann jetzt auch dein Space sehen. Annehmen unter Neuigkeiten.` },
     { type: "channel_share_invite", channel_id: body.channel_id, channel_name: channel.name },
   );
 

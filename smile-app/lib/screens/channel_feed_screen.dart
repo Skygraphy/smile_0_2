@@ -238,7 +238,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       return before[mediaItemId]?.isNotEmpty ?? false;
     }
     final name = frameNameOf(frame.frameId, frame.frameName);
-    messenger.showSnackBar(SnackBar(content: Text(on ? t.favoriteAddedTo(name) : t.favoriteRemovedFrom(name))));
+    messenger.showSnackBar(SnackBar(content: SmileNamedText(on ? t.favoriteAddedTo(name) : t.favoriteRemovedFrom(name), names: [name])));
     return _favoriteFrames[mediaItemId]?.isNotEmpty ?? false;
   }
 
@@ -762,7 +762,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       commit: () => ObjectPictureService().setAlbumCoverPhoto(widget.channelId, mediaId),
       affects: tablesChanged({'channels'}, channelIds: {widget.channelId}),
     );
-    if (saved) messenger.showSnackBar(SnackBar(content: Text(t.coverSet(_shownName))));
+    if (saved) messenger.showSnackBar(SnackBar(content: SmileNamedText(t.coverSet(_shownName), names: [_shownName])));
   }
 
   /// Every photo/video of this view -- not the ones still on their way.

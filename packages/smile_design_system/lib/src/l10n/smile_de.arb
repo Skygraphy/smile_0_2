@@ -153,7 +153,7 @@
   },
   "removePersonMessage": "Die Person verliert den Zugriff auf dieses Album.",
   "endShare": "Freigabe beenden",
-  "endShareTitle": "Freigabe für „{space}“ beenden?",
+  "endShareTitle": "Freigabe für {space} beenden?",
   "@endShareTitle": {
     "placeholders": {
       "space": {
@@ -161,7 +161,7 @@
       }
     }
   },
-  "endShareMessage": "„{space}“ sieht „{album}“ danach nicht mehr, auch nicht auf seinen Frames.",
+  "endShareMessage": "{space} sieht {album} danach nicht mehr, auch nicht auf seinen Frames.",
   "@endShareMessage": {
     "placeholders": {
       "space": {
@@ -175,7 +175,7 @@
   "leaveAlbum": "Album verlassen",
   "leaveAlbumMessage": "Du siehst die Fotos dieses Albums danach nicht mehr.",
   "deleteAlbum": "Album löschen",
-  "deleteAlbumTitle": "Album „{album}“ löschen?",
+  "deleteAlbumTitle": "Album {album} löschen?",
   "@deleteAlbumTitle": {
     "placeholders": {
       "album": {
@@ -214,7 +214,7 @@
   "spacesEmptyTitle": "Noch kein eigener Space",
   "spacesEmptyMessage": "Einen Space brauchst du nur, wenn du selbst Frames aufstellst oder Alben verwaltest, für dein Zuhause oder deinen Betrieb.",
   "createSpace": "Space anlegen",
-  "createSpaceHint": "Name, z. B. „Familie Müller“ oder „Hotel Sacher“",
+  "createSpaceHint": "Name, z. B. Familie Müller oder Hotel Sacher",
   "create": "Anlegen",
   "youAreAdmin": "Du bist Admin",
   "youAreCoAdmin": "Du bist Co-Admin",
@@ -237,12 +237,12 @@
       "space": {"type": "String"}
     }
   },
-  "createAlbumHint": "Name, z. B. „Enkelkinder“ oder „Lobby“",
+  "createAlbumHint": "Name, z. B. Enkelkinder oder Lobby",
   "noAlbumYet": "Noch kein Album",
   "sharedIntoSpace": "Mit diesem Space geteilt",
   "sharedIntoSpaceHint": "Alben anderer Spaces, die hier nur angesehen werden",
   "stopShowing": "Nicht mehr anzeigen",
-  "stopShowingTitle": "„{album}“ nicht mehr anzeigen?",
+  "stopShowingTitle": "{album} nicht mehr anzeigen?",
   "@stopShowingTitle": {
     "placeholders": {
       "album": {
@@ -283,7 +283,7 @@
   "stepDownMessage": "Du verlierst deine Verwaltungsrechte über diesen Space.",
   "trashTitle": "Papierkorb",
   "deleteSpace": "Space löschen",
-  "deleteSpaceTitle": "Space „{space}“ löschen?",
+  "deleteSpaceTitle": "Space {space} löschen?",
   "@deleteSpaceTitle": {
     "placeholders": {
       "space": {
@@ -292,7 +292,7 @@
     }
   },
   "deleteSpaceMessage": "Der Space verschwindet mit allen Alben, Fotos und Frames sofort für alle; alle Beteiligten werden benachrichtigt. 30 Tage lang kannst du ihn im Papierkorb wiederherstellen.",
-  "inTrash": "„{name}“ ist im Papierkorb.",
+  "inTrash": "{name} ist im Papierkorb.",
   "@inTrash": {
     "placeholders": {
       "name": {
@@ -348,20 +348,20 @@
   "showNow": "Jetzt zeigen",
   "showHereNow": "Hier jetzt zeigen",
   "frameShowsThisAlbum": "zeigt gerade dieses Album",
-  "frameShowsAlbum": "zeigt gerade „{album}“",
+  "frameShowsAlbum": "zeigt gerade {album}",
   "@frameShowsAlbum": {
     "placeholders": {
       "album": {"type": "String"}
     }
   },
-  "frameSwitched": "„{frame}“ zeigt jetzt „{album}“.",
+  "frameSwitched": "{frame} zeigt jetzt {album}.",
   "@frameSwitched": {
     "placeholders": {
       "frame": {"type": "String"},
       "album": {"type": "String"}
     }
   },
-  "removeFromFrameTitle": "„{album}“ vom Frame entfernen?",
+  "removeFromFrameTitle": "{album} vom Frame entfernen?",
   "@removeFromFrameTitle": {
     "placeholders": {
       "album": {"type": "String"}
@@ -425,7 +425,7 @@
     }
   },
   "waitingForAnswer": "Wartet auf Antwort",
-  "acceptedCoAdmin": "Du verwaltest jetzt „{space}“ mit.",
+  "acceptedCoAdmin": "Du verwaltest jetzt {space} mit.",
   "@acceptedCoAdmin": {
     "placeholders": {
       "space": {
@@ -433,7 +433,7 @@
       }
     }
   },
-  "acceptedAlbum": "„{album}“ ist jetzt in deinen Alben.",
+  "acceptedAlbum": "{album} ist jetzt in deinen Alben.",
   "@acceptedAlbum": {
     "placeholders": {
       "album": {
@@ -441,7 +441,7 @@
       }
     }
   },
-  "acceptedShare": "„{album}“ ist jetzt mit deinem Space geteilt.",
+  "acceptedShare": "{album} ist jetzt mit deinem Space geteilt.",
   "@acceptedShare": {
     "placeholders": {
       "album": {
@@ -485,7 +485,7 @@
       }
     }
   },
-  "restored": "„{name}“ ist wiederhergestellt.",
+  "restored": "{name} ist wiederhergestellt.",
   "@restored": {
     "placeholders": {
       "name": {
@@ -578,7 +578,7 @@
   "removeAll": "Alle entfernen",
   "removeEntry": "Entfernen",
   "deleteFrame": "Frame löschen",
-  "deleteFrameTitle": "Frame „{name}“ löschen?",
+  "deleteFrameTitle": "Frame {name} löschen?",
   "@deleteFrameTitle": {
     "placeholders": {
       "name": {
@@ -586,7 +586,7 @@
       }
     }
   },
-  "deleteFrameMessage": "Der Frame wird endgültig entfernt. Das Tablet löscht seine Fotos und zeigt wieder „Frame verbinden“. Zum Weiterverwenden einfach neu verbinden.",
+  "deleteFrameMessage": "Der Frame wird endgültig entfernt. Das Tablet löscht seine Fotos und zeigt wieder den Bildschirm zum Verbinden. Zum Weiterverwenden einfach neu verbinden.",
   "deleteAccount": "Konto löschen",
   "deleteAccountTitle": "Konto endgültig löschen?",
   "deleteAccountMessage": "Dein Profil, alle deine Fotos und Videos in allen Alben und alle deine Mitgliedschaften werden sofort und endgültig gelöscht. Spaces, in denen du Admin bist, übernimmt dein längster Co-Admin; ohne Co-Admin wird der Space mit allen Alben und Frames gelöscht. Das kann nicht rückgängig gemacht werden.",
@@ -609,7 +609,7 @@
   },
   "deleteAccountTypeEmail": "Zum Bestätigen diese E-Mail-Adresse eintippen:",
   "newsUnseen": "Neuigkeiten, es gibt Neues",
-  "pictureFor": "Bild für „{name}“",
+  "pictureFor": "Bild für {name}",
   "@pictureFor": {
     "placeholders": {
       "name": {
@@ -617,7 +617,7 @@
       }
     }
   },
-  "coverFor": "Titelbild für „{name}“",
+  "coverFor": "Titelbild für {name}",
   "@coverFor": {
     "placeholders": {
       "name": {
@@ -630,7 +630,7 @@
   "removePicture": "Bild entfernen",
   "changeObjectPicture": "Bild ändern",
   "setAsCover": "Als Titelbild",
-  "coverSet": "„{name}“ hat ein neues Titelbild.",
+  "coverSet": "{name} hat ein neues Titelbild.",
   "@coverSet": {
     "placeholders": {
       "name": {
@@ -685,15 +685,15 @@
   "deleteForEveryone": "Für alle löschen",
   "deleteForEveryoneHint": "Bei allen und auf allen Frames, endgültig",
   "deleteForMe": "Für mich löschen",
-  "deleteForMeHint": "Nur bei dir weg, unter „Ausgeblendet“ zurückholbar",
+  "deleteForMeHint": "Nur bei dir weg, über ⋮ → Ausgeblendete anzeigen zurückholbar",
   "deleteOnlyOwn": "Für alle löschen kannst du nur deine eigenen Fotos.",
-  "inviteToNamed": "In „{name}“ einladen",
+  "inviteToNamed": "In {name} einladen",
   "@inviteToNamed": {
     "placeholders": {
       "name": {"type": "String"}
     }
   },
-  "coAdminFor": "Co-Admin für „{name}“",
+  "coAdminFor": "Co-Admin für {name}",
   "@coAdminFor": {
     "placeholders": {
       "name": {"type": "String"}
@@ -715,35 +715,35 @@
   "qrScanHintCoAdmin": "Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Co-Admin wird man nur per QR-Code vor Ort.",
   "qrValid": "Gilt 24 Stunden.",
   "newCode": "Neuen Code erstellen",
-  "inviteMessageMember": "Komm in mein Smile-Album „{album}“! Einfach auf den Link tippen: {link}",
+  "inviteMessageMember": "Komm in mein Smile-Album {album}! Einfach auf den Link tippen: {link}",
   "@inviteMessageMember": {"placeholders": {"album": {"type": "String"}, "link": {"type": "String"}}},
-  "inviteMessageShare": "Ich möchte mein Smile-Album „{album}“ mit deinem Space teilen. Einfach auf den Link tippen: {link}",
+  "inviteMessageShare": "Ich möchte mein Smile-Album {album} mit deinem Space teilen. Einfach auf den Link tippen: {link}",
   "@inviteMessageShare": {"placeholders": {"album": {"type": "String"}, "link": {"type": "String"}}},
   "scanCode": "Code scannen",
   "scanHint": "QR-Code in den Rahmen halten",
   "typeCode": "Code eintippen",
   "codeFieldHint": "z. B. K7P-2QX",
-  "redeemJoinedAlbum": "Du bist jetzt im Album „{name}“.",
+  "redeemJoinedAlbum": "Du bist jetzt im Album {name}.",
   "@redeemJoinedAlbum": {
     "placeholders": {
       "name": {"type": "String"}
     }
   },
-  "redeemJoinedShare": "„{album}“ ist jetzt in deinem Space „{space}“ zu sehen.",
+  "redeemJoinedShare": "{album} ist jetzt in deinem Space {space} zu sehen.",
   "@redeemJoinedShare": {
     "placeholders": {
       "album": {"type": "String"},
       "space": {"type": "String"}
     }
   },
-  "redeemJoinedCoAdmin": "Du bist jetzt Co-Admin von „{space}“.",
+  "redeemJoinedCoAdmin": "Du bist jetzt Co-Admin von {space}.",
   "@redeemJoinedCoAdmin": {
     "placeholders": {
       "space": {"type": "String"}
     }
   },
   "redeemRequestedTitle": "Anfrage gesendet",
-  "redeemRequested": "Die Admins von „{name}“ entscheiden. Du bekommst Bescheid.",
+  "redeemRequested": "Die Admins von {name} entscheiden. Du bekommst Bescheid.",
   "@redeemRequested": {
     "placeholders": {
       "name": {"type": "String"}
@@ -803,15 +803,15 @@
   "pickFrame": "Welcher Frame?",
   "useAsFrame": "Dieses Gerät als Frame verwenden",
   "setUpFrame": "Frame einrichten",
-  "connectNamedFrame": "„{name}“ verbinden",
+  "connectNamedFrame": "{name} verbinden",
   "@connectNamedFrame": {
     "placeholders": {
       "name": {"type": "String"}
     }
   },
-  "connectFrameHint": "Auf dem Tablet: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Gilt 15 Minuten.",
+  "connectFrameHint": "Auf dem Tablet: Smile öffnen → Dieses Gerät als Frame verwenden → QR-Code scannen. Gilt 15 Minuten.",
   "waitingForFrame": "Warte auf den Frame …",
-  "frameNameQuestion": "Wie soll der neue Frame heißen, z. B. „Küche“?",
+  "frameNameQuestion": "Wie soll der neue Frame heißen, z. B. Küche?",
   "anotherDevice": "Ein anderes Gerät",
   "anotherDeviceHint": "Das Tablet scannt den QR-Code oder bekommt den Code.",
   "thisDevice": "Dieses Gerät",
@@ -823,10 +823,10 @@
   "frameScanInstead": "QR-Code scannen",
   "pickSpaceForFrame": "Für welchen Space?",
   "connectOtherDevice": "Anderes Gerät verbinden",
-  "reconnectHint": "Auf dem neuen Gerät: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.",
+  "reconnectHint": "Auf dem neuen Gerät: Smile öffnen → Dieses Gerät als Frame verwenden → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.",
   "done": "Fertig",
   "playSlideshow": "Diashow",
-  "frameAlbumEmpty": "In „{album}“ sind noch keine Fotos.",
+  "frameAlbumEmpty": "In {album} sind noch keine Fotos.",
   "@frameAlbumEmpty": {
     "placeholders": {
       "album": {"type": "String"}
@@ -873,7 +873,7 @@
   "endOverview": "Übersicht zeigen",
   "displayTime": "Anzeigedauer",
   "showNewNow": "Neue Fotos sofort zeigen",
-  "showNewNowHint": "Mit „Neu von …“ oben im Bild.",
+  "showNewNowHint": "Oben im Bild steht, von wem es kommt.",
   "bigClock": "Große Uhr mit Datum",
   "bigClockHint": "Wochentag, Datum und Uhrzeit oben rechts.",
   "showSenderCaption": "Absender einblenden",
@@ -891,9 +891,9 @@
   "level1": "Nur zuschauen",
   "level1Hint": "Berührungen werden ignoriert. Alles kommt aus der App.",
   "level2": "Blättern",
-  "level2Hint": "Pause und ein großer Knopf „Weiter“.",
+  "level2Hint": "Pause und ein großer Weiter-Knopf.",
   "level3": "Einfach",
-  "level3Hint": "Zurück, Pause, Weiter und „Neueste Fotos“.",
+  "level3Hint": "Zurück, Pause, Weiter und Neueste Fotos.",
   "level4": "Komfort",
   "level4Hint": "Dazu Übersicht, Album wechseln und Anzeigedauer.",
   "level5": "Alles selbst",
@@ -916,7 +916,7 @@
   "showOnFrameNow": "Jetzt am Frame zeigen",
   "nowRunning": "läuft gerade",
   "addShort": "Hinzufügen",
-  "frameOtherSpaceHint": "„{album}“ gehört zum Space {space}. Ein Frame zeigt nur Alben aus seinem eigenen Space oder solche, die mit seinem Space geteilt sind. Ein Admin von {space} kann das Album über „Mit einem Space teilen“ mit deinem Space teilen – danach geht es hier mit einem Tipp.",
+  "frameOtherSpaceHint": "{album} gehört zum Space {space}. Ein Frame zeigt nur Alben aus seinem eigenen Space oder solche, die mit seinem Space geteilt sind. Ein Admin von {space} kann das Album über Album-Info → Mit einem Space teilen mit deinem Space teilen – danach geht es hier mit einem Tipp.",
   "@frameOtherSpaceHint": {"placeholders": {"album": {"type": "String"}, "space": {"type": "String"}}},
   "favorites": "Lieblingsbilder",
   "favoriteMarked": "Gemerkt",
@@ -934,20 +934,20 @@
   "favoriteYesterday": "gestern {time}",
   "@favoriteYesterday": {"placeholders": {"time": {"type": "String"}}},
   "favoriteFor": "Lieblingsbild für den Frame",
-  "favoriteAddedTo": "Lieblingsbild von „{frame}“",
+  "favoriteAddedTo": "Lieblingsbild von {frame}",
   "@favoriteAddedTo": {"placeholders": {"frame": {"type": "String"}}},
   "favoritesEmpty": "Noch keine Lieblingsbilder",
   "favoritesEmptyHint": "Am Frame mit dem Herz merken – oder hier in einem Album beim Foto über das Herz oben rechts.",
   "favoritesRemove": "Entfernen",
   "favoritesRemoveAll": "Alle entfernen",
-  "favoritesRemoveAllQuestion": "Alle Lieblingsbilder von „{frame}“ entfernen?",
+  "favoritesRemoveAllQuestion": "Alle Lieblingsbilder von {frame} entfernen?",
   "@favoritesRemoveAllQuestion": {"placeholders": {"frame": {"type": "String"}}},
   "favoritesRemoveHint": "Die Fotos selbst bleiben in ihren Alben.",
   "favoritesSelected": "{n} ausgewählt",
   "@favoritesSelected": {"placeholders": {"n": {"type": "int"}}},
-  "favoritesRemoveSelectedQuestion": "{n, plural, =1{1 Lieblingsbild} other{{n} Lieblingsbilder}} von „{frame}“ entfernen?",
+  "favoritesRemoveSelectedQuestion": "{n, plural, =1{1 Lieblingsbild} other{{n} Lieblingsbilder}} von {frame} entfernen?",
   "@favoritesRemoveSelectedQuestion": {"placeholders": {"n": {"type": "int"}, "frame": {"type": "String"}}},
-  "favoriteRemovedFrom": "Kein Lieblingsbild mehr von „{frame}“",
+  "favoriteRemovedFrom": "Kein Lieblingsbild mehr von {frame}",
   "@favoriteRemovedFrom": {"placeholders": {"frame": {"type": "String"}}},
   "favoritesAddTitle": "Lieblingsbilder · {frame}",
   "@favoritesAddTitle": {"placeholders": {"frame": {"type": "String"}}},
@@ -1023,7 +1023,7 @@
   "searchContact": "Kontakt suchen",
   "inSmile": "In Smile",
   "notInSmile": "Noch nicht in Smile",
-  "inSmileAs": "in Smile: „{name}“",
+  "inSmileAs": "in Smile: {name}",
   "@inSmileAs": {"placeholders": {"name": {"type": "String"}}},
   "contactInvite": "Einladen",
   "noContacts": "Keine Kontakte gefunden.",
@@ -1036,7 +1036,7 @@
   "sendWhatsApp": "Per WhatsApp senden",
   "sendEmail": "Per E-Mail senden",
   "sendOther": "Mit anderer App senden",
-  "contactSmsMember": "Ich lade dich in mein Smile-Album „{album}“ ein. Dort teilen wir Fotos und Videos: {link}",
+  "contactSmsMember": "Ich lade dich in mein Smile-Album {album} ein. Dort teilen wir Fotos und Videos: {link}",
   "@contactSmsMember": {"placeholders": {"album": {"type": "String"}, "link": {"type": "String"}}},
   "phoneMobile": "Mobil",
   "phoneHome": "Privat",

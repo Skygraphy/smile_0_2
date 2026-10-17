@@ -309,12 +309,12 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String endShareTitle(String space) {
-    return 'Freigabe für „$space“ beenden?';
+    return 'Freigabe für $space beenden?';
   }
 
   @override
   String endShareMessage(String space, String album) {
-    return '„$space“ sieht „$album“ danach nicht mehr, auch nicht auf seinen Frames.';
+    return '$space sieht $album danach nicht mehr, auch nicht auf seinen Frames.';
   }
 
   @override
@@ -329,7 +329,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String deleteAlbumTitle(String album) {
-    return 'Album „$album“ löschen?';
+    return 'Album $album löschen?';
   }
 
   @override
@@ -371,8 +371,7 @@ class SmileTextsDe extends SmileTexts {
   String get createSpace => 'Space anlegen';
 
   @override
-  String get createSpaceHint =>
-      'Name, z. B. „Familie Müller“ oder „Hotel Sacher“';
+  String get createSpaceHint => 'Name, z. B. Familie Müller oder Hotel Sacher';
 
   @override
   String get create => 'Anlegen';
@@ -409,7 +408,7 @@ class SmileTextsDe extends SmileTexts {
   }
 
   @override
-  String get createAlbumHint => 'Name, z. B. „Enkelkinder“ oder „Lobby“';
+  String get createAlbumHint => 'Name, z. B. Enkelkinder oder Lobby';
 
   @override
   String get noAlbumYet => 'Noch kein Album';
@@ -426,7 +425,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String stopShowingTitle(String album) {
-    return '„$album“ nicht mehr anzeigen?';
+    return '$album nicht mehr anzeigen?';
   }
 
   @override
@@ -497,7 +496,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String deleteSpaceTitle(String space) {
-    return 'Space „$space“ löschen?';
+    return 'Space $space löschen?';
   }
 
   @override
@@ -506,7 +505,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String inTrash(String name) {
-    return '„$name“ ist im Papierkorb.';
+    return '$name ist im Papierkorb.';
   }
 
   @override
@@ -607,17 +606,17 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String frameShowsAlbum(String album) {
-    return 'zeigt gerade „$album“';
+    return 'zeigt gerade $album';
   }
 
   @override
   String frameSwitched(String frame, String album) {
-    return '„$frame“ zeigt jetzt „$album“.';
+    return '$frame zeigt jetzt $album.';
   }
 
   @override
   String removeFromFrameTitle(String album) {
-    return '„$album“ vom Frame entfernen?';
+    return '$album vom Frame entfernen?';
   }
 
   @override
@@ -685,17 +684,17 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String acceptedCoAdmin(String space) {
-    return 'Du verwaltest jetzt „$space“ mit.';
+    return 'Du verwaltest jetzt $space mit.';
   }
 
   @override
   String acceptedAlbum(String album) {
-    return '„$album“ ist jetzt in deinen Alben.';
+    return '$album ist jetzt in deinen Alben.';
   }
 
   @override
   String acceptedShare(String album) {
-    return '„$album“ ist jetzt mit deinem Space geteilt.';
+    return '$album ist jetzt mit deinem Space geteilt.';
   }
 
   @override
@@ -733,7 +732,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String restored(String name) {
-    return '„$name“ ist wiederhergestellt.';
+    return '$name ist wiederhergestellt.';
   }
 
   @override
@@ -887,12 +886,12 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String deleteFrameTitle(String name) {
-    return 'Frame „$name“ löschen?';
+    return 'Frame $name löschen?';
   }
 
   @override
   String get deleteFrameMessage =>
-      'Der Frame wird endgültig entfernt. Das Tablet löscht seine Fotos und zeigt wieder „Frame verbinden“. Zum Weiterverwenden einfach neu verbinden.';
+      'Der Frame wird endgültig entfernt. Das Tablet löscht seine Fotos und zeigt wieder den Bildschirm zum Verbinden. Zum Weiterverwenden einfach neu verbinden.';
 
   @override
   String get deleteAccount => 'Konto löschen';
@@ -926,12 +925,12 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String pictureFor(String name) {
-    return 'Bild für „$name“';
+    return 'Bild für $name';
   }
 
   @override
   String coverFor(String name) {
-    return 'Titelbild für „$name“';
+    return 'Titelbild für $name';
   }
 
   @override
@@ -951,7 +950,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String coverSet(String name) {
-    return '„$name“ hat ein neues Titelbild.';
+    return '$name hat ein neues Titelbild.';
   }
 
   @override
@@ -1049,7 +1048,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get deleteForMeHint =>
-      'Nur bei dir weg, unter „Ausgeblendet“ zurückholbar';
+      'Nur bei dir weg, über ⋮ → Ausgeblendete anzeigen zurückholbar';
 
   @override
   String get deleteOnlyOwn =>
@@ -1057,12 +1056,12 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String inviteToNamed(String name) {
-    return 'In „$name“ einladen';
+    return 'In $name einladen';
   }
 
   @override
   String coAdminFor(String name) {
-    return 'Co-Admin für „$name“';
+    return 'Co-Admin für $name';
   }
 
   @override
@@ -1105,12 +1104,12 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String inviteMessageMember(String album, String link) {
-    return 'Komm in mein Smile-Album „$album“! Einfach auf den Link tippen: $link';
+    return 'Komm in mein Smile-Album $album! Einfach auf den Link tippen: $link';
   }
 
   @override
   String inviteMessageShare(String album, String link) {
-    return 'Ich möchte mein Smile-Album „$album“ mit deinem Space teilen. Einfach auf den Link tippen: $link';
+    return 'Ich möchte mein Smile-Album $album mit deinem Space teilen. Einfach auf den Link tippen: $link';
   }
 
   @override
@@ -1127,17 +1126,17 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String redeemJoinedAlbum(String name) {
-    return 'Du bist jetzt im Album „$name“.';
+    return 'Du bist jetzt im Album $name.';
   }
 
   @override
   String redeemJoinedShare(String album, String space) {
-    return '„$album“ ist jetzt in deinem Space „$space“ zu sehen.';
+    return '$album ist jetzt in deinem Space $space zu sehen.';
   }
 
   @override
   String redeemJoinedCoAdmin(String space) {
-    return 'Du bist jetzt Co-Admin von „$space“.';
+    return 'Du bist jetzt Co-Admin von $space.';
   }
 
   @override
@@ -1145,7 +1144,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String redeemRequested(String name) {
-    return 'Die Admins von „$name“ entscheiden. Du bekommst Bescheid.';
+    return 'Die Admins von $name entscheiden. Du bekommst Bescheid.';
   }
 
   @override
@@ -1257,19 +1256,19 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String connectNamedFrame(String name) {
-    return '„$name“ verbinden';
+    return '$name verbinden';
   }
 
   @override
   String get connectFrameHint =>
-      'Auf dem Tablet: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Gilt 15 Minuten.';
+      'Auf dem Tablet: Smile öffnen → Dieses Gerät als Frame verwenden → QR-Code scannen. Gilt 15 Minuten.';
 
   @override
   String get waitingForFrame => 'Warte auf den Frame …';
 
   @override
   String get frameNameQuestion =>
-      'Wie soll der neue Frame heißen, z. B. „Küche“?';
+      'Wie soll der neue Frame heißen, z. B. Küche?';
 
   @override
   String get anotherDevice => 'Ein anderes Gerät';
@@ -1309,7 +1308,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get reconnectHint =>
-      'Auf dem neuen Gerät: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.';
+      'Auf dem neuen Gerät: Smile öffnen → Dieses Gerät als Frame verwenden → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.';
 
   @override
   String get done => 'Fertig';
@@ -1319,7 +1318,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String frameAlbumEmpty(String album) {
-    return 'In „$album“ sind noch keine Fotos.';
+    return 'In $album sind noch keine Fotos.';
   }
 
   @override
@@ -1448,7 +1447,7 @@ class SmileTextsDe extends SmileTexts {
   String get showNewNow => 'Neue Fotos sofort zeigen';
 
   @override
-  String get showNewNowHint => 'Mit „Neu von …“ oben im Bild.';
+  String get showNewNowHint => 'Oben im Bild steht, von wem es kommt.';
 
   @override
   String get bigClock => 'Große Uhr mit Datum';
@@ -1503,13 +1502,13 @@ class SmileTextsDe extends SmileTexts {
   String get level2 => 'Blättern';
 
   @override
-  String get level2Hint => 'Pause und ein großer Knopf „Weiter“.';
+  String get level2Hint => 'Pause und ein großer Weiter-Knopf.';
 
   @override
   String get level3 => 'Einfach';
 
   @override
-  String get level3Hint => 'Zurück, Pause, Weiter und „Neueste Fotos“.';
+  String get level3Hint => 'Zurück, Pause, Weiter und Neueste Fotos.';
 
   @override
   String get level4 => 'Komfort';
@@ -1578,7 +1577,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String frameOtherSpaceHint(String album, String space) {
-    return '„$album“ gehört zum Space $space. Ein Frame zeigt nur Alben aus seinem eigenen Space oder solche, die mit seinem Space geteilt sind. Ein Admin von $space kann das Album über „Mit einem Space teilen“ mit deinem Space teilen – danach geht es hier mit einem Tipp.';
+    return '$album gehört zum Space $space. Ein Frame zeigt nur Alben aus seinem eigenen Space oder solche, die mit seinem Space geteilt sind. Ein Admin von $space kann das Album über Album-Info → Mit einem Space teilen mit deinem Space teilen – danach geht es hier mit einem Tipp.';
   }
 
   @override
@@ -1628,7 +1627,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String favoriteAddedTo(String frame) {
-    return 'Lieblingsbild von „$frame“';
+    return 'Lieblingsbild von $frame';
   }
 
   @override
@@ -1646,7 +1645,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String favoritesRemoveAllQuestion(String frame) {
-    return 'Alle Lieblingsbilder von „$frame“ entfernen?';
+    return 'Alle Lieblingsbilder von $frame entfernen?';
   }
 
   @override
@@ -1665,12 +1664,12 @@ class SmileTextsDe extends SmileTexts {
       other: '$n Lieblingsbilder',
       one: '1 Lieblingsbild',
     );
-    return '$_temp0 von „$frame“ entfernen?';
+    return '$_temp0 von $frame entfernen?';
   }
 
   @override
   String favoriteRemovedFrom(String frame) {
-    return 'Kein Lieblingsbild mehr von „$frame“';
+    return 'Kein Lieblingsbild mehr von $frame';
   }
 
   @override
@@ -1909,7 +1908,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String inSmileAs(String name) {
-    return 'in Smile: „$name“';
+    return 'in Smile: $name';
   }
 
   @override
@@ -1947,7 +1946,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String contactSmsMember(String album, String link) {
-    return 'Ich lade dich in mein Smile-Album „$album“ ein. Dort teilen wir Fotos und Videos: $link';
+    return 'Ich lade dich in mein Smile-Album $album ein. Dort teilen wir Fotos und Videos: $link';
   }
 
   @override

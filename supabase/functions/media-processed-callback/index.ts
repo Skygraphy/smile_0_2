@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
         [failed.sender_id as string],
         {
           title: "Hochladen fehlgeschlagen",
-          body: `Dein ${failed.media_type === "video" ? "Video" : "Foto"} in „${channelName}“ konnte nicht verarbeitet werden. Bitte versuche es noch einmal.`,
+          body: `Dein ${failed.media_type === "video" ? "Video" : "Foto"} in ${channelName} konnte nicht verarbeitet werden. Bitte versuche es noch einmal.`,
         },
         { type: "media_failed", channel_id: failed.channel_id as string, channel_name: channelName },
       );

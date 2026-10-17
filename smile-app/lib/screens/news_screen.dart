@@ -99,13 +99,13 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
 
   /// Runs [action], reloads, and confirms with [success] -- a row that just
   /// vanishes on success looks exactly like nothing happened.
-  Future<void> _run(Future<void> Function() action, {String? success}) async {
+  Future<void> _run(Future<void> Function() action, {String? success, List<String?> names = const []}) async {
     final t = SmileTexts.of(context);
     final messenger = ScaffoldMessenger.of(context);
     try {
       await action();
       await _load();
-      if (success != null) messenger.showSnackBar(SnackBar(content: Text(success)));
+      if (success != null) messenger.showSnackBar(SnackBar(content: SmileNamedText(success, names: names)));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(t.actionFailed(errorReasonIn(t, e)))));
     }
@@ -142,6 +142,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
     await _run(
       () => widget.membershipService.decideShareRequest(request.id, accept: true, spaceId: chosen),
       success: t.acceptedShare(request.channelName ?? ''),
+      names: [request.channelName],
     );
   }
 
@@ -230,6 +231,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                     onAccept: () => _run(
                       () => widget.spaceService.decideCoOwnerInvite(invite.id, accept: true),
                       success: t.acceptedCoAdmin(invite.spaceName ?? ''),
+                      names: [invite.spaceName],
                     ),
                     onDecline: () => _run(() => widget.spaceService.decideCoOwnerInvite(invite.id, accept: false)),
                   ),
@@ -251,6 +253,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                         ? _run(
                             () => widget.membershipService.decideMembershipRequest(request.id, accept: true),
                             success: t.acceptedAlbum(request.channelName ?? ''),
+                            names: [request.channelName],
                           )
                         : _acceptShareInvite(request),
                     onDecline: () => _run(
@@ -344,7 +347,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                   trailing: IconButton(
                     icon: Icon(SmileIcons.restore, color: Theme.of(context).colorScheme.primary),
                     tooltip: t.actionRestore,
-                    onPressed: () => _run(() => widget.trashService.restore(item), success: t.restored(item.name)),
+                    onPressed: () => _run(() => widget.trashService.restore(item), success: t.restored(item.name), names: [item.name]),
                   ),
                 ),
             ],

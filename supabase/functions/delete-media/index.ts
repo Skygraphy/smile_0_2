@@ -154,8 +154,8 @@ Deno.serve(async (req) => {
             {
               title: "Foto gelöscht",
               body: e.count === 1
-                ? `${actorName} hat dein Foto aus „${ch?.name ?? ""}“ gelöscht.`
-                : `${actorName} hat ${e.count} deiner Fotos aus „${ch?.name ?? ""}“ gelöscht.`,
+                ? `${actorName} hat dein Foto aus ${ch?.name ?? ""} gelöscht.`
+                : `${actorName} hat ${e.count} deiner Fotos aus ${ch?.name ?? ""} gelöscht.`,
             },
             { type: "photo_deleted", channel_id: e.channel, channel_name: ch?.name ?? "" },
           );

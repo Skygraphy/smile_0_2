@@ -134,6 +134,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
       context,
       title: t.deleteFrameTitle(_frame.name),
       message: t.deleteFrameMessage,
+      names: [_frame.name],
       confirmLabel: t.actionDelete,
       destructive: true,
     );
@@ -238,7 +239,12 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
     );
     if (saved) {
       messenger.showSnackBar(
-        SnackBar(content: Text(t.frameSwitched(_shownName, albumNameOf(assignment.channelId, assignment.channelName)))),
+        SnackBar(
+          content: SmileNamedText(
+            t.frameSwitched(_shownName, albumNameOf(assignment.channelId, assignment.channelName)),
+            names: [_shownName, albumNameOf(assignment.channelId, assignment.channelName)],
+          ),
+        ),
       );
       if (mounted) await _load();
     }
@@ -300,6 +306,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
       context,
       title: t.removeFromFrameTitle(assignment.channelName),
       message: t.removeFromFrameMessage,
+      names: [assignment.channelName],
       confirmLabel: t.actionRemove,
       destructive: true,
     );

@@ -309,6 +309,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
       context,
       title: t.stopShowingTitle(album.channelName),
       message: t.stopShowingMessage,
+      names: [album.channelName],
       confirmLabel: t.stopShowing,
       destructive: true,
     );
@@ -322,6 +323,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
       context,
       title: t.deleteSpaceTitle(_name),
       message: t.deleteSpaceMessage,
+      names: [_name],
       confirmLabel: t.actionDelete,
       destructive: true,
     );
@@ -331,7 +333,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).popUntil((route) => route.isFirst);
-      messenger.showSnackBar(SnackBar(content: Text(t.inTrash(_name))));
+      messenger.showSnackBar(SnackBar(content: SmileNamedText(t.inTrash(_name), names: [_name])));
     } catch (e) {
       if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
     }

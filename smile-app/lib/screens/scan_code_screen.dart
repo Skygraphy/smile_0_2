@@ -162,14 +162,15 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
     final t = SmileTexts.of(context);
     final messenger = scaffoldMessengerKey.currentState;
     final navigator = Navigator.of(context);
-    void say(String text) => messenger?.showSnackBar(SnackBar(content: Text(text)));
+    final names = [result.channelName, result.spaceName];
+    void say(String text) => messenger?.showSnackBar(SnackBar(content: SmileNamedText(text, names: names)));
 
     if (result.status == 'requested') {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
           title: Text(t.redeemRequestedTitle),
-          content: Text(t.redeemRequested(result.channelName ?? result.spaceName ?? '')),
+          content: SmileNamedText(t.redeemRequested(result.channelName ?? result.spaceName ?? ''), names: names),
           actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.ok))],
         ),
       );

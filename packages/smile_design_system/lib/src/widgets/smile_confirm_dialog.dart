@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/smile_texts.dart';
+import 'smile_named_text.dart';
 
 /// The one confirmation dialog. [destructive] colors the confirm button
 /// coral-on-error style for Delete/Leave/Remove. Returns true only when
@@ -11,6 +12,8 @@ Future<bool> showSmileConfirmDialog(
   String? message,
   required String confirmLabel,
   bool destructive = false,
+  // Shown in bold in title and message (2026-10-17, instead of „…“).
+  Iterable<String?> names = const [],
 }) async {
   final t = SmileTexts.of(context);
   final result = await showDialog<bool>(
@@ -19,8 +22,8 @@ Future<bool> showSmileConfirmDialog(
       final scheme = Theme.of(context).colorScheme;
       final msg = message;
       return AlertDialog(
-        title: Text(title),
-        content: msg == null ? null : Text(msg),
+        title: SmileNamedText(title, names: names),
+        content: msg == null ? null : SmileNamedText(msg, names: names),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

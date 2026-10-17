@@ -589,13 +589,13 @@ abstract class SmileTexts {
   /// No description provided for @endShareTitle.
   ///
   /// In de, this message translates to:
-  /// **'Freigabe für „{space}“ beenden?'**
+  /// **'Freigabe für {space} beenden?'**
   String endShareTitle(String space);
 
   /// No description provided for @endShareMessage.
   ///
   /// In de, this message translates to:
-  /// **'„{space}“ sieht „{album}“ danach nicht mehr, auch nicht auf seinen Frames.'**
+  /// **'{space} sieht {album} danach nicht mehr, auch nicht auf seinen Frames.'**
   String endShareMessage(String space, String album);
 
   /// No description provided for @leaveAlbum.
@@ -619,7 +619,7 @@ abstract class SmileTexts {
   /// No description provided for @deleteAlbumTitle.
   ///
   /// In de, this message translates to:
-  /// **'Album „{album}“ löschen?'**
+  /// **'Album {album} löschen?'**
   String deleteAlbumTitle(String album);
 
   /// No description provided for @deleteAlbumMessage.
@@ -685,7 +685,7 @@ abstract class SmileTexts {
   /// No description provided for @createSpaceHint.
   ///
   /// In de, this message translates to:
-  /// **'Name, z. B. „Familie Müller“ oder „Hotel Sacher“'**
+  /// **'Name, z. B. Familie Müller oder Hotel Sacher'**
   String get createSpaceHint;
 
   /// No description provided for @create.
@@ -751,7 +751,7 @@ abstract class SmileTexts {
   /// No description provided for @createAlbumHint.
   ///
   /// In de, this message translates to:
-  /// **'Name, z. B. „Enkelkinder“ oder „Lobby“'**
+  /// **'Name, z. B. Enkelkinder oder Lobby'**
   String get createAlbumHint;
 
   /// No description provided for @noAlbumYet.
@@ -781,7 +781,7 @@ abstract class SmileTexts {
   /// No description provided for @stopShowingTitle.
   ///
   /// In de, this message translates to:
-  /// **'„{album}“ nicht mehr anzeigen?'**
+  /// **'{album} nicht mehr anzeigen?'**
   String stopShowingTitle(String album);
 
   /// No description provided for @stopShowingMessage.
@@ -901,7 +901,7 @@ abstract class SmileTexts {
   /// No description provided for @deleteSpaceTitle.
   ///
   /// In de, this message translates to:
-  /// **'Space „{space}“ löschen?'**
+  /// **'Space {space} löschen?'**
   String deleteSpaceTitle(String space);
 
   /// No description provided for @deleteSpaceMessage.
@@ -913,7 +913,7 @@ abstract class SmileTexts {
   /// No description provided for @inTrash.
   ///
   /// In de, this message translates to:
-  /// **'„{name}“ ist im Papierkorb.'**
+  /// **'{name} ist im Papierkorb.'**
   String inTrash(String name);
 
   /// No description provided for @frameInfoLoadError.
@@ -1093,19 +1093,19 @@ abstract class SmileTexts {
   /// No description provided for @frameShowsAlbum.
   ///
   /// In de, this message translates to:
-  /// **'zeigt gerade „{album}“'**
+  /// **'zeigt gerade {album}'**
   String frameShowsAlbum(String album);
 
   /// No description provided for @frameSwitched.
   ///
   /// In de, this message translates to:
-  /// **'„{frame}“ zeigt jetzt „{album}“.'**
+  /// **'{frame} zeigt jetzt {album}.'**
   String frameSwitched(String frame, String album);
 
   /// No description provided for @removeFromFrameTitle.
   ///
   /// In de, this message translates to:
-  /// **'„{album}“ vom Frame entfernen?'**
+  /// **'{album} vom Frame entfernen?'**
   String removeFromFrameTitle(String album);
 
   /// No description provided for @removeFromFrameMessage.
@@ -1207,19 +1207,19 @@ abstract class SmileTexts {
   /// No description provided for @acceptedCoAdmin.
   ///
   /// In de, this message translates to:
-  /// **'Du verwaltest jetzt „{space}“ mit.'**
+  /// **'Du verwaltest jetzt {space} mit.'**
   String acceptedCoAdmin(String space);
 
   /// No description provided for @acceptedAlbum.
   ///
   /// In de, this message translates to:
-  /// **'„{album}“ ist jetzt in deinen Alben.'**
+  /// **'{album} ist jetzt in deinen Alben.'**
   String acceptedAlbum(String album);
 
   /// No description provided for @acceptedShare.
   ///
   /// In de, this message translates to:
-  /// **'„{album}“ ist jetzt mit deinem Space geteilt.'**
+  /// **'{album} ist jetzt mit deinem Space geteilt.'**
   String acceptedShare(String album);
 
   /// No description provided for @requestAccepted.
@@ -1273,7 +1273,7 @@ abstract class SmileTexts {
   /// No description provided for @restored.
   ///
   /// In de, this message translates to:
-  /// **'„{name}“ ist wiederhergestellt.'**
+  /// **'{name} ist wiederhergestellt.'**
   String restored(String name);
 
   /// No description provided for @profileLoadError.
@@ -1519,13 +1519,13 @@ abstract class SmileTexts {
   /// No description provided for @deleteFrameTitle.
   ///
   /// In de, this message translates to:
-  /// **'Frame „{name}“ löschen?'**
+  /// **'Frame {name} löschen?'**
   String deleteFrameTitle(String name);
 
   /// No description provided for @deleteFrameMessage.
   ///
   /// In de, this message translates to:
-  /// **'Der Frame wird endgültig entfernt. Das Tablet löscht seine Fotos und zeigt wieder „Frame verbinden“. Zum Weiterverwenden einfach neu verbinden.'**
+  /// **'Der Frame wird endgültig entfernt. Das Tablet löscht seine Fotos und zeigt wieder den Bildschirm zum Verbinden. Zum Weiterverwenden einfach neu verbinden.'**
   String get deleteFrameMessage;
 
   /// No description provided for @deleteAccount.
@@ -1579,13 +1579,13 @@ abstract class SmileTexts {
   /// No description provided for @pictureFor.
   ///
   /// In de, this message translates to:
-  /// **'Bild für „{name}“'**
+  /// **'Bild für {name}'**
   String pictureFor(String name);
 
   /// No description provided for @coverFor.
   ///
   /// In de, this message translates to:
-  /// **'Titelbild für „{name}“'**
+  /// **'Titelbild für {name}'**
   String coverFor(String name);
 
   /// No description provided for @pickFromAlbum.
@@ -1621,7 +1621,7 @@ abstract class SmileTexts {
   /// No description provided for @coverSet.
   ///
   /// In de, this message translates to:
-  /// **'„{name}“ hat ein neues Titelbild.'**
+  /// **'{name} hat ein neues Titelbild.'**
   String coverSet(String name);
 
   /// No description provided for @choosePhoto.
@@ -1777,7 +1777,7 @@ abstract class SmileTexts {
   /// No description provided for @deleteForMeHint.
   ///
   /// In de, this message translates to:
-  /// **'Nur bei dir weg, unter „Ausgeblendet“ zurückholbar'**
+  /// **'Nur bei dir weg, über ⋮ → Ausgeblendete anzeigen zurückholbar'**
   String get deleteForMeHint;
 
   /// No description provided for @deleteOnlyOwn.
@@ -1789,13 +1789,13 @@ abstract class SmileTexts {
   /// No description provided for @inviteToNamed.
   ///
   /// In de, this message translates to:
-  /// **'In „{name}“ einladen'**
+  /// **'In {name} einladen'**
   String inviteToNamed(String name);
 
   /// No description provided for @coAdminFor.
   ///
   /// In de, this message translates to:
-  /// **'Co-Admin für „{name}“'**
+  /// **'Co-Admin für {name}'**
   String coAdminFor(String name);
 
   /// No description provided for @searchName.
@@ -1867,13 +1867,13 @@ abstract class SmileTexts {
   /// No description provided for @inviteMessageMember.
   ///
   /// In de, this message translates to:
-  /// **'Komm in mein Smile-Album „{album}“! Einfach auf den Link tippen: {link}'**
+  /// **'Komm in mein Smile-Album {album}! Einfach auf den Link tippen: {link}'**
   String inviteMessageMember(String album, String link);
 
   /// No description provided for @inviteMessageShare.
   ///
   /// In de, this message translates to:
-  /// **'Ich möchte mein Smile-Album „{album}“ mit deinem Space teilen. Einfach auf den Link tippen: {link}'**
+  /// **'Ich möchte mein Smile-Album {album} mit deinem Space teilen. Einfach auf den Link tippen: {link}'**
   String inviteMessageShare(String album, String link);
 
   /// No description provided for @scanCode.
@@ -1903,19 +1903,19 @@ abstract class SmileTexts {
   /// No description provided for @redeemJoinedAlbum.
   ///
   /// In de, this message translates to:
-  /// **'Du bist jetzt im Album „{name}“.'**
+  /// **'Du bist jetzt im Album {name}.'**
   String redeemJoinedAlbum(String name);
 
   /// No description provided for @redeemJoinedShare.
   ///
   /// In de, this message translates to:
-  /// **'„{album}“ ist jetzt in deinem Space „{space}“ zu sehen.'**
+  /// **'{album} ist jetzt in deinem Space {space} zu sehen.'**
   String redeemJoinedShare(String album, String space);
 
   /// No description provided for @redeemJoinedCoAdmin.
   ///
   /// In de, this message translates to:
-  /// **'Du bist jetzt Co-Admin von „{space}“.'**
+  /// **'Du bist jetzt Co-Admin von {space}.'**
   String redeemJoinedCoAdmin(String space);
 
   /// No description provided for @redeemRequestedTitle.
@@ -1927,7 +1927,7 @@ abstract class SmileTexts {
   /// No description provided for @redeemRequested.
   ///
   /// In de, this message translates to:
-  /// **'Die Admins von „{name}“ entscheiden. Du bekommst Bescheid.'**
+  /// **'Die Admins von {name} entscheiden. Du bekommst Bescheid.'**
   String redeemRequested(String name);
 
   /// No description provided for @redeemAlready.
@@ -2107,13 +2107,13 @@ abstract class SmileTexts {
   /// No description provided for @connectNamedFrame.
   ///
   /// In de, this message translates to:
-  /// **'„{name}“ verbinden'**
+  /// **'{name} verbinden'**
   String connectNamedFrame(String name);
 
   /// No description provided for @connectFrameHint.
   ///
   /// In de, this message translates to:
-  /// **'Auf dem Tablet: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Gilt 15 Minuten.'**
+  /// **'Auf dem Tablet: Smile öffnen → Dieses Gerät als Frame verwenden → QR-Code scannen. Gilt 15 Minuten.'**
   String get connectFrameHint;
 
   /// No description provided for @waitingForFrame.
@@ -2125,7 +2125,7 @@ abstract class SmileTexts {
   /// No description provided for @frameNameQuestion.
   ///
   /// In de, this message translates to:
-  /// **'Wie soll der neue Frame heißen, z. B. „Küche“?'**
+  /// **'Wie soll der neue Frame heißen, z. B. Küche?'**
   String get frameNameQuestion;
 
   /// No description provided for @anotherDevice.
@@ -2197,7 +2197,7 @@ abstract class SmileTexts {
   /// No description provided for @reconnectHint.
   ///
   /// In de, this message translates to:
-  /// **'Auf dem neuen Gerät: Smile öffnen → „Dieses Gerät als Frame verwenden“ → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.'**
+  /// **'Auf dem neuen Gerät: Smile öffnen → Dieses Gerät als Frame verwenden → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.'**
   String get reconnectHint;
 
   /// No description provided for @done.
@@ -2215,7 +2215,7 @@ abstract class SmileTexts {
   /// No description provided for @frameAlbumEmpty.
   ///
   /// In de, this message translates to:
-  /// **'In „{album}“ sind noch keine Fotos.'**
+  /// **'In {album} sind noch keine Fotos.'**
   String frameAlbumEmpty(String album);
 
   /// No description provided for @frameAlbumEmptyHint.
@@ -2449,7 +2449,7 @@ abstract class SmileTexts {
   /// No description provided for @showNewNowHint.
   ///
   /// In de, this message translates to:
-  /// **'Mit „Neu von …“ oben im Bild.'**
+  /// **'Oben im Bild steht, von wem es kommt.'**
   String get showNewNowHint;
 
   /// No description provided for @bigClock.
@@ -2551,7 +2551,7 @@ abstract class SmileTexts {
   /// No description provided for @level2Hint.
   ///
   /// In de, this message translates to:
-  /// **'Pause und ein großer Knopf „Weiter“.'**
+  /// **'Pause und ein großer Weiter-Knopf.'**
   String get level2Hint;
 
   /// No description provided for @level3.
@@ -2563,7 +2563,7 @@ abstract class SmileTexts {
   /// No description provided for @level3Hint.
   ///
   /// In de, this message translates to:
-  /// **'Zurück, Pause, Weiter und „Neueste Fotos“.'**
+  /// **'Zurück, Pause, Weiter und Neueste Fotos.'**
   String get level3Hint;
 
   /// No description provided for @level4.
@@ -2695,7 +2695,7 @@ abstract class SmileTexts {
   /// No description provided for @frameOtherSpaceHint.
   ///
   /// In de, this message translates to:
-  /// **'„{album}“ gehört zum Space {space}. Ein Frame zeigt nur Alben aus seinem eigenen Space oder solche, die mit seinem Space geteilt sind. Ein Admin von {space} kann das Album über „Mit einem Space teilen“ mit deinem Space teilen – danach geht es hier mit einem Tipp.'**
+  /// **'{album} gehört zum Space {space}. Ein Frame zeigt nur Alben aus seinem eigenen Space oder solche, die mit seinem Space geteilt sind. Ein Admin von {space} kann das Album über Album-Info → Mit einem Space teilen mit deinem Space teilen – danach geht es hier mit einem Tipp.'**
   String frameOtherSpaceHint(String album, String space);
 
   /// No description provided for @favorites.
@@ -2779,7 +2779,7 @@ abstract class SmileTexts {
   /// No description provided for @favoriteAddedTo.
   ///
   /// In de, this message translates to:
-  /// **'Lieblingsbild von „{frame}“'**
+  /// **'Lieblingsbild von {frame}'**
   String favoriteAddedTo(String frame);
 
   /// No description provided for @favoritesEmpty.
@@ -2809,7 +2809,7 @@ abstract class SmileTexts {
   /// No description provided for @favoritesRemoveAllQuestion.
   ///
   /// In de, this message translates to:
-  /// **'Alle Lieblingsbilder von „{frame}“ entfernen?'**
+  /// **'Alle Lieblingsbilder von {frame} entfernen?'**
   String favoritesRemoveAllQuestion(String frame);
 
   /// No description provided for @favoritesRemoveHint.
@@ -2827,13 +2827,13 @@ abstract class SmileTexts {
   /// No description provided for @favoritesRemoveSelectedQuestion.
   ///
   /// In de, this message translates to:
-  /// **'{n, plural, =1{1 Lieblingsbild} other{{n} Lieblingsbilder}} von „{frame}“ entfernen?'**
+  /// **'{n, plural, =1{1 Lieblingsbild} other{{n} Lieblingsbilder}} von {frame} entfernen?'**
   String favoritesRemoveSelectedQuestion(int n, String frame);
 
   /// No description provided for @favoriteRemovedFrom.
   ///
   /// In de, this message translates to:
-  /// **'Kein Lieblingsbild mehr von „{frame}“'**
+  /// **'Kein Lieblingsbild mehr von {frame}'**
   String favoriteRemovedFrom(String frame);
 
   /// No description provided for @favoritesAddTitle.
@@ -3259,7 +3259,7 @@ abstract class SmileTexts {
   /// No description provided for @inSmileAs.
   ///
   /// In de, this message translates to:
-  /// **'in Smile: „{name}“'**
+  /// **'in Smile: {name}'**
   String inSmileAs(String name);
 
   /// No description provided for @contactInvite.
@@ -3325,7 +3325,7 @@ abstract class SmileTexts {
   /// No description provided for @contactSmsMember.
   ///
   /// In de, this message translates to:
-  /// **'Ich lade dich in mein Smile-Album „{album}“ ein. Dort teilen wir Fotos und Videos: {link}'**
+  /// **'Ich lade dich in mein Smile-Album {album} ein. Dort teilen wir Fotos und Videos: {link}'**
   String contactSmsMember(String album, String link);
 
   /// No description provided for @phoneMobile.
