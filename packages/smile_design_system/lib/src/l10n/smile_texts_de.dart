@@ -1861,5 +1861,5 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get noPersonFound =>
-      'Niemand gefunden. Fremde findest du nur mit dem ganzen Smile-Namen, z. B. @anna.huber.';
+      'Niemand gefunden. Fremde nur mit ganzem @Smile-Namen.';
 }

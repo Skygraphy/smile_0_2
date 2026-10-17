@@ -186,7 +186,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     await showInviteSheet(
       context,
       title: t.coAdminFor(_shownName),
-      people: InviteService().knownPeople().then((all) => all.where((p) => !already.contains(p.userId)).toList()),
+      people: InviteService().knownPeople(),
       whyNot: (p) => already.contains(p.userId) ? t.alreadyAdmin : null,
       onPerson: (person) => _invitePerson(
         person,

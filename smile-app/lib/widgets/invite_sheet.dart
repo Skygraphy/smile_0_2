@@ -11,9 +11,11 @@ import '../services/profile_service.dart';
 /// someone standing next to you, a code to send as a message, and email
 /// as the last resort.
 ///
-/// [people] is already filtered by the caller (e.g. without the album's
-/// members). A person found by the exact Smile name (2026-10-17) always
-/// shows; [whyNot] greys them out with the reason (e.g. "Schon im Album"). [onShareCode] null: no "Einladungslink teilen" (Co-Admin is
+/// [people] are all the people one knows. [whyNot] says why someone can't
+/// be invited here (e.g. "Schon im Album"): without a search they're left
+/// out, in a search they show greyed out with that reason (2026-10-17) --
+/// as does a stranger found by their exact Smile name. Known people match
+/// by name or by a part of their @name. [onShareCode] null: no "Einladungslink teilen" (Co-Admin is
 /// in person only).
 Future<void> showInviteSheet(
   BuildContext context, {
@@ -160,11 +162,17 @@ class _InviteSheetState extends State<_InviteSheet> {
                     );
                   }
                   final all = snapshot.data ?? const <KnownPerson>[];
-                  final byHandle = _byHandleFor == normalizeHandle(_query) ? _byHandle : null;
+                  final handleQuery = normalizeHandle(_query);
+                  final byHandle = _byHandleFor == handleQuery ? _byHandle : null;
+                  bool matches(KnownPerson p) =>
+                      p.name.toLowerCase().contains(_query) ||
+                      (handleQuery.isNotEmpty && (p.handle?.startsWith(handleQuery) ?? false));
+                  final known = _query.isEmpty
+                      ? all.where((p) => widget.whyNot?.call(p) == null).toList()
+                      : all.where(matches).toList();
                   final shown = [
-                    ?byHandle,
-                    for (final p in _query.isEmpty ? all : all.where((p) => p.name.toLowerCase().contains(_query)))
-                      if (p.userId != byHandle?.userId) p,
+                    if (byHandle != null && !known.any((p) => p.userId == byHandle.userId)) byHandle,
+                    ...known,
                   ];
                   if (shown.isEmpty) {
                     return Padding(
@@ -176,22 +184,23 @@ class _InviteSheetState extends State<_InviteSheet> {
                     shrinkWrap: true,
                     children: [
                       for (final person in shown)
-                        if (person.handle != null && widget.whyNot?.call(person) != null)
+                        if (widget.whyNot?.call(person) case final reason?)
                           Opacity(
                             opacity: 0.5,
                             child: SmileObjectTile(
                               leading: SmileAvatar(name: person.name, avatarUrl: person.avatarUrl, size: 40),
                               title: person.name,
-                              subtitle: '@${person.handle} · ${widget.whyNot!(person)}',
+                              subtitle: [if (person.handle != null) '@${person.handle}', reason].join(' · '),
                             ),
                           )
                         else
                           SmileObjectTile(
                             leading: SmileAvatar(name: person.name, avatarUrl: person.avatarUrl, size: 40),
                             title: person.name,
-                            subtitle: person.handle != null
-                                ? '@${person.handle}'
-                                : widget.subtitle?.call(person) ?? person.context,
+                            subtitle: [
+                              if (person.handle != null) '@${person.handle}',
+                              ?(widget.subtitle?.call(person) ?? person.context),
+                            ].join(' · '),
                             onTap: () => widget.onPerson(person),
                           ),
                     ],

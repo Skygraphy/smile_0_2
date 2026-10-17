@@ -24,7 +24,7 @@ class KnownPerson {
   final String? context;
   final bool managesASpace;
 
-  /// Set when found by the Smile name (migrations/0080).
+  /// Their Smile name, if they chose one (migrations/0080, 0081).
   final String? handle;
 }
 
@@ -111,6 +111,7 @@ class InviteService {
               avatarUrl: avatarPathToUrl(r['avatar_path'] as String?),
               context: r['context'] as String?,
               managesASpace: r['manages_a_space'] == true,
+              handle: r['handle'] as String?,
             ))
         .toList();
   }

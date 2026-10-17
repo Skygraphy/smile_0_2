@@ -3175,7 +3175,7 @@ abstract class SmileTexts {
   /// No description provided for @noPersonFound.
   ///
   /// In de, this message translates to:
-  /// **'Niemand gefunden. Fremde findest du nur mit dem ganzen Smile-Namen, z. B. @anna.huber.'**
+  /// **'Niemand gefunden. Fremde nur mit ganzem @Smile-Namen.'**
   String get noPersonFound;
 }
 
