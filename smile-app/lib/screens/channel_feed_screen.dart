@@ -22,6 +22,7 @@ import '../services/object_picture_service.dart';
 import 'album_info_screen.dart';
 import 'capture_preview_screen.dart';
 import 'send_preview_screen.dart';
+import '../services/preferred_frame.dart';
 import '../widgets/friendly_error.dart';
 import '../widgets/capture_choice.dart';
 import '../widgets/album_covers.dart';
@@ -156,7 +157,14 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     _loadFrames();
   }
 
+  /// The caller's Frames that may show this album (one tap on the Frame
+  /// symbol puts it on the preferred one, 2026-10-18).
+  List<({String frameId, String frameName, String? avatarPath, String spaceName})> _albumFrames = const [];
+
   void _loadFrames() {
+    unawaited(FrameService().listFramesForAlbum(widget.channelId).then((frames) {
+      if (mounted) setState(() => _albumFrames = frames);
+    }).catchError((Object _) {}));
     unawaited(ChannelService().listFramesShowing(widget.channelId).then((frames) async {
       if (mounted) setState(() => _frames = frames);
       final favorites = await FrameService().favoritesOf(frames.map((f) => f.frameId).toList());
@@ -346,6 +354,62 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
         value: onTap,
         child: Row(children: [Icon(icon, size: 20), const SizedBox(width: SmileSpacing.m), Text(label)]),
       );
+
+  /// One tap on the Frame symbol (2026-10-18): this album on the preferred
+  /// Frame right away -- put on it first if needed --, with "Rückgängig".
+  Future<void> _showOnPreferredFrame() async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final frames = _albumFrames;
+    if (frames.isEmpty) {
+      if (_frames.isNotEmpty) await _openFrame();
+      return;
+    }
+    final preferredId = await PreferredFrame.get();
+    var frame = frames.where((f) => f.frameId == preferredId).firstOrNull ?? (frames.length == 1 ? frames.single : null);
+    if (frame == null) {
+      if (!mounted) return;
+      final picked = await showModalBottomSheet<({String frameId, bool remember})>(
+        context: context,
+        showDragHandle: true,
+        builder: (_) => _FramePickSheet(frames: frames),
+      );
+      if (picked == null) return;
+      frame = frames.firstWhere((f) => f.frameId == picked.frameId);
+      if (picked.remember) await PreferredFrame.set(picked.frameId);
+    }
+    final target = frame;
+    String? previous;
+    try {
+      previous = (await FrameService().getFrame(target.frameId)).currentChannelId;
+    } catch (_) {}
+    final onIt = _frames.any((f) => f.frameId == target.frameId);
+    final saved = await LocalChanges.instance.run(
+      overrides: {LocalChanges.frameAlbum(target.frameId): widget.channelId},
+      commit: () async {
+        if (!onIt) await FrameService().assignChannel(frameId: target.frameId, channelId: widget.channelId);
+        await FrameService().showChannelNow(frameId: target.frameId, channelId: widget.channelId);
+      },
+      affects: tablesChanged({'frames', 'frame_channels'}, channelIds: {widget.channelId}),
+    );
+    if (!saved || !mounted) return;
+    _loadFrames();
+    final name = frameNameOf(target.frameId, target.frameName);
+    final before = previous;
+    messenger.showSnackBar(SnackBar(
+      content: SmileNamedText(t.frameSwitched(name, _shownName), names: [name, _shownName]),
+      action: before == null || before == widget.channelId
+          ? null
+          : SnackBarAction(
+              label: t.undo,
+              onPressed: () => unawaited(LocalChanges.instance.run(
+                overrides: {LocalChanges.frameAlbum(target.frameId): before},
+                commit: () => FrameService().showChannelNow(frameId: target.frameId, channelId: before),
+                affects: tablesChanged({'frames'}),
+              )),
+            ),
+    ));
+  }
 
   Future<void> _openFrame() async {
     final t = SmileTexts.of(context);
@@ -696,7 +760,17 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           minLines: 1,
           maxLines: 5,
           textCapitalization: TextCapitalization.sentences,
-          decoration: InputDecoration(hintText: t.captionHint),
+          decoration: InputDecoration(
+            hintText: t.captionHint,
+            // Delete it with one tap (2026-10-18) -- only when there is one.
+            suffixIcon: (current ?? '').isEmpty
+                ? null
+                : IconButton(
+                    icon: Icon(SmileIcons.delete, color: Theme.of(context).colorScheme.error),
+                    tooltip: t.captionDelete,
+                    onPressed: () => Navigator.of(context).pop(''),
+                  ),
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.actionCancel)),
@@ -1228,8 +1302,16 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                     // The album as a slideshow, like on a Frame (2026-10-11).
                     if ((_items ?? const <MediaItem>[]).any((i) => i.isReady))
                       IconButton(icon: const Icon(SmileIcons.slideshow), tooltip: t.playSlideshow, onPressed: _playSlideshow),
-                    if (_frames.isNotEmpty)
-                      IconButton(icon: const Icon(SmileIcons.frame), tooltip: t.openRemote, onPressed: _openFrame),
+                    // One tap: on the preferred Frame; long press: its remote (2026-10-18).
+                    if (_frames.isNotEmpty || _albumFrames.isNotEmpty)
+                      GestureDetector(
+                        onLongPress: _frames.isNotEmpty ? _openFrame : null,
+                        child: IconButton(
+                          icon: const Icon(SmileIcons.frame),
+                          tooltip: t.showOnMyFrame,
+                          onPressed: _showOnPreferredFrame,
+                        ),
+                      ),
                     // ⋮ like on every page (2026-10-16).
                     PopupMenuButton<VoidCallback>(
                       icon: const Icon(SmileIcons.more),
@@ -1851,3 +1933,60 @@ class _DateSeparator extends StatelessWidget {
   }
 }
 
+/// "Auf welchem Frame zeigen?" -- the first time with several Frames.
+class _FramePickSheet extends StatefulWidget {
+  const _FramePickSheet({required this.frames});
+
+  final List<({String frameId, String frameName, String? avatarPath, String spaceName})> frames;
+
+  @override
+  State<_FramePickSheet> createState() => _FramePickSheetState();
+}
+
+class _FramePickSheetState extends State<_FramePickSheet> {
+  late String _picked = widget.frames.first.frameId;
+  bool _remember = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = SmileTexts.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(SmileSpacing.l, 0, SmileSpacing.l, SmileSpacing.l),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(t.pickFrameToShow, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: SmileSpacing.s),
+            RadioGroup<String>(
+              groupValue: _picked,
+              onChanged: (v) => setState(() => _picked = v ?? _picked),
+              child: Column(
+                children: [
+                  for (final f in widget.frames)
+                    RadioListTile<String>(
+                      value: f.frameId,
+                      title: Text(frameNameOf(f.frameId, f.frameName)),
+                      subtitle: f.spaceName.isEmpty ? null : Text(f.spaceName),
+                    ),
+                ],
+              ),
+            ),
+            CheckboxListTile(
+              value: _remember,
+              onChanged: (v) => setState(() => _remember = v ?? true),
+              title: Text(t.rememberFrame),
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+            const SizedBox(height: SmileSpacing.s),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop((frameId: _picked, remember: _remember)),
+              child: Text(t.showNow),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

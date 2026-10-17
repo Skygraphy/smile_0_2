@@ -142,7 +142,8 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
             label(t.atEnd),
             chips([('loop', t.endLoop), ('overview', t.endOverview)], f.endBehavior, 'end_behavior'),
             label(t.videoLengthLabel),
-            chips([('full', t.videoFull), ('photo', t.videoAsPhoto(f.intervalSeconds))], f.videoLength, 'video_length'),
+            chips([('full', t.videoFull), ('photo', t.videoAsPhoto(f.intervalSeconds)), ('none', t.videoNone)], f.videoLength,
+                'video_length'),
           ]),
           card([
             label(t.fillLabel),

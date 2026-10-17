@@ -596,7 +596,7 @@ class SmileTextsDe extends SmileTexts {
   String get showingNow => 'Läuft gerade';
 
   @override
-  String get showNow => 'Jetzt zeigen';
+  String get showNow => 'Zeigen';
 
   @override
   String get showHereNow => 'Hier jetzt zeigen';
@@ -1961,6 +1961,34 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get captionHint => 'Titel hinzufügen …';
+
+  @override
+  String get captionDelete => 'Titel löschen';
+
+  @override
+  String get videoNone => 'Keine Videos';
+
+  @override
+  String get undo => 'Rückgängig';
+
+  @override
+  String get showOnMyFrame => 'Auf dem Frame zeigen';
+
+  @override
+  String get pickFrameToShow => 'Auf welchem Frame zeigen?';
+
+  @override
+  String get rememberFrame => 'Diesen Frame künftig immer nehmen';
+
+  @override
+  String get preferredFrame => 'Bevorzugter Frame';
+
+  @override
+  String get preferredFrameAsk => 'Jedes Mal fragen';
+
+  @override
+  String get preferredFrameHint =>
+      'Ein Tipp auf das Frame-Symbol im Album zeigt es dort sofort.';
 
   @override
   String get captionEdit => 'Titel bearbeiten';

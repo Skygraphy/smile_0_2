@@ -20,6 +20,8 @@ import '../services/upload_queue.dart';
 import 'avatar_viewer_screen.dart';
 import 'handle_edit_screen.dart';
 import 'my_card_screen.dart';
+import '../services/frame_service.dart';
+import '../services/preferred_frame.dart';
 
 /// WhatsApp's own Settings screen layout: avatar with a small camera badge
 /// overlapping its bottom-right corner, name underneath. Three separate
@@ -55,7 +57,44 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
   @override
   Future<void> onSync() => _load();
 
+  /// The caller's Frames and the preferred one (2026-10-18).
+  List<ManagedFrame> _frames = const [];
+  String? _preferredFrameId;
+
+  Future<void> _loadFrames() async {
+    try {
+      final frames = await FrameService().listMyFrames();
+      final preferred = await PreferredFrame.get();
+      if (mounted) {
+        setState(() {
+          _frames = frames;
+          _preferredFrameId = preferred;
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _pickPreferredFrame() async {
+    final t = SmileTexts.of(context);
+    // '' = ask each time.
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(t.preferredFrame),
+        children: [
+          SimpleDialogOption(onPressed: () => Navigator.of(context).pop(''), child: Text(t.preferredFrameAsk)),
+          for (final f in _frames)
+            SimpleDialogOption(onPressed: () => Navigator.of(context).pop(f.frame.id), child: Text(f.frame.name)),
+        ],
+      ),
+    );
+    if (picked == null) return;
+    await PreferredFrame.set(picked.isEmpty ? null : picked);
+    if (mounted) setState(() => _preferredFrameId = picked.isEmpty ? null : picked);
+  }
+
   Future<void> _load() async {
+    unawaited(_loadFrames());
     try {
       final profile = await widget.profileService.getMyProfile();
       if (!mounted) return;
@@ -329,6 +368,21 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                     ),
                   ],
                 ),
+                // The Frame an album goes to with one tap (2026-10-18).
+                if (_frames.isNotEmpty)
+                  SmileInfoSection(
+                    title: t.preferredFrame,
+                    children: [
+                      SmileObjectTile(
+                        leading: Icon(SmileIcons.frame, color: scheme.onSurfaceVariant),
+                        title: _frames.where((f) => f.frame.id == _preferredFrameId).firstOrNull?.frame.name ??
+                            t.preferredFrameAsk,
+                        subtitle: t.preferredFrameHint,
+                        subtitleMaxLines: 2,
+                        onTap: _pickPreferredFrame,
+                      ),
+                    ],
+                  ),
                 // "Videos senden" (2026-10-12): how much videos are shrunk.
                 SmileInfoSection(
                   title: t.sendVideos,

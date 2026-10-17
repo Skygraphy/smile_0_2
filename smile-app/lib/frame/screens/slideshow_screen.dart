@@ -335,6 +335,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       default:
         _playlist = ordered(_albumEntries);
     }
+    // "Keine Videos" (2026-10-18, migrations/0085): photos only.
+    if (settings?.videoLength == 'none') _playlist = _playlist.where((e) => !e.isVideo).toList();
     final keep = keepId == null ? -1 : _playlist.indexWhere((e) => e.mediaItemId == keepId);
     _currentIndex = keep >= 0 ? keep : (_currentIndex < _playlist.length ? _currentIndex : 0);
   }
@@ -394,7 +396,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final favoritesOnly = _favoritesRound || (_settings?.contentMode == 'favorites');
     if (favoritesOnly && _playlist.isNotEmpty) return _playlist;
     if (!_newestRound) return _playlist;
-    final album = [..._albumEntries]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    final album = [
+      for (final e in _albumEntries)
+        if (_settings?.videoLength != 'none' || !e.isVideo) e,
+    ]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     return album.isEmpty ? _playlist : album;
   }
 
@@ -917,7 +922,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                       ),
                   ]),
                   section(t.videoLengthLabel, [
-                    for (final (value, label) in [('full', t.videoFull), ('photo', t.videoAsPhoto(seconds))])
+                    for (final (value, label) in [('full', t.videoFull), ('photo', t.videoAsPhoto(seconds)), ('none', t.videoNone)])
                       _BigChoice(label: label, selected: videoLength == value, onTap: () => set('video_length', value, () => videoLength = value)),
                   ]),
                   section(t.fillLabel, [

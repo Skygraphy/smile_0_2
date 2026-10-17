@@ -1075,7 +1075,7 @@ abstract class SmileTexts {
   /// No description provided for @showNow.
   ///
   /// In de, this message translates to:
-  /// **'Jetzt zeigen'**
+  /// **'Zeigen'**
   String get showNow;
 
   /// No description provided for @showHereNow.
@@ -3351,6 +3351,60 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Titel hinzufügen …'**
   String get captionHint;
+
+  /// No description provided for @captionDelete.
+  ///
+  /// In de, this message translates to:
+  /// **'Titel löschen'**
+  String get captionDelete;
+
+  /// No description provided for @videoNone.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Videos'**
+  String get videoNone;
+
+  /// No description provided for @undo.
+  ///
+  /// In de, this message translates to:
+  /// **'Rückgängig'**
+  String get undo;
+
+  /// No description provided for @showOnMyFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Auf dem Frame zeigen'**
+  String get showOnMyFrame;
+
+  /// No description provided for @pickFrameToShow.
+  ///
+  /// In de, this message translates to:
+  /// **'Auf welchem Frame zeigen?'**
+  String get pickFrameToShow;
+
+  /// No description provided for @rememberFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Diesen Frame künftig immer nehmen'**
+  String get rememberFrame;
+
+  /// No description provided for @preferredFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Bevorzugter Frame'**
+  String get preferredFrame;
+
+  /// No description provided for @preferredFrameAsk.
+  ///
+  /// In de, this message translates to:
+  /// **'Jedes Mal fragen'**
+  String get preferredFrameAsk;
+
+  /// No description provided for @preferredFrameHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Tipp auf das Frame-Symbol im Album zeigt es dort sofort.'**
+  String get preferredFrameHint;
 
   /// No description provided for @captionEdit.
   ///

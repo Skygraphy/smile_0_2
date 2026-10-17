@@ -37,7 +37,7 @@ class SlideshowPrefs {
   /// 'auto' | 'portrait' | 'landscape' -- only while the slideshow plays.
   final String orientation;
 
-  /// 'full' | 'photo'
+  /// 'full' | 'photo' | 'none' (no videos)
   final String videoLength;
 
   /// 'fit' | 'auto' | 'fill'
@@ -173,7 +173,7 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
   }
 
   void _applyPrefs(SlideshowPrefs prefs) {
-    final reorder = prefs.order != _prefs.order;
+    final reorder = prefs.order != _prefs.order || (prefs.videoLength == 'none') != (_prefs.videoLength == 'none');
     setState(() {
       _prefs = prefs;
       if (reorder) _items = _ordered(widget.items);
@@ -183,7 +183,8 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
   }
 
   List<MediaItem> _ordered(List<MediaItem> items) {
-    final list = [...items];
+    // "Keine Videos" (2026-10-18): photos only.
+    final list = [for (final i in items) if (_prefs.videoLength != 'none' || !i.isVideo) i];
     switch (_prefs.order) {
       case 'newest':
         list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -286,7 +287,7 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                 chips([('auto', t.orientAuto), ('portrait', t.orientPortrait), ('landscape', t.orientLandscape)],
                     p.orientation, (v) => p.copyWith(orientation: v)),
                 label(t.videoLengthLabel),
-                chips([('full', t.videoFull), ('photo', t.videoAsPhoto(p.seconds))], p.videoLength,
+                chips([('full', t.videoFull), ('photo', t.videoAsPhoto(p.seconds)), ('none', t.videoNone)], p.videoLength,
                     (v) => p.copyWith(videoLength: v)),
                 label(t.fillLabel),
                 chips([('fit', t.fillNever), ('auto', t.fillAuto), ('fill', t.fillAlways)], p.fillMode,

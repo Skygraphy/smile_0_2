@@ -60,7 +60,7 @@ const SETTABLE: Record<string, { control: string; ok: (v: unknown) => boolean }>
   video_sound: { control: "playback", ok: (v) => typeof v === "boolean" },
   show_clock: { control: "playback", ok: (v) => typeof v === "boolean" },
   show_sender: { control: "playback", ok: (v) => typeof v === "boolean" },
-  video_length: { control: "playback", ok: (v) => ["full", "photo"].includes(v as string) },
+  video_length: { control: "playback", ok: (v) => ["full", "photo", "none"].includes(v as string) },
   fill_mode: { control: "playback", ok: (v) => ["fit", "auto", "fill"].includes(v as string) },
   slow_zoom: { control: "playback", ok: (v) => typeof v === "boolean" },
   // 2026-10-17: the rest of the playback settings on level 5 too.
