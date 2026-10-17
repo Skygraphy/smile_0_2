@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' show PermissionStatus;
 import 'package:share_plus/share_plus.dart';
 import 'package:smile_design_system/smile_design_system.dart';
@@ -47,6 +48,15 @@ class _ContactsInviteScreenState extends State<ContactsInviteScreen> {
   List<PhoneContact> _contacts = const [];
   String _query = '';
   String? _error;
+  final _scroll = ScrollController();
+  /// The letter shown big while dragging along the A–Z rail.
+  String? _dragLetter;
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -193,6 +203,29 @@ class _ContactsInviteScreenState extends State<ContactsInviteScreen> {
     );
   }
 
+  // Fixed heights (2026-10-17, A–Z rail): a jump to a letter lands
+  // exactly, also with hundreds of contacts, and the list stays lazy.
+  static const _labelHeight = 36.0;
+  static const _letterHeight = 32.0;
+  static const _rowHeight = 64.0;
+  static const _letters = [
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', //
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '#',
+  ];
+
+  /// "Öztürk" -> O, "Émile" -> E, "1A Installateur" -> #.
+  static String _letterOf(String name) {
+    const plain = {
+      'Ä': 'A', 'Á': 'A', 'À': 'A', 'Â': 'A', 'Å': 'A', 'Ö': 'O', 'Ó': 'O', 'Ò': 'O', 'Ô': 'O', 'Ø': 'O',
+      'Ü': 'U', 'Ú': 'U', 'Ù': 'U', 'Û': 'U', 'É': 'E', 'È': 'E', 'Ê': 'E', 'Ë': 'E', 'Í': 'I', 'Ì': 'I',
+      'Î': 'I', 'Ï': 'I', 'Ç': 'C', 'Č': 'C', 'Ć': 'C', 'Š': 'S', 'Ś': 'S', 'Ž': 'Z', 'Ź': 'Z', 'Ñ': 'N',
+    };
+    if (name.isEmpty) return '#';
+    final first = name.characters.first.toUpperCase();
+    final letter = plain[first] ?? first;
+    return RegExp('^[A-Z]\$').hasMatch(letter) ? letter : '#';
+  }
+
   Widget _list(BuildContext context) {
     final t = SmileTexts.of(context);
     final scheme = Theme.of(context).colorScheme;
@@ -208,13 +241,151 @@ class _ContactsInviteScreenState extends State<ContactsInviteScreen> {
     // One row per Smile person, even if several contacts point to them.
     final seen = <String>{};
     final inSmile = [for (final c in shown) if (c.smile != null && seen.add(c.smile!.userId)) c];
-    final others = widget.message == null ? const <PhoneContact>[] : shown.where((c) => c.smile == null).toList();
+    final others = widget.message == null ? <PhoneContact>[] : shown.where((c) => c.smile == null).toList();
 
-    Widget label(String text) => Padding(
-          padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.m, SmileSpacing.l, SmileSpacing.xs),
-          child: Text(text.toUpperCase(),
-              style: TextStyle(fontSize: 12, letterSpacing: 0.7, fontWeight: FontWeight.w600, color: muted)),
+    // "Noch nicht in Smile" grouped A..Z, # last.
+    final groups = <String, List<PhoneContact>>{};
+    for (final c in others) {
+      groups.putIfAbsent(_letterOf(c.name), () => []).add(c);
+    }
+    final useLetters = q.isEmpty && others.length > 12;
+
+    // The flat list: (kind, payload) with a known height each.
+    final items = <(String, Object?)>[];
+    final letterOffsets = <String, double>{};
+    var offset = 0.0;
+    void add(String kind, Object? payload, double height) {
+      items.add((kind, payload));
+      offset += height;
+    }
+
+    if (inSmile.isNotEmpty) add('label', t.inSmile, _labelHeight);
+    for (final c in inSmile) {
+      add('smile', c, _rowHeight);
+    }
+    if (others.isNotEmpty) add('label', t.notInSmile, _labelHeight);
+    if (useLetters) {
+      for (final letter in _letters) {
+        final group = groups[letter];
+        if (group == null) continue;
+        letterOffsets[letter] = offset;
+        add('letter', letter, _letterHeight);
+        for (final c in group) {
+          add('other', c, _rowHeight);
+        }
+      }
+    } else {
+      for (final c in others) {
+        add('other', c, _rowHeight);
+      }
+    }
+    double heightOf(int i) => switch (items[i].$1) {
+          'label' => _labelHeight,
+          'letter' => _letterHeight,
+          _ => _rowHeight,
+        };
+
+    Widget row({
+      required Widget leading,
+      required String title,
+      required String subtitle,
+      Widget? trailing,
+      VoidCallback? onTap,
+    }) =>
+        InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: _rowHeight,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.l),
+              child: Row(
+                children: [
+                  leading,
+                  const SizedBox(width: SmileSpacing.m),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15)),
+                        Text(subtitle,
+                            maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12.5, color: muted)),
+                      ],
+                    ),
+                  ),
+                  ?trailing,
+                ],
+              ),
+            ),
+          ),
         );
+
+    Widget letterHeader(String letter) => Container(
+          height: _letterHeight,
+          color: scheme.surface,
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.l),
+          child: Text(letter, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: scheme.primary)),
+        );
+
+    Widget item(BuildContext context, int i) {
+      final (kind, payload) = items[i];
+      switch (kind) {
+        case 'label':
+          return SizedBox(
+            height: _labelHeight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.m, SmileSpacing.l, 0),
+              child: Text((payload as String).toUpperCase(),
+                  style: TextStyle(fontSize: 12, letterSpacing: 0.7, fontWeight: FontWeight.w600, color: muted)),
+            ),
+          );
+        case 'letter':
+          return letterHeader(payload as String);
+        case 'smile':
+          final c = payload as PhoneContact;
+          final person = c.smile!;
+          final reason = widget.whyNot?.call(person);
+          final tile = row(
+            leading: SmileAvatar(name: person.name, avatarUrl: person.avatarUrl, size: 40),
+            title: c.name,
+            subtitle: reason ?? t.inSmileAs(person.name),
+            trailing: reason != null
+                ? null
+                : Text(t.contactInvite, style: TextStyle(color: scheme.primary, fontWeight: FontWeight.w600, fontSize: 13)),
+            onTap: reason != null ? null : () => _invitePerson(person),
+          );
+          return reason != null ? Opacity(opacity: 0.5, child: tile) : tile;
+        default:
+          final c = payload as PhoneContact;
+          return row(
+            leading: SmileAvatar(name: c.name, size: 40),
+            title: c.name,
+            subtitle: c.phones.isNotEmpty ? c.phones.first.number : c.emails.first,
+            trailing: Text(t.contactInvite, style: TextStyle(color: muted, fontSize: 13)),
+            onTap: () => _inviteContact(c),
+          );
+      }
+    }
+
+    void jumpTo(String letter) {
+      // An empty letter: the next one that has contacts.
+      final from = _letters.indexOf(letter);
+      final target = _letters.skip(from).firstWhere(letterOffsets.containsKey, orElse: () => '');
+      if (target.isEmpty || !_scroll.hasClients) return;
+      final max = _scroll.position.maxScrollExtent;
+      _scroll.jumpTo(letterOffsets[target]!.clamp(0.0, max));
+    }
+
+    void railAt(double y, double height) {
+      final i = (y / height * _letters.length).floor().clamp(0, _letters.length - 1);
+      final letter = _letters[i];
+      if (letter != _dragLetter) {
+        HapticFeedback.selectionClick();
+        setState(() => _dragLetter = letter);
+      }
+      jumpTo(letter);
+    }
 
     return Column(
       children: [
@@ -236,51 +407,96 @@ class _ContactsInviteScreenState extends State<ContactsInviteScreen> {
             padding: const EdgeInsets.all(SmileSpacing.m),
             child: Text(_error!, style: TextStyle(color: scheme.error)),
           ),
-        Expanded(
-          child: ListView(
-            padding: EdgeInsets.only(bottom: SmileSpacing.l + MediaQuery.paddingOf(context).bottom),
-            children: [
-              if (inSmile.isNotEmpty) label(t.inSmile),
-              for (final c in inSmile)
-                if (widget.whyNot?.call(c.smile!) case final reason?)
-                  Opacity(
-                    opacity: 0.5,
-                    child: SmileObjectTile(
-                      leading: SmileAvatar(name: c.smile!.name, avatarUrl: c.smile!.avatarUrl, size: 40),
-                      title: c.name,
-                      subtitle: reason,
-                    ),
-                  )
-                else
-                  SmileObjectTile(
-                    leading: SmileAvatar(name: c.smile!.name, avatarUrl: c.smile!.avatarUrl, size: 40),
-                    title: c.name,
-                    subtitle: t.inSmileAs(c.smile!.name),
-                    trailing: Text(t.contactInvite,
-                        style: TextStyle(color: scheme.primary, fontWeight: FontWeight.w600, fontSize: 13)),
-                    onTap: () => _invitePerson(c.smile!),
-                  ),
-              if (widget.message == null)
-                Padding(
-                  padding: const EdgeInsets.all(SmileSpacing.l),
-                  child: Text(t.contactsOnlySmileHint, style: TextStyle(color: muted, fontSize: 13)),
-                ),
-              if (others.isNotEmpty) label(t.notInSmile),
-              for (final c in others)
-                SmileObjectTile(
-                  leading: SmileAvatar(name: c.name, size: 40),
-                  title: c.name,
-                  subtitle: c.phones.isNotEmpty ? c.phones.first.number : c.emails.first,
-                  trailing: Text(t.contactInvite, style: TextStyle(color: muted, fontSize: 13)),
-                  onTap: () => _inviteContact(c),
-                ),
-              if (inSmile.isEmpty && others.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(SmileSpacing.l),
-                  child: Text(t.noContacts, style: TextStyle(color: muted)),
-                ),
-            ],
+        if (widget.message == null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.s, SmileSpacing.l, 0),
+            child: Text(t.contactsOnlySmileHint, style: TextStyle(color: muted, fontSize: 13)),
           ),
+        Expanded(
+          child: items.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(SmileSpacing.l),
+                  child: Align(alignment: Alignment.topLeft, child: Text(t.noContacts, style: TextStyle(color: muted))),
+                )
+              : Stack(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(right: useLetters ? 24 : 0),
+                      child: ListView.builder(
+                        controller: _scroll,
+                        padding: EdgeInsets.only(bottom: SmileSpacing.l + MediaQuery.paddingOf(context).bottom),
+                        itemCount: items.length,
+                        itemExtentBuilder: (i, _) => i < items.length ? heightOf(i) : null,
+                        itemBuilder: item,
+                      ),
+                    ),
+                    // The current letter stays on top while scrolling.
+                    if (useLetters)
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 24,
+                        child: AnimatedBuilder(
+                          animation: _scroll,
+                          builder: (context, _) {
+                            final at = _scroll.hasClients ? _scroll.offset : 0.0;
+                            String? current;
+                            for (final e in letterOffsets.entries) {
+                              if (e.value <= at) current = e.key;
+                            }
+                            return current == null ? const SizedBox.shrink() : letterHeader(current);
+                          },
+                        ),
+                      ),
+                    // A–Z, like the Android phone book.
+                    if (useLetters)
+                      Positioned(
+                        top: 4,
+                        bottom: 4 + MediaQuery.paddingOf(context).bottom,
+                        right: 2,
+                        width: 22,
+                        child: LayoutBuilder(
+                          builder: (context, box) => GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTapDown: (d) => railAt(d.localPosition.dy, box.maxHeight),
+                            onTapUp: (_) => setState(() => _dragLetter = null),
+                            onVerticalDragStart: (d) => railAt(d.localPosition.dy, box.maxHeight),
+                            onVerticalDragUpdate: (d) => railAt(d.localPosition.dy, box.maxHeight),
+                            onVerticalDragEnd: (_) => setState(() => _dragLetter = null),
+                            onVerticalDragCancel: () => setState(() => _dragLetter = null),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                for (final letter in _letters)
+                                  Text(
+                                    letter,
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: letter == _dragLetter
+                                          ? scheme.primary
+                                          : muted.withValues(alpha: letterOffsets.containsKey(letter) ? 1 : 0.35),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    // The big letter while dragging.
+                    if (_dragLetter != null)
+                      Center(
+                        child: Container(
+                          width: 72,
+                          height: 72,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(color: scheme.primary, borderRadius: BorderRadius.circular(36)),
+                          child: Text(_dragLetter!,
+                              style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: scheme.onPrimary)),
+                        ),
+                      ),
+                  ],
+                ),
         ),
       ],
     );
