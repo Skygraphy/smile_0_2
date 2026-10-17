@@ -114,7 +114,9 @@ class SmileIcons {
   // --- Smile-Frame -----------------------------------------------------
   /// Switch the Frame between slideshow and the tile overview.
   static const IconData overview = IconData(0xe1fc, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
-  static const IconData slideshow = IconData(0xe3d0, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// Phosphor `slideshow` (images with arrows) -- chosen by the user 2026-10-17
+  /// instead of the play triangle.
+  static const IconData slideshow = IconData(0xed32, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 
   /// "More to choose from here" (the album switcher on the Frame).
   static const IconData switchAlbum = IconData(0xe140, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
