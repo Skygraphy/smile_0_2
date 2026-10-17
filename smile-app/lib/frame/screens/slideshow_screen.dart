@@ -1037,11 +1037,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
     final settings = _settings;
     final caption = current?.caption?.trim();
-    final String? title = !_showGrid && !_barVisible && (settings?.showCaptions ?? true) && caption != null && caption.isNotEmpty
-        ? caption
-        : null;
+    final String? title =
+        !_showGrid && (settings?.showCaptions ?? true) && caption != null && caption.isNotEmpty ? caption : null;
     // Pills at the bottom move up while a title is shown.
-    final aboveTitle = title == null ? 0.0 : 150.0;
+    final aboveTitle = title == null ? 0.0 : 110.0;
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
@@ -1068,8 +1067,6 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                 ),
               ),
             if (!_showGrid && (settings?.showClock ?? false)) Positioned(right: 20, top: 20, child: _clock()),
-            // The photo's title (2026-10-17): big, at the bottom, two lines at most.
-            if (title != null) Positioned(left: 0, right: 0, bottom: 0, child: _titleBand(title)),
             // "Neu von …" at the bottom, out of the way of clock and caption.
             if (!_showGrid && _newFrom != null && !_barVisible)
               Positioned(
@@ -1084,18 +1081,23 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
             // A video: the big sound button in the middle, with the bar.
             if (!_showGrid && _showingVideo && _barVisible)
               Positioned.fill(child: Center(child: _soundButton(t))),
+            // At the bottom: the photo's title (2026-10-17, always while titles
+            // are on) and, when open, the buttons below it.
             if (!_showGrid)
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 0,
-                child: IgnorePointer(
-                  ignoring: !_barVisible,
-                  child: AnimatedOpacity(
-                    opacity: _barVisible ? 1 : 0,
-                    duration: const Duration(milliseconds: 200),
-                    child: _bar(t),
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ?(title == null ? null : _titleBand(title)),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 200),
+                      alignment: Alignment.bottomCenter,
+                      child: _barVisible ? _bar(t) : const SizedBox(width: double.infinity),
+                    ),
+                  ],
                 ),
               ),
           ],
@@ -1184,26 +1186,15 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   Widget _titleBand(String text) => IgnorePointer(
         child: Container(
-          padding: const EdgeInsets.fromLTRB(48, 56, 48, 36),
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.transparent, Color(0xB0000000)],
-            ),
-          ),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+          color: Colors.black.withValues(alpha: 0.62),
           child: Text(
             text,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 30,
-              fontWeight: FontWeight.w500,
-              height: 1.3,
-              shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
-            ),
+            style: const TextStyle(color: SmileTheme.primary, fontSize: 30, fontWeight: FontWeight.w500, height: 1.3),
           ),
         ),
       );
@@ -1443,6 +1434,31 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                     children: [
                       _photo(entry, BoxFit.cover),
                       if (entry.isVideo) const Center(child: Icon(SmileIcons.play, size: 40, color: Colors.white70)),
+                      // Its title, as in the slideshow (2026-10-17): while
+                      // titles are on; room on the right for the heart.
+                      if ((_settings?.showCaptions ?? true) && (entry.caption?.trim().isNotEmpty ?? false))
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: IgnorePointer(
+                            child: Container(
+                              padding: EdgeInsets.fromLTRB(10, 6, _controls.favorite ? 60 : 10, 6),
+                              color: Colors.black.withValues(alpha: 0.62),
+                              child: Text(
+                                entry.caption!.trim(),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: SmileTheme.primary,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.25,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       // A heart per photo (2026-10-14): a tap on it marks or
                       // takes back, a tap on the photo still opens it. Its
                       // tap area is big, so the photo isn't hit by mistake.
