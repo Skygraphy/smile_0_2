@@ -480,10 +480,18 @@ class SyncService {
     final data = page.firstPageData!;
     final currentChannelId = data['channel_id'] as String?;
     final assignedChannels = _assignedFrom(data);
+    // The shown album's titles (and senders) from this first answer already
+    // -- a changed title used to wait until every album was synced
+    // (2026-10-18).
+    final firstById = {for (final r in page.items) r.mediaItemId: r};
+    final early = [
+      for (final e in local)
+        if (firstById[e.mediaItemId] case final remote?) e.refreshedFrom(remote) else e,
+    ];
     onEarlyResult?.call(SyncResult(
       channelId: currentChannelId,
-      entries: local.where((e) => e.channelId == currentChannelId).toList(),
-      allEntries: local,
+      entries: early.where((e) => e.channelId == currentChannelId).toList(),
+      allEntries: early,
       favorites: _favoritesFrom(data),
       settings: _settingsFrom(data),
       assignedChannels: assignedChannels,
