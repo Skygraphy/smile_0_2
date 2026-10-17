@@ -38,12 +38,16 @@ class SmilePhotoStage extends StatefulWidget {
   final SmileFillMode fillMode;
   final bool slowZoom;
 
-  /// How long the photo is shown. Up to [breathAfter] the zoom takes exactly
-  /// that long; longer, it "breathes": [breathAfter] in, as long out, again
-  /// and again (2026-10-17), so it never grows too big and never stands still.
+  /// How long the photo is shown. The zoom always moves at the same speed
+  /// (2026-10-17, like the photo memories of Google/Apple Photos): [zoomPerSecond]
+  /// up to at most [maxZoom]. A shorter photo just grows less; a longer one
+  /// "breathes" -- [breathAfter] in, as long out, again and again -- so it
+  /// never grows too big and never stands still.
   final Duration duration;
 
-  static const breathAfter = Duration(seconds: 15);
+  static const zoomPerSecond = 0.008;
+  static const maxZoom = 0.08;
+  static const breathAfter = Duration(seconds: 10); // maxZoom / zoomPerSecond
 
   /// At most this share of the photo may be cut off for "auto" to fill.
   static const autoFillTolerance = 0.15;
@@ -65,6 +69,11 @@ class _SmilePhotoStageState extends State<SmilePhotoStage> with SingleTickerProv
   }
 
   bool get _breathes => widget.duration > SmilePhotoStage.breathAfter;
+
+  /// How far it grows: the same speed for every display time.
+  double get _amount => _breathes
+      ? SmilePhotoStage.maxZoom
+      : (SmilePhotoStage.zoomPerSecond * widget.duration.inMilliseconds / 1000).clamp(0.0, SmilePhotoStage.maxZoom);
 
   /// Starts (or continues from where it is) with the current duration.
   void _startZoom() {
@@ -146,7 +155,7 @@ class _SmilePhotoStageState extends State<SmilePhotoStage> with SingleTickerProv
       final photo = AnimatedBuilder(
         animation: _zoom,
         builder: (context, child) => Transform.scale(
-          scale: 1 + 0.08 * Curves.easeInOut.transform(_zoom.value),
+          scale: 1 + _amount * Curves.easeInOut.transform(_zoom.value),
           child: child,
         ),
         child: Image(image: widget.image, fit: fills ? BoxFit.cover : BoxFit.contain, gaplessPlayback: true),
