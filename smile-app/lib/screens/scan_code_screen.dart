@@ -27,8 +27,10 @@ class ScanCodeScreen extends StatefulWidget {
 
 class _ScanCodeScreenState extends State<ScanCodeScreen> {
   final _service = InviteService();
-  final _scanner = MobileScannerController(formats: const [BarcodeFormat.qrCode]);
-  bool _busy = false;
+  // A code from a link is redeemed right away: no camera unless that fails
+  // (it was started and disposed at once, 2026-10-17).
+  late final _scanner = MobileScannerController(formats: const [BarcodeFormat.qrCode], autoStart: widget.initial == null);
+  late bool _busy = widget.initial != null;
 
   @override
   void initState() {

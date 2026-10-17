@@ -8,6 +8,7 @@ import '../services/offline.dart';
 import '../services/sync_bus.dart';
 import '../services/invite_links.dart';
 import 'channels_home_screen.dart';
+import 'person_screen.dart';
 import 'scan_code_screen.dart';
 import 'frames_screen.dart';
 import 'spaces_screen.dart';
@@ -58,7 +59,13 @@ class _HomeShellState extends State<HomeShell> with SyncReload {
     if (link == null || _takingInvite || !mounted) return;
     _takingInvite = true;
     await InviteLinks.clear();
-    if (mounted) await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ScanCodeScreen(initial: link)));
+    // A card goes straight to the person -- no camera page in between
+    // (2026-10-17: it made opening a card slow).
+    if (mounted) {
+      await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => link.handle != null ? PersonScreen(handle: link.handle!) : ScanCodeScreen(initial: link),
+      ));
+    }
     _takingInvite = false;
   }
 
