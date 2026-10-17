@@ -4,4 +4,6 @@
          neutral with no hue tint (the app's dark surfaces must stay
          grayscale, not pick up the coral primary). -->
     <color name="ic_launcher_background">#121212</color>
+    <!-- Living Coral: the app icon's background (2026-10-17). -->
+    <color name="smile_coral">#FF6F61</color>
 </resources>
