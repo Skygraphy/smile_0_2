@@ -174,11 +174,11 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     if (item.isVideo) {
       final path = item.localVideoPath;
       if (path == null) return;
-      screen = VideoPlayerScreen(mediaId: item.mediaItemId ?? item.id, url: null, localPath: path);
+      screen = VideoPlayerScreen(mediaId: item.mediaItemId ?? item.id, url: null, localPath: path, caption: item.caption);
     } else {
       final bytes = item.tileBytes;
       if (bytes == null) return;
-      screen = PhotoViewerScreen.local(localBytes: bytes);
+      screen = PhotoViewerScreen.local(localBytes: bytes, localCaption: item.caption);
     }
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
   }

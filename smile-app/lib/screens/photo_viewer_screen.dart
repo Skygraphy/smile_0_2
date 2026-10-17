@@ -18,11 +18,12 @@ class PhotoViewerScreen extends StatefulWidget {
     this.onFavorite,
     this.favorite = false,
     this.onEditCaption,
-  }) : localBytes = null;
+  })  : localBytes = null,
+        localCaption = null;
 
   /// A photo still on its way to the server (2026-10-12): straight from
   /// the phone.
-  const PhotoViewerScreen.local({super.key, required Uint8List this.localBytes})
+  const PhotoViewerScreen.local({super.key, required Uint8List this.localBytes, this.localCaption})
       : item = null,
         onShowOnFrame = null,
         onFavorite = null,
@@ -48,13 +49,16 @@ class PhotoViewerScreen extends StatefulWidget {
   final MediaItem? item;
   final Uint8List? localBytes;
 
+  /// The title of a photo still on its way (2026-10-17).
+  final String? localCaption;
+
   @override
   State<PhotoViewerScreen> createState() => _PhotoViewerScreenState();
 }
 
 class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
   late bool _favorite = widget.favorite;
-  late String? _caption = widget.item?.caption;
+  late String? _caption = widget.item?.caption ?? widget.localCaption;
   final _zoom = TransformationController();
 
   @override
