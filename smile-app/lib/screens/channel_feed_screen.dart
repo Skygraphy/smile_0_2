@@ -546,8 +546,19 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     if (next != _stickyDate) setState(() => _stickyDate = next);
   }
 
+  /// Kept so a note about this album can go when the album is left
+  /// (2026-10-18: "Küche zeigt jetzt Boot" showed on in another album).
+  ScaffoldMessengerState? _messenger;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _messenger = ScaffoldMessenger.maybeOf(context);
+  }
+
   @override
   void dispose() {
+    _messenger?.hideCurrentSnackBar();
     // Only clear it if no other feed took over in the meantime.
     if (ForegroundNotifications.openAlbumId == widget.channelId) ForegroundNotifications.openAlbumId = null;
     _scrollController.dispose();
