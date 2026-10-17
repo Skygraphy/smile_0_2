@@ -36,13 +36,15 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Invite links (2026-10-17): smileapp.app/i/CODE opens Smile;
+            <!-- Invite links (2026-10-17): smileapp.app/i/CODE and a card's
+                 smileapp.app/@name open Smile;
                  verified through smileapp.app/.well-known/assetlinks.json. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https" android:host="smileapp.app" android:pathPrefix="/i/"/>
+                <data android:scheme="https" android:host="smileapp.app" android:pathPrefix="/@"/>
             </intent-filter>
             <!-- The links are handled by InviteLinks (app_links), not by
                  Flutter's own router. -->

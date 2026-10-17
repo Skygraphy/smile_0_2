@@ -146,4 +146,8 @@ class SmileIcons {
   /// Lieblingsbilder (2026-10-14): outline = not marked, filled = marked.
   static const IconData heart = IconData(0xe2a8, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData heartFilled = IconData(0xe2a8, fontFamily: 'PhosphorFill', fontPackage: _pkg);
+
+  /// Smile-Name (@name) and the personal card (2026-10-17).
+  static const IconData handle = IconData(0xe0ac, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  static const IconData card = IconData(0xe2c8, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 }

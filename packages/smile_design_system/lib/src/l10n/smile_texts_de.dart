@@ -1091,11 +1091,11 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get qrScanHint =>
-      'Mit der Smile-App scannen: Neuigkeiten → Code scannen. Oder den Code eintippen.';
+      'Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Oder den Code eintippen.';
 
   @override
   String get qrScanHintCoAdmin =>
-      'Mit der Smile-App scannen: Neuigkeiten → Code scannen. Co-Admin wird man nur per QR-Code vor Ort.';
+      'Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Co-Admin wird man nur per QR-Code vor Ort.';
 
   @override
   String get qrValid => 'Gilt 24 Stunden.';
@@ -1780,4 +1780,73 @@ class SmileTextsDe extends SmileTexts {
   String inviteMessageCodeFallback(String code) {
     return 'Falls der Link nicht geht: In Smile ⋮ → Code scannen → Code eintippen: $code';
   }
+
+  @override
+  String get smileName => 'Smile-Name';
+
+  @override
+  String get smileNameChoose => 'Smile-Namen wählen';
+
+  @override
+  String get smileNameHint =>
+      'Wer deinen Smile-Namen genau kennt, findet dich in Smile und kann dich einladen. Gefunden wird nur der ganze Name, niemand kann stöbern.';
+
+  @override
+  String get smileNameRules =>
+      '3 bis 24 Zeichen: Kleinbuchstaben, Ziffern, Punkt und Unterstrich.';
+
+  @override
+  String get smileNameFree => 'Frei';
+
+  @override
+  String get smileNameTaken => 'Schon vergeben';
+
+  @override
+  String get smileNameInvalid =>
+      'Nur a–z, 0–9, Punkt und Unterstrich, 3 bis 24 Zeichen';
+
+  @override
+  String get smileNameRemove => 'Smile-Namen entfernen';
+
+  @override
+  String get smileNameSaveError =>
+      'Der Smile-Name konnte nicht gespeichert werden. Bitte versuche es noch einmal.';
+
+  @override
+  String get myCard => 'Meine Karte';
+
+  @override
+  String get myCardHint =>
+      'Zeig diese Karte her oder teile sie, damit dich jemand in ein Album einladen kann.';
+
+  @override
+  String get shareMyCard => 'Meine Karte teilen';
+
+  @override
+  String myCardMessage(String link) {
+    return 'Lade mich in Smile ein: $link';
+  }
+
+  @override
+  String get myCardNeedsName =>
+      'Wähle zuerst einen Smile-Namen. Dann bekommst du deine Karte mit QR-Code.';
+
+  @override
+  String get searchNameOrHandle => 'Name oder @Smile-Name';
+
+  @override
+  String get personNotFound => 'Diesen Smile-Namen gibt es nicht.';
+
+  @override
+  String get personIsYou => 'Das ist deine eigene Karte.';
+
+  @override
+  String get inviteIntoAlbum => 'In ein Album einladen';
+
+  @override
+  String get pickAlbumToInvite => 'In welches Album?';
+
+  @override
+  String get noAlbumsToInvite =>
+      'Du verwaltest noch kein Album, in das du einladen kannst.';
 }

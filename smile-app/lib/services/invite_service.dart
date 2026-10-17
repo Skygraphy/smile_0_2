@@ -14,6 +14,7 @@ class KnownPerson {
     this.avatarUrl,
     this.context,
     this.managesASpace = false,
+    this.handle,
   });
 
   final String userId;
@@ -22,6 +23,18 @@ class KnownPerson {
   /// Where one knows them from: an album or a Space name.
   final String? context;
   final bool managesASpace;
+
+  /// Set when found by the Smile name (migrations/0080).
+  final String? handle;
+}
+
+/// An album the caller manages, to invite someone into.
+class InvitableAlbum {
+  const InvitableAlbum({required this.id, required this.name, required this.spaceName});
+
+  final String id;
+  final String name;
+  final String spaceName;
 }
 
 /// What an invite code is for (create-invite-code).
@@ -98,6 +111,33 @@ class InviteService {
               avatarUrl: avatarPathToUrl(r['avatar_path'] as String?),
               context: r['context'] as String?,
               managesASpace: r['manages_a_space'] == true,
+            ))
+        .toList();
+  }
+
+  /// Exactly one person by their Smile name, or null (never oneself).
+  Future<KnownPerson?> findByHandle(String raw) async {
+    final rows = await supabase.rpc('find_person_by_handle', params: {'raw': raw}) as List;
+    if (rows.isEmpty) return null;
+    final r = rows.first as Map<String, dynamic>;
+    return KnownPerson(
+      userId: r['user_id'] as String,
+      name: r['display_name'] as String,
+      avatarUrl: avatarPathToUrl(r['avatar_path'] as String?),
+      managesASpace: r['manages_a_space'] == true,
+      handle: r['handle'] as String?,
+    );
+  }
+
+  /// The albums of Spaces the caller manages.
+  Future<List<InvitableAlbum>> albumsICanInviteTo() async {
+    final rows = await supabase.rpc('albums_i_can_invite_to') as List;
+    return rows
+        .cast<Map<String, dynamic>>()
+        .map((r) => InvitableAlbum(
+              id: r['channel_id'] as String,
+              name: r['channel_name'] as String,
+              spaceName: r['space_name'] as String,
             ))
         .toList();
   }

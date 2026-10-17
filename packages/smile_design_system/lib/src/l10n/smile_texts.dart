@@ -1843,13 +1843,13 @@ abstract class SmileTexts {
   /// No description provided for @qrScanHint.
   ///
   /// In de, this message translates to:
-  /// **'Mit der Smile-App scannen: Neuigkeiten → Code scannen. Oder den Code eintippen.'**
+  /// **'Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Oder den Code eintippen.'**
   String get qrScanHint;
 
   /// No description provided for @qrScanHintCoAdmin.
   ///
   /// In de, this message translates to:
-  /// **'Mit der Smile-App scannen: Neuigkeiten → Code scannen. Co-Admin wird man nur per QR-Code vor Ort.'**
+  /// **'Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Co-Admin wird man nur per QR-Code vor Ort.'**
   String get qrScanHintCoAdmin;
 
   /// No description provided for @qrValid.
@@ -3033,6 +3033,126 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Falls der Link nicht geht: In Smile ⋮ → Code scannen → Code eintippen: {code}'**
   String inviteMessageCodeFallback(String code);
+
+  /// No description provided for @smileName.
+  ///
+  /// In de, this message translates to:
+  /// **'Smile-Name'**
+  String get smileName;
+
+  /// No description provided for @smileNameChoose.
+  ///
+  /// In de, this message translates to:
+  /// **'Smile-Namen wählen'**
+  String get smileNameChoose;
+
+  /// No description provided for @smileNameHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Wer deinen Smile-Namen genau kennt, findet dich in Smile und kann dich einladen. Gefunden wird nur der ganze Name, niemand kann stöbern.'**
+  String get smileNameHint;
+
+  /// No description provided for @smileNameRules.
+  ///
+  /// In de, this message translates to:
+  /// **'3 bis 24 Zeichen: Kleinbuchstaben, Ziffern, Punkt und Unterstrich.'**
+  String get smileNameRules;
+
+  /// No description provided for @smileNameFree.
+  ///
+  /// In de, this message translates to:
+  /// **'Frei'**
+  String get smileNameFree;
+
+  /// No description provided for @smileNameTaken.
+  ///
+  /// In de, this message translates to:
+  /// **'Schon vergeben'**
+  String get smileNameTaken;
+
+  /// No description provided for @smileNameInvalid.
+  ///
+  /// In de, this message translates to:
+  /// **'Nur a–z, 0–9, Punkt und Unterstrich, 3 bis 24 Zeichen'**
+  String get smileNameInvalid;
+
+  /// No description provided for @smileNameRemove.
+  ///
+  /// In de, this message translates to:
+  /// **'Smile-Namen entfernen'**
+  String get smileNameRemove;
+
+  /// No description provided for @smileNameSaveError.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Smile-Name konnte nicht gespeichert werden. Bitte versuche es noch einmal.'**
+  String get smileNameSaveError;
+
+  /// No description provided for @myCard.
+  ///
+  /// In de, this message translates to:
+  /// **'Meine Karte'**
+  String get myCard;
+
+  /// No description provided for @myCardHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Zeig diese Karte her oder teile sie, damit dich jemand in ein Album einladen kann.'**
+  String get myCardHint;
+
+  /// No description provided for @shareMyCard.
+  ///
+  /// In de, this message translates to:
+  /// **'Meine Karte teilen'**
+  String get shareMyCard;
+
+  /// No description provided for @myCardMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Lade mich in Smile ein: {link}'**
+  String myCardMessage(String link);
+
+  /// No description provided for @myCardNeedsName.
+  ///
+  /// In de, this message translates to:
+  /// **'Wähle zuerst einen Smile-Namen. Dann bekommst du deine Karte mit QR-Code.'**
+  String get myCardNeedsName;
+
+  /// No description provided for @searchNameOrHandle.
+  ///
+  /// In de, this message translates to:
+  /// **'Name oder @Smile-Name'**
+  String get searchNameOrHandle;
+
+  /// No description provided for @personNotFound.
+  ///
+  /// In de, this message translates to:
+  /// **'Diesen Smile-Namen gibt es nicht.'**
+  String get personNotFound;
+
+  /// No description provided for @personIsYou.
+  ///
+  /// In de, this message translates to:
+  /// **'Das ist deine eigene Karte.'**
+  String get personIsYou;
+
+  /// No description provided for @inviteIntoAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'In ein Album einladen'**
+  String get inviteIntoAlbum;
+
+  /// No description provided for @pickAlbumToInvite.
+  ///
+  /// In de, this message translates to:
+  /// **'In welches Album?'**
+  String get pickAlbumToInvite;
+
+  /// No description provided for @noAlbumsToInvite.
+  ///
+  /// In de, this message translates to:
+  /// **'Du verwaltest noch kein Album, in das du einladen kannst.'**
+  String get noAlbumsToInvite;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

@@ -29,6 +29,8 @@
   .small { font-size: 13px; }
   .hidden { display: none !important; }
   a.plain { color: var(--coral); }
+  .handle { color: #FF6F61; font-weight: 600; margin-top: -6px; }
+  .handle:empty { display: none; }
 </style>
 </head>
 <body>
@@ -68,7 +70,8 @@
   <!-- Person (Smile name) -->
   <section id="person" class="card hidden">
     <h1 id="person-title">Smile</h1>
-    <p>Öffne diesen Link in Smile, um die Person in ein Album einzuladen.</p>
+    <p id="person-handle" class="handle"></p>
+    <p id="person-text">Öffne diesen Link in Smile, um die Person in ein Album einzuladen.</p>
     <a class="btn" id="open-person" href="#">In Smile öffnen</a>
     <a class="btn alt" data-store="android" href="#">Smile für Android holen</a>
   </section>
@@ -106,9 +109,21 @@
           : who + ' lädt dich in das Album ' + what + ' ein';
     }).catch(() => {});
   } else if (person) {
-    document.getElementById('person-title').textContent = '@' + person[1].toLowerCase();
+    const handle = person[1].toLowerCase();
+    referrer = 'person=' + handle;
+    document.getElementById('person-title').textContent = '@' + handle;
     document.getElementById('open-person').href = location.href;
     show('person');
+    fetch(PREVIEW + '?handle=' + encodeURIComponent(handle)).then((r) => r.json()).then((d) => {
+      if (d.status === 'ok' && d.name) {
+        document.getElementById('person-title').textContent = d.name;
+        document.getElementById('person-handle').textContent = '@' + d.handle;
+        document.getElementById('person-text').textContent =
+          'Mit Smile kannst du ' + d.name + ' in ein Album einladen. Öffne den Link in Smile – oder hol dir Smile zuerst.';
+      } else if (d.status === 'invalid') {
+        document.getElementById('person-text').textContent = 'Diesen Smile-Namen gibt es nicht.';
+      }
+    }).catch(() => {});
   } else {
     show('home');
   }

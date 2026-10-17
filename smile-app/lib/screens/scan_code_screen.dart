@@ -10,6 +10,7 @@ import '../services/invite_service.dart';
 import '../services/offline.dart';
 import '../widgets/friendly_error.dart';
 import 'channel_feed_screen.dart';
+import 'person_screen.dart';
 
 /// The invited side (decided 2026-10-11): scan the QR code someone shows
 /// you -- in at once -- or type the code from a message -- then the
@@ -35,7 +36,12 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
     final initial = widget.initial;
     if (initial != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(_redeem(initial.code, viaQr: initial.inPerson));
+        if (!mounted) return;
+        if (initial.handle != null) {
+          _openPerson(initial.handle!);
+        } else {
+          unawaited(_redeem(initial.code, viaQr: initial.inPerson));
+        }
       });
     }
   }
@@ -53,10 +59,21 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
       // so in person either way.
       final link = barcode.rawValue == null ? null : InviteLinks.parse(barcode.rawValue!);
       if (link != null) {
-        unawaited(_redeem(link.code, viaQr: true));
+        if (link.handle != null) {
+          _busy = true;
+          _openPerson(link.handle!);
+        } else {
+          unawaited(_redeem(link.code, viaQr: true));
+        }
         return;
       }
     }
+  }
+
+  /// A Smile name's card (2026-10-17): their page instead of this one.
+  void _openPerson(String handle) {
+    unawaited(_scanner.stop());
+    Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => PersonScreen(handle: handle)));
   }
 
   Future<void> _typeCode() async {

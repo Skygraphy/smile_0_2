@@ -8,10 +8,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// An invite from a link or QR code: the code, and whether it was shown in
 /// person (QR -- in at once) or came by message (the admins decide).
 class InviteLink {
-  const InviteLink(this.code, {required this.inPerson});
+  const InviteLink(this.code, {required this.inPerson}) : handle = null;
+
+  /// A person's card (smileapp.app/@name, 2026-10-17): open them to invite.
+  const InviteLink.person(String this.handle)
+      : code = '',
+        inPerson = true;
 
   final String code;
   final bool inPerson;
+  final String? handle;
 }
 
 /// Invites as real links (decided 2026-10-17, domain smileapp.app): the
@@ -26,17 +32,32 @@ class InviteLinks {
   static String forCode(String code, {required bool inPerson}) =>
       'https://$host/i/$code${inPerson ? '?s=1' : ''}';
 
+  /// A person's card: smileapp.app/@name.
+  static String forHandle(String handle) => 'https://$host/@$handle';
+
+  static final _handleShape = RegExp(r'^[a-z0-9][a-z0-9._]{1,22}[a-z0-9_]$');
+
   /// A link, an old "smile:invite:" QR code, or the store's referrer.
   static InviteLink? parse(String raw) {
     final text = raw.trim();
     final old = RegExp(r'^smile:invite:([A-Za-z0-9-]{6,7})$', caseSensitive: false).firstMatch(text);
     if (old != null) return InviteLink(_clean(old.group(1)!), inPerson: true);
     final referrer = RegExp(r'(?:^|&)invite=([A-Za-z0-9-]{6,7})').firstMatch(text);
+    final personReferrer = RegExp(r'(?:^|&)person=([A-Za-z0-9._]{3,24})').firstMatch(text);
+    if (personReferrer != null && !text.contains('://')) {
+      final handle = personReferrer.group(1)!.toLowerCase();
+      return _handleShape.hasMatch(handle) ? InviteLink.person(handle) : null;
+    }
     if (referrer != null && !text.contains('://')) {
       return InviteLink(_clean(referrer.group(1)!), inPerson: RegExp(r'(?:^|&)s=1').hasMatch(text));
     }
     final uri = Uri.tryParse(text);
     if (uri == null || !uri.host.endsWith(host)) return null;
+    final person = RegExp(r'^/@([A-Za-z0-9._]{3,24})/?$').firstMatch(Uri.decodeComponent(uri.path));
+    if (person != null) {
+      final handle = person.group(1)!.toLowerCase();
+      return _handleShape.hasMatch(handle) ? InviteLink.person(handle) : null;
+    }
     final match = RegExp(r'^/i/([A-Za-z0-9-]{6,7})/?$').firstMatch(uri.path);
     if (match == null) return null;
     return InviteLink(_clean(match.group(1)!), inPerson: uri.queryParameters['s'] == '1');
@@ -89,7 +110,9 @@ class InviteLinks {
       await prefs.setBool(_referrerKey, true);
       final details = await PlayInstallReferrer.installReferrer;
       final referrer = details.installReferrer;
-      if (referrer != null && referrer.contains('invite=')) _take(Uri.decodeComponent(referrer));
+      if (referrer != null && (referrer.contains('invite=') || referrer.contains('person='))) {
+        _take(Uri.decodeComponent(referrer));
+      }
     } catch (_) {
       // Not from the Play Store (e.g. installed by hand): nothing to take.
     }
@@ -98,7 +121,7 @@ class InviteLinks {
   static Future<void> _savePending(InviteLink link) async {
     try {
       await (await SharedPreferences.getInstance())
-          .setString(_pendingKey, '${link.code}|${link.inPerson ? 1 : 0}|${DateTime.now().millisecondsSinceEpoch}');
+          .setString(_pendingKey, '${link.handle != null ? '@${link.handle}' : link.code}|${link.inPerson ? 1 : 0}|${DateTime.now().millisecondsSinceEpoch}');
     } catch (_) {}
   }
 
@@ -113,7 +136,9 @@ class InviteLinks {
         await clear();
         return;
       }
-      pending.value = InviteLink(parts[0], inPerson: parts.length > 1 && parts[1] == '1');
+      pending.value = parts[0].startsWith('@')
+          ? InviteLink.person(parts[0].substring(1))
+          : InviteLink(parts[0], inPerson: parts.length > 1 && parts[1] == '1');
     } catch (_) {}
   }
 }

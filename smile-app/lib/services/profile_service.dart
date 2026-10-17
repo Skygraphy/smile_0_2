@@ -1,13 +1,48 @@
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestException;
+
 import 'avatar_upload.dart';
 import '../main.dart';
 import 'edge_functions.dart';
 
 class SmileProfile {
-  SmileProfile({required this.userId, required this.displayName, this.avatarUrl});
+  SmileProfile({required this.userId, required this.displayName, this.avatarUrl, this.handle});
 
   final String userId;
   final String displayName;
   final String? avatarUrl;
+
+  /// The Smile name without "@" (migrations/0080); null until chosen.
+  final String? handle;
+}
+
+/// A Smile name that is taken (or not allowed) -- only the free check
+/// while typing can race with someone else.
+class HandleTakenException implements Exception {
+  const HandleTakenException();
+}
+
+/// The shape a Smile name must have (the same check as migrations/0080).
+bool isValidHandle(String handle) {
+  const reserved = {
+    'smile', 'smileapp', 'admin', 'administrator', 'support', 'help', 'hilfe',
+    'team', 'official', 'offiziell', 'info', 'frame', 'smileframe', 'noreply', 'root',
+  };
+  return RegExp(r'^[a-z0-9][a-z0-9._]{1,22}[a-z0-9_]$').hasMatch(handle) &&
+      !handle.contains('..') &&
+      !reserved.contains(handle);
+}
+
+/// '@Ernst.Schiener ' -> 'ernst.schiener'.
+String normalizeHandle(String raw) => raw.trim().replaceFirst(RegExp('^@'), '').toLowerCase();
+
+/// A first proposal from the display name: "Ernst Schiener" -> ernst.schiener.
+String suggestHandle(String displayName) {
+  var s = displayName.toLowerCase();
+  const umlauts = {'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss', 'é': 'e', 'è': 'e', 'á': 'a', 'à': 'a'};
+  umlauts.forEach((from, to) => s = s.replaceAll(from, to));
+  s = s.replaceAll(RegExp(r'\s+'), '.').replaceAll(RegExp(r'[^a-z0-9._]'), '');
+  s = s.replaceAll(RegExp(r'\.{2,}'), '.').replaceAll(RegExp(r'^[._]+|\.+$'), '');
+  return s.length > 24 ? s.substring(0, 24).replaceAll(RegExp(r'\.+$'), '') : s;
 }
 
 /// One row per user, self-managed (migrations/0029_profiles_and_avatars.sql).
@@ -28,13 +63,34 @@ class ProfileService {
 
   Future<SmileProfile?> getMyProfile() async {
     final userId = supabase.auth.currentUser!.id;
-    final row = await supabase.from('profiles').select('display_name, avatar_path').eq('user_id', userId).maybeSingle();
+    final row =
+        await supabase.from('profiles').select('display_name, avatar_path, handle').eq('user_id', userId).maybeSingle();
     if (row == null) return null;
     return SmileProfile(
       userId: userId,
       displayName: row['display_name'] as String,
       avatarUrl: avatarPathToUrl(row['avatar_path'] as String?),
+      handle: row['handle'] as String?,
     );
+  }
+
+  /// Free for the caller (their own current name counts as free)?
+  Future<bool> isHandleAvailable(String handle) async =>
+      await supabase.rpc('handle_available', params: {'raw': handle}) == true;
+
+  /// [handle] null removes the Smile name. Throws [HandleTakenException]
+  /// when someone else got it first.
+  Future<void> setHandle(String? handle) async {
+    try {
+      await supabase.from('profiles').update({
+        'handle': handle,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('user_id', _userId());
+    } on PostgrestException catch (e) {
+      // 23505 unique, 23514 format check.
+      if (e.code == '23505' || e.code == '23514') throw const HandleTakenException();
+      rethrow;
+    }
   }
 
   Future<void> setDisplayName(String name) async {

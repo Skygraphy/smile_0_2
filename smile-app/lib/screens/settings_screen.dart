@@ -18,6 +18,8 @@ import '../widgets/friendly_error.dart';
 import '../services/video_quality.dart';
 import '../services/upload_queue.dart';
 import 'avatar_viewer_screen.dart';
+import 'handle_edit_screen.dart';
+import 'my_card_screen.dart';
 
 /// WhatsApp's own Settings screen layout: avatar with a small camera badge
 /// overlapping its bottom-right corner, name underneath. Three separate
@@ -126,7 +128,25 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
       failureText: t.nameSaveError(''),
     );
     if (!saved || !mounted) return;
-    setState(() => _profile = SmileProfile(userId: profile.userId, displayName: newName, avatarUrl: profile.avatarUrl));
+    setState(() => _profile =
+        SmileProfile(userId: profile.userId, displayName: newName, avatarUrl: profile.avatarUrl, handle: profile.handle));
+  }
+
+  /// "Smile-Namen wählen" (2026-10-17).
+  Future<void> _editHandle() async {
+    final profile = _profile;
+    if (profile == null) return;
+    final saved = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => HandleEditScreen(current: profile.handle, displayName: profile.displayName)),
+    );
+    if (saved != null && mounted) await _load();
+  }
+
+  Future<void> _openCard() async {
+    final profile = _profile;
+    if (profile == null) return;
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => MyCardScreen(profile: profile)));
+    if (mounted) await _load();
   }
 
   /// At the bottom of the Profil tab -- a rare,
@@ -273,12 +293,42 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                     ),
                   ),
                 ),
+                if (profile.handle != null)
+                  Center(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(SmileRadius.s),
+                      onTap: _editHandle,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                        child: Text('@${profile.handle}',
+                            style: TextStyle(color: scheme.primary, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                  ),
                 if (_errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                     child: Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(color: scheme.error)),
                   ),
                 const SizedBox(height: SmileSpacing.l),
+                // Smile name and the own card (2026-10-17): found and
+                // invited without an email address.
+                SmileInfoSection(
+                  title: t.smileName,
+                  children: [
+                    SmileObjectTile(
+                      leading: Icon(SmileIcons.handle, color: scheme.onSurfaceVariant),
+                      title: profile.handle != null ? '@${profile.handle}' : t.smileNameChoose,
+                      subtitle: profile.handle != null ? t.smileName : null,
+                      onTap: _editHandle,
+                    ),
+                    SmileObjectTile(
+                      leading: Icon(SmileIcons.card, color: scheme.onSurfaceVariant),
+                      title: t.myCard,
+                      onTap: _openCard,
+                    ),
+                  ],
+                ),
                 // "Videos senden" (2026-10-12): how much videos are shrunk.
                 SmileInfoSection(
                   title: t.sendVideos,
