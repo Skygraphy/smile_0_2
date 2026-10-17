@@ -151,37 +151,54 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
             ),
         ],
       ),
-      bottomNavigationBar: _caption == null ? null : SmileViewerCaption(_caption!),
-      body: GestureDetector(
-        onDoubleTapDown: (d) => _lastTap = d,
-        onDoubleTap: () {
-          if (_lastTap != null) _toggleZoom(_lastTap!);
-        },
-        child: InteractiveViewer(
-          transformationController: _zoom,
-          minScale: 1,
-          maxScale: 5,
-          child: SizedBox.expand(child: image),
-        ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          GestureDetector(
+            onDoubleTapDown: (d) => _lastTap = d,
+            onDoubleTap: () {
+              if (_lastTap != null) _toggleZoom(_lastTap!);
+            },
+            child: InteractiveViewer(
+              transformationController: _zoom,
+              minScale: 1,
+              maxScale: 5,
+              child: SizedBox.expand(child: image),
+            ),
+          ),
+          if (_caption != null) Positioned(left: 0, right: 0, bottom: 0, child: SmileViewerCaption(_caption!)),
+        ],
       ),
     );
   }
 }
 
-/// A photo's or video's title under it in full screen (2026-10-17).
+/// A photo's or video's title in full screen and in the phone's slideshow
+/// (2026-10-17): the Frame's style -- a dark, see-through band across the
+/// bottom of the picture, coral text, not too bold.
 class SmileViewerCaption extends StatelessWidget {
-  const SmileViewerCaption(this.caption, {super.key});
+  const SmileViewerCaption(this.caption, {super.key, this.maxLines = 4});
 
   final String caption;
+  final int maxLines;
 
   @override
-  Widget build(BuildContext context) => Container(
-        color: Colors.black,
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.m, SmileSpacing.l, SmileSpacing.l),
-            child: Text(caption, style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.4)),
+  Widget build(BuildContext context) => IgnorePointer(
+        child: Container(
+          width: double.infinity,
+          color: Colors.black.withValues(alpha: 0.62),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.m, SmileSpacing.l, SmileSpacing.m),
+              child: Text(
+                caption,
+                textAlign: TextAlign.center,
+                maxLines: maxLines,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: SmileTheme.primary, fontSize: 18, fontWeight: FontWeight.w500, height: 1.35),
+              ),
+            ),
           ),
         ),
       );

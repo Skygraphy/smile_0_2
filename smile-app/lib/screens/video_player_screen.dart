@@ -153,8 +153,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
         ],
       ),
-      bottomNavigationBar: _caption == null ? null : SmileViewerCaption(_caption!),
-      body: Center(
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Center(
         child: _error != null
             ? Padding(
                 padding: const EdgeInsets.all(24),
@@ -176,6 +178,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                       ],
                     ),
                   ),
+      ),
+          if (_caption != null)
+            Positioned(left: 0, right: 0, bottom: 56, child: SmileViewerCaption(_caption!, maxLines: 3)),
+        ],
       ),
     );
   }

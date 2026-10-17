@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+
+import 'photo_viewer_screen.dart' show SmileViewerCaption;
 import 'package:video_player/video_player.dart';
 
 import '../services/media_service.dart';
@@ -373,25 +375,8 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                child: IgnorePointer(
-                  child: Container(
-                    padding: EdgeInsets.fromLTRB(32, 40, 32, 24 + MediaQuery.paddingOf(context).bottom),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Colors.transparent, Color(0xB0000000)],
-                      ),
-                    ),
-                    child: Text(
-                      _current.caption!.trim(),
-                      textAlign: TextAlign.center,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontSize: 18, height: 1.35),
-                    ),
-                  ),
-                ),
+                // The Frame's style (2026-10-17).
+                child: SmileViewerCaption(_current.caption!.trim(), maxLines: 3),
               ),
             AnimatedOpacity(
               opacity: _chrome ? 1 : 0,
