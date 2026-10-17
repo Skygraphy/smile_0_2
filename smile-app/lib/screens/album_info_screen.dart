@@ -417,7 +417,11 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     final t = SmileTexts.of(context);
     try {
       final code = await InviteService().createCode(kind, widget.channelId);
-      await SharePlus.instance.share(ShareParams(text: message(_shownName, code.pretty)));
+      // A link first (2026-10-17) -- it works with and without Smile -- and
+      // the code as a fallback.
+      await SharePlus.instance.share(
+        ShareParams(text: '${message(_shownName, code.messageLink)}\n\n${t.inviteMessageCodeFallback(code.pretty)}'),
+      );
     } catch (e) {
       if (mounted) setState(() => _errorMessage = t.actionFailed(errorReasonIn(t, e)));
     }

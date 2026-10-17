@@ -3,6 +3,7 @@ import 'avatar_upload.dart';
 import 'edge_functions.dart';
 import 'local_changes.dart';
 import 'sync_bus.dart';
+import 'invite_links.dart';
 
 /// Someone the caller already shares an album or a Space with -- the "per
 /// Name" list when inviting (migrations/0073 known_people()).
@@ -43,8 +44,13 @@ class InviteCode {
   /// As shown and typed: K7P-2QX.
   String get pretty => '${code.substring(0, 3)}-${code.substring(3)}';
 
-  /// What the QR code holds -- only Smile's own scanner understands it.
-  String get qrData => 'smile:invite:$code';
+  /// What the QR code holds (2026-10-17): the invite link, marked as shown
+  /// in person -- any phone camera opens it; with Smile installed the app,
+  /// without it the web page and the store.
+  String get qrData => InviteLinks.forCode(code, inPerson: true);
+
+  /// The link for a message (the admins decide, as with a typed code).
+  String get messageLink => InviteLinks.forCode(code, inPerson: false);
 }
 
 /// The outcome of redeeming a code (redeem-invite-code).

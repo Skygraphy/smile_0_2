@@ -24,6 +24,7 @@ import 'services/offline.dart';
 import 'services/offline_http_client.dart';
 import 'widgets/offline_hint.dart';
 import 'services/video_prefetcher.dart';
+import 'services/invite_links.dart';
 import 'services/upload_queue.dart';
 import 'frame/frame.dart' as frame;
 import 'package:flutter/services.dart';
@@ -113,6 +114,9 @@ Future<void> main() async {
   VideoPrefetcher.start();
   // Photos/videos still waiting to be sent go out (2026-10-11).
   unawaited(UploadQueue.instance.start());
+  // Invites as links (smileapp.app/i/…), also brought along by the store
+  // (2026-10-17) -- taken by HomeShell once someone is signed in.
+  unawaited(InviteLinks.start());
   Perf.mark('runApp');
   runApp(const SmileRoot());
 }

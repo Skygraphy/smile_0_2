@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Smile</title>
+<meta name="description" content="Smile – Fotos und Videos für die Familie, auf dem Handy und auf dem Bilderrahmen.">
+<meta name="theme-color" content="#121212">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  :root { color-scheme: dark; --bg: #121212; --surface: #1c1a1a; --line: #2e2a2a; --text: #ece6e5; --muted: #a39b9a; --coral: #FF6F61; --on-coral: #1a0f0e; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+         display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+  main { width: 100%; max-width: 420px; display: grid; gap: 20px; justify-items: center; text-align: center; }
+  .mark { width: 72px; height: 72px; }
+  .word { font-size: 40px; font-weight: 800; letter-spacing: -0.5px; margin: -6px 0 0; }
+  .word span { color: var(--coral); }
+  h1 { font-size: 22px; font-weight: 600; margin: 0; line-height: 1.35; text-wrap: balance; }
+  p { margin: 0; color: var(--muted); line-height: 1.55; }
+  .card { width: 100%; background: var(--surface); border-radius: 20px; padding: 22px 18px; display: grid; gap: 14px; }
+  .btn { display: block; width: 100%; text-decoration: none; border-radius: 26px; padding: 14px 16px; font-weight: 600; font-size: 16px;
+         background: var(--coral); color: var(--on-coral); }
+  .btn.alt { background: #2a2626; color: var(--text); }
+  .btn[aria-disabled="true"] { opacity: .55; pointer-events: none; }
+  .code { font-size: 28px; font-weight: 800; letter-spacing: .22em; padding: 10px 16px; border: 1.5px dashed #4a4443; border-radius: 14px; user-select: all; }
+  .small { font-size: 13px; }
+  .hidden { display: none !important; }
+  a.plain { color: var(--coral); }
+</style>
+</head>
+<body>
+<main>
+  <svg class="mark" viewBox="0 0 96 96" aria-hidden="true">
+    <circle cx="48" cy="34" r="18" fill="none" stroke="#FF6F61" stroke-width="8"/>
+    <path d="M18 66c8 12 18 18 30 18s22-6 30-18" fill="none" stroke="#FF6F61" stroke-width="8" stroke-linecap="round"/>
+  </svg>
+  <div class="word">S<span>m</span>ile</div>
+
+  <!-- Home -->
+  <section id="home" class="card hidden">
+    <h1>Fotos und Videos für die Familie</h1>
+    <p>Teilt eure Momente in gemeinsamen Alben – auf dem Handy und auf dem Bilderrahmen in der Küche.</p>
+    <a class="btn" data-store="android" href="#">Smile für Android</a>
+    <a class="btn alt" aria-disabled="true">Bald im App Store</a>
+  </section>
+
+  <!-- Invite -->
+  <section id="invite" class="card hidden">
+    <h1 id="invite-title">Du wurdest zu Smile eingeladen</h1>
+    <p id="invite-text">Öffne die Einladung in Smile – oder hol dir Smile zuerst.</p>
+    <a class="btn" id="open-app" href="#">In Smile öffnen</a>
+    <a class="btn alt" data-store="android" href="#">Smile für Android holen</a>
+    <a class="btn alt" aria-disabled="true">Bald im App Store</a>
+    <p class="small">Nach der Installation bist du automatisch dabei. Falls nicht: In Smile auf ⋮ → „Code scannen“ → „Code eintippen“ und diesen Code eingeben:</p>
+    <div class="code" id="code"></div>
+  </section>
+
+  <!-- Expired / unknown -->
+  <section id="expired" class="card hidden">
+    <h1>Diese Einladung gilt nicht mehr</h1>
+    <p>Einladungen gelten 24 Stunden. Bitte die Person, dir eine neue zu schicken.</p>
+    <a class="btn alt" data-store="android" href="#">Smile für Android</a>
+  </section>
+
+  <!-- Person (Smile name) -->
+  <section id="person" class="card hidden">
+    <h1 id="person-title">Smile</h1>
+    <p>Öffne diesen Link in Smile, um die Person in ein Album einzuladen.</p>
+    <a class="btn" id="open-person" href="#">In Smile öffnen</a>
+    <a class="btn alt" data-store="android" href="#">Smile für Android holen</a>
+  </section>
+</main>
+<script>
+  // One page for everything (also served as 404.html): the path decides.
+  const PLAY = 'https://play.google.com/store/apps/details?id=com.smile.smile_app';
+  const PREVIEW = 'https://wxuipqaozvgzthlgnbgz.supabase.co/functions/v1/invite-preview';
+  const show = (id) => document.getElementById(id).classList.remove('hidden');
+  const path = decodeURIComponent(location.pathname);
+  const invite = path.match(/^\/i\/([A-Za-z0-9-]{6,7})\/?$/);
+  const person = path.match(/^\/@([a-z0-9._]{3,30})\/?$/i);
+  let referrer = '';
+
+  if (invite) {
+    const code = invite[1].toUpperCase().replace(/[^A-Z0-9]/g, '');
+    referrer = 'invite=' + code + (new URLSearchParams(location.search).get('s') === '1' ? '&s=1' : '');
+    document.getElementById('code').textContent = code.slice(0, 3) + '-' + code.slice(3);
+    // The same address again: with Smile installed, Android opens the app.
+    document.getElementById('open-app').href = location.href;
+    show('invite');
+    fetch(PREVIEW + '?code=' + code).then((r) => r.json()).then((d) => {
+      if (d.status === 'expired' || d.status === 'invalid') {
+        document.getElementById('invite').classList.add('hidden');
+        show('expired');
+        return;
+      }
+      if (d.status !== 'ok') return;
+      const who = d.inviter || 'Jemand';
+      const what = d.target ? '„' + d.target + '“' : '';
+      document.getElementById('invite-title').textContent = d.kind === 'space_co_owner'
+        ? who + ' lädt dich als Co-Admin von ' + what + ' ein'
+        : d.kind === 'album_share'
+          ? who + ' möchte das Album ' + what + ' mit deinem Space teilen'
+          : who + ' lädt dich in das Album ' + what + ' ein';
+    }).catch(() => {});
+  } else if (person) {
+    document.getElementById('person-title').textContent = '@' + person[1].toLowerCase();
+    document.getElementById('open-person').href = location.href;
+    show('person');
+  } else {
+    show('home');
+  }
+  // The code goes along to the store, so Smile can pick it up after the
+  // installation (Android install referrer).
+  const store = referrer ? PLAY + '&referrer=' + encodeURIComponent(referrer) : PLAY;
+  for (const a of document.querySelectorAll('[data-store="android"]')) a.href = store;
+  // On Android an intent link opens Smile even from inside the browser --
+  // and the store when Smile isn't there.
+  if (/Android/i.test(navigator.userAgent)) {
+    const intent = 'intent://' + location.host + location.pathname + location.search +
+      '#Intent;scheme=https;package=com.smile.smile_app;S.browser_fallback_url=' + encodeURIComponent(store) + ';end';
+    for (const id of ['open-app', 'open-person']) document.getElementById(id).href = intent;
+  }
+</script>
+</body>
+</html>

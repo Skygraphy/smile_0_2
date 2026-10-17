@@ -6,7 +6,9 @@ import 'package:smile_design_system/smile_design_system.dart';
 import '../services/frame_service.dart';
 import '../services/offline.dart';
 import '../services/sync_bus.dart';
+import '../services/invite_links.dart';
 import 'channels_home_screen.dart';
+import 'scan_code_screen.dart';
 import 'frames_screen.dart';
 import 'spaces_screen.dart';
 
@@ -38,6 +40,26 @@ class _HomeShellState extends State<HomeShell> with SyncReload {
       if (mounted && v == 'true' && !_hasFrames) setState(() => _hasFrames = true);
     }));
     unawaited(_checkFrames());
+    // An invite from a link waits for the sign-in -- taken here (2026-10-17).
+    InviteLinks.pending.addListener(_takeInvite);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _takeInvite());
+  }
+
+  @override
+  void dispose() {
+    InviteLinks.pending.removeListener(_takeInvite);
+    super.dispose();
+  }
+
+  bool _takingInvite = false;
+
+  Future<void> _takeInvite() async {
+    final link = InviteLinks.pending.value;
+    if (link == null || _takingInvite || !mounted) return;
+    _takingInvite = true;
+    await InviteLinks.clear();
+    if (mounted) await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ScanCodeScreen(initial: link)));
+    _takingInvite = false;
   }
 
   static const _hasFramesKey = 'home_has_frames';

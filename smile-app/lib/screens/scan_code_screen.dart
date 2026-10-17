@@ -5,6 +5,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../main.dart';
+import '../services/invite_links.dart';
 import '../services/invite_service.dart';
 import '../services/offline.dart';
 import '../widgets/friendly_error.dart';
@@ -14,7 +15,10 @@ import 'channel_feed_screen.dart';
 /// you -- in at once -- or type the code from a message -- then the
 /// album's admins decide.
 class ScanCodeScreen extends StatefulWidget {
-  const ScanCodeScreen({super.key});
+  const ScanCodeScreen({super.key, this.initial});
+
+  /// An invite from a link (or the store): redeemed right away.
+  final InviteLink? initial;
 
   @override
   State<ScanCodeScreen> createState() => _ScanCodeScreenState();
@@ -26,6 +30,17 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
   bool _busy = false;
 
   @override
+  void initState() {
+    super.initState();
+    final initial = widget.initial;
+    if (initial != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_redeem(initial.code, viaQr: initial.inPerson));
+      });
+    }
+  }
+
+  @override
   void dispose() {
     unawaited(_scanner.dispose());
     super.dispose();
@@ -34,9 +49,11 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
   void _onDetect(BarcodeCapture capture) {
     if (_busy) return;
     for (final barcode in capture.barcodes) {
-      final value = barcode.rawValue;
-      if (value != null && value.toLowerCase().startsWith('smile:invite:')) {
-        unawaited(_redeem(value, viaQr: true));
+      // The link (2026-10-17) or an older "smile:invite:" code -- scanned,
+      // so in person either way.
+      final link = barcode.rawValue == null ? null : InviteLinks.parse(barcode.rawValue!);
+      if (link != null) {
+        unawaited(_redeem(link.code, viaQr: true));
         return;
       }
     }

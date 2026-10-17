@@ -715,20 +715,10 @@
   "qrScanHintCoAdmin": "Mit der Smile-App scannen: Neuigkeiten → Code scannen. Co-Admin wird man nur per QR-Code vor Ort.",
   "qrValid": "Gilt 24 Stunden.",
   "newCode": "Neuen Code erstellen",
-  "inviteMessageMember": "Komm in mein Smile-Album „{album}“! Smile öffnen → Neuigkeiten → Code scannen → Code eintippen: {code}",
-  "@inviteMessageMember": {
-    "placeholders": {
-      "album": {"type": "String"},
-      "code": {"type": "String"}
-    }
-  },
-  "inviteMessageShare": "Ich möchte mein Smile-Album „{album}“ mit deinem Space teilen. Smile öffnen → Neuigkeiten → Code scannen → Code eintippen: {code}",
-  "@inviteMessageShare": {
-    "placeholders": {
-      "album": {"type": "String"},
-      "code": {"type": "String"}
-    }
-  },
+  "inviteMessageMember": "Komm in mein Smile-Album „{album}“! Einfach auf den Link tippen: {link}",
+  "@inviteMessageMember": {"placeholders": {"album": {"type": "String"}, "link": {"type": "String"}}},
+  "inviteMessageShare": "Ich möchte mein Smile-Album „{album}“ mit deinem Space teilen. Einfach auf den Link tippen: {link}",
+  "@inviteMessageShare": {"placeholders": {"album": {"type": "String"}, "link": {"type": "String"}}},
   "scanCode": "Code scannen",
   "scanHint": "QR-Code in den Rahmen halten",
   "typeCode": "Code eintippen",
@@ -992,5 +982,7 @@
   "roleMemberHint": "Stellt Fotos und Videos ins Album.",
   "roleViewerHint": "Sieht das Album über einen geteilten Space.",
   "sharedSpaceHint": "Dieser Space sieht das Album auf seinen Frames und Handys, trägt aber nichts bei.",
-  "favorites2": "Lieblingsbilder"
+  "favorites2": "Lieblingsbilder",
+  "inviteMessageCodeFallback": "Falls der Link nicht geht: In Smile ⋮ → Code scannen → Code eintippen: {code}",
+  "@inviteMessageCodeFallback": {"placeholders": {"code": {"type": "String"}}}
 }

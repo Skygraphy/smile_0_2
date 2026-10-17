@@ -427,6 +427,8 @@ verify_jwt = false
 verify_jwt = false
 [functions.list-frame-favorites]
 verify_jwt = false
+[functions.invite-preview]
+verify_jwt = false
 [functions.list-channel-members]
 verify_jwt = false
 [functions.list-my-channels]

@@ -1104,13 +1104,13 @@ class SmileTextsDe extends SmileTexts {
   String get newCode => 'Neuen Code erstellen';
 
   @override
-  String inviteMessageMember(String album, String code) {
-    return 'Komm in mein Smile-Album „$album“! Smile öffnen → Neuigkeiten → Code scannen → Code eintippen: $code';
+  String inviteMessageMember(String album, String link) {
+    return 'Komm in mein Smile-Album „$album“! Einfach auf den Link tippen: $link';
   }
 
   @override
-  String inviteMessageShare(String album, String code) {
-    return 'Ich möchte mein Smile-Album „$album“ mit deinem Space teilen. Smile öffnen → Neuigkeiten → Code scannen → Code eintippen: $code';
+  String inviteMessageShare(String album, String link) {
+    return 'Ich möchte mein Smile-Album „$album“ mit deinem Space teilen. Einfach auf den Link tippen: $link';
   }
 
   @override
@@ -1775,4 +1775,9 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get favorites2 => 'Lieblingsbilder';
+
+  @override
+  String inviteMessageCodeFallback(String code) {
+    return 'Falls der Link nicht geht: In Smile ⋮ → Code scannen → Code eintippen: $code';
+  }
 }

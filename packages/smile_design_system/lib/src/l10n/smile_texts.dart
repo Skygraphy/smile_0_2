@@ -1867,14 +1867,14 @@ abstract class SmileTexts {
   /// No description provided for @inviteMessageMember.
   ///
   /// In de, this message translates to:
-  /// **'Komm in mein Smile-Album „{album}“! Smile öffnen → Neuigkeiten → Code scannen → Code eintippen: {code}'**
-  String inviteMessageMember(String album, String code);
+  /// **'Komm in mein Smile-Album „{album}“! Einfach auf den Link tippen: {link}'**
+  String inviteMessageMember(String album, String link);
 
   /// No description provided for @inviteMessageShare.
   ///
   /// In de, this message translates to:
-  /// **'Ich möchte mein Smile-Album „{album}“ mit deinem Space teilen. Smile öffnen → Neuigkeiten → Code scannen → Code eintippen: {code}'**
-  String inviteMessageShare(String album, String code);
+  /// **'Ich möchte mein Smile-Album „{album}“ mit deinem Space teilen. Einfach auf den Link tippen: {link}'**
+  String inviteMessageShare(String album, String link);
 
   /// No description provided for @scanCode.
   ///
@@ -3027,6 +3027,12 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Lieblingsbilder'**
   String get favorites2;
+
+  /// No description provided for @inviteMessageCodeFallback.
+  ///
+  /// In de, this message translates to:
+  /// **'Falls der Link nicht geht: In Smile ⋮ → Code scannen → Code eintippen: {code}'**
+  String inviteMessageCodeFallback(String code);
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

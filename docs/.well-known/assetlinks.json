@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.smile.smile_app",
+      "sha256_cert_fingerprints": [
+        "D1:80:2D:AD:15:13:58:73:5B:98:48:BF:1A:57:38:B6:1D:0F:87:60:72:54:4D:33:53:F9:92:46:F2:30:CD:BB"
+      ]
+    }
+  }
+]
