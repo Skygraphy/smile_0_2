@@ -290,6 +290,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
                             channel.channelId,
                             albumNameOf(channel.channelId, channel.channelName),
                             {channel.channelId: channel},
+                            size: 52,
                           ),
                           title: albumNameOf(channel.channelId, channel.channelName),
                           // Role icon first: pencil = Member (may post),

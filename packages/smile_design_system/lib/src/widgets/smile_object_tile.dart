@@ -67,7 +67,8 @@ class SmileObjectTile extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.l, vertical: 9),
+        // Rows like WhatsApp's chat list (variant B, 2026-10-17): 76 dp with a 52 cover.
+        padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.l, vertical: 12),
         child: Row(
           children: [
             leading,
@@ -81,11 +82,11 @@ class SmileObjectTile extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 15),
+                    style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 16.5),
                   ),
                   if (sub != null && sub.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.only(top: 3),
                       child: Row(
                         children: [
                           if (subtitleIcon != null) ...[
@@ -99,7 +100,7 @@ class SmileObjectTile extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: subColor,
-                                fontSize: 13,
+                                fontSize: 14,
                                 fontWeight: subtitleHighlight ? FontWeight.w600 : null,
                               ),
                             ),
