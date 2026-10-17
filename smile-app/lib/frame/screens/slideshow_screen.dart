@@ -1144,22 +1144,22 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 120,
-            height: 120,
+            width: 190,
+            height: 190,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: on ? SmileTheme.primary : Colors.black.withValues(alpha: 0.6),
-              border: Border.all(color: on ? SmileTheme.primary : Colors.white70, width: 3),
+              border: Border.all(color: on ? SmileTheme.primary : Colors.white70, width: 4),
             ),
-            child: Icon(on ? SmileIcons.soundOn : SmileIcons.soundOff, size: 56, color: Colors.white),
+            child: Icon(on ? SmileIcons.soundOn : SmileIcons.soundOff, size: 92, color: Colors.white),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
             decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(14)),
             // What a tap does: on -> "Ton aus", off -> "Ton an".
             child: Text(on ? t.soundOff : t.soundOn,
-                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
+                style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w600)),
           ),
         ],
       ),

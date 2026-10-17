@@ -43,6 +43,8 @@ class _VideoSlideState extends State<VideoSlide> {
   VideoPlayerController? _controller;
   File? _playbackFile;
   bool _finished = false;
+  Timer? _fade;
+  double _volume = 0;
 
   @override
   void initState() {
@@ -54,9 +56,7 @@ class _VideoSlideState extends State<VideoSlide> {
   void didUpdateWidget(VideoSlide oldWidget) {
     super.didUpdateWidget(oldWidget);
     // The setting can change while a video plays (pushed via sync).
-    if (oldWidget.withSound != widget.withSound) {
-      _controller?.setVolume(widget.withSound ? 1 : 0);
-    }
+    if (oldWidget.withSound != widget.withSound) _fadeTo(widget.withSound ? 1 : 0);
     if (oldWidget.paused != widget.paused) {
       if (widget.paused) {
         _controller?.pause();
@@ -93,8 +93,29 @@ class _VideoSlideState extends State<VideoSlide> {
       if (value.hasError) _finish();
     });
     setState(() => _controller = controller);
-    await controller.setVolume(widget.withSound ? 1 : 0);
+    _volume = widget.withSound ? 1 : 0;
+    await controller.setVolume(_volume);
     if (!widget.paused) await controller.play();
+  }
+
+  /// Sound swells in or fades out over about a second (2026-10-17)
+  /// instead of switching abruptly.
+  void _fadeTo(double target) {
+    _fade?.cancel();
+    final controller = _controller;
+    if (controller == null) return;
+    const steps = 20;
+    final start = _volume;
+    var step = 0;
+    _fade = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      step++;
+      final t = step / steps;
+      // Ease in and out, so it starts and ends softly.
+      final eased = t * t * (3 - 2 * t);
+      _volume = start + (target - start) * eased;
+      unawaited(controller.setVolume(_volume.clamp(0.0, 1.0)));
+      if (step >= steps) timer.cancel();
+    });
   }
 
   void _finish() {
@@ -105,6 +126,7 @@ class _VideoSlideState extends State<VideoSlide> {
 
   @override
   void dispose() {
+    _fade?.cancel();
     final controller = _controller;
     final file = _playbackFile;
     unawaited(() async {
