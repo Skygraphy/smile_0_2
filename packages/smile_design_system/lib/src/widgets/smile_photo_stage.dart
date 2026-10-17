@@ -38,8 +38,12 @@ class SmilePhotoStage extends StatefulWidget {
   final SmileFillMode fillMode;
   final bool slowZoom;
 
-  /// How long the photo is shown -- the zoom takes exactly that long.
+  /// How long the photo is shown. Up to [breathAfter] the zoom takes exactly
+  /// that long; longer, it "breathes": [breathAfter] in, as long out, again
+  /// and again (2026-10-17), so it never grows too big and never stands still.
   final Duration duration;
+
+  static const breathAfter = Duration(seconds: 15);
 
   /// At most this share of the photo may be cut off for "auto" to fill.
   static const autoFillTolerance = 0.15;
@@ -49,7 +53,7 @@ class SmilePhotoStage extends StatefulWidget {
 }
 
 class _SmilePhotoStageState extends State<SmilePhotoStage> with SingleTickerProviderStateMixin {
-  late final AnimationController _zoom = AnimationController(vsync: this, duration: widget.duration);
+  late final AnimationController _zoom = AnimationController(vsync: this);
   ImageStream? _stream;
   ImageStreamListener? _listener;
   double? _aspect;
@@ -57,7 +61,20 @@ class _SmilePhotoStageState extends State<SmilePhotoStage> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    if (widget.slowZoom) _zoom.forward();
+    if (widget.slowZoom) _startZoom();
+  }
+
+  bool get _breathes => widget.duration > SmilePhotoStage.breathAfter;
+
+  /// Starts (or continues from where it is) with the current duration.
+  void _startZoom() {
+    if (_breathes) {
+      _zoom.duration = SmilePhotoStage.breathAfter;
+      _zoom.repeat(reverse: true);
+    } else {
+      _zoom.duration = widget.duration;
+      _zoom.forward();
+    }
   }
 
   @override
@@ -71,7 +88,17 @@ class _SmilePhotoStageState extends State<SmilePhotoStage> with SingleTickerProv
     super.didUpdateWidget(old);
     if (old.image != widget.image) _resolve();
     if (old.slowZoom != widget.slowZoom) {
-      widget.slowZoom ? _zoom.forward() : _zoom.value = 0;
+      if (widget.slowZoom) {
+        _startZoom();
+      } else {
+        _zoom.stop();
+        _zoom.value = 0;
+      }
+    } else if (old.duration != widget.duration && widget.slowZoom) {
+      // A new display time while the photo shows (it used to keep the old
+      // one, finish early and stand still): carry on from here.
+      _zoom.stop();
+      _startZoom();
     }
   }
 
