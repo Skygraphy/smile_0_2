@@ -3153,6 +3153,30 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Du verwaltest noch kein Album, in das du einladen kannst.'**
   String get noAlbumsToInvite;
+
+  /// No description provided for @alreadyInAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Schon im Album'**
+  String get alreadyInAlbum;
+
+  /// No description provided for @alreadyAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Schon Admin oder Co-Admin'**
+  String get alreadyAdmin;
+
+  /// No description provided for @managesNoSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Verwaltet keinen Space'**
+  String get managesNoSpace;
+
+  /// No description provided for @noPersonFound.
+  ///
+  /// In de, this message translates to:
+  /// **'Niemand gefunden. Fremde findest du nur mit dem ganzen Smile-Namen, z. B. @anna.huber.'**
+  String get noPersonFound;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

@@ -187,7 +187,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
       context,
       title: t.coAdminFor(_shownName),
       people: InviteService().knownPeople().then((all) => all.where((p) => !already.contains(p.userId)).toList()),
-      allow: (p) => !already.contains(p.userId),
+      whyNot: (p) => already.contains(p.userId) ? t.alreadyAdmin : null,
       onPerson: (person) => _invitePerson(
         person,
         () => widget.spaceService.inviteCoOwner(spaceId: widget.spaceId, userId: person.userId),

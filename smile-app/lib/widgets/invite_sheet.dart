@@ -12,15 +12,15 @@ import '../services/profile_service.dart';
 /// as the last resort.
 ///
 /// [people] is already filtered by the caller (e.g. without the album's
-/// members). [allow] filters a person found by the exact Smile name
-/// (2026-10-17) the same way. [onShareCode] null: no "Einladungslink teilen" (Co-Admin is
+/// members). A person found by the exact Smile name (2026-10-17) always
+/// shows; [whyNot] greys them out with the reason (e.g. "Schon im Album"). [onShareCode] null: no "Einladungslink teilen" (Co-Admin is
 /// in person only).
 Future<void> showInviteSheet(
   BuildContext context, {
   required String title,
   required Future<List<KnownPerson>> people,
   String? Function(KnownPerson person)? subtitle,
-  bool Function(KnownPerson person)? allow,
+  String? Function(KnownPerson person)? whyNot,
   required Future<void> Function(KnownPerson person) onPerson,
   required VoidCallback onShowQr,
   VoidCallback? onShareCode,
@@ -34,7 +34,7 @@ Future<void> showInviteSheet(
       title: title,
       people: people,
       subtitle: subtitle,
-      allow: allow,
+      whyNot: whyNot,
       // The sheet closes first; the caller reports what happened.
       onPerson: (person) {
         Navigator.of(sheetContext).pop();
@@ -63,7 +63,7 @@ class _InviteSheet extends StatefulWidget {
     required this.title,
     required this.people,
     required this.subtitle,
-    required this.allow,
+    required this.whyNot,
     required this.onPerson,
     required this.onShowQr,
     required this.onShareCode,
@@ -73,7 +73,7 @@ class _InviteSheet extends StatefulWidget {
   final String title;
   final Future<List<KnownPerson>> people;
   final String? Function(KnownPerson person)? subtitle;
-  final bool Function(KnownPerson person)? allow;
+  final String? Function(KnownPerson person)? whyNot;
   final void Function(KnownPerson person) onPerson;
   final VoidCallback onShowQr;
   final VoidCallback? onShareCode;
@@ -113,7 +113,7 @@ class _InviteSheetState extends State<_InviteSheet> {
       }
       if (!mounted || normalizeHandle(_query) != handle) return;
       setState(() {
-        _byHandle = found != null && (widget.allow?.call(found) ?? true) ? found : null;
+        _byHandle = found;
         _byHandleFor = handle;
       });
     });
@@ -169,21 +169,31 @@ class _InviteSheetState extends State<_InviteSheet> {
                   if (shown.isEmpty) {
                     return Padding(
                       padding: const EdgeInsets.all(SmileSpacing.l),
-                      child: Text(_query.isEmpty ? t.noKnownPeople : '—', style: TextStyle(color: muted)),
+                      child: Text(_query.isEmpty ? t.noKnownPeople : t.noPersonFound, style: TextStyle(color: muted)),
                     );
                   }
                   return ListView(
                     shrinkWrap: true,
                     children: [
                       for (final person in shown)
-                        SmileObjectTile(
-                          leading: SmileAvatar(name: person.name, avatarUrl: person.avatarUrl, size: 40),
-                          title: person.name,
-                          subtitle: person.handle != null
-                              ? '@${person.handle}'
-                              : widget.subtitle?.call(person) ?? person.context,
-                          onTap: () => widget.onPerson(person),
-                        ),
+                        if (person.handle != null && widget.whyNot?.call(person) != null)
+                          Opacity(
+                            opacity: 0.5,
+                            child: SmileObjectTile(
+                              leading: SmileAvatar(name: person.name, avatarUrl: person.avatarUrl, size: 40),
+                              title: person.name,
+                              subtitle: '@${person.handle} · ${widget.whyNot!(person)}',
+                            ),
+                          )
+                        else
+                          SmileObjectTile(
+                            leading: SmileAvatar(name: person.name, avatarUrl: person.avatarUrl, size: 40),
+                            title: person.name,
+                            subtitle: person.handle != null
+                                ? '@${person.handle}'
+                                : widget.subtitle?.call(person) ?? person.context,
+                            onTap: () => widget.onPerson(person),
+                          ),
                     ],
                   );
                 },

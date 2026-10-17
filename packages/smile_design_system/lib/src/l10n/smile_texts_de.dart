@@ -1849,4 +1849,17 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get noAlbumsToInvite =>
       'Du verwaltest noch kein Album, in das du einladen kannst.';
+
+  @override
+  String get alreadyInAlbum => 'Schon im Album';
+
+  @override
+  String get alreadyAdmin => 'Schon Admin oder Co-Admin';
+
+  @override
+  String get managesNoSpace => 'Verwaltet keinen Space';
+
+  @override
+  String get noPersonFound =>
+      'Niemand gefunden. Fremde findest du nur mit dem ganzen Smile-Namen, z. B. @anna.huber.';
 }

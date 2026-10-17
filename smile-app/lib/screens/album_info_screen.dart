@@ -376,7 +376,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       context,
       title: t.inviteToNamed(_shownName),
       people: InviteService().knownPeople().then((all) => all.where((p) => !inAlbum.contains(p.userId)).toList()),
-      allow: (p) => !inAlbum.contains(p.userId),
+      whyNot: (p) => inAlbum.contains(p.userId) ? t.alreadyInAlbum : null,
       onPerson: (person) => _invitePerson(
         person,
         () => widget.membershipService.inviteMember(channelId: widget.channelId, userId: person.userId),
@@ -394,7 +394,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       context,
       title: t.shareWithSpace,
       people: InviteService().knownPeople().then((all) => all.where((p) => p.managesASpace).toList()),
-      allow: (p) => p.managesASpace,
+      whyNot: (p) => p.managesASpace ? null : t.managesNoSpace,
       subtitle: (_) => t.managesASpace,
       onPerson: (person) => _invitePerson(
         person,

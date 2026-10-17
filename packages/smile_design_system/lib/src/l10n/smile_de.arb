@@ -1005,5 +1005,9 @@
   "personIsYou": "Das ist deine eigene Karte.",
   "inviteIntoAlbum": "In ein Album einladen",
   "pickAlbumToInvite": "In welches Album?",
-  "noAlbumsToInvite": "Du verwaltest noch kein Album, in das du einladen kannst."
+  "noAlbumsToInvite": "Du verwaltest noch kein Album, in das du einladen kannst.",
+  "alreadyInAlbum": "Schon im Album",
+  "alreadyAdmin": "Schon Admin oder Co-Admin",
+  "managesNoSpace": "Verwaltet keinen Space",
+  "noPersonFound": "Niemand gefunden. Fremde findest du nur mit dem ganzen Smile-Namen, z. B. @anna.huber."
 }
