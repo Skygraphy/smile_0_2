@@ -34,6 +34,3 @@ flutter:
     - family: PhosphorFill
       fonts:
         - asset: fonts/Phosphor-Fill.ttf
-    - family: PhosphorBold
-      fonts:
-        - asset: fonts/Phosphor-Bold.ttf

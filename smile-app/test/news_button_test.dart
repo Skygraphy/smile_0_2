@@ -26,7 +26,7 @@ Widget _host(Widget child) => MaterialApp(
     );
 
 Color? _newsIconColor(WidgetTester tester) =>
-    tester.widget<Icon>(find.byIcon(SmileIconsBold.news)).color;
+    tester.widget<Icon>(find.byIcon(SmileIcons.news)).color;
 
 void main() {
   testWidgets('Neuigkeiten icon turns coral only while something waits', (tester) async {

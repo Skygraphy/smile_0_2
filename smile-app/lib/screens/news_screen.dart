@@ -169,12 +169,12 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
     final inbox = _inbox;
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(SmileIconsBold.back), onPressed: () => Navigator.of(context).maybePop()),
+        leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).maybePop()),
         title: Text(t.news),
         actions: [
           // Joining by an invite's QR code or typed code (2026-10-11).
           IconButton(
-            icon: const Icon(SmileIconsBold.scan),
+            icon: const Icon(SmileIcons.scan),
             tooltip: t.scanCode,
             onPressed: () async {
               await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ScanCodeScreen()));

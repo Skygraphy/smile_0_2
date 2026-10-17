@@ -85,7 +85,7 @@ class QuickCaptureButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: const Icon(SmileIconsBold.camera),
+      icon: const Icon(SmileIcons.camera),
       tooltip: SmileTexts.of(context).captureInAlbum,
       onPressed: () => _capture(context),
     );
@@ -152,7 +152,7 @@ class _NewsButtonState extends State<NewsButton> with SyncReload {
         isLabelVisible: _status.unseenNews,
         smallSize: 9,
         backgroundColor: coral,
-        child: Icon(SmileIconsBold.news, color: _status.needsAnswer ? coral : null),
+        child: Icon(SmileIcons.news, color: _status.needsAnswer ? coral : null),
       ),
       tooltip: _status.needsAnswer ? t.newsWaiting : (_status.unseenNews ? t.newsUnseen : t.news),
       onPressed: _open,

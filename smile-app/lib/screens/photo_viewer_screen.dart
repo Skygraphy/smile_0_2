@@ -104,12 +104,12 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black38,
         foregroundColor: Colors.white,
-        leading: IconButton(icon: const Icon(SmileIconsBold.back), onPressed: () => Navigator.of(context).pop()),
+        leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).pop()),
         actions: [
           if (widget.onFavorite != null)
             IconButton(
               icon: Icon(
-                _favorite ? SmileIconsBold.heartFilled : SmileIconsBold.heart,
+                _favorite ? SmileIcons.heartFilled : SmileIcons.heart,
                 color: _favorite ? SmileTheme.primary : null,
               ),
               tooltip: SmileTexts.of(context).favoriteFor,
@@ -120,7 +120,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
             ),
           if (widget.onShowOnFrame != null)
             IconButton(
-              icon: const Icon(SmileIconsBold.frame),
+              icon: const Icon(SmileIcons.frame),
               tooltip: SmileTexts.of(context).showOnFrameNow,
               onPressed: widget.onShowOnFrame,
             ),

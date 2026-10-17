@@ -170,16 +170,16 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
     return Scaffold(
       appBar: _selecting
           ? AppBar(
-              leading: IconButton(icon: const Icon(SmileIconsBold.close), onPressed: () => setState(_selected.clear)),
+              leading: IconButton(icon: const Icon(SmileIcons.close), onPressed: () => setState(_selected.clear)),
               title: Text(t.favoritesSelected(_selected.length)),
               actions: [
                 IconButton(
-                  icon: const Icon(SmileIconsBold.selectAll),
+                  icon: const Icon(SmileIcons.selectAll),
                   tooltip: t.selectAll,
                   onPressed: () => setState(() => _selected.addAll(shown.map((f) => f.item.id))),
                 ),
                 IconButton(
-                  icon: const Icon(SmileIconsBold.delete),
+                  icon: const Icon(SmileIcons.delete),
                   tooltip: t.favoritesRemove,
                   onPressed: _removeSelected,
                 ),
@@ -188,10 +188,10 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
           : AppBar(
               title: Text(t.favorites),
               actions: [
-                TextButton.icon(onPressed: _add, icon: const Icon(SmileIconsBold.add), label: Text(t.addShort)),
+                TextButton.icon(onPressed: _add, icon: const Icon(SmileIcons.add), label: Text(t.addShort)),
                 if (shown.isNotEmpty)
                   PopupMenuButton<VoidCallback>(
-                    icon: const Icon(SmileIconsBold.more),
+                    icon: const Icon(SmileIcons.more),
                     tooltip: t.moreOptions,
                     onSelected: (action) => action(),
                     itemBuilder: (context) => [

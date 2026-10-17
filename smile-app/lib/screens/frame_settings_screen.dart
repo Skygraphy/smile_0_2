@@ -333,7 +333,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(SmileIconsBold.back), onPressed: () => Navigator.of(context).maybePop()),
+        leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).maybePop()),
       ),
       body: assignments == null
           ? const Center(child: CircularProgressIndicator())
