@@ -414,6 +414,23 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   bool get _showingVideo => _current?.isVideo ?? false;
 
+  /// Ton an/aus on the Frame itself (2026-10-17): only for the video playing
+  /// right now (this slide); the next one follows the app's setting again.
+  /// Never saved, never sent to the server.
+  int? _soundForSlide;
+  bool _soundOverride = false;
+
+  bool get _videoWithSound =>
+      _soundForSlide == _slideNumber ? _soundOverride : (_settings?.videoSound ?? true);
+
+  void _toggleSound() {
+    setState(() {
+      _soundOverride = !_videoWithSound;
+      _soundForSlide = _slideNumber;
+    });
+    _keepBar();
+  }
+
   FrameControls get _controls => _settings?.effectiveControls ?? const FrameControls();
 
   /// What it last told the server it plays (a round or none).
@@ -1002,7 +1019,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                   entry: current,
                   cacheStore: widget.cacheStore,
                   onFinished: _onVideoFinished,
-                  withSound: _settings?.videoSound ?? true,
+                  withSound: _videoWithSound,
                   paused: _paused,
                 )
               : _stage(current),
@@ -1048,6 +1065,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
             if (_heartFlash != null) Positioned.fill(child: IgnorePointer(child: _heart(t, _heartFlash!))),
             if (!_showGrid && _paused && !_barVisible)
               Positioned(bottom: 24, left: 0, right: 0, child: Center(child: _pausedPill(t))),
+            // A video: the big sound button in the middle, with the bar.
+            if (!_showGrid && _showingVideo && _barVisible)
+              Positioned.fill(child: Center(child: _soundButton(t))),
             if (!_showGrid)
               Positioned(
                 left: 0,
@@ -1110,6 +1130,36 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           Text(
             '${_weekdays[now.weekday - 1]}, ${now.day}. ${_months[now.month - 1]}',
             style: const TextStyle(color: Colors.white, fontSize: 18),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _soundButton(SmileTexts t) {
+    final on = _videoWithSound;
+    return GestureDetector(
+      onTap: _toggleSound,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: on ? SmileTheme.primary : Colors.black.withValues(alpha: 0.6),
+              border: Border.all(color: on ? SmileTheme.primary : Colors.white70, width: 3),
+            ),
+            child: Icon(on ? SmileIcons.soundOn : SmileIcons.soundOff, size: 56, color: Colors.white),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(14)),
+            // What a tap does: on -> "Ton aus", off -> "Ton an".
+            child: Text(on ? t.soundOff : t.soundOn,
+                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
