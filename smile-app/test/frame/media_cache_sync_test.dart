@@ -80,4 +80,19 @@ void main() {
       expect(evicted.map((e) => e.mediaItemId), ['other-new', 'shown-old']);
     });
   });
+
+  // Titles (2026-10-17, migrations/0084): every sync brings the current one,
+  // including "none any more".
+  test('refreshedFrom takes the title as it is now, also when removed', () {
+    const remote = RemoteMediaEntry(
+      mediaItemId: 'a', mediaType: 'photo', sortOrder: 5, displayUrl: null, caption: 'Schau Oma', senderName: 'Ernst');
+    final cached = _cached('a', 1);
+    final withTitle = cached.refreshedFrom(remote);
+    expect(withTitle.caption, 'Schau Oma');
+    expect(withTitle.sortOrder, 5);
+    expect(withTitle.senderName, 'Ernst');
+    const cleared = RemoteMediaEntry(mediaItemId: 'a', mediaType: 'photo', sortOrder: 5, displayUrl: null);
+    expect(withTitle.refreshedFrom(cleared).caption, isNull);
+    expect(CachedMediaEntry.fromJson(withTitle.toJson()).caption, 'Schau Oma');
+  });
 }

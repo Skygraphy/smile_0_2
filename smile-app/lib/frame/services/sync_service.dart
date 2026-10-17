@@ -22,6 +22,7 @@ class FrameControls {
     this.album = false,
     this.duration = false,
     this.playback = false,
+    this.captions = false,
   });
 
   final bool next;
@@ -37,8 +38,12 @@ class FrameControls {
   final bool duration;
   final bool playback;
 
+  /// The "Titel" button (migrations/0084, level 4).
+  final bool captions;
+
   /// Level 1 "Nur zuschauen": touches are ignored.
-  bool get any => next || back || pause || newest || favorite || favorites || overview || album || duration || playback;
+  bool get any =>
+      next || back || pause || newest || favorite || favorites || overview || album || duration || playback || captions;
 
   factory FrameControls.fromJson(Map<String, dynamic>? json) {
     bool on(String key) => json?[key] == true;
@@ -53,6 +58,7 @@ class FrameControls {
       album: on('album'),
       duration: on('duration'),
       playback: on('playback'),
+      captions: on('captions'),
     );
   }
 }
@@ -79,6 +85,7 @@ class FrameSettingsInfo {
     this.slowZoom = true,
     this.rotateWithDevice = false,
     this.controlLevel,
+    this.showCaptions = true,
   });
 
   final String displayMode; // 'slideshow' | 'manual'
@@ -125,6 +132,9 @@ class FrameSettingsInfo {
   /// Bedienstufe 1-5, null = "Eigene Auswahl" (migrations/0075).
   final int? controlLevel;
 
+  /// "Titel anzeigen" (migrations/0084).
+  final bool showCaptions;
+
   FrameControls get effectiveControls =>
       controls ?? FrameControls(next: true, back: true, pause: true, overview: true, album: channelSwitchEnabled);
 
@@ -149,6 +159,7 @@ class FrameSettingsInfo {
         slowZoom: json['slow_zoom'] as bool? ?? true,
         rotateWithDevice: json['rotate_with_device'] as bool? ?? false,
         controlLevel: json['control_level'] as int?,
+        showCaptions: json['show_captions'] as bool? ?? true,
       );
 }
 
@@ -548,6 +559,7 @@ class SyncService {
           posterFileName: posterFileName,
           channelId: remote.channelId,
           senderName: remote.senderName,
+          caption: remote.caption,
         ));
         // A photo of the shown album is there: on screen at once, not only
         // after every album is downloaded (2026-10-16: a newly connected
@@ -579,7 +591,7 @@ class SyncService {
       ...local.where((e) => !deleteIds.contains(e.mediaItemId)).map((e) {
         final remote = remoteByMediaId[e.mediaItemId];
         return remote != null
-            ? e.copyWith(sortOrder: remote.sortOrder, channelId: remote.channelId, senderName: remote.senderName)
+            ? e.refreshedFrom(remote)
             : e;
       }),
       ...newEntries,
@@ -684,6 +696,7 @@ class SyncService {
               posterUrl: e['poster_url'] as String?,
               channelId: data['channel_id'] as String?,
               senderName: e['sender_name'] as String?,
+              caption: e['caption'] as String?,
             )),
       );
       cursor = data['next_cursor'] as int?;

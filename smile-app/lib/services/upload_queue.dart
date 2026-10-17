@@ -34,6 +34,9 @@ class QueuedUpload {
   double? get aspectRatio => (meta['aspect_ratio'] as num?)?.toDouble();
   bool get prepared => meta['prepared'] == true;
 
+  /// Its title, if one was written when sending (2026-10-17).
+  String? get caption => meta['caption'] as String?;
+
   /// The video on the phone (converted copy, else the picked original).
   String? get localVideoPath => meta['video_path'] as String? ?? meta['source'] as String?;
 
@@ -153,6 +156,7 @@ class UploadQueue extends ChangeNotifier {
   Future<void> enqueue(
     String channelId,
     List<XFile> files, {
+    List<String?>? captions,
     Future<void> Function(QueuedUpload item)? beforeShow,
   }) async {
     final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -174,6 +178,8 @@ class UploadQueue extends ChangeNotifier {
         // In the order they were picked, even within one millisecond.
         'created_at': start + index,
         'extension': extension,
+        if (captions != null && index < captions.length && (captions[index]?.trim().isNotEmpty ?? false))
+          'caption': captions[index]!.trim(),
         'mime_type': isVideo
             ? (extension == 'mov' ? 'video/quicktime' : 'video/$extension')
             : (extension == 'png' ? 'image/png' : 'image/jpeg'),
@@ -442,7 +448,7 @@ class UploadQueue extends ChangeNotifier {
         // Registered while the phone converts (2026-10-09).
         if (online && item.meta['server_media_id'] == null) {
           _earlyCreate[item.id] = _mediaService
-              .createVideoUpload(channelId: item.channelId, fileSizeBytes: size, previewDataUrl: preview)
+              .createVideoUpload(channelId: item.channelId, fileSizeBytes: size, previewDataUrl: preview, caption: item.caption)
               .then<Map<String, dynamic>?>((data) async {
             item.meta['server_media_id'] = data['media_item_id'];
             await _writeMeta(item.dir, item.meta);
@@ -534,6 +540,7 @@ class UploadQueue extends ChangeNotifier {
             thumbnail: await File('${item.dir.path}/thumb.jpg').readAsBytes(),
             size: width != null && height != null ? (width, height) : null,
             preview: item.meta['preview'] as String?,
+            caption: item.caption,
           ),
         ));
       }
@@ -557,6 +564,7 @@ class UploadQueue extends ChangeNotifier {
             bytes: await File('${item.dir.path}/original').readAsBytes(),
             fileExtension: item.meta['extension'] as String,
             mimeType: item.meta['mime_type'] as String,
+            caption: item.caption,
           ),
         ],
         onMediaItemCreated: (_, id) => item.meta['server_media_id'] = id,
@@ -605,6 +613,7 @@ class UploadQueue extends ChangeNotifier {
     try {
       final mediaId = await _mediaService.sendPreparedVideo(
         channelId: item.channelId,
+        caption: item.caption,
         video: PreparedVideo(
           file: file,
           mimeType: item.meta['upload_mime'] as String,

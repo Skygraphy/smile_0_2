@@ -21,6 +21,7 @@ import '../services/foreground_notifications.dart';
 import '../services/object_picture_service.dart';
 import 'album_info_screen.dart';
 import 'capture_preview_screen.dart';
+import 'send_preview_screen.dart';
 import '../widgets/friendly_error.dart';
 import '../widgets/capture_choice.dart';
 import '../widgets/album_covers.dart';
@@ -601,24 +602,31 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     // videos of any length; 2026-10-08: multiple selection, mixed).
     final picked = await ImagePicker().pickMultipleMedia(imageQuality: 90);
     if (picked.isEmpty || !mounted) return;
-    await _uploadFiles(picked);
+    // A preview with an optional title per item first (2026-10-17).
+    final captions = await Navigator.of(context).push<List<String?>>(
+      MaterialPageRoute(builder: (_) => SendPreviewScreen(files: picked, albumName: _channelName)),
+    );
+    if (captions == null || !mounted) return;
+    await _uploadFiles(picked, captions: captions);
   }
 
   /// The album's own camera (decided 2026-10-08): photo or video, then a
   /// preview offers "Senden" or "Nochmal" before anything is uploaded.
   Future<void> _chooseCapture() async {
     var captured = await captureWithChoice(context);
+    final caption = TextEditingController();
     while (captured != null) {
       if (!mounted) return;
       final (:file, :isVideo) = captured;
       final decision = await Navigator.of(context).push<CaptureDecision>(
         MaterialPageRoute(
-          builder: (_) => CapturePreviewScreen(file: File(file.path), isVideo: isVideo, albumName: _channelName),
+          builder: (_) =>
+              CapturePreviewScreen(file: File(file.path), isVideo: isVideo, albumName: _channelName, caption: caption),
         ),
       );
       if (!mounted) return;
       if (decision == CaptureDecision.send) {
-        await _uploadFiles([file]);
+        await _uploadFiles([file], captions: [caption.text]);
         return;
       }
       if (decision != CaptureDecision.retake) return;
@@ -668,10 +676,50 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// delete goes to the server (LocalChanges then keeps them hidden).
   final Set<String> _leaving = {};
 
+  /// The sender and the album's admins may change a title (2026-10-17).
+  bool _canEditCaption(MediaItem item) =>
+      !_showingHidden && (item.senderId == supabase.auth.currentUser?.id || (_myStatus?.isSco ?? false));
+
+  /// "Titel bearbeiten": returns the new title ('' = removed), null when
+  /// cancelled or it failed (a friendly note then).
+  Future<String?> _editCaption(MediaItem item, String? current) async {
+    final t = SmileTexts.of(context);
+    final controller = TextEditingController(text: current ?? '');
+    final text = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.captionEdit),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 200,
+          minLines: 1,
+          maxLines: 5,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(hintText: t.captionHint),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.actionCancel)),
+          FilledButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: Text(t.save)),
+        ],
+      ),
+    );
+    if (text == null || text == (current ?? '') || !mounted) return null;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await widget.mediaService.setCaption(item.id, text.isEmpty ? null : text);
+      unawaited(_load());
+      return text;
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(t.actionFailed(errorReasonIn(t, e)))));
+      return null;
+    }
+  }
+
   /// Like WhatsApp (decided 2026-10-11): into the queue and the album at
   /// once; without a connection they wait there with a clock and go out by
   /// themselves later, even with Smile closed (UploadQueue).
-  Future<void> _uploadFiles(List<XFile> picked) async {
+  Future<void> _uploadFiles(List<XFile> picked, {List<String?>? captions}) async {
     setState(() {
       _errorMessage = null;
       _statusMessage = null;
@@ -680,6 +728,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     await UploadQueue.instance.enqueue(
       widget.channelId,
       picked,
+      captions: captions,
       beforeShow: (item) async {
         // Decode before it's ever shown: Image.memory doesn't paint anything
         // for the frame or two it takes to decode a several-MB original,
@@ -993,6 +1042,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           isMine: true,
           showTail: isFirstInRun,
           aspectRatio: pending.aspectRatio,
+          caption: pending.caption,
           time: pending.createdAt,
           // A clock until it is on the server (2026-10-12, like WhatsApp);
           // without a connection also slightly darker, with "Nicht senden".
@@ -1076,6 +1126,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           aspectRatio: item.aspectRatio,
           senderName: isMine ? null : item.senderLabel,
           senderAvatarUrl: isMine ? null : item.senderAvatarUrl,
+          caption: item.caption,
           time: item.createdAt,
           isSelected: _selectedIds.contains(item.id),
           // Delete works the same way in both views -- a hidden photo can
@@ -1092,6 +1143,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                             onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
                             favorite: _favoriteFrames[item.id]?.isNotEmpty ?? false,
                             onFavorite: _frames.isEmpty ? null : () => _toggleFavorite(item.id),
+                            caption: item.caption,
+                            onEditCaption: _canEditCaption(item) ? (current) => _editCaption(item, current) : null,
                           ),
                         ),
                       )
@@ -1104,6 +1157,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                                 onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
                                 favorite: _favoriteFrames[item.id]?.isNotEmpty ?? false,
                             onFavorite: _frames.isEmpty ? null : () => _toggleFavorite(item.id),
+                                onEditCaption: _canEditCaption(item) ? (current) => _editCaption(item, current) : null,
                               ),
                             ),
                           )
@@ -1461,9 +1515,13 @@ class _ChatRow extends StatelessWidget {
     this.onLongPress,
     this.waiting = false,
     this.onCancelSend,
+    this.caption,
   });
 
   final bool isMine;
+
+  /// The photo's title (2026-10-17): under it, inside the bubble.
+  final String? caption;
   /// Waiting for a connection to be sent: a clock next to the time.
   final bool waiting;
   /// "Nicht senden" in its menu (three dots), while it waits.
@@ -1545,7 +1603,11 @@ class _ChatRow extends StatelessWidget {
     final frame = Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(color: frameColor, borderRadius: borderRadius),
-      child: Stack(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+      Stack(
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
@@ -1602,6 +1664,17 @@ class _ChatRow extends StatelessWidget {
                 itemBuilder: (context) => [
                   PopupMenuItem<void>(onTap: onCancelSend, child: Text(SmileTexts.of(context).dontSend)),
                 ],
+              ),
+            ),
+        ],
+      ),
+          // The title under the photo, like WhatsApp (2026-10-17).
+          if (caption != null && caption!.isNotEmpty)
+            SizedBox(
+              width: photoSize.width,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(4, 6, 4, 2),
+                child: Text(caption!, style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14.5, height: 1.35)),
               ),
             ),
         ],

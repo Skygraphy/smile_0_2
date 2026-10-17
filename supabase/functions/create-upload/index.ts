@@ -34,6 +34,8 @@ interface CreateUploadRequest {
   // frame, a photo's thumbnail), and complete-upload takes both as they
   // are -- no worker, no waiting.
   client_encoded?: boolean;
+  // Optional title (2026-10-17, migrations/0084): at most 200 characters.
+  caption?: string;
   // Several at once (2026-10-10): one request for a whole selection of
   // photos instead of one each -- every Edge Function call costs ~1 s.
   // channel_id is shared; each item has the per-file fields above.
@@ -41,6 +43,13 @@ interface CreateUploadRequest {
 }
 
 type ItemRequest = Omit<CreateUploadRequest, "channel_id" | "items">;
+
+/** Trimmed, at most 200 characters; empty is no title. */
+function cleanCaption(caption: unknown): string | null {
+  if (typeof caption !== "string") return null;
+  const text = caption.trim();
+  return text ? text.slice(0, 200) : null;
+}
 
 function invalid(item: ItemRequest): string | null {
   if (!item.media_type || !item.mime_type || !item.file_extension) return "missing_fields";
@@ -132,6 +141,7 @@ Deno.serve(async (req) => {
       mime_type: item.mime_type,
       file_size_bytes: item.file_size_bytes ?? null,
       preview_data_url: item.preview_data_url ?? null,
+      caption: cleanCaption(item.caption),
       processing_status: "uploaded",
       created_at: new Date(base + index).toISOString(),
     };

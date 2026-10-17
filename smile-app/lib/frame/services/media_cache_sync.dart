@@ -10,12 +10,16 @@ class RemoteMediaEntry {
     this.posterUrl,
     this.channelId,
     this.senderName,
+    this.caption,
   });
 
   final String mediaItemId;
   final String mediaType;
   final int sortOrder;
   final String? displayUrl;
+
+  /// Its title (migrations/0084), null when it has none.
+  final String? caption;
 
   /// The album it belongs to -- a Frame caches all of its albums
   /// (2026-10-09) and shows one of them.
@@ -39,12 +43,16 @@ class CachedMediaEntry {
     this.posterFileName,
     this.channelId,
     this.senderName,
+    this.caption,
   });
 
   final String mediaItemId;
   final String mediaType;
   final int sortOrder;
   final String fileName;
+
+  /// Its title (migrations/0084); every sync brings the current one.
+  final String? caption;
   final int fileSizeBytes;
   final DateTime cachedAt;
 
@@ -74,6 +82,7 @@ class CachedMediaEntry {
         'poster_file_name': posterFileName,
         'channel_id': channelId,
         'sender_name': senderName,
+        'caption': caption,
       };
 
   factory CachedMediaEntry.fromJson(Map<String, dynamic> json) => CachedMediaEntry(
@@ -86,6 +95,22 @@ class CachedMediaEntry {
         posterFileName: json['poster_file_name'] as String?,
         channelId: json['channel_id'] as String?,
         senderName: json['sender_name'] as String?,
+        caption: json['caption'] as String?,
+      );
+
+  /// The server's current sort order, album, sender and title (the title
+  /// may also have been removed -- hence not a "?? this" copy).
+  CachedMediaEntry refreshedFrom(RemoteMediaEntry remote) => CachedMediaEntry(
+        mediaItemId: mediaItemId,
+        mediaType: mediaType,
+        sortOrder: remote.sortOrder,
+        fileName: fileName,
+        fileSizeBytes: fileSizeBytes,
+        cachedAt: cachedAt,
+        posterFileName: posterFileName,
+        channelId: remote.channelId ?? channelId,
+        senderName: remote.senderName ?? senderName,
+        caption: remote.caption,
       );
 
   CachedMediaEntry copyWith({int? sortOrder, String? channelId, String? senderName}) => CachedMediaEntry(
@@ -98,6 +123,7 @@ class CachedMediaEntry {
         posterFileName: posterFileName,
         channelId: channelId ?? this.channelId,
         senderName: senderName ?? this.senderName,
+        caption: caption,
       );
 }
 

@@ -11,8 +11,14 @@ import '../services/media_service.dart';
 /// at once while the full one loads; offline it stays when the full one
 /// was never loaded.
 class PhotoViewerScreen extends StatefulWidget {
-  const PhotoViewerScreen({super.key, required MediaItem this.item, this.onShowOnFrame, this.onFavorite, this.favorite = false})
-      : localBytes = null;
+  const PhotoViewerScreen({
+    super.key,
+    required MediaItem this.item,
+    this.onShowOnFrame,
+    this.onFavorite,
+    this.favorite = false,
+    this.onEditCaption,
+  }) : localBytes = null;
 
   /// A photo still on its way to the server (2026-10-12): straight from
   /// the phone.
@@ -20,6 +26,7 @@ class PhotoViewerScreen extends StatefulWidget {
       : item = null,
         onShowOnFrame = null,
         onFavorite = null,
+        onEditCaption = null,
         favorite = false;
 
   /// "Jetzt am Frame zeigen" (2026-10-14) -- only when the album runs on a
@@ -34,6 +41,10 @@ class PhotoViewerScreen extends StatefulWidget {
   /// A Lieblingsbild already: the heart is filled, in coral.
   final bool favorite;
 
+  /// "Titel bearbeiten" (2026-10-17), for the sender and the album's admins:
+  /// returns the new title ('' = removed), null when nothing changed.
+  final Future<String?> Function(String? current)? onEditCaption;
+
   final MediaItem? item;
   final Uint8List? localBytes;
 
@@ -43,6 +54,7 @@ class PhotoViewerScreen extends StatefulWidget {
 
 class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
   late bool _favorite = widget.favorite;
+  late String? _caption = widget.item?.caption;
   final _zoom = TransformationController();
 
   @override
@@ -124,8 +136,18 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
               tooltip: SmileTexts.of(context).showOnFrameNow,
               onPressed: widget.onShowOnFrame,
             ),
+          if (widget.onEditCaption != null)
+            IconButton(
+              icon: const Icon(SmileIcons.caption),
+              tooltip: SmileTexts.of(context).captionEdit,
+              onPressed: () async {
+                final now = await widget.onEditCaption!(_caption);
+                if (now != null && mounted) setState(() => _caption = now.isEmpty ? null : now);
+              },
+            ),
         ],
       ),
+      bottomNavigationBar: _caption == null ? null : SmileViewerCaption(_caption!),
       body: GestureDetector(
         onDoubleTapDown: (d) => _lastTap = d,
         onDoubleTap: () {
@@ -140,4 +162,23 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
       ),
     );
   }
+}
+
+/// A photo's or video's title under it in full screen (2026-10-17).
+class SmileViewerCaption extends StatelessWidget {
+  const SmileViewerCaption(this.caption, {super.key});
+
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        color: Colors.black,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.m, SmileSpacing.l, SmileSpacing.l),
+            child: Text(caption, style: const TextStyle(color: Colors.white, fontSize: 15, height: 1.4)),
+          ),
+        ),
+      );
 }

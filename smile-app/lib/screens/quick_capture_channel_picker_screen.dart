@@ -18,8 +18,9 @@ import 'channel_feed_screen.dart';
 
 /// The step after the header camera icon (spaces_screen.dart) captures a
 /// photo or video -- mirrors WhatsApp's own "camera icon -> pick who to send it to"
-/// flow. Uploads straight from here (no separate confirm/caption step, to
-/// keep this a true one-tap "quick share") and lands on that channel's
+/// flow. Uploads straight from here (no separate confirm step, to keep this
+/// a true one-tap "quick share"; an optional title field sits above the
+/// albums, 2026-10-17) and lands on that channel's
 /// feed so the sender sees their own photo land, same as WhatsApp opening
 /// the chat after sending.
 class QuickCaptureChannelPickerScreen extends StatefulWidget {
@@ -46,6 +47,13 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
   String? _errorMessage;
   UploadableChannel? _uploadingTo;
   Map<String, ChannelWithActivity> _covers = const {};
+  final _caption = TextEditingController();
+
+  @override
+  void dispose() {
+    _caption.dispose();
+    super.dispose();
+  }
   /// The photo itself, or a frame taken from the video.
   Uint8List? _preview;
 
@@ -91,7 +99,7 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
       _uploadingTo = channel;
       _errorMessage = null;
     });
-    await UploadQueue.instance.enqueue(channel.channelId, [widget.file]);
+    await UploadQueue.instance.enqueue(channel.channelId, [widget.file], captions: [_caption.text]);
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
@@ -123,6 +131,24 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
                             const Center(child: Icon(SmileIcons.play, size: 56, color: Colors.white70)),
                         ],
                       ),
+              ),
+            ),
+          ),
+          // Optional title (2026-10-17).
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: TextField(
+              controller: _caption,
+              maxLength: 200,
+              minLines: 1,
+              maxLines: 3,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: InputDecoration(
+                hintText: SmileTexts.of(context).captionHint,
+                counterText: '',
+                filled: true,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
             ),
           ),

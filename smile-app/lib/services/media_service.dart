@@ -94,12 +94,15 @@ class MediaItem {
 /// it can; [deniedIds] reports the rest instead of failing the whole call.
 /// A photo made ready on the phone (MediaService.preparePhoto).
 class PreparedPhoto {
-  const PreparedPhoto({required this.display, required this.thumbnail, this.size, this.preview});
+  const PreparedPhoto({required this.display, required this.thumbnail, this.size, this.preview, this.caption});
 
   final Uint8List display;
   final Uint8List thumbnail;
   final (int, int)? size;
   final String? preview;
+
+  /// Optional title (2026-10-17, migrations/0084).
+  final String? caption;
 }
 
 /// A video made ready on the phone (MediaService.prepareVideo): [file] is
@@ -274,6 +277,7 @@ class MediaService {
                     'width': ?photos[i].photo.size?.$1,
                     'height': ?photos[i].photo.size?.$2,
                     'preview_data_url': ?photos[i].photo.preview,
+                    'caption': ?photos[i].photo.caption,
                   },
               ]);
             } on PostgrestException catch (e) {
@@ -347,7 +351,7 @@ class MediaService {
   /// photo is removed again and doesn't hold up the others.
   Future<List<Object?>> uploadPhotosViaServer({
     required String channelId,
-    required List<({Uint8List bytes, String fileExtension, String mimeType})> photos,
+    required List<({Uint8List bytes, String fileExtension, String mimeType, String? caption})> photos,
     void Function(int index, String mediaItemId)? onMediaItemCreated,
     void Function(int index)? onReady,
     void Function(int attempt, int maxAttempts)? onRetrying,
@@ -366,6 +370,7 @@ class MediaService {
             'file_extension': 'jpg',
             'file_size_bytes': photos[i].bytes.length,
             'preview_data_url': ?previews[i],
+            'caption': ?photos[i].caption,
             'client_encoded': true,
           },
       ]),
@@ -537,6 +542,7 @@ class MediaService {
     required String channelId,
     required int fileSizeBytes,
     String? previewDataUrl,
+    String? caption,
     void Function(int attempt, int maxAttempts)? onRetrying,
   }) =>
       _withRetry(
@@ -547,6 +553,7 @@ class MediaService {
           fileExtension: 'mp4',
           fileSizeBytes: fileSizeBytes,
           previewDataUrl: previewDataUrl,
+          caption: caption,
           clientEncoded: true,
         ),
         onRetry: onRetrying,
@@ -559,6 +566,7 @@ class MediaService {
   Future<String> sendPreparedVideo({
     required String channelId,
     required PreparedVideo video,
+    String? caption,
     Map<String, dynamic>? createData,
     void Function(String mediaItemId)? onMediaItemCreated,
     void Function(int attempt, int maxAttempts)? onRetrying,
@@ -570,6 +578,7 @@ class MediaService {
           channelId: channelId,
           fileSizeBytes: size,
           previewDataUrl: video.previewDataUrl,
+          caption: caption,
           onRetrying: onRetrying,
         );
     onProgress?.call(0, size);
@@ -585,6 +594,11 @@ class MediaService {
       onProgress: onProgress,
     );
     return created['media_item_id'] as String;
+  }
+
+  /// Changes or removes a title (sender or album admin, migrations/0084).
+  Future<void> setCaption(String mediaItemId, String? caption) async {
+    await supabase.rpc('set_media_caption', params: {'p_media_item_id': mediaItemId, 'p_caption': caption ?? ''});
   }
 
   /// Removes a video's row again -- one registered by an earlier try that
@@ -706,9 +720,11 @@ class MediaService {
     required String fileExtension,
     required int fileSizeBytes,
     String? previewDataUrl,
+    String? caption,
     bool clientEncoded = false,
   }) async {
     final response = await invokeEdge('create-upload', body: {
+      'caption': ?caption,
       if (clientEncoded) 'client_encoded': true,
       'channel_id': channelId,
       'media_type': mediaType,

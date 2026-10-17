@@ -2575,7 +2575,7 @@ abstract class SmileTexts {
   /// No description provided for @level4Hint.
   ///
   /// In de, this message translates to:
-  /// **'Dazu Übersicht, Album wechseln und Anzeigedauer.'**
+  /// **'Dazu Übersicht, Album wechseln, Anzeigedauer und Titel ein- oder ausblenden.'**
   String get level4Hint;
 
   /// No description provided for @level5.
@@ -3345,6 +3345,42 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Arbeit'**
   String get phoneWork;
+
+  /// No description provided for @captionHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Titel hinzufügen …'**
+  String get captionHint;
+
+  /// No description provided for @captionEdit.
+  ///
+  /// In de, this message translates to:
+  /// **'Titel bearbeiten'**
+  String get captionEdit;
+
+  /// No description provided for @captionShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Titel'**
+  String get captionShort;
+
+  /// No description provided for @showCaptions.
+  ///
+  /// In de, this message translates to:
+  /// **'Titel anzeigen'**
+  String get showCaptions;
+
+  /// No description provided for @showCaptionsHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Unten im Bild, wenn der Absender einen geschrieben hat.'**
+  String get showCaptionsHint;
+
+  /// No description provided for @allowCaptions.
+  ///
+  /// In de, this message translates to:
+  /// **'Titel ein- oder ausblenden'**
+  String get allowCaptions;
 
   /// No description provided for @rotateWithDevice.
   ///

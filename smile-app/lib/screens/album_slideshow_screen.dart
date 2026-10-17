@@ -24,6 +24,7 @@ class SlideshowPrefs {
     this.fillMode = 'auto',
     this.slowZoom = true,
     this.sound = true,
+    this.captions = true,
   });
 
   final int seconds;
@@ -42,6 +43,9 @@ class SlideshowPrefs {
   final bool slowZoom;
   final bool sound;
 
+  /// Show a photo's title at the bottom (2026-10-17).
+  final bool captions;
+
   static const _key = 'phone_slideshow';
 
   static Future<SlideshowPrefs> load() async {
@@ -57,6 +61,7 @@ class SlideshowPrefs {
         fillMode: j['fill_mode'] as String? ?? 'auto',
         slowZoom: j['slow_zoom'] as bool? ?? true,
         sound: j['sound'] as bool? ?? true,
+        captions: j['captions'] as bool? ?? true,
       );
     } catch (_) {
       return const SlideshowPrefs();
@@ -75,6 +80,7 @@ class SlideshowPrefs {
           'fill_mode': fillMode,
           'slow_zoom': slowZoom,
           'sound': sound,
+          'captions': captions,
         }),
       );
     } catch (_) {}
@@ -88,6 +94,7 @@ class SlideshowPrefs {
     String? fillMode,
     bool? slowZoom,
     bool? sound,
+    bool? captions,
   }) =>
       SlideshowPrefs(
         seconds: seconds ?? this.seconds,
@@ -97,6 +104,7 @@ class SlideshowPrefs {
         fillMode: fillMode ?? this.fillMode,
         slowZoom: slowZoom ?? this.slowZoom,
         sound: sound ?? this.sound,
+        captions: captions ?? this.captions,
       );
 
   /// For Android (MainActivity.setOrientation): "Automatisch" turns with
@@ -293,6 +301,12 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                   value: p.sound,
                   onChanged: (v) => set(p.copyWith(sound: v)),
                 ),
+                SwitchListTile(
+                  title: Text(t.showCaptions),
+                  subtitle: Text(t.showCaptionsHint),
+                  value: p.captions,
+                  onChanged: (v) => set(p.copyWith(captions: v)),
+                ),
               ],
             ),
           ),
@@ -353,6 +367,32 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                 );
               },
             ),
+            // The photo's title (2026-10-17), while the controls are hidden.
+            if (_prefs.captions && !_chrome && items.isNotEmpty && (_current.caption?.trim().isNotEmpty ?? false))
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: IgnorePointer(
+                  child: Container(
+                    padding: EdgeInsets.fromLTRB(32, 40, 32, 24 + MediaQuery.paddingOf(context).bottom),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Color(0xB0000000)],
+                      ),
+                    ),
+                    child: Text(
+                      _current.caption!.trim(),
+                      textAlign: TextAlign.center,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 18, height: 1.35),
+                    ),
+                  ),
+                ),
+              ),
             AnimatedOpacity(
               opacity: _chrome ? 1 : 0,
               duration: const Duration(milliseconds: 200),

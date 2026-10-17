@@ -188,6 +188,14 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
               value: f.showSender,
               onChanged: (v) => _save({'show_sender': v}),
             ),
+            // Titles (2026-10-17, migrations/0084).
+            SwitchListTile(
+              secondary: const Icon(SmileIcons.caption),
+              title: Text(t.showCaptions),
+              subtitle: Text(t.showCaptionsHint),
+              value: f.showCaptions,
+              onChanged: (v) => _save({'show_captions': v}),
+            ),
             SwitchListTile(
               secondary: Icon(f.videoSound ? SmileIcons.soundOn : SmileIcons.soundOff),
               title: Text(t.videoSound),

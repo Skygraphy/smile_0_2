@@ -1514,7 +1514,8 @@ class SmileTextsDe extends SmileTexts {
   String get level4 => 'Komfort';
 
   @override
-  String get level4Hint => 'Dazu Übersicht, Album wechseln und Anzeigedauer.';
+  String get level4Hint =>
+      'Dazu Übersicht, Album wechseln, Anzeigedauer und Titel ein- oder ausblenden.';
 
   @override
   String get level5 => 'Alles selbst';
@@ -1957,6 +1958,25 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get phoneWork => 'Arbeit';
+
+  @override
+  String get captionHint => 'Titel hinzufügen …';
+
+  @override
+  String get captionEdit => 'Titel bearbeiten';
+
+  @override
+  String get captionShort => 'Titel';
+
+  @override
+  String get showCaptions => 'Titel anzeigen';
+
+  @override
+  String get showCaptionsHint =>
+      'Unten im Bild, wenn der Absender einen geschrieben hat.';
+
+  @override
+  String get allowCaptions => 'Titel ein- oder ausblenden';
 
   @override
   String get rotateWithDevice => 'Bild dreht sich mit dem Frame';

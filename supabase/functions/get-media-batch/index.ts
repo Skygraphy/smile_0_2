@@ -48,7 +48,7 @@ interface RequestBody {
 const FRAME_COLUMNS =
   "id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, " +
   "max_local_cache_gb, current_channel_id, control_level, controls, content_mode, recent_count, play_order, " +
-  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, rotate_with_device, spaces(name, deleted_at)";
+  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, spaces(name, deleted_at)";
 
 // What the Frame may change itself, by the control that allows it, and
 // what each value may be.
@@ -69,6 +69,8 @@ const SETTABLE: Record<string, { control: string; ok: (v: unknown) => boolean }>
   rotate_with_device: { control: "playback", ok: (v) => typeof v === "boolean" },
   quiet_from: { control: "playback", ok: (v) => v === null || (typeof v === "string" && /^\d{2}:\d{2}(:\d{2})?$/.test(v)) },
   quiet_to: { control: "playback", ok: (v) => v === null || (typeof v === "string" && /^\d{2}:\d{2}(:\d{2})?$/.test(v)) },
+  // The Frame's own "Titel" button (level 4) -- and on level 5 in Wiedergabe.
+  show_captions: { control: "captions", ok: (v) => typeof v === "boolean" },
 };
 
 Deno.serve(async (req) => {
@@ -149,6 +151,7 @@ Deno.serve(async (req) => {
     fill_mode: frame.fill_mode,
     slow_zoom: frame.slow_zoom,
     rotate_with_device: frame.rotate_with_device,
+    show_captions: frame.show_captions,
   };
 
   if (body.fcm_token || body.battery_level !== undefined || body.is_charging !== undefined) {
@@ -286,6 +289,7 @@ Deno.serve(async (req) => {
     storage_path_thumbnail: string | null;
     sort_key: number;
     sender_name: string | null;
+    caption: string | null;
   }[];
 
   // Signed in one call per bucket instead of one per photo: with every
@@ -311,6 +315,7 @@ Deno.serve(async (req) => {
     media_type: row.media_type,
     sort_order: row.sort_key,
     sender_name: row.sender_name ?? null,
+    caption: row.caption ?? null,
     display_url: displayUrls.get(row.storage_path_display) ?? null,
     poster_url: row.media_type === "video" && row.storage_path_thumbnail
       ? posterUrls.get(row.storage_path_thumbnail) ?? null

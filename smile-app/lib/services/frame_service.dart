@@ -73,6 +73,7 @@ class SmileFrame {
   String get fillMode => playback['fill_mode'] as String? ?? 'auto';
   bool get slowZoom => playback['slow_zoom'] as bool? ?? true;
   bool get rotateWithDevice => playback['rotate_with_device'] as bool? ?? false;
+  bool get showCaptions => playback['show_captions'] as bool? ?? true;
 
   /// A round played on the Frame right now (migrations/0077).
   String? get playingRound => playback['playing_round'] as String?;
@@ -194,7 +195,7 @@ class FrameService {
   static const playbackColumns = [
     'control_level', 'controls', 'content_mode', 'recent_count', 'play_order', 'end_behavior', 'slideshow_interval_seconds',
     'show_new_immediately', 'show_clock', 'show_sender', 'quiet_from', 'quiet_to', 'playing_round',
-    'video_length', 'fill_mode', 'slow_zoom', 'rotate_with_device',
+    'video_length', 'fill_mode', 'slow_zoom', 'rotate_with_device', 'show_captions',
   ];
 
   static final _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, video_sound, avatar_path, current_channel_id, pairing_code, '

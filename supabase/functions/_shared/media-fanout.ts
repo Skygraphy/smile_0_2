@@ -21,8 +21,10 @@ export async function announceReadyPhoto(supabaseAdmin: any, mediaItemId: string
 }
 
 /** "5 neue Fotos" instead of "Foto" -- only the media types actually in the batch. */
-export function batchBody(senderName: string, photos: number, videos: number): string {
+export function batchBody(senderName: string, photos: number, videos: number, caption?: string | null): string {
   const total = photos + videos;
+  // One photo with a title: the title is the message (2026-10-17).
+  if (total <= 1 && caption) return `${senderName}: ${caption}`;
   if (total <= 1) return `${senderName} hat ${videos === 1 ? "ein Video" : "ein Foto"} geteilt.`;
   const kind = videos === 0 ? "Fotos" : photos === 0 ? "Videos" : "Fotos und Videos";
   return `${senderName} hat ${total} neue ${kind} geteilt.`;
@@ -48,12 +50,13 @@ async function notifyChannelMembersOfNewPhoto(supabaseAdmin: any, channelId: str
   let photos = 1;
   let videos = 0;
   let senderName = "Jemand";
+  let caption: string | null = null;
   if (senderId) {
     const since = new Date(Date.now() - BATCH_MINUTES * 60_000).toISOString();
     const [{ data: batch }, profiles] = await Promise.all([
       supabaseAdmin
         .from("media_items")
-        .select("media_type")
+        .select("media_type, caption")
         .eq("channel_id", channelId)
         .eq("sender_id", senderId)
         .eq("processing_status", "ready")
@@ -61,6 +64,7 @@ async function notifyChannelMembersOfNewPhoto(supabaseAdmin: any, channelId: str
       fetchProfilesByUserId(supabaseAdmin, [senderId]),
     ]);
     const types = (batch ?? []).map((m: { media_type: string }) => m.media_type);
+    if ((batch ?? []).length === 1) caption = (batch![0] as { caption: string | null }).caption ?? null;
     if (types.length > 0) {
       videos = types.filter((t: string) => t === "video").length;
       photos = types.length - videos;
@@ -71,7 +75,7 @@ async function notifyChannelMembersOfNewPhoto(supabaseAdmin: any, channelId: str
   await pushNotificationToUsers(
     supabaseAdmin,
     recipientIds,
-    { title: channel?.name ?? "Neues Foto", body: batchBody(senderName, photos, videos) },
+    { title: channel?.name ?? "Neues Foto", body: batchBody(senderName, photos, videos, caption) },
     { type: "new_photo", channel_id: channelId, channel_name: channel?.name ?? "" },
     senderId ? { collapseKey: `photos_${channelId}_${senderId}`, collapseWindowMinutes: BATCH_MINUTES } : undefined,
   );

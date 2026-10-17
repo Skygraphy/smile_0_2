@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+
+import 'photo_viewer_screen.dart' show SmileViewerCaption;
 import 'package:video_player/video_player.dart';
 
 import '../services/offline.dart';
@@ -21,6 +23,8 @@ class VideoPlayerScreen extends StatefulWidget {
     this.onShowOnFrame,
     this.onFavorite,
     this.favorite = false,
+    this.caption,
+    this.onEditCaption,
   });
 
   /// "Jetzt am Frame zeigen" (2026-10-14) -- only when the album runs on a
@@ -35,6 +39,10 @@ class VideoPlayerScreen extends StatefulWidget {
   /// A Lieblingsbild already: the heart is filled, in coral.
   final bool favorite;
 
+  /// Its title (2026-10-17) and "Titel bearbeiten" -- see PhotoViewerScreen.
+  final String? caption;
+  final Future<String?> Function(String? current)? onEditCaption;
+
   final String mediaId;
   final String? url;
 
@@ -46,6 +54,7 @@ class VideoPlayerScreen extends StatefulWidget {
 }
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+  late String? _caption = widget.caption;
   late bool _favorite = widget.favorite;
   VideoPlayerController? _controller;
   String? _error;
@@ -133,8 +142,18 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               tooltip: SmileTexts.of(context).showOnFrameNow,
               onPressed: widget.onShowOnFrame,
             ),
+          if (widget.onEditCaption != null)
+            IconButton(
+              icon: const Icon(SmileIcons.caption),
+              tooltip: SmileTexts.of(context).captionEdit,
+              onPressed: () async {
+                final now = await widget.onEditCaption!(_caption);
+                if (now != null && mounted) setState(() => _caption = now.isEmpty ? null : now);
+              },
+            ),
         ],
       ),
+      bottomNavigationBar: _caption == null ? null : SmileViewerCaption(_caption!),
       body: Center(
         child: _error != null
             ? Padding(

@@ -11,11 +11,20 @@ enum CaptureDecision { send, retake }
 /// 2026-10-08, WhatsApp-style): look at it once, then "Senden" or "Nochmal"
 /// -- nothing is uploaded before that. Back closes without sending.
 class CapturePreviewScreen extends StatefulWidget {
-  const CapturePreviewScreen({super.key, required this.file, required this.isVideo, required this.albumName});
+  const CapturePreviewScreen({
+    super.key,
+    required this.file,
+    required this.isVideo,
+    required this.albumName,
+    this.caption,
+  });
 
   final File file;
   final bool isVideo;
   final String albumName;
+
+  /// The optional title (2026-10-17); the caller reads it after "Senden".
+  final TextEditingController? caption;
 
   @override
   State<CapturePreviewScreen> createState() => _CapturePreviewScreenState();
@@ -77,20 +86,45 @@ class _CapturePreviewScreenState extends State<CapturePreviewScreen> {
       body: Center(child: _media()),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: Row(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 12 + MediaQuery.viewInsetsOf(context).bottom),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              TextButton.icon(
-                icon: const Icon(SmileIcons.restore),
-                label: Text(t.captureRetake),
-                onPressed: () => Navigator.of(context).pop(CaptureDecision.retake),
-              ),
-              const Spacer(),
-              FloatingActionButton(
-                heroTag: null,
-                tooltip: t.captureSend,
-                onPressed: () => Navigator.of(context).pop(CaptureDecision.send),
-                child: const Icon(SmileIcons.send),
+              if (widget.caption != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: TextField(
+                    controller: widget.caption,
+                    maxLength: 200,
+                    minLines: 1,
+                    maxLines: 4,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: t.captionHint,
+                      counterText: '',
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                    ),
+                  ),
+                ),
+              Row(
+                children: [
+                  TextButton.icon(
+                    icon: const Icon(SmileIcons.restore),
+                    label: Text(t.captureRetake),
+                    onPressed: () => Navigator.of(context).pop(CaptureDecision.retake),
+                  ),
+                  const Spacer(),
+                  FloatingActionButton(
+                    heroTag: null,
+                    tooltip: t.captureSend,
+                    onPressed: () => Navigator.of(context).pop(CaptureDecision.send),
+                    child: const Icon(SmileIcons.send),
+                  ),
+                ],
               ),
             ],
           ),

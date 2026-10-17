@@ -821,6 +821,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     var sound = s?.videoSound ?? true;
     var clock = s?.showClock ?? false;
     var sender = s?.showSender ?? true;
+    var captions = s?.showCaptions ?? true;
     var videoLength = s?.videoLength ?? 'full';
     var fill = s?.fillMode ?? 'auto';
     var zoom = s?.slowZoom ?? true;
@@ -932,6 +933,11 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                       selected: sender,
                       onTap: () => set('show_sender', !sender, () => sender = !sender),
                     ),
+                    _BigChoice(
+                      label: t.showCaptions,
+                      selected: captions,
+                      onTap: () => set('show_captions', !captions, () => captions = !captions),
+                    ),
                   ]),
                   section(t.alsoLabel, [
                     _BigChoice(
@@ -1030,6 +1036,12 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     }
 
     final settings = _settings;
+    final caption = current?.caption?.trim();
+    final String? title = !_showGrid && !_barVisible && (settings?.showCaptions ?? true) && caption != null && caption.isNotEmpty
+        ? caption
+        : null;
+    // Pills at the bottom move up while a title is shown.
+    final aboveTitle = title == null ? 0.0 : 150.0;
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
@@ -1056,17 +1068,19 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                 ),
               ),
             if (!_showGrid && (settings?.showClock ?? false)) Positioned(right: 20, top: 20, child: _clock()),
+            // The photo's title (2026-10-17): big, at the bottom, two lines at most.
+            if (title != null) Positioned(left: 0, right: 0, bottom: 0, child: _titleBand(title)),
             // "Neu von …" at the bottom, out of the way of clock and caption.
             if (!_showGrid && _newFrom != null && !_barVisible)
               Positioned(
-                bottom: _paused ? 92 : 28,
+                bottom: aboveTitle + (_paused ? 92 : 28),
                 left: 0,
                 right: 0,
                 child: Center(child: _newFromPill(t.frameNewFrom(_newFrom!))),
               ),
             if (_heartFlash != null) Positioned.fill(child: IgnorePointer(child: _heart(t, _heartFlash!))),
             if (!_showGrid && _paused && !_barVisible)
-              Positioned(bottom: 24, left: 0, right: 0, child: Center(child: _pausedPill(t))),
+              Positioned(bottom: aboveTitle + 24, left: 0, right: 0, child: Center(child: _pausedPill(t))),
             // A video: the big sound button in the middle, with the bar.
             if (!_showGrid && _showingVideo && _barVisible)
               Positioned.fill(child: Center(child: _soundButton(t))),
@@ -1168,6 +1182,32 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     );
   }
 
+  Widget _titleBand(String text) => IgnorePointer(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(48, 56, 48, 36),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.transparent, Color(0xB0000000)],
+            ),
+          ),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 30,
+              fontWeight: FontWeight.w500,
+              height: 1.3,
+              shadows: [Shadow(color: Colors.black54, blurRadius: 8)],
+            ),
+          ),
+        ),
+      );
+
   Widget _newFromPill(String text) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(color: SmileTheme.primary, borderRadius: BorderRadius.circular(20)),
@@ -1253,6 +1293,13 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           onTap: () => act(() => _toggleFavorite()),
         ),
       if (c.duration) _BigButton(icon: SmileIcons.timer, label: t.ctrlDuration, onTap: _pickDuration),
+      if (c.captions)
+        _BigButton(
+          icon: SmileIcons.caption,
+          label: t.captionShort,
+          active: _settings?.showCaptions ?? true,
+          onTap: () => act(() => _changeSettings({'show_captions': !(_settings?.showCaptions ?? true)})),
+        ),
       if (c.playback) _BigButton(icon: SmileIcons.playback, label: t.settings, onTap: _openPlayback),
     ];
     return Container(
