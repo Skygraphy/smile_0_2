@@ -334,7 +334,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
         // ⋮ instead of the gear (2026-10-16), like on every page.
         actions: [
           PopupMenuButton<VoidCallback>(
-            icon: const Icon(SmileIcons.more),
+            icon: const Icon(SmileIconsBold.more),
             tooltip: t.moreOptions,
             onSelected: (action) => action(),
             itemBuilder: (context) {

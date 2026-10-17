@@ -184,7 +184,7 @@ class _FramesScreenState extends State<FramesScreen> with SyncReload {
     final frames = _frames;
     return Scaffold(
       appBar: AppBar(
-        title: Text(t.frames),
+        title: Text(t.frames, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w700)),
         actions: smileTopBarActions(
           primary: SmileMenuEntry(icon: SmileIcons.add, label: t.connectFrame, onTap: _setUpFrame),
           onChanged: _load,

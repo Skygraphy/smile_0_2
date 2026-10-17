@@ -119,7 +119,7 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return Scaffold(
       appBar: AppBar(
-        title: Text(t.spaces),
+        title: Text(t.spaces, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w700)),
         actions: smileTopBarActions(
           primary: SmileMenuEntry(icon: SmileIcons.add, label: t.createSpace, onTap: _createSpace),
           onChanged: _load,

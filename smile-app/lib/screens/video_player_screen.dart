@@ -118,7 +118,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           if (widget.onFavorite != null)
             IconButton(
               icon: Icon(
-                _favorite ? SmileIcons.heartFilled : SmileIcons.heart,
+                _favorite ? SmileIconsBold.heartFilled : SmileIconsBold.heart,
                 color: _favorite ? SmileTheme.primary : null,
               ),
               tooltip: SmileTexts.of(context).favoriteFor,
@@ -129,7 +129,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
           if (widget.onShowOnFrame != null)
             IconButton(
-              icon: const Icon(SmileIcons.frame),
+              icon: const Icon(SmileIconsBold.frame),
               tooltip: SmileTexts.of(context).showOnFrameNow,
               onPressed: widget.onShowOnFrame,
             ),

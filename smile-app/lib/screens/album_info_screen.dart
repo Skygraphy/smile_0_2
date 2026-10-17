@@ -683,7 +683,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).maybePop()),
+        leading: IconButton(icon: const Icon(SmileIconsBold.back), onPressed: () => Navigator.of(context).maybePop()),
         actions: [if (roster != null) _menu(t, roster)],
       ),
       body: roster == null

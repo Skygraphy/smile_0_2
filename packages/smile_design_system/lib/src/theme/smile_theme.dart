@@ -102,6 +102,22 @@ class SmileTheme {
           ),
         ),
       ),
+      // Top bars like WhatsApp (2026-10-17): white, slightly larger icons
+      // (bold ones via SmileIconsBold), and the buttons closer together.
+      appBarTheme: const AppBarTheme(
+        iconTheme: IconThemeData(color: onSurface, size: 26),
+        actionsIconTheme: IconThemeData(color: onSurface, size: 26),
+        actionsPadding: EdgeInsets.only(right: 4),
+      ),
+      // 42 instead of Material's 48 between icon buttons -- WhatsApp's
+      // spacing; still a comfortable target.
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          minimumSize: const Size(42, 42),
+          padding: const EdgeInsets.all(8),
+        ),
+      ),
       inputDecorationTheme: const InputDecorationTheme(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(8)),

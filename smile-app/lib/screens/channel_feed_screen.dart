@@ -1134,7 +1134,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     return Scaffold(
       appBar: _selectionMode
           ? AppBar(
-              leading: IconButton(icon: const Icon(SmileIcons.close), onPressed: _clearSelection),
+              leading: IconButton(icon: const Icon(SmileIconsBold.close), onPressed: _clearSelection),
               // In words (2026-10-11) -- the actions are in the bar below.
               title: Text(_allSelected ? t.allSelected(_selectedIds.length) : t.selectedCount(_selectedIds.length)),
             )
@@ -1145,11 +1145,11 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                   // it no longer shares the eye icon with the per-tile
                   // hide/unhide action, which was confusing (same icon,
                   // opposite meaning in each context).
-                  leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: _toggleHiddenView),
+                  leading: IconButton(icon: const Icon(SmileIconsBold.back), onPressed: _toggleHiddenView),
                   title: Text(t.hiddenPhotos),
                 )
               : AppBar(
-                  leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).maybePop()),
+                  leading: IconButton(icon: const Icon(SmileIconsBold.back), onPressed: () => Navigator.of(context).maybePop()),
                   titleSpacing: 0,
                   // WhatsApp pattern: tapping the album's icon + name opens
                   // its info page (people, shares, frames).
@@ -1173,12 +1173,12 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                   actions: [
                     // The album as a slideshow, like on a Frame (2026-10-11).
                     if ((_items ?? const <MediaItem>[]).any((i) => i.isReady))
-                      IconButton(icon: const Icon(SmileIcons.slideshow), tooltip: t.playSlideshow, onPressed: _playSlideshow),
+                      IconButton(icon: const Icon(SmileIconsBold.slideshow), tooltip: t.playSlideshow, onPressed: _playSlideshow),
                     if (_frames.isNotEmpty)
-                      IconButton(icon: const Icon(SmileIcons.frame), tooltip: t.openRemote, onPressed: _openFrame),
+                      IconButton(icon: const Icon(SmileIconsBold.frame), tooltip: t.openRemote, onPressed: _openFrame),
                     // ⋮ like on every page (2026-10-16).
                     PopupMenuButton<VoidCallback>(
-                      icon: const Icon(SmileIcons.more),
+                      icon: const Icon(SmileIconsBold.more),
                       tooltip: t.moreOptions,
                       onSelected: (action) => action(),
                       itemBuilder: (context) => [

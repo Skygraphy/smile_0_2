@@ -376,11 +376,11 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     final albums = _albums;
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).maybePop()),
+        leading: IconButton(icon: const Icon(SmileIconsBold.back), onPressed: () => Navigator.of(context).maybePop()),
         // ⋮ like on every page (2026-10-16).
         actions: [
           PopupMenuButton<VoidCallback>(
-            icon: const Icon(SmileIcons.more),
+            icon: const Icon(SmileIconsBold.more),
             tooltip: t.moreOptions,
             onSelected: (action) => action(),
             itemBuilder: (context) {

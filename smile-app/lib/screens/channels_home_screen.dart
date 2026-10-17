@@ -258,7 +258,8 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
     final channels = _channels;
     return Scaffold(
       appBar: AppBar(
-        title: const SmileWordmark(fontSize: 20),
+        // As big as WhatsApp's name in its top bar (2026-10-17).
+        title: const SmileWordmark(fontSize: 25),
         actions: smileTopBarActions(
           onPhotoSent: _load,
           primary: _managed.isEmpty ? null : SmileMenuEntry(icon: SmileIcons.add, label: SmileTexts.of(context).newAlbum, onTap: _newAlbum),
