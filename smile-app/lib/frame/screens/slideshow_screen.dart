@@ -633,6 +633,16 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     _keepBar();
   }
 
+  void _onSwipe(DragEndDetails details) {
+    if (_quiet) return;
+    final v = details.primaryVelocity ?? 0;
+    if (v < -300 && _controls.next) {
+      _advance(1);
+    } else if (v > 300 && _controls.back) {
+      _advance(-1);
+    }
+  }
+
   void _keepBar() {
     _hideBar?.cancel();
     if (_barVisible) {
@@ -950,6 +960,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _showGrid ? null : _onTap,
+        // Swiping like the big buttons (2026-10-17): left = Weiter (from
+        // level 2), right = Zurück (from level 3) -- the same switches.
+        onHorizontalDragEnd: _showGrid ? null : _onSwipe,
         child: Stack(
           children: [
             Positioned.fill(child: body),
