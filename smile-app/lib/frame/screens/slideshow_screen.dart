@@ -1150,34 +1150,24 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           spacing: 48,
           runSpacing: 16,
           children: [
-            if (browse.isNotEmpty) _group(t.groupBrowse, browse),
-            if (playing.isNotEmpty) _group(t.groupPlaying, playing),
-            if (own.isNotEmpty) _group(null, own),
+            if (browse.isNotEmpty) _group(browse),
+            if (playing.isNotEmpty) _group(playing),
+            if (own.isNotEmpty) _group(own),
           ],
         ),
       ),
     );
   }
 
-  /// A group of big buttons, with a small label above.
-  Widget _group(String? label, List<Widget> buttons) => Column(
+  /// A group of big buttons -- set apart by space only, no titles
+  /// (2026-10-17).
+  Widget _group(List<Widget> buttons) => Row(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            (label ?? '').toUpperCase(),
-            style: const TextStyle(color: Colors.white60, fontSize: 13, letterSpacing: 1.2),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final (i, b) in buttons.indexed) ...[
-                if (i > 0) const SizedBox(width: 12),
-                b,
-              ],
-            ],
-          ),
+          for (final (i, b) in buttons.indexed) ...[
+            if (i > 0) const SizedBox(width: 12),
+            b,
+          ],
         ],
       );
 
