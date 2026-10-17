@@ -397,6 +397,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     final name = frameNameOf(target.frameId, target.frameName);
     final before = previous;
     messenger.showSnackBar(SnackBar(
+      // With an action Flutter keeps a snack bar until it is swiped away
+      // (2026-10-18: it stayed for good) -- this one goes after a few seconds.
+      persist: false,
+      duration: const Duration(seconds: 6),
       content: SmileNamedText(t.frameSwitched(name, _shownName), names: [name, _shownName]),
       action: before == null || before == widget.channelId
           ? null
