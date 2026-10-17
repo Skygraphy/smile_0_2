@@ -3345,6 +3345,18 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Arbeit'**
   String get phoneWork;
+
+  /// No description provided for @rotateWithDevice.
+  ///
+  /// In de, this message translates to:
+  /// **'Bild dreht sich mit dem Frame'**
+  String get rotateWithDevice;
+
+  /// No description provided for @rotateWithDeviceHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Hochkant oder quer gestellt, das Bild dreht mit. Auch wenn die automatische Drehung am Gerät aus ist.'**
+  String get rotateWithDeviceHint;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

@@ -158,6 +158,13 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
               value: f.slowZoom,
               onChanged: (v) => _save({'slow_zoom': v}),
             ),
+            SwitchListTile(
+              secondary: const Icon(SmileIcons.rotate),
+              title: Text(t.rotateWithDevice),
+              subtitle: Text(t.rotateWithDeviceHint),
+              value: f.rotateWithDevice,
+              onChanged: (v) => _save({'rotate_with_device': v}),
+            ),
           ]),
           card([
             SwitchListTile(

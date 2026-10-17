@@ -1958,4 +1958,11 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get phoneWork => 'Arbeit';
+
+  @override
+  String get rotateWithDevice => 'Bild dreht sich mit dem Frame';
+
+  @override
+  String get rotateWithDeviceHint =>
+      'Hochkant oder quer gestellt, das Bild dreht mit. Auch wenn die automatische Drehung am Gerät aus ist.';
 }

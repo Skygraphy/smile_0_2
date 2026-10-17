@@ -1040,5 +1040,7 @@
   "@contactSmsMember": {"placeholders": {"album": {"type": "String"}, "link": {"type": "String"}}},
   "phoneMobile": "Mobil",
   "phoneHome": "Privat",
-  "phoneWork": "Arbeit"
+  "phoneWork": "Arbeit",
+  "rotateWithDevice": "Bild dreht sich mit dem Frame",
+  "rotateWithDeviceHint": "Hochkant oder quer gestellt, das Bild dreht mit. Auch wenn die automatische Drehung am Gerät aus ist."
 }

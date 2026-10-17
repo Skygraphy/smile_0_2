@@ -180,7 +180,19 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     _gridTimeout?.cancel();
     _minuteTimer?.cancel();
     if (_quiet) unawaited(_window.invokeMethod<void>('setDim', false).catchError((Object _) {}));
+    if (_rotating == true) unawaited(_window.invokeMethod<void>('setOrientation', 'system').catchError((Object _) {}));
     super.dispose();
+  }
+
+  /// "Bild dreht sich mit dem Frame" (2026-10-17): by the motion sensor,
+  /// also when the tablet's auto-rotate is off; otherwise the system's rule.
+  bool? _rotating;
+
+  void _updateRotation() {
+    final want = _settings?.rotateWithDevice;
+    if (want == null || want == _rotating) return;
+    _rotating = want;
+    unawaited(_window.invokeMethod<void>('setOrientation', want ? 'sensor' : 'system').catchError((Object _) {}));
   }
 
   Future<void> _loadFromCacheImmediately() async {
@@ -256,6 +268,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     });
     _knownIds = {...?known, for (final e in all) e.mediaItemId};
     _updateQuiet();
+    _updateRotation();
     _showArrived(arrived);
     final pending = _pendingShowId;
     if (pending != null) _showMedia(pending, retry: false);

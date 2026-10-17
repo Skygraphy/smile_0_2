@@ -48,7 +48,7 @@ interface RequestBody {
 const FRAME_COLUMNS =
   "id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, " +
   "max_local_cache_gb, current_channel_id, control_level, controls, content_mode, recent_count, play_order, " +
-  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, spaces(name, deleted_at)";
+  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, rotate_with_device, spaces(name, deleted_at)";
 
 // What the Frame may change itself, by the control that allows it, and
 // what each value may be.
@@ -142,6 +142,7 @@ Deno.serve(async (req) => {
     video_length: frame.video_length,
     fill_mode: frame.fill_mode,
     slow_zoom: frame.slow_zoom,
+    rotate_with_device: frame.rotate_with_device,
   };
 
   if (body.fcm_token || body.battery_level !== undefined || body.is_charging !== undefined) {

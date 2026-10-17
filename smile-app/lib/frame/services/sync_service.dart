@@ -77,6 +77,7 @@ class FrameSettingsInfo {
     this.videoLength = 'full',
     this.fillMode = 'auto',
     this.slowZoom = true,
+    this.rotateWithDevice = false,
   });
 
   final String displayMode; // 'slideshow' | 'manual'
@@ -117,6 +118,9 @@ class FrameSettingsInfo {
   final String fillMode;
   final bool slowZoom;
 
+  /// Turn with the device even when its auto-rotate is off (2026-10-17).
+  final bool rotateWithDevice;
+
   FrameControls get effectiveControls =>
       controls ?? FrameControls(next: true, back: true, pause: true, overview: true, album: channelSwitchEnabled);
 
@@ -139,6 +143,7 @@ class FrameSettingsInfo {
         videoLength: json['video_length'] as String? ?? 'full',
         fillMode: json['fill_mode'] as String? ?? 'auto',
         slowZoom: json['slow_zoom'] as bool? ?? true,
+        rotateWithDevice: json['rotate_with_device'] as bool? ?? false,
       );
 }
 

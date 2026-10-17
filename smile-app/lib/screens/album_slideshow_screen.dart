@@ -99,10 +99,12 @@ class SlideshowPrefs {
         sound: sound ?? this.sound,
       );
 
-  List<DeviceOrientation> get orientations => switch (orientation) {
-        'portrait' => const [DeviceOrientation.portraitUp],
-        'landscape' => const [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight],
-        _ => const [],
+  /// For Android (MainActivity.setOrientation): "Automatisch" turns with
+  /// the phone even when its auto-rotate is off (2026-10-17).
+  String get androidOrientation => switch (orientation) {
+        'portrait' => 'portrait',
+        'landscape' => 'landscape',
+        _ => 'sensor',
       };
 }
 
@@ -154,8 +156,8 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
     _hideChrome?.cancel();
     _pages.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    // The rest of the app turns with the phone again.
-    SystemChrome.setPreferredOrientations(const []);
+    // The rest of the app follows the system's rotation again.
+    unawaited(_screen.invokeMethod<void>('orientation', 'system').catchError((Object _) {}));
     unawaited(_screen.invokeMethod<void>('keepOn', false).catchError((Object _) {}));
     super.dispose();
   }
@@ -166,7 +168,7 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
       _prefs = prefs;
       if (reorder) _items = _ordered(widget.items);
     });
-    SystemChrome.setPreferredOrientations(prefs.orientations);
+    unawaited(_screen.invokeMethod<void>('orientation', prefs.androidOrientation).catchError((Object _) {}));
     _schedule();
   }
 

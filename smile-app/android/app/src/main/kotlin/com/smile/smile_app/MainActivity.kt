@@ -1,5 +1,6 @@
 package com.smile.smile_app
 
+import android.content.pm.ActivityInfo
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
@@ -45,6 +46,8 @@ class MainActivity : FlutterActivity() {
                     else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
                 window.attributes = attributes
             }
+            // "Bild dreht sich mit dem Frame" (2026-10-17).
+            if (call.method == "setOrientation") setOrientation(call.arguments as? String)
             result.success(null)
         }
         // The app's own slideshow keeps the screen on while it plays
@@ -57,6 +60,9 @@ class MainActivity : FlutterActivity() {
                     window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 }
             }
+            // The app's slideshow: "Automatisch" turns with the phone even
+            // when auto-rotate is off (2026-10-17).
+            if (call.method == "orientation") setOrientation(call.arguments as? String)
             result.success(null)
         }
         // Videos are shrunk on the phone before uploading (VideoCompressor).
@@ -87,5 +93,18 @@ class MainActivity : FlutterActivity() {
         /** Set while Smile's own Dart code runs (UploadWorker checks it). */
         @Volatile
         var queueChannel: MethodChannel? = null
+    }
+
+    /// sensor: turns with the device by its motion sensor, also when the
+    /// system's auto-rotate is off (unlike Flutter's own orientations,
+    /// which follow that lock); portrait / landscape: only those, either
+    /// way up; anything else: back to the system's rule.
+    private fun setOrientation(mode: String?) {
+        requestedOrientation = when (mode) {
+            "sensor" -> ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+            "portrait" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+            "landscape" -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
     }
 }
