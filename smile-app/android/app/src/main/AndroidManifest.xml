@@ -15,7 +15,7 @@
          the phone. -->
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <application
-        android:label="smile_app"
+        android:label="SmileApp"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round">
@@ -36,10 +36,6 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
             <!-- Invite links (2026-10-17): smileapp.app/i/CODE and a card's
                  smileapp.app/@name open Smile;
                  verified through smileapp.app/.well-known/assetlinks.json. -->
@@ -54,6 +50,35 @@
                  Flutter's own router. -->
             <meta-data android:name="flutter_deeplinking_enabled" android:value="false"/>
         </activity>
+        <!-- The home screen entry (2026-10-17): SmileApp on a phone,
+             SmileFrame with its own icon on a Frame. Exactly one is enabled;
+             MainActivity.setLauncher switches them with the Frame mode. -->
+        <activity-alias
+            android:name=".AppLauncher"
+            android:targetActivity=".MainActivity"
+            android:label="SmileApp"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".FrameLauncher"
+            android:targetActivity=".MainActivity"
+            android:label="SmileFrame"
+            android:icon="@mipmap/ic_launcher_frame"
+            android:roundIcon="@mipmap/ic_launcher_frame_round"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity-alias>
         <!-- Every push (also while the app is closed) uses the Smile channel
              with heads-up importance and the Smile status bar icon. -->
         <meta-data

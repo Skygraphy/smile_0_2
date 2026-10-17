@@ -1,6 +1,8 @@
 package com.smile.smile_app
 
+import android.content.ComponentName
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
@@ -37,7 +39,10 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "smile/frame_window").setMethodCallHandler { call, result ->
-            if (call.method == "setFrameMode") setFrameWindow(call.arguments == true)
+            if (call.method == "setFrameMode") {
+                setFrameWindow(call.arguments == true)
+                setLauncher(call.arguments == true)
+            }
             // Nachtruhe (2026-10-14): the display as dark as it goes, the
             // Frame shows black meanwhile; back to the system's brightness after.
             if (call.method == "setDim") {
@@ -93,6 +98,28 @@ class MainActivity : FlutterActivity() {
         /** Set while Smile's own Dart code runs (UploadWorker checks it). */
         @Volatile
         var queueChannel: MethodChannel? = null
+    }
+
+    /// The home screen shows SmileFrame (own icon) on a Frame and SmileApp
+    /// on a phone (2026-10-17): one activity-alias on, the other off. Only
+    /// touched when it differs, so the launcher isn't refreshed each start.
+    private fun setLauncher(frame: Boolean) {
+        val pm = packageManager
+        val app = ComponentName(this, "$packageName.AppLauncher")
+        val frameEntry = ComponentName(this, "$packageName.FrameLauncher")
+        fun set(component: ComponentName, on: Boolean) {
+            val want = if (on) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            val now = pm.getComponentEnabledSetting(component)
+            val isOn = now == PackageManager.COMPONENT_ENABLED_STATE_ENABLED ||
+                (now == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && component == app)
+            if (isOn != on) pm.setComponentEnabledSetting(component, want, PackageManager.DONT_KILL_APP)
+        }
+        try {
+            // Turn the new one on first: never both off.
+            set(if (frame) frameEntry else app, true)
+            set(if (frame) app else frameEntry, false)
+        } catch (_: Exception) {}
     }
 
     /// sensor: turns with the device by its motion sensor, also when the
