@@ -953,16 +953,29 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         child: Stack(
           children: [
             Positioned.fill(child: body),
+            // Top: only album · sender on the left and the clock on the
+            // right -- fits also upright (2026-10-17). What round plays shows
+            // on its button (coral border), no extra pill in the middle.
             if (!_showGrid && current != null && (settings?.showSender ?? true))
-              Positioned(left: 20, top: 20, child: _caption(channelName, current.senderName)),
+              Positioned(
+                left: 20,
+                top: 20,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.sizeOf(context).width - 40 - ((settings?.showClock ?? false) ? 250 : 0),
+                  ),
+                  child: _caption(channelName, current.senderName),
+                ),
+              ),
             if (!_showGrid && (settings?.showClock ?? false)) Positioned(right: 20, top: 20, child: _clock()),
-            if (!_showGrid && _newFrom != null)
-              Positioned(top: 20, left: 0, right: 0, child: Center(child: _newFromPill(t.frameNewFrom(_newFrom!))))
-            // So one can see what plays right now (2026-10-14).
-            else if (!_showGrid && _newestRound)
-              Positioned(top: 20, left: 0, right: 0, child: Center(child: _newestPill(t)))
-            else if (!_showGrid && _favoritesRound)
-              Positioned(top: 20, left: 0, right: 0, child: Center(child: _favoritesPill(t))),
+            // "Neu von …" at the bottom, out of the way of clock and caption.
+            if (!_showGrid && _newFrom != null && !_barVisible)
+              Positioned(
+                bottom: _paused ? 92 : 28,
+                left: 0,
+                right: 0,
+                child: Center(child: _newFromPill(t.frameNewFrom(_newFrom!))),
+              ),
             if (_heartFlash != null) Positioned.fill(child: IgnorePointer(child: _heart(t, _heartFlash!))),
             if (!_showGrid && _paused && !_barVisible)
               Positioned(bottom: 24, left: 0, right: 0, child: Center(child: _pausedPill(t))),
@@ -999,7 +1012,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(14)),
-      child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 20)),
+      child: Text(text,
+          maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 20)),
     );
   }
 
@@ -1014,19 +1028,19 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final now = _now;
     final time = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(18)),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
             time,
-            style: const TextStyle(color: Colors.white, fontSize: 56, fontWeight: FontWeight.w600, height: 1.05,
+            style: const TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.w600, height: 1.05,
                 fontFeatures: [FontFeature.tabularFigures()]),
           ),
           Text(
             '${_weekdays[now.weekday - 1]}, ${now.day}. ${_months[now.month - 1]}',
-            style: const TextStyle(color: Colors.white, fontSize: 22),
+            style: const TextStyle(color: Colors.white, fontSize: 18),
           ),
         ],
       ),
@@ -1037,19 +1051,6 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(color: SmileTheme.primary, borderRadius: BorderRadius.circular(20)),
         child: Text(text, style: const TextStyle(color: Color(0xFF1A0F0E), fontSize: 22, fontWeight: FontWeight.w600)),
-      );
-
-  Widget _favoritesPill(SmileTexts t) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(20)),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(SmileIcons.heartFilled, color: SmileTheme.primary, size: 26),
-            const SizedBox(width: 10),
-            Text(t.favorites, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w600)),
-          ],
-        ),
       );
 
   /// After "Merken": big enough to see from the sofa.
@@ -1068,19 +1069,6 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
               ),
             ],
           ),
-        ),
-      );
-
-  Widget _newestPill(SmileTexts t) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(20)),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(SmileIcons.newest, color: SmileTheme.primary, size: 26),
-            const SizedBox(width: 10),
-            Text(t.allowNewest, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w600)),
-          ],
         ),
       );
 
