@@ -32,7 +32,7 @@ Deno.test("Frame settings: delivered, changed on the Frame only as allowed, remo
     const batch = (extra: Record<string, unknown> = {}) =>
       invoke("get-media-batch", "irrelevant-anon-call", { access_token: frameToken, ...extra });
     const row = async () =>
-      ((await svc(`frames?id=eq.${frameId}&select=control_level,slideshow_interval_seconds,play_order,show_clock`))
+      ((await svc(`frames?id=eq.${frameId}&select=control_level,slideshow_interval_seconds,play_order,show_clock,quiet_from,recent_count`))
         .body as Record<string, unknown>[])[0];
 
     // A new Frame: level 3 "Einfach", playback defaults -- all in the sync.
@@ -69,6 +69,19 @@ Deno.test("Frame settings: delivered, changed on the Frame only as allowed, remo
     await batch({ set_settings: { slideshow_interval_seconds: 99999, play_order: "sideways" } });
     assertEquals((await row()).slideshow_interval_seconds, 20);
     assertEquals((await row()).play_order, "shuffle");
+
+    // 2026-10-17: the rest of the playback settings too -- and Nachtruhe
+    // can be switched off (null) from the Frame.
+    const more = await batch({
+      set_settings: { recent_count: 50, show_new_immediately: false, rotate_with_device: true, quiet_from: "22:00", quiet_to: "07:00" },
+    });
+    assertEquals(more.body.settings.recent_count, 50);
+    assertEquals(more.body.settings.show_new_immediately, false);
+    assertEquals(more.body.settings.rotate_with_device, true);
+    assertEquals(String((await row()).quiet_from).slice(0, 5), "22:00");
+    await batch({ set_settings: { quiet_from: null, quiet_to: null, recent_count: 9999 } });
+    assertEquals((await row()).quiet_from, null);
+    assertEquals((await row()).recent_count, 50);
 
     // Picking an album on the Frame while all albums play in turn: just
     // that album from now on.

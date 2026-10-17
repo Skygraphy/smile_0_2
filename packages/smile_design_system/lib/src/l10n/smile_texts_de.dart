@@ -1963,6 +1963,52 @@ class SmileTextsDe extends SmileTexts {
   String get rotateWithDevice => 'Bild dreht sich mit dem Frame';
 
   @override
+  String get recentCountLabel => 'Wie viele aktuelle Fotos';
+
+  @override
+  String quietPreset(String from, String to) {
+    return '$from – $to Uhr';
+  }
+
+  @override
+  String get alsoLabel => 'Dazu';
+
+  @override
+  String get rotateShort => 'Bild dreht sich mit';
+
+  @override
+  String get whoWatches => 'Wer schaut auf diesen Frame?';
+
+  @override
+  String get watchAll => 'Jemand, der alles selbst einstellen möchte';
+
+  @override
+  String get watchAllHint => 'Alle Knöpfe und Einstellungen direkt am Frame.';
+
+  @override
+  String get watchSimple => 'Einfach bedienen';
+
+  @override
+  String get watchSimpleHint =>
+      'Zurück, Pause, Weiter, Neueste Fotos und Lieblingsbilder.';
+
+  @override
+  String get watchOnly => 'Nur zuschauen';
+
+  @override
+  String get watchOnlyHint =>
+      'Keine Knöpfe. Die Fotos laufen von selbst, alles kommt aus der App.';
+
+  @override
+  String levelBadge(int n, String name) {
+    return 'Stufe $n · $name';
+  }
+
+  @override
+  String get whoWatchesLater =>
+      'Später jederzeit änderbar unter Frame → ⋮ → Bedienung.';
+
+  @override
   String get rotateWithDeviceHint =>
       'Hochkant oder quer gestellt, das Bild dreht mit. Auch wenn die automatische Drehung am Gerät aus ist.';
 }

@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show SignOutScope;
 
 import '../frame/frame.dart' as frame;
 import '../main.dart';
+import '../services/frame_controls.dart';
 import '../services/frame_service.dart';
 import '../services/push_service.dart';
 import '../services/upload_queue.dart';
@@ -51,6 +52,10 @@ class _CreateFrameScreenState extends State<CreateFrameScreen> {
     super.dispose();
   }
 
+  /// "Wer schaut auf diesen Frame?" (2026-10-17): 5 / 3 / 1, saved with
+  /// the new Frame. 3 is what a new Frame gets anyway.
+  int _level = 3;
+
   Future<SmileFrame?> _createFrame() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) return null;
@@ -60,10 +65,17 @@ class _CreateFrameScreenState extends State<CreateFrameScreen> {
       _errorMessage = null;
     });
     try {
-      return await widget.frameService.createFrame(
+      final created = await widget.frameService.createFrame(
         spaceId: widget.spaceId,
         name: name,
       );
+      if (_level != 3) {
+        await widget.frameService.updateSettings(
+          frameId: created.id,
+          changes: FrameControlLevels.update(FrameControlLevels.preset(_level)),
+        );
+      }
+      return created;
     } catch (e) {
       if (mounted) {
         setState(() => _errorMessage = t.actionFailed(errorReasonIn(t, e)));
@@ -278,6 +290,24 @@ class _CreateFrameScreenState extends State<CreateFrameScreen> {
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: SmileSpacing.l),
+        Text(t.whoWatches),
+        const SizedBox(height: SmileSpacing.s),
+        for (final (level, title, hint, name) in [
+          (5, t.watchAll, t.watchAllHint, t.level5),
+          (3, t.watchSimple, t.watchSimpleHint, t.level3),
+          (1, t.watchOnly, t.watchOnlyHint, t.level1),
+        ]) ...[
+          _LevelOption(
+            selected: _level == level,
+            title: title,
+            hint: hint,
+            badge: t.levelBadge(level, name),
+            onTap: _busy ? null : () => setState(() => _level = level),
+          ),
+          const SizedBox(height: SmileSpacing.s),
+        ],
+        Text(t.whoWatchesLater, style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant)),
+        const SizedBox(height: SmileSpacing.l),
         if (_nameController.text.trim().isNotEmpty) ...[
           choice(
             SmileIcons.frame,
@@ -302,6 +332,65 @@ class _CreateFrameScreenState extends State<CreateFrameScreen> {
           Text(_errorMessage!, style: TextStyle(color: scheme.error)),
         ],
       ],
+    );
+  }
+}
+
+/// One answer to "Wer schaut auf diesen Frame?".
+class _LevelOption extends StatelessWidget {
+  const _LevelOption({
+    required this.selected,
+    required this.title,
+    required this.hint,
+    required this.badge,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final String title;
+  final String hint;
+  final String badge;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: selected ? scheme.primary.withValues(alpha: 0.14) : scheme.surfaceContainer,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(SmileRadius.l),
+        side: BorderSide(color: selected ? scheme.primary : Colors.transparent, width: 2),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(SmileRadius.l),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(SmileSpacing.m),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                color: selected ? scheme.primary : scheme.onSurfaceVariant,
+                size: 22,
+              ),
+              const SizedBox(width: SmileSpacing.m),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text(hint, style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant, height: 1.35)),
+                    const SizedBox(height: 4),
+                    Text(badge, style: TextStyle(fontSize: 12, color: scheme.primary, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

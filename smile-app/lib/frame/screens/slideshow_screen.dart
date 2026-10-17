@@ -750,7 +750,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   /// A setting changed on the Frame itself: sent with the next sync, which
   /// starts right away (the server only takes what the controls allow).
-  void _changeSettings(Map<String, Object> settings) {
+  void _changeSettings(Map<String, Object?> settings) {
     widget.syncService.changeSettings(settings);
     unawaited(_sync());
   }
@@ -805,6 +805,13 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     var videoLength = s?.videoLength ?? 'full';
     var fill = s?.fillMode ?? 'auto';
     var zoom = s?.slowZoom ?? true;
+    var recent = s?.recentCount ?? 20;
+    var showNew = s?.showNewImmediately ?? true;
+    var rotate = s?.rotateWithDevice ?? false;
+    // "22:00:00" -> "22:00"; null = no Nachtruhe.
+    String? hhmm(String? v) => v == null || v.length < 5 ? null : v.substring(0, 5);
+    var quietFrom = hhmm(s?.quietFrom);
+    var quietTo = hhmm(s?.quietTo);
     final seconds = s?.slideshowIntervalSeconds ?? 8;
     await showModalBottomSheet<void>(
       context: context,
@@ -844,6 +851,12 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                     for (final (value, label) in [('album', t.contentAlbum), ('rotate', t.contentRotate), ('recent', t.contentRecent)])
                       _BigChoice(label: label, selected: content == value, onTap: () => set('content_mode', value, () => content = value)),
                   ]),
+                  // 2026-10-17: only with "Aktuelles".
+                  if (content == 'recent')
+                    section(t.recentCountLabel, [
+                      for (final n in {10, 20, 50, 100, recent}.toList()..sort())
+                        _BigChoice(label: '$n', selected: recent == n, onTap: () => set('recent_count', n, () => recent = n)),
+                    ]),
                   section(t.playOrder, [
                     for (final (value, label) in [('newest', t.orderNewest), ('oldest', t.orderOldest), ('shuffle', t.orderShuffle)])
                       _BigChoice(label: label, selected: order == value, onTap: () => set('play_order', value, () => order = value)),
@@ -851,6 +864,37 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                   section(t.atEnd, [
                     for (final (value, label) in [('loop', t.endLoop), ('overview', t.endOverview)])
                       _BigChoice(label: label, selected: end == value, onTap: () => set('end_behavior', value, () => end = value)),
+                  ]),
+                  section(t.quietTime, [
+                    _BigChoice(
+                      label: t.quietOff,
+                      selected: quietFrom == null,
+                      onTap: () {
+                        setSheet(() => quietFrom = quietTo = null);
+                        _changeSettings({'quiet_from': null, 'quiet_to': null});
+                      },
+                    ),
+                    for (final (from, to) in {
+                      ('21:00', '07:00'),
+                      ('22:00', '07:00'),
+                      ('23:00', '07:00'),
+                      // A time set in the app shows as its own choice.
+                      if (quietFrom != null && quietTo != null) (quietFrom!, quietTo!),
+                    })
+                      _BigChoice(
+                        label: t.quietPreset(
+                          from.endsWith(':00') ? '${int.parse(from.substring(0, 2))}' : from,
+                          to.endsWith(':00') ? '${int.parse(to.substring(0, 2))}' : to,
+                        ),
+                        selected: quietFrom == from && quietTo == to,
+                        onTap: () {
+                          setSheet(() {
+                            quietFrom = from;
+                            quietTo = to;
+                          });
+                          _changeSettings({'quiet_from': from, 'quiet_to': to});
+                        },
+                      ),
                   ]),
                   section(t.videoLengthLabel, [
                     for (final (value, label) in [('full', t.videoFull), ('photo', t.videoAsPhoto(seconds))])
@@ -868,6 +912,18 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                       label: t.showSenderCaption,
                       selected: sender,
                       onTap: () => set('show_sender', !sender, () => sender = !sender),
+                    ),
+                  ]),
+                  section(t.alsoLabel, [
+                    _BigChoice(
+                      label: t.showNewNow,
+                      selected: showNew,
+                      onTap: () => set('show_new_immediately', !showNew, () => showNew = !showNew),
+                    ),
+                    _BigChoice(
+                      label: t.rotateShort,
+                      selected: rotate,
+                      onTap: () => set('rotate_with_device', !rotate, () => rotate = !rotate),
                     ),
                   ]),
                 ],

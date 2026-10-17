@@ -3352,6 +3352,84 @@ abstract class SmileTexts {
   /// **'Bild dreht sich mit dem Frame'**
   String get rotateWithDevice;
 
+  /// No description provided for @recentCountLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Wie viele aktuelle Fotos'**
+  String get recentCountLabel;
+
+  /// No description provided for @quietPreset.
+  ///
+  /// In de, this message translates to:
+  /// **'{from} – {to} Uhr'**
+  String quietPreset(String from, String to);
+
+  /// No description provided for @alsoLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Dazu'**
+  String get alsoLabel;
+
+  /// No description provided for @rotateShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Bild dreht sich mit'**
+  String get rotateShort;
+
+  /// No description provided for @whoWatches.
+  ///
+  /// In de, this message translates to:
+  /// **'Wer schaut auf diesen Frame?'**
+  String get whoWatches;
+
+  /// No description provided for @watchAll.
+  ///
+  /// In de, this message translates to:
+  /// **'Jemand, der alles selbst einstellen möchte'**
+  String get watchAll;
+
+  /// No description provided for @watchAllHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle Knöpfe und Einstellungen direkt am Frame.'**
+  String get watchAllHint;
+
+  /// No description provided for @watchSimple.
+  ///
+  /// In de, this message translates to:
+  /// **'Einfach bedienen'**
+  String get watchSimple;
+
+  /// No description provided for @watchSimpleHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurück, Pause, Weiter, Neueste Fotos und Lieblingsbilder.'**
+  String get watchSimpleHint;
+
+  /// No description provided for @watchOnly.
+  ///
+  /// In de, this message translates to:
+  /// **'Nur zuschauen'**
+  String get watchOnly;
+
+  /// No description provided for @watchOnlyHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Knöpfe. Die Fotos laufen von selbst, alles kommt aus der App.'**
+  String get watchOnlyHint;
+
+  /// No description provided for @levelBadge.
+  ///
+  /// In de, this message translates to:
+  /// **'Stufe {n} · {name}'**
+  String levelBadge(int n, String name);
+
+  /// No description provided for @whoWatchesLater.
+  ///
+  /// In de, this message translates to:
+  /// **'Später jederzeit änderbar unter Frame → ⋮ → Bedienung.'**
+  String get whoWatchesLater;
+
   /// No description provided for @rotateWithDeviceHint.
   ///
   /// In de, this message translates to:

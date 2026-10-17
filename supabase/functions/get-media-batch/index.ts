@@ -63,6 +63,12 @@ const SETTABLE: Record<string, { control: string; ok: (v: unknown) => boolean }>
   video_length: { control: "playback", ok: (v) => ["full", "photo"].includes(v as string) },
   fill_mode: { control: "playback", ok: (v) => ["fit", "auto", "fill"].includes(v as string) },
   slow_zoom: { control: "playback", ok: (v) => typeof v === "boolean" },
+  // 2026-10-17: the rest of the playback settings on level 5 too.
+  recent_count: { control: "playback", ok: (v) => Number.isInteger(v) && (v as number) >= 5 && (v as number) <= 500 },
+  show_new_immediately: { control: "playback", ok: (v) => typeof v === "boolean" },
+  rotate_with_device: { control: "playback", ok: (v) => typeof v === "boolean" },
+  quiet_from: { control: "playback", ok: (v) => v === null || (typeof v === "string" && /^\d{2}:\d{2}(:\d{2})?$/.test(v)) },
+  quiet_to: { control: "playback", ok: (v) => v === null || (typeof v === "string" && /^\d{2}:\d{2}(:\d{2})?$/.test(v)) },
 };
 
 Deno.serve(async (req) => {

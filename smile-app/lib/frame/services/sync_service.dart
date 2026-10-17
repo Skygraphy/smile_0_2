@@ -275,8 +275,8 @@ class SyncService {
   /// A setting changed on the Frame itself (display time, playback):
   /// sent with the next sync, which the caller triggers. The server only
   /// takes what the Frame's controls allow (get-media-batch).
-  void changeSettings(Map<String, Object> settings) => _pendingSettings.addAll(settings);
-  final Map<String, Object> _pendingSettings = {};
+  void changeSettings(Map<String, Object?> settings) => _pendingSettings.addAll(settings);
+  final Map<String, Object?> _pendingSettings = {};
 
   /// A Lieblingsbild marked (true) or taken back (false) on the Frame: sent
   /// one per sync, which the caller triggers; more waiting run another.
@@ -427,7 +427,7 @@ class SyncService {
     // A switch made on the Frame since the last sync (also an old build's
     // stored pick): reported once, then the server's choice applies.
     final pickedChannelId = await _credentialsStore.preferredChannelId;
-    final settingsToSend = Map<String, Object>.of(_pendingSettings);
+    final settingsToSend = Map<String, Object?>.of(_pendingSettings);
     final favoriteToSend = _pendingFavorites.entries.firstOrNull;
     final roundPending = _roundPending;
     final roundToSend = _pendingRound;
@@ -622,7 +622,7 @@ class SyncService {
     required String? fcmToken,
     required String? selectChannelId,
     String? fetchChannelId,
-    Map<String, Object> setSettings = const {},
+    Map<String, Object?> setSettings = const {},
     MapEntry<String, bool>? favorite,
     ({String? value})? round,
   }) async {
