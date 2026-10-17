@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smile Testlauf</title>
+<style>
+/* Layout: one step at a time -- question and answer buttons on top, the
+   devices' screenshots side by side below, the run's history at the end. */
+:root{color-scheme:dark;--page:#0d0c0c;--bg:#151313;--surface:#1f1c1c;--raised:#2a2626;--line:#332e2e;--text:#ece6e5;--muted:#a39b9a;--coral:#FF6F61;--on-coral:#1a0f0e;--ok:#7fd18b;--bad:#ff8a80;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--text);padding:20px 16px 60px}
+.wrap{max-width:1400px;margin:0 auto;display:grid;gap:18px}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.word{font-weight:700;font-size:22px}.word span{color:var(--coral)}
+.run{color:var(--muted);font-size:14px}
+.progress{flex:1;min-width:160px;height:6px;background:var(--surface);border-radius:3px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--coral);width:0;transition:width .3s}
+.count{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:20px;display:grid;gap:14px}
+h1{margin:0;font-size:21px;line-height:1.3}
+.text{margin:0;color:#d8d0cf;font-size:15.5px;line-height:1.55;white-space:pre-wrap}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.check{font-size:13px;border-radius:10px;padding:5px 10px;background:var(--surface)}
+.check.ok{color:var(--ok)}.check.bad{color:var(--bad)}
+.answers{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:inherit;font-size:16px;font-weight:600;border:0;border-radius:14px;padding:13px 22px;cursor:pointer;background:var(--raised);color:var(--text)}
+button.yes{background:var(--coral);color:var(--on-coral)}
+button.no{background:#4a2421;color:#ffb4ab}
+button:focus-visible{outline:3px solid #fff3}
+button:disabled{opacity:.5;cursor:default}
+textarea{font:inherit;font-size:15px;width:100%;min-height:70px;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;resize:vertical}
+.working{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:15px}
+.spin{width:22px;height:22px;border-radius:50%;border:3px solid var(--raised);border-top-color:var(--coral);animation:s 0.9s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;align-items:start}
+.shot{display:grid;gap:6px;min-width:0}
+.shot b{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+.shot img{width:100%;border-radius:12px;border:1px solid var(--line);cursor:zoom-in;background:#000}
+.shot.wide{grid-column:span 2}
+@media (max-width:700px){.shot.wide{grid-column:auto}}
+.zoom{position:fixed;inset:0;background:#000d;display:none;align-items:center;justify-content:center;padding:20px;z-index:10;cursor:zoom-out}
+.zoom img{max-width:100%;max-height:100%;border-radius:10px}
+.log{display:grid;gap:6px}
+.log h2{font-size:15px;margin:0;color:var(--muted)}
+.entry{display:flex;gap:10px;font-size:13.5px;color:#cfc7c6;align-items:baseline}
+.entry .c{font-weight:700;min-width:84px}
+.entry .c.yes{color:var(--ok)}.entry .c.no{color:var(--bad)}.entry .c.other{color:#ffd28a}
+.idle{color:var(--muted);font-size:15px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="word">S<span>m</span>ile Testlauf</span>
+    <span class="run" id="run"></span>
+    <div class="progress"><i id="bar"></i></div>
+    <span class="count" id="count"></span>
+  </header>
+  <div class="card" id="card"><p class="idle">Warte auf Claude …</p></div>
+  <div class="shots" id="shots"></div>
+  <div class="card log"><h2>Bisher</h2><div id="log"></div></div>
+</div>
+<div class="zoom" id="zoom"><img alt=""></div>
+<script>
+let shown = null; // stepId + status currently rendered
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+async function answer(state, option) {
+  const choice = option.id, kind = option.kind;
+  const text = $('note') ? $('note').value.trim() : '';
+  if (option.needsText && !text && $('note')) { $('note').focus(); return; }
+  for (const b of document.querySelectorAll('.answers button')) b.disabled = true;
+  await fetch('/api/answer', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stepId: state.stepId, choice, kind, text }) }).catch(() => {});
+  poll();
+}
+
+function render(state) {
+  const key = state.stepId + ':' + state.status + ':' + (state.shots || []).map((s) => s.file).join(',');
+  if (key === shown) return;
+  shown = key;
+  $('run').textContent = state.run || '';
+  const total = state.total || 0, index = state.index || 0;
+  $('count').textContent = total ? `Schritt ${index} von ${total}` : '';
+  $('bar').style.width = total ? `${Math.round((index - (state.status === 'question' ? 1 : 0)) / total * 100)}%` : '0';
+  const checks = (state.checks || []).map((c) => `<span class="check ${c.ok ? 'ok' : 'bad'}">${c.ok ? '✓' : '✗'} ${esc(c.label)}</span>`).join('');
+  let html = `<h1>${esc(state.title || '')}</h1>`;
+  if (state.text) html += `<p class="text">${esc(state.text)}</p>`;
+  if (checks) html += `<div class="checks">${checks}</div>`;
+  if (state.status === 'question') {
+    if (state.input) html += `<textarea id="note" placeholder="${esc(state.input.placeholder || 'Was ist dir aufgefallen?')}"></textarea>`;
+    html += `<div class="answers">${(state.options || []).map((o, i) =>
+      `<button class="${esc(o.kind || '')}" data-i="${i}">${esc(o.label)}</button>`).join('')}</div>`;
+  } else if (state.status === 'working') {
+    html += `<div class="working"><span class="spin"></span>${esc(state.answered ? 'Danke! Claude macht weiter …' : (state.workingText || 'Claude arbeitet an den Geräten …'))}</div>`;
+  } else if (state.status === 'done') {
+    html += `<p class="text">Fertig. Danke!</p>`;
+  } else {
+    html = `<p class="idle">Warte auf Claude …</p>`;
+  }
+  $('card').innerHTML = html;
+  for (const b of document.querySelectorAll('.answers button')) {
+    const o = state.options[Number(b.dataset.i)];
+    b.onclick = () => answer(state, o);
+  }
+  $('shots').innerHTML = (state.shots || []).map((s) =>
+    `<div class="shot ${s.wide ? 'wide' : ''}"><b>${esc(s.label)}</b><img src="/shots/${encodeURIComponent(s.file)}?v=${encodeURIComponent(state.stepId)}" alt="${esc(s.label)}"></div>`).join('');
+  for (const img of document.querySelectorAll('.shot img')) img.onclick = () => {
+    $('zoom').querySelector('img').src = img.src; $('zoom').style.display = 'flex';
+  };
+}
+$('zoom').onclick = () => ($('zoom').style.display = 'none');
+
+async function renderLog() {
+  const log = await fetch('/api/log').then((r) => r.json()).catch(() => []);
+  $('log').innerHTML = log.slice().reverse().map((e) =>
+    `<div class="entry"><span class="c ${esc(e.kind)}">${esc(e.choice)}</span><span>${esc(e.title)}${e.text ? ' — ' + esc(e.text) : ''}</span></div>`).join('') || '<span class="idle">Noch nichts.</span>';
+}
+
+async function poll() {
+  const state = await fetch('/api/state').then((r) => r.json()).catch(() => null);
+  if (state) render(state);
+  renderLog();
+}
+poll();
+setInterval(poll, 1000);
+</script>
+</body>
+</html>
