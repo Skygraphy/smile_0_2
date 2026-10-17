@@ -10,6 +10,10 @@
          requested at runtime by the plugin, but still has to be declared. -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <!-- "Aus Kontakten" einladen (2026-10-17): read only, asked at runtime
+         after Smile's own explanation; only hashed email addresses leave
+         the phone. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <application
         android:label="smile_app"
         android:name="${applicationName}"
@@ -81,6 +85,23 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- The SMS, WhatsApp and email apps an invite is sent with. -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO"/>
+            <data android:scheme="sms"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO"/>
+            <data android:scheme="mailto"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="whatsapp"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
         </intent>
     </queries>
 </manifest>

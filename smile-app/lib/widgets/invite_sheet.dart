@@ -24,6 +24,7 @@ Future<void> showInviteSheet(
   String? Function(KnownPerson person)? subtitle,
   String? Function(KnownPerson person)? whyNot,
   required Future<void> Function(KnownPerson person) onPerson,
+  VoidCallback? onContacts,
   required VoidCallback onShowQr,
   VoidCallback? onShareCode,
   required VoidCallback onEmail,
@@ -42,6 +43,12 @@ Future<void> showInviteSheet(
         Navigator.of(sheetContext).pop();
         onPerson(person);
       },
+      onContacts: onContacts == null
+          ? null
+          : () {
+              Navigator.of(sheetContext).pop();
+              onContacts();
+            },
       onShowQr: () {
         Navigator.of(sheetContext).pop();
         onShowQr();
@@ -67,6 +74,7 @@ class _InviteSheet extends StatefulWidget {
     required this.subtitle,
     required this.whyNot,
     required this.onPerson,
+    required this.onContacts,
     required this.onShowQr,
     required this.onShareCode,
     required this.onEmail,
@@ -77,6 +85,7 @@ class _InviteSheet extends StatefulWidget {
   final String? Function(KnownPerson person)? subtitle;
   final String? Function(KnownPerson person)? whyNot;
   final void Function(KnownPerson person) onPerson;
+  final VoidCallback? onContacts;
   final VoidCallback onShowQr;
   final VoidCallback? onShareCode;
   final VoidCallback onEmail;
@@ -209,6 +218,9 @@ class _InviteSheetState extends State<_InviteSheet> {
               ),
             ),
             const Divider(height: SmileSpacing.l),
+            // The phone book, like WhatsApp (2026-10-17).
+            if (widget.onContacts != null)
+              SmileActionRow(icon: SmileIcons.contacts, label: t.fromContacts, onTap: widget.onContacts!),
             SmileActionRow(icon: SmileIcons.inviteCode, label: t.showQrCode, onTap: widget.onShowQr),
             if (widget.onShareCode != null)
               SmileActionRow(icon: SmileIcons.shareOut, label: t.shareInviteLink, onTap: widget.onShareCode!),

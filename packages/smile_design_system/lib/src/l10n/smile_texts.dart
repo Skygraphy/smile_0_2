@@ -3177,6 +3177,174 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Niemand gefunden. Fremde nur mit ganzem @Smile-Namen.'**
   String get noPersonFound;
+
+  /// No description provided for @fromContacts.
+  ///
+  /// In de, this message translates to:
+  /// **'Aus Kontakten'**
+  String get fromContacts;
+
+  /// No description provided for @contactsPermTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Kontakte in Smile finden'**
+  String get contactsPermTitle;
+
+  /// No description provided for @contactsPermText.
+  ///
+  /// In de, this message translates to:
+  /// **'Smile prüft, wer aus deinem Telefonbuch schon Smile hat. Alle anderen kannst du per SMS einladen.'**
+  String get contactsPermText;
+
+  /// No description provided for @contactsPermPoint1.
+  ///
+  /// In de, this message translates to:
+  /// **'Dein Telefonbuch bleibt auf dem Handy. Zum Prüfen gehen nur unlesbare Prüfwerte an Smile.'**
+  String get contactsPermPoint1;
+
+  /// No description provided for @contactsPermPoint2.
+  ///
+  /// In de, this message translates to:
+  /// **'Smile speichert keine Kontakte und schreibt niemanden von sich aus an.'**
+  String get contactsPermPoint2;
+
+  /// No description provided for @contactsPermPoint3.
+  ///
+  /// In de, this message translates to:
+  /// **'Du kannst es in den Android-Einstellungen jederzeit wieder ausschalten.'**
+  String get contactsPermPoint3;
+
+  /// No description provided for @contactsContinue.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiter'**
+  String get contactsContinue;
+
+  /// No description provided for @notNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Nicht jetzt'**
+  String get notNow;
+
+  /// No description provided for @contactsDenied.
+  ///
+  /// In de, this message translates to:
+  /// **'Smile darf deine Kontakte noch nicht sehen. Du kannst es in den Einstellungen erlauben.'**
+  String get contactsDenied;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In de, this message translates to:
+  /// **'Einstellungen öffnen'**
+  String get openSettings;
+
+  /// No description provided for @searchContact.
+  ///
+  /// In de, this message translates to:
+  /// **'Kontakt suchen'**
+  String get searchContact;
+
+  /// No description provided for @inSmile.
+  ///
+  /// In de, this message translates to:
+  /// **'In Smile'**
+  String get inSmile;
+
+  /// No description provided for @notInSmile.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch nicht in Smile'**
+  String get notInSmile;
+
+  /// No description provided for @inSmileAs.
+  ///
+  /// In de, this message translates to:
+  /// **'in Smile: „{name}“'**
+  String inSmileAs(String name);
+
+  /// No description provided for @contactInvite.
+  ///
+  /// In de, this message translates to:
+  /// **'Einladen'**
+  String get contactInvite;
+
+  /// No description provided for @noContacts.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Kontakte gefunden.'**
+  String get noContacts;
+
+  /// No description provided for @contactsOnlySmileHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Co-Admin kann nur werden, wer schon Smile hat.'**
+  String get contactsOnlySmileHint;
+
+  /// No description provided for @contactInviteTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Einladung zu Smile senden'**
+  String get contactInviteTitle;
+
+  /// No description provided for @contactInviteText.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} hat noch kein Smile. Möchtest du eine Einladung schicken?'**
+  String contactInviteText(String name);
+
+  /// No description provided for @contactMessageLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Nachricht'**
+  String get contactMessageLabel;
+
+  /// No description provided for @sendSms.
+  ///
+  /// In de, this message translates to:
+  /// **'Per SMS senden'**
+  String get sendSms;
+
+  /// No description provided for @sendWhatsApp.
+  ///
+  /// In de, this message translates to:
+  /// **'Per WhatsApp senden'**
+  String get sendWhatsApp;
+
+  /// No description provided for @sendEmail.
+  ///
+  /// In de, this message translates to:
+  /// **'Per E-Mail senden'**
+  String get sendEmail;
+
+  /// No description provided for @sendOther.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit anderer App senden'**
+  String get sendOther;
+
+  /// No description provided for @contactSmsMember.
+  ///
+  /// In de, this message translates to:
+  /// **'Ich lade dich in mein Smile-Album „{album}“ ein. Dort teilen wir Fotos und Videos: {link}'**
+  String contactSmsMember(String album, String link);
+
+  /// No description provided for @phoneMobile.
+  ///
+  /// In de, this message translates to:
+  /// **'Mobil'**
+  String get phoneMobile;
+
+  /// No description provided for @phoneHome.
+  ///
+  /// In de, this message translates to:
+  /// **'Privat'**
+  String get phoneHome;
+
+  /// No description provided for @phoneWork.
+  ///
+  /// In de, this message translates to:
+  /// **'Arbeit'**
+  String get phoneWork;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

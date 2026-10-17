@@ -15,6 +15,7 @@ import 'frame_remote_screen.dart';
 import '../widgets/email_dialog.dart';
 import '../widgets/invite_sheet.dart';
 import '../services/invite_service.dart';
+import 'contacts_invite_screen.dart';
 import 'invite_code_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import '../services/avatar_upload.dart';
@@ -381,6 +382,18 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         person,
         () => widget.membershipService.inviteMember(channelId: widget.channelId, userId: person.userId),
       ),
+      onContacts: () => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => ContactsInviteScreen(
+          title: t.inviteToNamed(_shownName),
+          whyNot: (p) => inAlbum.contains(p.userId) ? t.alreadyInAlbum : null,
+          onPerson: (person) => _invitePerson(
+            person,
+            () => widget.membershipService.inviteMember(channelId: widget.channelId, userId: person.userId),
+          ),
+          message: () async => t.contactSmsMember(
+              _shownName, (await InviteService().createCode(InviteKind.albumMember, widget.channelId)).messageLink),
+        ),
+      )),
       onShowQr: () => _showCode(InviteKind.albumMember, t.inviteToNamed(_shownName), t.qrScanHint),
       onShareCode: () => _shareCode(InviteKind.albumMember, (name, code) => t.inviteMessageMember(name, code)),
       onEmail: _inviteMemberByEmail,
@@ -400,6 +413,18 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         person,
         () => widget.membershipService.inviteShare(channelId: widget.channelId, userId: person.userId),
       ),
+      onContacts: () => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => ContactsInviteScreen(
+          title: t.shareWithSpace,
+          whyNot: (p) => p.managesASpace ? null : t.managesNoSpace,
+          onPerson: (person) => _invitePerson(
+            person,
+            () => widget.membershipService.inviteShare(channelId: widget.channelId, userId: person.userId),
+          ),
+          message: () async => t.inviteMessageShare(
+              _shownName, (await InviteService().createCode(InviteKind.albumShare, widget.channelId)).messageLink),
+        ),
+      )),
       onShowQr: () => _showCode(InviteKind.albumShare, t.shareWithSpace, t.qrScanHint),
       onShareCode: () => _shareCode(InviteKind.albumShare, (name, code) => t.inviteMessageShare(name, code)),
       onEmail: _inviteShareByEmail,

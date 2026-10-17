@@ -1862,4 +1862,100 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get noPersonFound =>
       'Niemand gefunden. Fremde nur mit ganzem @Smile-Namen.';
+
+  @override
+  String get fromContacts => 'Aus Kontakten';
+
+  @override
+  String get contactsPermTitle => 'Kontakte in Smile finden';
+
+  @override
+  String get contactsPermText =>
+      'Smile prüft, wer aus deinem Telefonbuch schon Smile hat. Alle anderen kannst du per SMS einladen.';
+
+  @override
+  String get contactsPermPoint1 =>
+      'Dein Telefonbuch bleibt auf dem Handy. Zum Prüfen gehen nur unlesbare Prüfwerte an Smile.';
+
+  @override
+  String get contactsPermPoint2 =>
+      'Smile speichert keine Kontakte und schreibt niemanden von sich aus an.';
+
+  @override
+  String get contactsPermPoint3 =>
+      'Du kannst es in den Android-Einstellungen jederzeit wieder ausschalten.';
+
+  @override
+  String get contactsContinue => 'Weiter';
+
+  @override
+  String get notNow => 'Nicht jetzt';
+
+  @override
+  String get contactsDenied =>
+      'Smile darf deine Kontakte noch nicht sehen. Du kannst es in den Einstellungen erlauben.';
+
+  @override
+  String get openSettings => 'Einstellungen öffnen';
+
+  @override
+  String get searchContact => 'Kontakt suchen';
+
+  @override
+  String get inSmile => 'In Smile';
+
+  @override
+  String get notInSmile => 'Noch nicht in Smile';
+
+  @override
+  String inSmileAs(String name) {
+    return 'in Smile: „$name“';
+  }
+
+  @override
+  String get contactInvite => 'Einladen';
+
+  @override
+  String get noContacts => 'Keine Kontakte gefunden.';
+
+  @override
+  String get contactsOnlySmileHint =>
+      'Co-Admin kann nur werden, wer schon Smile hat.';
+
+  @override
+  String get contactInviteTitle => 'Einladung zu Smile senden';
+
+  @override
+  String contactInviteText(String name) {
+    return '$name hat noch kein Smile. Möchtest du eine Einladung schicken?';
+  }
+
+  @override
+  String get contactMessageLabel => 'Nachricht';
+
+  @override
+  String get sendSms => 'Per SMS senden';
+
+  @override
+  String get sendWhatsApp => 'Per WhatsApp senden';
+
+  @override
+  String get sendEmail => 'Per E-Mail senden';
+
+  @override
+  String get sendOther => 'Mit anderer App senden';
+
+  @override
+  String contactSmsMember(String album, String link) {
+    return 'Ich lade dich in mein Smile-Album „$album“ ein. Dort teilen wir Fotos und Videos: $link';
+  }
+
+  @override
+  String get phoneMobile => 'Mobil';
+
+  @override
+  String get phoneHome => 'Privat';
+
+  @override
+  String get phoneWork => 'Arbeit';
 }

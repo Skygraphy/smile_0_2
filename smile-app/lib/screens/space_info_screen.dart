@@ -15,6 +15,7 @@ import '../services/sync_bus.dart';
 import '../widgets/email_dialog.dart';
 import '../widgets/invite_sheet.dart';
 import '../services/invite_service.dart';
+import 'contacts_invite_screen.dart';
 import 'invite_code_screen.dart';
 import '../widgets/album_covers.dart';
 import '../widgets/local_display.dart';
@@ -192,6 +193,17 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
         person,
         () => widget.spaceService.inviteCoOwner(spaceId: widget.spaceId, userId: person.userId),
       ),
+      // Co-Admin only for people who already have Smile: no SMS link.
+      onContacts: () => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => ContactsInviteScreen(
+          title: t.coAdminFor(_shownName),
+          whyNot: (p) => already.contains(p.userId) ? t.alreadyAdmin : null,
+          onPerson: (person) => _invitePerson(
+            person,
+            () => widget.spaceService.inviteCoOwner(spaceId: widget.spaceId, userId: person.userId),
+          ),
+        ),
+      )),
       onShowQr: () => _showCode(InviteKind.spaceCoOwner, t.coAdminFor(_shownName), t.qrScanHintCoAdmin),
       onEmail: _inviteCoAdminByEmail,
     );
