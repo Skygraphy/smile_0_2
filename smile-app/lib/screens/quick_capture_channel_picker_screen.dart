@@ -160,7 +160,8 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
           Expanded(
             child: channels == null
                 ? const Center(child: CircularProgressIndicator())
-                : channels.isEmpty
+                // Not "in no album" when the albums merely didn't load.
+                : channels.isEmpty && _errorMessage == null
                     ? SmileEmptyState(icon: SmileIcons.album, title: SmileTexts.of(context).sendToNoAlbum)
                     : ListView(
                         children: [

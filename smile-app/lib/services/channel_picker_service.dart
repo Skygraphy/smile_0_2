@@ -110,20 +110,24 @@ class ChannelPickerService {
     // the matching server-side fix and why this wasn't caught earlier.
     final rows = await supabase
         .from('channel_members')
-        .select('channel_id, channels(name, spaces!channels_space_id_fkey(name))')
+        .select('channel_id, channels(name, deleted_at, spaces!channels_space_id_fkey(name))')
         // RLS also shows the OTHER members of my albums (for member lists)
         // -- without this, an album with 3 members was listed 3 times.
         .eq('user_id', supabase.auth.currentUser!.id)
         .order('created_at');
-    return (rows as List).cast<Map<String, dynamic>>().map((row) {
-      final channel = row['channels'] as Map<String, dynamic>;
-      final space = channel['spaces'] as Map<String, dynamic>;
-      return UploadableChannel(
-        channelId: row['channel_id'] as String,
-        channelName: channel['name'] as String,
-        spaceName: space['name'] as String,
-      );
-    }).toList();
+    // 2026-10-18: one album in the Papierkorb (its row hidden) or in a Space
+    // the caller can't see (no Space name) made the WHOLE list fail -- "Die
+    // Alben konnten nicht geladen werden". Such rows are skipped or go
+    // without the Space name now.
+    return [
+      for (final row in (rows as List).cast<Map<String, dynamic>>())
+        if (row['channels'] case final Map<String, dynamic> channel when channel['deleted_at'] == null)
+          UploadableChannel(
+            channelId: row['channel_id'] as String,
+            channelName: channel['name'] as String? ?? '',
+            spaceName: (channel['spaces'] as Map<String, dynamic>?)?['name'] as String? ?? '',
+          ),
+    ];
   }
 
   /// Every channel the caller can *see* (including view-only shares),
