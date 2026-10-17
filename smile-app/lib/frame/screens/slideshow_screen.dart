@@ -1266,17 +1266,49 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       ),
       child: SafeArea(
         top: false,
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.end,
-          spacing: 48,
-          runSpacing: 16,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            if (browse.isNotEmpty) _group(browse),
-            if (playing.isNotEmpty) _group(playing),
-            if (own.isNotEmpty) _group(own),
+            // Which level this is (2026-10-17), right above the buttons.
+            _levelLabel(t),
+            const SizedBox(height: 14),
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.end,
+              spacing: 48,
+              runSpacing: 16,
+              children: [
+                if (browse.isNotEmpty) _group(browse),
+                if (playing.isNotEmpty) _group(playing),
+                if (own.isNotEmpty) _group(own),
+              ],
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// "Bedienstufe 3 · Einfach" -- or "Bedienung · Eigene Auswahl".
+  Widget _levelLabel(SmileTexts t) {
+    final level = _settings?.controlLevel;
+    final name = switch (level) {
+      1 => t.level1,
+      2 => t.level2,
+      3 => t.level3,
+      4 => t.level4,
+      5 => t.level5,
+      _ => t.levelCustom,
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+      child: Text.rich(
+        TextSpan(children: [
+          TextSpan(text: level == null ? '${t.controlLevel} · ' : '${t.controlLevel} $level · '),
+          TextSpan(text: name, style: const TextStyle(color: SmileTheme.primary, fontWeight: FontWeight.w600)),
+        ]),
+        style: const TextStyle(color: Colors.white, fontSize: 18),
       ),
     );
   }

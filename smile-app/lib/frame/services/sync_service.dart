@@ -78,6 +78,7 @@ class FrameSettingsInfo {
     this.fillMode = 'auto',
     this.slowZoom = true,
     this.rotateWithDevice = false,
+    this.controlLevel,
   });
 
   final String displayMode; // 'slideshow' | 'manual'
@@ -121,6 +122,9 @@ class FrameSettingsInfo {
   /// Turn with the device even when its auto-rotate is off (2026-10-17).
   final bool rotateWithDevice;
 
+  /// Bedienstufe 1-5, null = "Eigene Auswahl" (migrations/0075).
+  final int? controlLevel;
+
   FrameControls get effectiveControls =>
       controls ?? FrameControls(next: true, back: true, pause: true, overview: true, album: channelSwitchEnabled);
 
@@ -144,6 +148,7 @@ class FrameSettingsInfo {
         fillMode: json['fill_mode'] as String? ?? 'auto',
         slowZoom: json['slow_zoom'] as bool? ?? true,
         rotateWithDevice: json['rotate_with_device'] as bool? ?? false,
+        controlLevel: json['control_level'] as int?,
       );
 }
 
