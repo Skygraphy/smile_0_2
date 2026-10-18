@@ -7,5 +7,3 @@ supabase/.branches/
 .DS_Store
 *.log
 
-# Testlab: screenshots and answers of a test run stay local
-tools/testlab/run/
