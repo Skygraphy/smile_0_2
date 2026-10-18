@@ -13,10 +13,17 @@ import 'capture_choice.dart';
 /// (navigation decision A, 2026-10-05; the ⋮ menu 2026-10-13, like
 /// WhatsApp). [primary] is the tab's own first menu entry ("Neues Album",
 /// "Frame verbinden", "Space anlegen"); [onChanged] runs after a scanned code.
-List<Widget> smileTopBarActions({VoidCallback? onPhotoSent, SmileMenuEntry? primary, VoidCallback? onChanged}) => [
-      QuickCaptureButton(onDone: onPhotoSent),
-      NewsButton(),
-      SmileOverflowMenu(primary: primary, onChanged: onChanged),
+/// [tipAnchors] (camera, news, menu) let a tip point at a button (2026-10-18).
+List<Widget> smileTopBarActions({
+  VoidCallback? onPhotoSent,
+  SmileMenuEntry? primary,
+  VoidCallback? onChanged,
+  ({GlobalKey camera, GlobalKey news, GlobalKey menu})? tipAnchors,
+}) =>
+    [
+      KeyedSubtree(key: tipAnchors?.camera, child: QuickCaptureButton(onDone: onPhotoSent)),
+      KeyedSubtree(key: tipAnchors?.news, child: NewsButton()),
+      KeyedSubtree(key: tipAnchors?.menu, child: SmileOverflowMenu(primary: primary, onChanged: onChanged)),
     ];
 
 /// One entry of the ⋮ menu.

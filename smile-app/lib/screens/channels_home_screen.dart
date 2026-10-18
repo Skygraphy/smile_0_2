@@ -77,15 +77,16 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   Future<void> onSync() => _load();
 
   bool _tipOffered = false;
+  final _tipAnchors = (camera: GlobalKey(), news: GlobalKey(), menu: GlobalKey());
 
   /// One tip for the start page (2026-10-18), once the albums are there.
   void _offerTip() {
     if (_tipOffered || !mounted || (_channels ?? const []).isEmpty) return;
     _tipOffered = true;
     Tips.offerFirst(context, [
-      (TipId.quickCapture, null),
-      if (_managed.isNotEmpty) (TipId.newAlbum, null),
-      (TipId.newsIcon, null),
+      (TipId.quickCapture, _tipAnchors.camera),
+      if (_managed.isNotEmpty) (TipId.newAlbum, _tipAnchors.menu),
+      (TipId.newsIcon, _tipAnchors.news),
     ]);
   }
 
@@ -278,6 +279,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
           onPhotoSent: _load,
           primary: _managed.isEmpty ? null : SmileMenuEntry(icon: SmileIcons.add, label: SmileTexts.of(context).newAlbum, onTap: _newAlbum),
           onChanged: _load,
+          tipAnchors: _tipAnchors,
         ),
       ),
       body: _body(channels),
