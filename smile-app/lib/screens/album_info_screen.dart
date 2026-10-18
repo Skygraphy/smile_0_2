@@ -10,6 +10,7 @@ import '../main.dart';
 import '../services/channel_service.dart';
 import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
+import '../services/tips.dart';
 import '../services/frame_service.dart';
 import 'frame_remote_screen.dart';
 import '../widgets/email_dialog.dart';
@@ -73,6 +74,9 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offer(context, TipId.inviteWays);
+    });
     unawaited(_loadFromPhoneThenServer());
   }
 
@@ -372,6 +376,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   /// Like WhatsApp (decided 2026-10-11): people one knows by name, a QR
   /// code, a code to send, or email.
   Future<void> _inviteMember() async {
+    unawaited(Tips.markUsed(TipId.inviteWays));
     final t = SmileTexts.of(context);
     final inAlbum = {for (final m in _roster?.members ?? const <ChannelMember>[]) m.userId};
     await showInviteSheet(

@@ -9,6 +9,7 @@ import '../services/offline_http_client.dart';
 import '../services/avatar_upload.dart';
 import '../services/channel_picker_service.dart';
 import '../services/frame_controls.dart';
+import '../services/tips.dart';
 import '../services/frame_service.dart';
 import '../services/local_changes.dart';
 import '../services/sync_bus.dart';
@@ -52,6 +53,10 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Tips.offerFirst(context, [(TipId.controlLevel, null), (TipId.playback, null), (TipId.favoritesRound, null)]);
+    });
     unawaited(_loadFromPhoneThenServer());
   }
 
@@ -144,6 +149,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
   List<FrameFavorite>? _favorites;
 
   Future<void> _openFavorites() async {
+    unawaited(Tips.markUsed(TipId.favoritesRound));
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => FrameFavoritesScreen(frameId: widget.frameId, frameName: _shownName, frameService: _service),
@@ -256,7 +262,10 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
   Future<void> _openPage(Widget Function(SmileFrame frame, String? spaceId) page) async {
     final frame = _frame;
     if (frame == null) return;
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => page(frame, _spaceId)));
+    final shown = page(frame, _spaceId);
+    if (shown is FramePlaybackScreen) unawaited(Tips.markUsed(TipId.playback));
+    if (shown is FrameControlsScreen) unawaited(Tips.markUsed(TipId.controlLevel));
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => shown));
     if (mounted) await _load();
   }
 

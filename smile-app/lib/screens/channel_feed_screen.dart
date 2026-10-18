@@ -33,6 +33,7 @@ import '../services/local_changes.dart';
 import '../services/channel_picker_service.dart';
 import 'photo_viewer_screen.dart';
 import 'frame_remote_screen.dart';
+import '../services/tips.dart';
 import 'album_slideshow_screen.dart';
 import 'video_player_screen.dart';
 
@@ -60,6 +61,24 @@ class ChannelFeedScreen extends StatefulWidget {
 }
 
 class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
+  // Tips point at these (2026-10-18).
+  final _frameButtonKey = GlobalKey();
+  final _slideshowKey = GlobalKey();
+  bool _tipOffered = false;
+
+  /// One tip for this page, once its photos are there: the Frame symbol,
+  /// else the slideshow, else selecting several.
+  void _offerTip() {
+    if (_tipOffered || !mounted) return;
+    _tipOffered = true;
+    final hasReady = (_items ?? const <MediaItem>[]).any((i) => i.isReady);
+    Tips.offerFirst(context, [
+      if (_frames.isNotEmpty || _albumFrames.isNotEmpty) (TipId.frameButton, _frameButtonKey),
+      if (hasReady) (TipId.slideshow, _slideshowKey),
+      if (hasReady) (TipId.selectPhotos, null),
+    ]);
+  }
+
   List<MediaItem>? _items;
   late String _channelName = widget.channelName;
   /// This phone's own photos/videos on their way (UploadQueue), newest
@@ -193,6 +212,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
 
   /// Newest first, only what is ready (and not just removed here).
   Future<void> _playSlideshow() async {
+    unawaited(Tips.markUsed(TipId.slideshow));
     final items = (_items ?? const <MediaItem>[]).where((i) => i.isReady && !_isGoneHere(i.id)).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     if (items.isEmpty) return;
@@ -358,6 +378,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// One tap on the Frame symbol (2026-10-18): this album on the preferred
   /// Frame right away -- put on it first if needed --, with "Rückgängig".
   Future<void> _showOnPreferredFrame() async {
+    unawaited(Tips.markUsed(TipId.frameButton));
     final t = SmileTexts.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final frames = _albumFrames;
@@ -416,6 +437,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   }
 
   Future<void> _openFrame() async {
+    unawaited(Tips.markUsed(TipId.frameButton));
     final t = SmileTexts.of(context);
     var frame = _frames.length == 1 ? _frames.single : null;
     frame ??= await showDialog<FrameShowing>(
@@ -646,6 +668,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     }
 
     setState(() => _items = items);
+    if (items.isNotEmpty) WidgetsBinding.instance.addPostFrameCallback((_) => _offerTip());
     if (!_showingHidden) {
       // Keep showing the full-quality local bytes (no spinner, no interim
       // blurry preview) for as long as *this device's own* upload isn't
@@ -860,6 +883,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   }
 
   void _toggleSelected(String id) {
+    unawaited(Tips.markUsed(TipId.selectPhotos));
     setState(() {
       if (!_selectedIds.remove(id)) _selectedIds.add(id);
     });
@@ -1316,12 +1340,13 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                   actions: [
                     // The album as a slideshow, like on a Frame (2026-10-11).
                     if ((_items ?? const <MediaItem>[]).any((i) => i.isReady))
-                      IconButton(icon: const Icon(SmileIcons.slideshow), tooltip: t.playSlideshow, onPressed: _playSlideshow),
+                      IconButton(key: _slideshowKey, icon: const Icon(SmileIcons.slideshow), tooltip: t.playSlideshow, onPressed: _playSlideshow),
                     // One tap: on the preferred Frame; long press: its remote (2026-10-18).
                     if (_frames.isNotEmpty || _albumFrames.isNotEmpty)
                       GestureDetector(
                         onLongPress: _frames.isNotEmpty ? _openFrame : null,
                         child: IconButton(
+                          key: _frameButtonKey,
                           icon: const Icon(SmileIcons.frame),
                           tooltip: t.showOnMyFrame,
                           onPressed: _showOnPreferredFrame,

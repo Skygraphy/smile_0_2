@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/media_service.dart';
+import '../services/tips.dart';
 
 /// The whole photo, full screen (decided 2026-10-10 with the album's fixed
 /// bubble shapes, which crop): tap a photo in the album, zoom with two
@@ -60,6 +61,20 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
   late bool _favorite = widget.favorite;
   late String? _caption = widget.item?.caption ?? widget.localCaption;
   final _zoom = TransformationController();
+  final _captionKey = GlobalKey();
+  final _heartKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Tips.offerFirst(context, [
+        if (widget.onEditCaption != null) (TipId.captionLater, _captionKey),
+        if (widget.onFavorite != null) (TipId.favoriteHeart, _heartKey),
+      ]);
+    });
+  }
 
   @override
   void dispose() {
@@ -124,12 +139,14 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
         actions: [
           if (widget.onFavorite != null)
             IconButton(
+              key: _heartKey,
               icon: Icon(
                 _favorite ? SmileIcons.heartFilled : SmileIcons.heart,
                 color: _favorite ? SmileTheme.primary : null,
               ),
               tooltip: SmileTexts.of(context).favoriteFor,
               onPressed: () async {
+                Tips.markUsed(TipId.favoriteHeart);
                 final now = await widget.onFavorite!();
                 if (now != null && mounted) setState(() => _favorite = now);
               },
@@ -142,9 +159,11 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
             ),
           if (widget.onEditCaption != null)
             IconButton(
+              key: _captionKey,
               icon: const Icon(SmileIcons.caption),
               tooltip: SmileTexts.of(context).captionEdit,
               onPressed: () async {
+                Tips.markUsed(TipId.captionLater);
                 final now = await widget.onEditCaption!(_caption);
                 if (now != null && mounted) setState(() => _caption = now.isEmpty ? null : now);
               },

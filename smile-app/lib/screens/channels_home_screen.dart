@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../services/perf.dart';
+import '../services/tips.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../widgets/friendly_error.dart';
 
@@ -75,8 +76,21 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   @override
   Future<void> onSync() => _load();
 
+  bool _tipOffered = false;
+
+  /// One tip for the start page (2026-10-18), once the albums are there.
+  void _offerTip() {
+    if (_tipOffered || !mounted || (_channels ?? const []).isEmpty) return;
+    _tipOffered = true;
+    Tips.offerFirst(context, [
+      (TipId.quickCapture, null),
+      if (_managed.isNotEmpty) (TipId.newAlbum, null),
+      (TipId.newsIcon, null),
+    ]);
+  }
+
   Future<void> _load() async {
-    unawaited(_loadManaged());
+    unawaited(_loadManaged().then((_) => _offerTip()));
     Perf.start('album list');
     try {
       final channels = await widget.channelPickerService.listMyChannelsWithActivity();
@@ -139,6 +153,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   /// Gruppe"): straight to the name with one Space, else first which
   /// Space; the new album opens right away.
   Future<void> _newAlbum() async {
+    unawaited(Tips.markUsed(TipId.newAlbum));
     final t = SmileTexts.of(context);
     final navigator = Navigator.of(context);
     final spaces = _managed;

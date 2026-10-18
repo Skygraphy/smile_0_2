@@ -155,6 +155,9 @@ class SmileIcons {
   static const IconData contacts = IconData(0xe6f8, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData check = IconData(0xe182, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 
+  /// A tip (2026-10-18).
+  static const IconData lightbulb = IconData(0xe2dc, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
   /// A photo's title (2026-10-17): Phosphor `subtitles`.
   static const IconData caption = IconData(0xe1a8, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 

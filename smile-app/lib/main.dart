@@ -5,6 +5,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'services/tips.dart';
 import 'services/perf.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -117,6 +118,8 @@ Future<void> main() async {
   // Invites as links (smileapp.app/i/…), also brought along by the store
   // (2026-10-17) -- taken by HomeShell once someone is signed in.
   unawaited(InviteLinks.start());
+  // Tips on or off (2026-10-18).
+  unawaited(Tips.load());
   Perf.mark('runApp');
   runApp(const SmileRoot());
 }

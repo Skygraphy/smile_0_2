@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/media_service.dart';
+import '../services/tips.dart';
 
 /// Before sending picked photos/videos (2026-10-17), like WhatsApp: a
 /// preview with an optional title per item ("Titel hinzufügen ..."); with
@@ -29,6 +30,15 @@ class _SendPreviewScreenState extends State<SendPreviewScreen> {
   late final List<Future<Uint8List?>> _pictures = [for (final f in widget.files) _pictureOf(f)];
   final _pages = PageController();
   int _index = 0;
+  final _captionKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offer(context, TipId.captionWhenSending, anchor: _captionKey);
+    });
+  }
 
   bool _isVideo(XFile f) => _videoExtensions.contains(f.path.split('.').last.toLowerCase());
 
@@ -45,6 +55,7 @@ class _SendPreviewScreenState extends State<SendPreviewScreen> {
   }
 
   void _send() {
+    if (_captions.any((c) => c.text.trim().isNotEmpty)) Tips.markUsed(TipId.captionWhenSending);
     Navigator.of(context).pop<List<String?>>([
       for (final c in _captions) c.text.trim().isEmpty ? null : c.text.trim(),
     ]);
@@ -120,6 +131,7 @@ class _SendPreviewScreenState extends State<SendPreviewScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
+                    key: _captionKey,
                     child: TextField(
                       // One field per item: its own text when switching.
                       key: ValueKey(_index),

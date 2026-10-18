@@ -19,6 +19,7 @@ import '../services/video_quality.dart';
 import '../services/upload_queue.dart';
 import 'avatar_viewer_screen.dart';
 import 'handle_edit_screen.dart';
+import '../services/tips.dart';
 import 'my_card_screen.dart';
 import '../services/frame_service.dart';
 import '../services/preferred_frame.dart';
@@ -52,6 +53,9 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
     _load();
     // The stored "Videos senden" choice.
     unawaited(VideoQuality.load());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offerFirst(context, [(TipId.smileName, null), (TipId.videoQuality, null)]);
+    });
   }
 
   @override
@@ -102,6 +106,8 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
         _profile = profile;
         _errorMessage = null;
       });
+      // A Smile name already: its tip is not needed.
+      if (profile?.handle != null) unawaited(Tips.markUsed(TipId.smileName));
     } catch (e) {
       if (!mounted) return;
       setState(() => _errorMessage = SmileTexts.of(context).profileLoadError(errorReason(context, e)));
@@ -416,6 +422,34 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                           ],
                         ),
                       ),
+                    ),
+                  ],
+                ),
+                // Tipps (2026-10-18): on by default, all back from the start.
+                SmileInfoSection(
+                  title: t.tipsSection,
+                  children: [
+                    ValueListenableBuilder<bool>(
+                      valueListenable: Tips.enabled,
+                      builder: (context, on, _) => SwitchListTile(
+                        secondary: Icon(SmileIcons.lightbulb, color: scheme.onSurfaceVariant),
+                        title: Text(t.tipsShow),
+                        subtitle: Text(t.tipsShowHint),
+                        value: on,
+                        onChanged: (v) => Tips.setEnabled(v),
+                      ),
+                    ),
+                    SmileObjectTile(
+                      leading: Icon(SmileIcons.restore, color: scheme.onSurfaceVariant),
+                      title: t.tipsReset,
+                      subtitle: t.tipsResetHint,
+                      subtitleMaxLines: 2,
+                      onTap: () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        final done = t.tipsResetDone;
+                        await Tips.reset();
+                        messenger.showSnackBar(SnackBar(content: Text(done)));
+                      },
                     ),
                   ],
                 ),

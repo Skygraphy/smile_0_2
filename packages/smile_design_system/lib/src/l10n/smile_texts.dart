@@ -3352,6 +3352,150 @@ abstract class SmileTexts {
   /// **'Titel hinzufügen …'**
   String get captionHint;
 
+  /// No description provided for @tipLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'TIPP'**
+  String get tipLabel;
+
+  /// No description provided for @tipUnderstood.
+  ///
+  /// In de, this message translates to:
+  /// **'Verstanden'**
+  String get tipUnderstood;
+
+  /// No description provided for @tipNoMore.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Tipps mehr'**
+  String get tipNoMore;
+
+  /// No description provided for @tipsSection.
+  ///
+  /// In de, this message translates to:
+  /// **'Tipps'**
+  String get tipsSection;
+
+  /// No description provided for @tipsShow.
+  ///
+  /// In de, this message translates to:
+  /// **'Tipps anzeigen'**
+  String get tipsShow;
+
+  /// No description provided for @tipsShowHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Ab und zu ein kurzer Hinweis, was Smile noch kann.'**
+  String get tipsShowHint;
+
+  /// No description provided for @tipsReset.
+  ///
+  /// In de, this message translates to:
+  /// **'Tipps von vorne zeigen'**
+  String get tipsReset;
+
+  /// No description provided for @tipsResetHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Auch die schon gesehenen kommen wieder.'**
+  String get tipsResetHint;
+
+  /// No description provided for @tipsResetDone.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Tipps kommen wieder von vorne.'**
+  String get tipsResetDone;
+
+  /// No description provided for @tipFrameButton.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Tipp auf das Frame-Symbol zeigt dieses Album sofort am Frame. Lang drücken öffnet die Fernbedienung.'**
+  String get tipFrameButton;
+
+  /// No description provided for @tipSlideshow.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit dem Diashow-Symbol läuft das Album als Diashow auf diesem Handy, mit eigenen Einstellungen.'**
+  String get tipSlideshow;
+
+  /// No description provided for @tipCaptionWhenSending.
+  ///
+  /// In de, this message translates to:
+  /// **'Jedes Foto kann einen eigenen Titel bekommen. Unten antippen oder wischen, um zum nächsten zu wechseln.'**
+  String get tipCaptionWhenSending;
+
+  /// No description provided for @tipCaptionLater.
+  ///
+  /// In de, this message translates to:
+  /// **'Hier kannst du nachträglich einen Titel setzen oder ändern.'**
+  String get tipCaptionLater;
+
+  /// No description provided for @tipFavoriteHeart.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit dem Herz merkst du ein Foto als Lieblingsbild für den Frame.'**
+  String get tipFavoriteHeart;
+
+  /// No description provided for @tipSelectPhotos.
+  ///
+  /// In de, this message translates to:
+  /// **'Lang auf ein Foto drücken: mehrere auswählen, ausblenden oder löschen.'**
+  String get tipSelectPhotos;
+
+  /// No description provided for @tipQuickCapture.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Kamera-Symbol oben: Foto machen und gleich in ein Album schicken.'**
+  String get tipQuickCapture;
+
+  /// No description provided for @tipInviteWays.
+  ///
+  /// In de, this message translates to:
+  /// **'Einladen geht auch ohne E-Mail: per QR-Code, Link oder aus den Kontakten.'**
+  String get tipInviteWays;
+
+  /// No description provided for @tipSmileName.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit deinem Smile-Namen und deiner Karte findet dich jeder, der dich einladen möchte.'**
+  String get tipSmileName;
+
+  /// No description provided for @tipControlLevel.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit der Bedienstufe legst du fest, was am Frame selbst bedient werden kann, von Nur zuschauen bis Alles selbst.'**
+  String get tipControlLevel;
+
+  /// No description provided for @tipPlayback.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter Wiedergabe: Uhr, Nachtruhe, Titel, langsamer Zoom und Keine Videos.'**
+  String get tipPlayback;
+
+  /// No description provided for @tipFavoritesRound.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbilder laufen am Frame als eigene Runde, auch über alle Alben.'**
+  String get tipFavoritesRound;
+
+  /// No description provided for @tipNewAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Neue Alben legst du über ⋮ → Neues Album an.'**
+  String get tipNewAlbum;
+
+  /// No description provided for @tipVideoQuality.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter Videos senden wählst du, wie stark Videos verkleinert werden. Das spart Datenvolumen.'**
+  String get tipVideoQuality;
+
+  /// No description provided for @tipNewsIcon.
+  ///
+  /// In de, this message translates to:
+  /// **'Wird das Symbol oben Coral, wartet eine Einladung oder Anfrage auf dich.'**
+  String get tipNewsIcon;
+
   /// No description provided for @captionDelete.
   ///
   /// In de, this message translates to:

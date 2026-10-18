@@ -14,6 +14,7 @@ import '../services/channel_picker_service.dart';
 import '../services/media_service.dart';
 import '../services/upload_queue.dart';
 import '../services/sync_bus.dart';
+import '../services/tips.dart';
 import 'channel_feed_screen.dart';
 
 /// The step after the header camera icon (spaces_screen.dart) captures a
@@ -93,6 +94,7 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
   /// queue sends it -- right away, or with a clock once there is a
   /// connection again, even with Smile closed.
   Future<void> _sendTo(UploadableChannel channel) async {
+    unawaited(Tips.markUsed(TipId.quickCapture));
     // A short tick when it's sent, like WhatsApp (2026-10-10).
     unawaited(HapticFeedback.lightImpact());
     setState(() {

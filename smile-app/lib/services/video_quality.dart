@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import 'offline.dart';
+import 'tips.dart';
 
 /// "Videos senden": how much a video is shrunk before it goes up (decided
 /// 2026-10-12). Per phone, changeable any time on the Profil page; applies
@@ -39,6 +42,7 @@ enum VideoQuality {
   }
 
   static Future<void> choose(VideoQuality quality) async {
+    unawaited(Tips.markUsed(TipId.videoQuality));
     current.value = quality;
     await Offline.write(_key, quality.name);
   }

@@ -1963,6 +1963,93 @@ class SmileTextsDe extends SmileTexts {
   String get captionHint => 'Titel hinzufügen …';
 
   @override
+  String get tipLabel => 'TIPP';
+
+  @override
+  String get tipUnderstood => 'Verstanden';
+
+  @override
+  String get tipNoMore => 'Keine Tipps mehr';
+
+  @override
+  String get tipsSection => 'Tipps';
+
+  @override
+  String get tipsShow => 'Tipps anzeigen';
+
+  @override
+  String get tipsShowHint =>
+      'Ab und zu ein kurzer Hinweis, was Smile noch kann.';
+
+  @override
+  String get tipsReset => 'Tipps von vorne zeigen';
+
+  @override
+  String get tipsResetHint => 'Auch die schon gesehenen kommen wieder.';
+
+  @override
+  String get tipsResetDone => 'Die Tipps kommen wieder von vorne.';
+
+  @override
+  String get tipFrameButton =>
+      'Ein Tipp auf das Frame-Symbol zeigt dieses Album sofort am Frame. Lang drücken öffnet die Fernbedienung.';
+
+  @override
+  String get tipSlideshow =>
+      'Mit dem Diashow-Symbol läuft das Album als Diashow auf diesem Handy, mit eigenen Einstellungen.';
+
+  @override
+  String get tipCaptionWhenSending =>
+      'Jedes Foto kann einen eigenen Titel bekommen. Unten antippen oder wischen, um zum nächsten zu wechseln.';
+
+  @override
+  String get tipCaptionLater =>
+      'Hier kannst du nachträglich einen Titel setzen oder ändern.';
+
+  @override
+  String get tipFavoriteHeart =>
+      'Mit dem Herz merkst du ein Foto als Lieblingsbild für den Frame.';
+
+  @override
+  String get tipSelectPhotos =>
+      'Lang auf ein Foto drücken: mehrere auswählen, ausblenden oder löschen.';
+
+  @override
+  String get tipQuickCapture =>
+      'Das Kamera-Symbol oben: Foto machen und gleich in ein Album schicken.';
+
+  @override
+  String get tipInviteWays =>
+      'Einladen geht auch ohne E-Mail: per QR-Code, Link oder aus den Kontakten.';
+
+  @override
+  String get tipSmileName =>
+      'Mit deinem Smile-Namen und deiner Karte findet dich jeder, der dich einladen möchte.';
+
+  @override
+  String get tipControlLevel =>
+      'Mit der Bedienstufe legst du fest, was am Frame selbst bedient werden kann, von Nur zuschauen bis Alles selbst.';
+
+  @override
+  String get tipPlayback =>
+      'Unter Wiedergabe: Uhr, Nachtruhe, Titel, langsamer Zoom und Keine Videos.';
+
+  @override
+  String get tipFavoritesRound =>
+      'Lieblingsbilder laufen am Frame als eigene Runde, auch über alle Alben.';
+
+  @override
+  String get tipNewAlbum => 'Neue Alben legst du über ⋮ → Neues Album an.';
+
+  @override
+  String get tipVideoQuality =>
+      'Unter Videos senden wählst du, wie stark Videos verkleinert werden. Das spart Datenvolumen.';
+
+  @override
+  String get tipNewsIcon =>
+      'Wird das Symbol oben Coral, wartet eine Einladung oder Anfrage auf dich.';
+
+  @override
   String get captionDelete => 'Titel löschen';
 
   @override

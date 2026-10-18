@@ -9,6 +9,7 @@ import '../main.dart';
 import '../services/membership_service.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
+import '../services/tips.dart';
 import '../services/trash_service.dart';
 import '../services/channel_picker_service.dart';
 import 'scan_code_screen.dart';
@@ -51,6 +52,8 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
   @override
   void initState() {
     super.initState();
+    // Found the news on its own (2026-10-18).
+    unawaited(Tips.markUsed(TipId.newsIcon));
     unawaited(_loadFromPhoneThenServer());
   }
 
