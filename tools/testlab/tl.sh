@@ -9,7 +9,7 @@
 export MSYS_NO_PATHCONV=1
 ADB=/c/Users/ernst/AppData/Local/Android/Sdk/platform-tools/adb.exe
 TL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-declare -A DEV=([s26]=192.168.0.107:33177 [x200]=192.168.0.114:44455 [p610]=192.168.0.115:33879)
+declare -A DEV=([s26]=192.168.0.107:41201 [x200]=192.168.0.114:44345 [p610]=192.168.0.115:33879)
 
 shot() { "$ADB" -s "${DEV[$1]}" exec-out screencap -p > "$TL/run/shots/$2.png"; }
 tap() { "$ADB" -s "${DEV[$1]}" shell input tap "$2" "$3"; }
