@@ -102,6 +102,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
         _channels = channels;
         _errorMessage = null;
       });
+      _offerTip();
     } catch (e) {
       if (!mounted) return;
       final offline = Offline.isConnectionError(e);

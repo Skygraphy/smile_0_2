@@ -40,7 +40,6 @@ class Tips {
   /// For the switch in Einstellungen.
   static final enabled = ValueNotifier<bool>(true);
 
-  static Timer? _pending;
   static OverlayEntry? _shown;
 
   static Future<SharedPreferences?> _prefs() async {
@@ -91,26 +90,33 @@ class Tips {
 
   /// Like [offer] for several tips of one page: the first one still due
   /// shows (each with its own anchor, null: a card at the bottom).
+  /// Each page waits on its own: while it is behind another page (or the
+  /// keyboard is open) the tip keeps waiting until it is in front and quiet
+  /// again, as long as the page exists.
   static void offerFirst(BuildContext context, List<(TipId, GlobalKey?)> candidates) {
     if (candidates.isEmpty) return;
-    _pending?.cancel();
-    _pending = Timer(_quiet, () async {
-      if (!context.mounted || !enabled.value || _shown != null) return;
+    Future<void> check() async {
+      if (!context.mounted || !enabled.value) return;
       final prefs = await _prefs();
       if (prefs == null || !context.mounted) return;
-      if (prefs.getString(_dayKey) == _today()) return;
       final seen = prefs.getStringList(_seenKey) ?? const [];
       final used = prefs.getStringList(_usedKey) ?? const [];
       final due = candidates.where((c) => !seen.contains(c.$1.name) && !used.contains(c.$1.name)).firstOrNull;
       if (due == null) return;
+      // Not now (another page in front, keyboard, a tip already open, or
+      // today's tip already given): look again in a moment.
+      final quiet = (ModalRoute.of(context)?.isCurrent ?? false) && MediaQuery.viewInsetsOf(context).bottom == 0;
+      if (!quiet || _shown != null || prefs.getString(_dayKey) == _today()) {
+        Timer(_quiet, check);
+        return;
+      }
       final (id, anchor) = due;
-      // A quiet moment on this very page: it is in front, no keyboard.
-      if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
-      if (MediaQuery.viewInsetsOf(context).bottom > 0) return;
       await prefs.setString(_dayKey, _today());
       if (!context.mounted) return;
       _show(context, id, anchor);
-    });
+    }
+
+    Timer(_quiet, check);
   }
 
   static void _hide() {
