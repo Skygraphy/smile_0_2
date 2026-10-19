@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
 import '../services/offline.dart';
+import '../services/test_media.dart' show smileTestMode;
 import '../widgets/otp_code_field.dart';
 import '../frame/frame.dart' as frame;
 import 'package:smile_design_system/smile_design_system.dart';
@@ -43,7 +44,9 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
     try {
-      await supabase.auth.signInWithOtp(email: _email);
+      // The test app sends no mail: the test tools make the code with the
+      // testsuite project's admin access (2026-10-19).
+      if (!smileTestMode) await supabase.auth.signInWithOtp(email: _email);
       if (!mounted) return;
       setState(() => _step = _LoginStep.enterCode);
     } catch (e) {

@@ -34,6 +34,7 @@ import '../services/channel_picker_service.dart';
 import 'photo_viewer_screen.dart';
 import 'frame_remote_screen.dart';
 import '../services/tips.dart';
+import '../services/test_media.dart';
 import 'album_slideshow_screen.dart';
 import 'video_player_screen.dart';
 
@@ -702,7 +703,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   Future<void> _pickAndUpload() async {
     // Photos and videos, several at once, one picker (decisions 2026-10-01:
     // videos of any length; 2026-10-08: multiple selection, mixed).
-    final picked = await ImagePicker().pickMultipleMedia(imageQuality: 90);
+    final picked = smileTestMode ? await pickTestMedia() : await ImagePicker().pickMultipleMedia(imageQuality: 90);
     if (picked.isEmpty || !mounted) return;
     // A preview with an optional title per item first (2026-10-17).
     final captions = await Navigator.of(context).push<List<String?>>(

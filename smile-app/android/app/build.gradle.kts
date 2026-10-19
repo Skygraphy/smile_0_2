@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -6,6 +8,16 @@ plugins {
     // Crash reports (monitoring stage 2, 2026-10-07)
     id("com.google.firebase.crashlytics")
 }
+
+// The test app (2026-10-19): built with --dart-define=SMILE_TEST=true it is
+// "Smile Test" (com.smile.smile_app.test), installed next to the real app
+// and talking to the testsuite project. Flutter hands the dart-defines to
+// Gradle base64-encoded.
+val smileTest = (project.findProperty("dart-defines") as String? ?: "")
+    .split(",")
+    .filter { it.isNotBlank() }
+    .map { String(Base64.getDecoder().decode(it)) }
+    .contains("SMILE_TEST=true")
 
 android {
     namespace = "com.smile.smile_app"
@@ -32,6 +44,9 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        if (smileTest) applicationIdSuffix = ".test"
+        manifestPlaceholders["appLabel"] = if (smileTest) "Smile Test" else "SmileApp"
+        manifestPlaceholders["frameLabel"] = if (smileTest) "Frame Test" else "SmileFrame"
     }
 
     buildTypes {

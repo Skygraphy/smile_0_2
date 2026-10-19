@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../services/test_media.dart';
 
 /// Photo or video? Asked by every camera button (album and the quick
 /// capture in the top bar) -- a plain choice instead of WhatsApp's
@@ -34,7 +35,14 @@ Future<({XFile file, bool isVideo})?> captureWithChoice(BuildContext context) as
   return file == null ? null : (file: file, isVideo: video);
 }
 
-/// The system camera in photo or video mode.
-Future<XFile?> capture({required bool video}) => video
-    ? ImagePicker().pickVideo(source: ImageSource.camera)
-    : ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 90);
+/// The system camera in photo or video mode (the test app: a test picture
+/// or video instead).
+Future<XFile?> capture({required bool video}) async {
+  if (smileTestMode) {
+    final picked = await pickTestMedia(multiple: false, videos: video);
+    return picked.firstOrNull;
+  }
+  return video
+      ? ImagePicker().pickVideo(source: ImageSource.camera)
+      : ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 90);
+}

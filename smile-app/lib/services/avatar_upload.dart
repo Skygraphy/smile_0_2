@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
+import 'test_media.dart';
 
 /// Used by [ProfileService] for user avatars: three ways to get an avatar
 /// image -- camera, an existing photo, or a URL -- all uploading to the
@@ -29,6 +30,10 @@ Future<String?> _pickAndUpload(String objectPath, ImageSource source) async {
 typedef PickedPicture = ({Uint8List bytes, String mimeType});
 
 Future<PickedPicture?> pickPictureBytes(ImageSource source) async {
+  if (smileTestMode) {
+    final test = (await pickTestMedia(multiple: false, videos: false)).firstOrNull;
+    return test == null ? null : (bytes: await test.readAsBytes(), mimeType: 'image/png');
+  }
   final picked = await ImagePicker().pickImage(
     source: source,
     imageQuality: 85,

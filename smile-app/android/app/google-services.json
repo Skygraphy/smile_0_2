@@ -26,6 +26,25 @@
     },
     {
       "client_info": {
+        "mobilesdk_app_id": "1:1094927679790:android:4db5a9e70b16f580dffabf",
+        "android_client_info": {
+          "package_name": "com.smile.smile_app.test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWI9JJUsEjrocqgMbWaN3qgHQY7bxKQqc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:1094927679790:android:9b0eca7c83c70fefdffabf",
         "android_client_info": {
           "package_name": "com.smile.smile_frame"

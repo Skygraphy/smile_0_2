@@ -105,8 +105,10 @@ class MainActivity : FlutterActivity() {
     /// touched when it differs, so the launcher isn't refreshed each start.
     private fun setLauncher(frame: Boolean) {
         val pm = packageManager
-        val app = ComponentName(this, "$packageName.AppLauncher")
-        val frameEntry = ComponentName(this, "$packageName.FrameLauncher")
+        // The aliases' class names stay in the code's package, also in the
+        // test app, whose package name has ".test" added.
+        val app = ComponentName(this, "com.smile.smile_app.AppLauncher")
+        val frameEntry = ComponentName(this, "com.smile.smile_app.FrameLauncher")
         fun set(component: ComponentName, on: Boolean) {
             val want = if (on) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
                 else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
