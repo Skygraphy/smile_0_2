@@ -38,3 +38,22 @@ end;
 $$;
 revoke all on function public.testsuite_state() from public, anon, authenticated;
 grant execute on function public.testsuite_state() to service_role;
+
+-- Back to zero in one call (the Dart chapters, integration_test): every row
+-- of every public table except app_releases, and every user. Refuses as soon
+-- as a user has a real address: then this is not the testsuite project.
+create or replace function public.testsuite_reset()
+returns void language plpgsql security definer set search_path = public, auth as $$
+declare t text;
+begin
+  if exists (select 1 from auth.users where email not like '%@example.com') then
+    raise exception 'Abbruch: echte Benutzer gefunden, das ist nicht das Testprojekt.';
+  end if;
+  select string_agg(format('public.%I', tablename), ', ') into t
+    from pg_tables where schemaname = 'public' and tablename <> 'app_releases';
+  execute 'truncate ' || t || ' restart identity cascade';
+  delete from auth.users where true;  -- the API demands a WHERE (pg_safeupdate)
+end;
+$$;
+revoke all on function public.testsuite_reset() from public, anon, authenticated;
+grant execute on function public.testsuite_reset() to service_role;

@@ -1,0 +1,103 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:http/http.dart' as http;
+
+/// The TESTSUITE project with service rights, for the chapters
+/// (tools/testsuite): reset, test persons, login codes, state. Refuses the
+/// live project; the key only exists in test builds (--dart-define).
+class TestBackend {
+  static const url = String.fromEnvironment('SUPABASE_URL');
+  static const _key = String.fromEnvironment('SMILE_TEST_SERVICE_KEY');
+
+  static void _guard() {
+    if (url.contains('wxuipqaozvgzthlgnbgz') || _key.isEmpty || url.isEmpty) {
+      throw StateError('Nur gegen das Testprojekt (SMILE_TEST_SERVICE_KEY fehlt oder Live-Projekt).');
+    }
+  }
+
+  static Map<String, String> get _h =>
+      {'apikey': _key, 'Authorization': 'Bearer $_key', 'Content-Type': 'application/json'};
+
+  static Future<dynamic> _send(String method, String path, {Object? body, Map<String, String>? headers}) async {
+    _guard();
+    final req = http.Request(method, Uri.parse('$url$path'))..headers.addAll({..._h, ...?headers});
+    if (body != null) req.body = body is String ? body : jsonEncode(body);
+    final res = await http.Response.fromStream(await req.send());
+    if (res.statusCode >= 300) throw StateError('$method $path: ${res.statusCode} ${res.body}');
+    return res.body.isEmpty ? null : jsonDecode(res.body);
+  }
+
+  static Future<dynamic> rpc(String fn) => _send('POST', '/rest/v1/rpc/$fn', body: {});
+
+  /// Back to zero: all files, rows and users.
+  static Future<void> reset() async {
+    final buckets = await _send('GET', '/storage/v1/bucket') as List;
+    for (final b in buckets) {
+      final id = b['id'] as String;
+      final files = await _list(id, '');
+      for (var i = 0; i < files.length; i += 500) {
+        await _send('DELETE', '/storage/v1/object/$id', body: {'prefixes': files.sublist(i, (i + 500).clamp(0, files.length))});
+      }
+    }
+    await rpc('testsuite_reset');
+  }
+
+  static Future<List<String>> _list(String bucket, String prefix) async {
+    final out = <String>[];
+    final entries = await _send('POST', '/storage/v1/object/list/$bucket', body: {'prefix': prefix, 'limit': 1000}) as List;
+    for (final e in entries) {
+      final path = prefix.isEmpty ? e['name'] as String : '$prefix/${e['name']}';
+      if (e['id'] == null) {
+        out.addAll(await _list(bucket, path));
+      } else {
+        out.add(path);
+      }
+    }
+    return out;
+  }
+
+  static Future<String> userId(String email) async {
+    final users = (await _send('GET', '/auth/v1/admin/users?per_page=1000'))['users'] as List;
+    final found = users.where((u) => u['email'] == email).firstOrNull;
+    if (found != null) return found['id'] as String;
+    final created = await _send('POST', '/auth/v1/admin/users', body: {'email': email, 'email_confirm': true});
+    return created['id'] as String;
+  }
+
+  /// A test person without a device: user, profile, optional Smile name.
+  static Future<void> person(String email, String name, {String? handle}) async {
+    final id = await userId(email);
+    await _send('POST', '/rest/v1/profiles',
+        headers: {'Prefer': 'resolution=merge-duplicates'},
+        body: {'user_id': id, 'display_name': name, 'handle': ?handle});
+  }
+
+  /// The 6-digit code the mail would have brought.
+  static Future<String> otp(String email) async {
+    await userId(email);
+    final link = await _send('POST', '/auth/v1/admin/generate_link', body: {'type': 'magiclink', 'email': email});
+    return link['email_otp'] as String;
+  }
+
+  /// A file in the public avatars bucket (a picture on the internet for the tests).
+  static Future<String> putPublic(String path, Uint8List bytes, String contentType) async {
+    _guard();
+    final res = await http.post(Uri.parse('$url/storage/v1/object/avatars/$path'),
+        headers: {'Authorization': 'Bearer $_key', 'Content-Type': contentType, 'x-upsert': 'true'}, body: bytes);
+    if (res.statusCode >= 300) throw StateError('upload $path: ${res.statusCode}');
+    return '$url/storage/v1/object/public/avatars/$path';
+  }
+
+  /// Rows of a table (PostgREST query), e.g. select('profiles', 'select=handle&user_id=eq.x').
+  static Future<List> select(String table, String query) async => await _send('GET', '/rest/v1/$table?$query') as List;
+
+  /// Size of a file in the avatars bucket (null: no such file).
+  static Future<int?> avatarSize(String path) async {
+    final res = await http.get(Uri.parse('$url/storage/v1/object/public/avatars/$path'));
+    return res.statusCode == 200 ? res.bodyBytes.length : null;
+  }
+
+  /// Everything the server holds right now (testsuite_state(), state.sql).
+  static Future<Map<String, dynamic>> state() async => (await rpc('testsuite_state') as Map).cast<String, dynamic>();
+}

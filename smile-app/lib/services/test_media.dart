@@ -13,7 +13,7 @@ import 'media_service.dart';
 /// The test app (2026-10-19, built with --dart-define=SMILE_TEST=true): no
 /// gallery and no camera, so no private photo can ever end up in a test or
 /// the tutorial. Instead the test tools put free test pictures and videos
-/// into the app's own folder (`Android/data/<app>/files/fixtures/`):
+/// into the app's private folder (`/data/user/0/<app>/files/fixtures/`, by run-as):
 /// `media/` (photos and videos, with `labels.json`) and `profiles/`
 /// (portraits for profile pictures). See tools/testsuite/README.md.
 const bool smileTestMode = bool.fromEnvironment('SMILE_TEST');
@@ -26,9 +26,7 @@ class _TestFile {
 }
 
 Future<List<_TestFile>> _files(String folder, {required bool videos}) async {
-  final base = await getExternalStorageDirectory();
-  if (base == null) return const [];
-  final dir = Directory('${base.path}/fixtures/$folder');
+  final dir = Directory('${(await getApplicationSupportDirectory()).path}/fixtures/$folder');
   if (!await dir.exists()) return const [];
   var labels = <String, dynamic>{};
   final labelFile = File('${dir.path}/labels.json');

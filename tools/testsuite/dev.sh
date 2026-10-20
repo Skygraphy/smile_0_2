@@ -48,8 +48,8 @@ demo_mode() {
 }
 # Fresh test app, notifications already allowed (no system dialog in runs).
 clear_app() {
-  a shell pm clear $TEST_PKG >/dev/null
-  a shell pm grant $TEST_PKG android.permission.POST_NOTIFICATIONS
+  a shell pm clear $TEST_PKG >/dev/null 2>&1 || true
+  a shell pm grant $TEST_PKG android.permission.POST_NOTIFICATIONS >/dev/null 2>&1 || true
 }
 # Tips off for chapter runs (they have their own chapter): put into the
 # fresh app's preferences before its first start (debug build: run-as).
@@ -70,15 +70,17 @@ login() {
   type_text "$(otp_for "$email")"
 }
 # The test pictures/videos (fixtures/media, from make_media.js) and the
-# portraits (fixtures/profiles, make_portraits.js) into the test app's own folder; after
-# clear_app, which empties it.
+# portraits (fixtures/profiles, make_portraits.js) into the test app's private folder
+# (files/fixtures); after clear_app, which empties it. A folder adb creates under
+# Android/data belongs to adb and the app may not read it, hence run-as. The
+# phone keeps a copy in /data/local/tmp; --sync sends only what changed.
 push_fixtures() {
-  local dest=/sdcard/Android/data/$TEST_PKG/files/fixtures
-  a shell mkdir -p $dest
+  local tmp=/data/local/tmp/smile_fixtures
+  a shell mkdir -p $tmp
   for d in media profiles; do
-    [ -d "$TESTSUITE_DIR/fixtures/$d" ] && a push "$(cygpath -w "$TESTSUITE_DIR/fixtures/$d")" $dest/ >/dev/null
+    [ -d "$TESTSUITE_DIR/fixtures/$d" ] && a push --sync "$(cygpath -w "$TESTSUITE_DIR/fixtures/$d")" $tmp/ >/dev/null
   done
-  return 0
+  a shell "chmod -R a+rX $tmp; run-as $TEST_PKG sh -c 'mkdir -p files/fixtures && cp -r $tmp/media $tmp/profiles files/fixtures/'"
 }
 # Input fields by their label (what the field shows as its name, e.g.
 # "Name", "E-Mail-Adresse", "https://"); "" = the only or topmost-in-a-dialog
