@@ -8,27 +8,35 @@ TESTSUITE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 a() { "$ADB" -s "$DEV" "$@"; }
 ui() { a shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; a shell cat /sdcard/ui.xml; }
 # Center of the first element whose text, content-desc or hint starts with
-# $1 (or "class:android.widget.EditText" for the first of a class).
+# $1 (or "class:android.widget.EditText" for the first of a class, or
+# "~text" for an element that merely contains the text).
 find_el() {
   ui | node -e '
-    const x=require("fs").readFileSync(0,"utf8"), w=process.argv[1];
+    const x=require("fs").readFileSync(0,"utf8"), w=process.argv[1], last=process.env.FIND_LAST==="1"; let hit=null;
     for (const m of x.matchAll(/<node [^>]*>/g)) {
       const n=m[0], c=(n.match(/ class="([^"]*)"/)||[])[1]||"", h=(n.match(/ hint="([^"]*)"/)||[])[1]||"",
         t=(n.match(/ text="([^"]*)"/)||[])[1]||"", d=(n.match(/content-desc="([^"]*)"/)||[])[1]||"";
-      if (t.startsWith(w)||d.startsWith(w)||h.startsWith(w)||(w.startsWith("class:")&&c===w.slice(6))) {
+      const inc=w.startsWith("~")?w.slice(1):null;
+      if (inc ? (t.includes(inc)||d.includes(inc)) : t.startsWith(w)||d.startsWith(w)||h.startsWith(w)||(w.startsWith("class:")&&c===w.slice(6))) {
         const b=n.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/);
-        console.log(((+b[1]+ +b[3])>>1)+" "+((+b[2]+ +b[4])>>1)); process.exit(0);
+        hit=((+b[1]+ +b[3])>>1)+" "+((+b[2]+ +b[4])>>1); if (!last) break;
       }
-    } process.exit(1);' "$1"
+    } if (hit) { console.log(hit); process.exit(0); } process.exit(1);' "$1"
 }
 # Waits up to $2 seconds (default 15) for an element, then taps it.
 tap_el() {
-  local xy; for _ in $(seq 1 "${2:-15}"); do xy="$(find_el "$1")" && { a shell input tap $xy; return 0; }; sleep 1; done
-  echo "Nicht gefunden: $1" >&2; return 1
+  local xy; for _ in $(seq 1 "${2:-15}"); do xy="$(find_el "$1")" && { a shell input tap $xy; type log_tap >/dev/null 2>&1 && log_tap "$1"; return 0; }; sleep 1; done
+  echo "Nicht gefunden: $1" >&2; type on_missing >/dev/null 2>&1 && on_missing "$1"; return 1
 }
+# A tap on a spot without a name (logged under the given label).
+tap_at() { a shell input tap "$1" "$2"; type log_tap >/dev/null 2>&1 && log_tap "$3"; return 0; }
+# Like tap_el, but the last match (a dialog button over a same-named row).
+tap_last() { FIND_LAST=1 tap_el "$@"; }
 wait_el() { for _ in $(seq 1 "${2:-15}"); do find_el "$1" >/dev/null && return 0; sleep 1; done; echo "Nicht gefunden: $1" >&2; return 1; }
 gone_el() { for _ in $(seq 1 "${2:-15}"); do find_el "$1" >/dev/null || return 0; sleep 1; done; return 1; }
 type_text() { a shell input text "$(echo "$1" | sed 's/ /%s/g')"; }
+# The system back gesture, logged like a tap on the page's Zurück arrow.
+go_back() { type log_tap >/dev/null 2>&1 && log_tap "Zurück"; a shell input keyevent 4; }
 hide_keyboard() { a shell input keyevent 111; }
 shot() { a exec-out screencap -p > "$1"; }
 start_app() { a shell am start -n $TEST_PKG/com.smile.smile_app.MainActivity >/dev/null 2>&1; }

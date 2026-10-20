@@ -101,35 +101,56 @@ class ProfileService {
     await supabase.from('profiles').upsert({
       'user_id': userId,
       'display_name': name,
-      if (withAvatar) 'avatar_path': 'users/$userId',
+      if (withAvatar && _pendingAvatarPath != null) 'avatar_path': _pendingAvatarPath,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     });
+    if (withAvatar) _pendingAvatarPath = null;
   }
 
-  Future<String?> uploadMyAvatarFromCamera() => _setAvatar(pickAndUploadFromCamera('users/${_userId()}'));
+  Future<String?> uploadMyAvatarFromCamera() => _setAvatar(pickAndUploadFromCamera(_newAvatarPath()));
 
-  Future<String?> uploadMyAvatarFromGallery() => _setAvatar(pickAndUploadFromGallery('users/${_userId()}'));
+  Future<String?> uploadMyAvatarFromGallery() => _setAvatar(pickAndUploadFromGallery(_newAvatarPath()));
 
-  Future<String?> uploadMyAvatarFromUrl(String url) => _setAvatar(uploadAvatarFromUrl('users/${_userId()}', url));
+  Future<String?> uploadMyAvatarFromUrl(String url) => _setAvatar(uploadAvatarFromUrl(_newAvatarPath(), url));
 
   /// A picture already picked (and shown at once, LocalChanges).
   Future<String?> uploadMyAvatarPicked(PickedPicture picture) => _setAvatar(() async {
-        await uploadPictureBytes('users/${_userId()}', picture);
-        return 'users/${_userId()}';
+        final path = _newAvatarPath();
+        await uploadPictureBytes(path, picture);
+        return path;
       }());
 
-  /// The own avatar's address (always the same -- one avatar per person).
-  String? myAvatarUrl() => avatarPathToUrl('users/${_userId()}');
-
   String _userId() => supabase.auth.currentUser!.id;
+
+  /// Each picture gets its own file (2026-10-20, migrations/0086): under one
+  /// fixed address, phones kept showing the old picture they had cached.
+  /// The database removes the previous file.
+  String _newAvatarPath() => 'users/${_userId()}/${DateTime.now().millisecondsSinceEpoch}';
+
+  /// A picture chosen before the profile exists (first start): saved with
+  /// the name. A picture replaced before that is removed at once.
+  String? _pendingAvatarPath;
 
   Future<String?> _setAvatar(Future<String?> upload) async {
     final path = await upload;
     if (path == null) return null;
-    await supabase.from('profiles').update({
-      'avatar_path': path,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('user_id', _userId());
+    final rows = await supabase
+        .from('profiles')
+        .update({
+          'avatar_path': path,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('user_id', _userId())
+        .select('user_id');
+    if (rows.isEmpty) {
+      final replaced = _pendingAvatarPath;
+      _pendingAvatarPath = path;
+      if (replaced != null) {
+        try {
+          await supabase.storage.from('avatars').remove([replaced]);
+        } catch (_) {}
+      }
+    }
     return avatarPathToUrl(path);
   }
 }

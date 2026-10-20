@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show SignOutScope;
@@ -143,16 +142,14 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
       shown = LocalPicture.bytes(picked.bytes);
       commit = () => widget.profileService.uploadMyAvatarPicked(picked);
     }
-    final serverUrl = widget.profileService.myAvatarUrl();
     final saved = await LocalChanges.instance.run(
       overrides: {LocalChanges.profileAvatar: shown},
       commit: commit,
-      // Same address as before (one avatar per person): drop the old copy
-      // from the image cache, then load the new one.
+      // A new picture has a new address (migrations/0086): no old copy to
+      // drop, just load the new one before the local one goes.
       warmUp: () async {
-        if (serverUrl == null) return;
-        await CachedNetworkImage.evictFromCache(serverUrl);
-        await precacheUrl(serverUrl);
+        final url = (await widget.profileService.getMyProfile())?.avatarUrl;
+        if (url != null) await precacheUrl(url);
       },
       affects: tablesChanged({'profiles'}),
     );

@@ -1,0 +1,28 @@
+{
+  "_": "Elements a chapter sees but that are tested in another chapter: screen -> element label (prefix) -> chapter id. Everything a chapter taps counts by itself; whatever is neither tapped nor listed here shows as nicht geprüft.",
+  "Anmeldung": {
+    "Dieses Gerät als Frame verwenden": "ch06"
+  },
+  "Startseite (leer)": {
+    "Aufnehmen": "ch03",
+    "Neuigkeiten": "ch09",
+    "Ich wurde eingeladen": "ch05",
+    "Ich richte Smile ein": "ch02",
+    "Alben": "ch02",
+    "Spaces": "ch02"
+  },
+  "Menü": {
+    "Code scannen": "ch05"
+  },
+  "Einstellungen": {
+    "Tipps": "ch10",
+    "Konto löschen": "ch11",
+    "Bevorzugter Frame": "ch07"
+  },
+  "_aliases": {
+    "Begrüßung": {
+      "?": "Profilbild-Kreis",
+      "AB": "Profilbild-Kreis"
+    }
+  }
+}

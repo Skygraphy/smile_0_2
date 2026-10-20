@@ -30,4 +30,5 @@ node -e '
   const chapters=ids.map(id=>{const j=JSON.parse(fs.readFileSync(out+"/"+id+"/steps.json"));return {id,no:j.no,title:j.title,steps:j.steps.length};});
   fs.writeFileSync(out+"/data/index.json",JSON.stringify({chapters,findings:JSON.parse(fs.readFileSync(findings))}));' \
   "$(cygpath -w "$SITE")" "$(cygpath -w findings.json)" "${chapters[@]}"
+node coverage.js "$(cygpath -w out)" "$(cygpath -w "$SITE/data")"
 echo "$SITE: ${chapters[*]}"

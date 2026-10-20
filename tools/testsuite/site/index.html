@@ -62,6 +62,18 @@ textarea:focus{outline:2px solid var(--accent);border-color:transparent}
 .find .n{color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums}
 .find p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
 .empty{color:var(--muted);padding:24px;border-radius:16px;background:var(--surface)}
+.kind{font-size:11px;font-weight:600;letter-spacing:.04em;padding:2px 8px;border-radius:999px;background:var(--raised);color:var(--muted)}
+.kind.branch{background:#2a2433;color:#c4a8f0}
+.step.branch{box-shadow:inset 3px 0 0 #6d55a0}
+.cov{display:grid;gap:14px}
+.cov section{background:var(--surface);border-radius:14px;padding:14px 16px;display:grid;gap:8px}
+.cov h2{margin:0;font-size:15.5px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.cov h2 .meta{font-size:12.5px;font-weight:400;color:var(--muted)}
+.cov ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.cov li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:baseline;font-size:14px;padding:3px 0;border-top:1px solid var(--line)}
+.cov li:first-child{border-top:0}
+.cov li .l{min-width:0;overflow-wrap:anywhere}
+.chip.later{background:#2c2a20;color:#e6c76a}
 .note-off{color:var(--muted);font-size:12.5px}
 dialog{border:0;padding:0;background:transparent;max-width:min(92vw,520px)}
 dialog::backdrop{background:rgba(0,0,0,.8)}
@@ -88,6 +100,7 @@ const key = (ch, no) => `${ch}-${String(no).padStart(2, "0")}`;
 async function load() {
   try {
     state.index = await (await fetch("data/index.json")).json();
+    state.coverage = await (await fetch("data/coverage.json")).json();
     for (const c of state.index.chapters) {
       state.chapters[c.id] = await (await fetch(`${c.id}/steps.json`)).json();
     }
@@ -130,7 +143,10 @@ function renderRail() {
       <span class="meta">${ok} von ${total} bestätigt${bad ? ` · ${bad} passt nicht` : ""}</span>
       <span class="bar"><span class="o" style="width:${pct(ok)}%"></span><span class="b" style="width:${pct(bad)}%"></span></span>
     </button>`;
-  }).join("") + `<button data-ch="finds" aria-current="${state.current === "finds"}">
+  }).join("") + `<button data-ch="coverage" aria-current="${state.current === "coverage"}">
+      <span class="t">Abdeckung</span><span class="meta">${state.coverage.tested} geprüft · ${state.coverage.later} später · ${state.coverage.open} offen</span>
+      <span class="bar"><span class="o" style="width:${(state.coverage.tested / Math.max(1, state.coverage.tested + state.coverage.later + state.coverage.open) * 100).toFixed(1)}%"></span></span></button>
+    <button data-ch="finds" aria-current="${state.current === "finds"}">
       <span class="t">Funde</span><span class="meta">${state.index.findings.length} gefunden · ${state.index.findings.filter(f => f.status === "behoben").length} behoben</span></button>`;
   rail.querySelectorAll("button").forEach(b => b.onclick = () => {
     state.current = b.dataset.ch;
@@ -148,6 +164,27 @@ function renderFinds() {
       <span class="chip ${x.status === "behoben" ? "ok" : "bad"}">${esc(x.status)}</span></div>`).join("")}</div>`;
 }
 
+function chapterName(id) {
+  const c = state.index.chapters.find(x => x.id === id);
+  return c ? `Kapitel ${c.no}` : `Kapitel ${+id.slice(2)}`;
+}
+
+function renderCoverage() {
+  const c = state.coverage;
+  const chip = e => e.status === "geprüft"
+    ? `<span class="chip ok">geprüft · ${e.where.map(chapterName).join(", ")}</span>`
+    : e.status === "später" ? `<span class="chip later">folgt in ${e.where.map(chapterName).join(", ")}</span>`
+    : `<span class="chip bad">noch nicht geprüft</span>`;
+  $("#main").innerHTML = `<section class="intro"><h1>Abdeckung</h1>
+    <p>Jeder Knopf und jedes Feld, das auf einer Seite angetippt werden kann, und wo es geprüft wird. Rot ist noch nirgends geprüft. Am Ende darf hier nichts Rotes mehr stehen.</p>
+    <div class="chips"><span class="chip ok">${c.tested} geprüft</span><span class="chip later">${c.later} folgen später</span><span class="chip ${c.open ? "bad" : "ok"}">${c.open} noch nicht geprüft</span></div></section>
+    <div class="cov">${c.screens.map(s => {
+      const o = s.elements.filter(e => e.status === "offen").length;
+      return `<section><h2>${esc(s.screen)}<span class="meta">${s.elements.length} Elemente${o ? ` · ${o} offen` : ""}</span></h2>
+        <ul>${s.elements.map(e => `<li><span class="l">${esc(e.label)}</span>${chip(e)}</li>`).join("")}</ul></section>`;
+    }).join("")}</div>`;
+}
+
 function renderChapter() {
   const ch = state.chapters[state.current];
   const autoOk = ch.steps.flatMap(s => s.checks).filter(c => c.ok).length;
@@ -159,10 +196,11 @@ function renderChapter() {
       <span class="chip">Lauf vom ${esc(ch.ranAt ?? "")}</span></div>
       ${state.canWrite ? "" : '<p class="note-off">Bestätigen ist in dieser Ansicht nicht möglich.</p>'}
     </section>
-    ${ch.steps.map(s => `<article class="step" id="s${s.no}">
+    ${ch.steps.map(s => `<article class="step${s.kind === "Abzweigung" ? " branch" : ""}" id="s${s.no}">
       <img class="shot" src="${ch.id}/${s.image.replace(".png", ".jpg")}" alt="Bildschirm nach Schritt ${s.no}: ${esc(s.title)}" loading="lazy">
       <div class="body">
-        <div class="head"><span class="no">${s.no}</span><h2>${esc(s.title)}</h2><span class="dev">${esc(s.device)}</span></div>
+        <div class="head"><span class="no">${s.no}</span><h2>${esc(s.title)}</h2>
+          <span class="kind${s.kind === "Abzweigung" ? " branch" : ""}">${esc(s.kind ?? "Hauptweg")}</span><span class="dev">${esc(s.device)}${s.screen ? " · " + esc(s.screen) : ""}</span></div>
         <div><p class="lbl">So geht's</p><p class="txt">${esc(s.do)}</p></div>
         <div><p class="lbl">Das siehst du</p><p class="txt">${esc(s.expect)}</p></div>
         ${s.checks.length ? `<div class="checks">${s.checks.map(c => `<div><span class="dot ${c.ok ? "ok" : "bad"}"></span>${esc(c.desc)}${c.ok ? "" : " (fehlgeschlagen)"}</div>`).join("")}</div>` : ""}
@@ -200,7 +238,9 @@ async function save(k, body) {
 
 function render() {
   renderRail();
-  if (state.current === "finds") renderFinds(); else if (state.current) renderChapter();
+  if (state.current === "finds") renderFinds();
+  else if (state.current === "coverage") renderCoverage();
+  else if (state.current) renderChapter();
 }
 $("#zoom").onclick = () => $("#zoom").close();
 load();
