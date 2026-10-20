@@ -3097,14 +3097,20 @@ abstract class SmileTexts {
   /// No description provided for @smileNameBadChar.
   ///
   /// In de, this message translates to:
-  /// **'Das Zeichen {char} ist nicht erlaubt. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.'**
+  /// **'Das Zeichen {char} geht nicht. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.'**
   String smileNameBadChar(String char);
 
   /// No description provided for @smileNameSpace.
   ///
   /// In de, this message translates to:
-  /// **'Leerzeichen sind nicht erlaubt. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.'**
+  /// **'Leerzeichen gehen nicht. Nimm einen Punkt oder Unterstrich.'**
   String get smileNameSpace;
+
+  /// No description provided for @smileNameUmlaut.
+  ///
+  /// In de, this message translates to:
+  /// **'Umlaute gehen nicht. Schreib ae, oe, ue oder ss.'**
+  String get smileNameUmlaut;
 
   /// No description provided for @smileNameBadStart.
   ///

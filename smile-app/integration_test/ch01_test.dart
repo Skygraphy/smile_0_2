@@ -499,17 +499,26 @@ void main() {
     await c.hideKeyboard();
     await c.snap();
 
-    c.step('Name mit Sonderzeichen', 'anna! x eingeben.', 'Ausrufezeichen und Leerzeichen erscheinen gar nicht erst, im Feld steht @annax.',
-        kind: 'Abzweigung',
-        explain: 'Das Feld nimmt nur a–z, 0–9, Punkt und Unterstrich an (Großbuchstaben werden klein). Andere Zeichen und Leerzeichen kommen gar nicht erst hinein, auch nicht beim Einfügen.');
-    await tester.tap(find.byType(TextField).last);
-    await c.settle();
-    await tester.enterText(find.byType(TextField).last, 'anna! x');
-    c.logTap('Eingabefeld');
-    await c.settle();
-    await c.check('Im Feld steht nur annax', () => tester.widget<TextField>(find.byType(TextField).last).controller?.text == 'annax');
-    await c.hideKeyboard();
-    await c.snap();
+    for (final (name, input, kept, message, why) in [
+      ('Name mit Leerzeichen', 'anna berger', 'annaberger', 'Leerzeichen gehen nicht. Nimm einen Punkt oder Unterstrich.',
+          'Ein Leerzeichen kommt gar nicht erst ins Feld. Damit man nicht rätselt, wohin es verschwunden ist, sagt Smile kurz warum und was stattdessen geht.'),
+      ('Name mit Sonderzeichen', 'anna!', 'anna', 'Das Zeichen ! geht nicht. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.',
+          'Andere Zeichen als a–z, 0–9, Punkt und Unterstrich kommen nicht ins Feld; der Hinweis nennt das Zeichen.'),
+      ('Name mit Umlaut', 'jürgen', 'jrgen', 'Umlaute gehen nicht. Schreib ae, oe, ue oder ss.',
+          'Umlaute gehen in Smile-Namen nicht (sie wären in Links schwer zu tippen); der Hinweis sagt, wie man sie schreibt.'),
+    ]) {
+      c.step(name, '$input eingeben.', 'Im Feld steht @$kept, darunter ein grauer Hinweis: $message',
+          kind: 'Abzweigung', explain: why);
+      await tester.tap(find.byType(TextField).last);
+      await c.settle();
+      await tester.enterText(find.byType(TextField).last, input);
+      c.logTap('Eingabefeld');
+      await c.settle();
+      await c.check('Im Feld steht nur $kept', () => tester.widget<TextField>(find.byType(TextField).last).controller?.text == kept);
+      await c.check('Hinweis: $message', () => c.waitFor(message, seconds: 3));
+      await c.hideKeyboard();
+      await c.snap();
+    }
 
     for (final (name, input, message, why) in [
       ('Name beginnt mit Punkt', '.anna', 'Am Anfang muss ein Buchstabe oder eine Ziffer stehen', 'Punkt und Unterstrich sind erlaubt, nur nicht am Anfang.'),

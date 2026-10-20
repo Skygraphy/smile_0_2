@@ -6,7 +6,7 @@ ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 
 ## 0.0.2 (2026-10-20)
 
-Fünf Verbesserungen aus der Durchsicht von Kapitel 1.
+Sechs Verbesserungen aus der Durchsicht von Kapitel 1.
 
 Behoben:
 
@@ -15,6 +15,7 @@ Behoben:
 - 13: Smile-Name: Meldung zählte alle Regeln auf statt des einen Fehlers
 - 14: Profilbild in der Begrüßung: das gewählte Bild steht sofort im Kreis, keine Anfangsbuchstaben dazwischen.
 - 15: Smile-Name: Noch zu kurz. Mindestens 3 Zeichen. (ohne die Regeln zu wiederholen)
+- 16: Smile-Name: Leerzeichen, Umlaute und Sonderzeichen kommen nicht ins Feld, ein grauer Hinweis sagt warum und was stattdessen geht.
 
 ## 0.0.1 (2026-10-20)
 

@@ -1818,12 +1818,16 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String smileNameBadChar(String char) {
-    return 'Das Zeichen $char ist nicht erlaubt. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.';
+    return 'Das Zeichen $char geht nicht. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.';
   }
 
   @override
   String get smileNameSpace =>
-      'Leerzeichen sind nicht erlaubt. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.';
+      'Leerzeichen gehen nicht. Nimm einen Punkt oder Unterstrich.';
+
+  @override
+  String get smileNameUmlaut =>
+      'Umlaute gehen nicht. Schreib ae, oe, ue oder ss.';
 
   @override
   String get smileNameBadStart =>

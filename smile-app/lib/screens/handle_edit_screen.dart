@@ -29,6 +29,10 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
   _Check _check = _Check.none;
   bool _saving = false;
   String? _failure;
+  /// A character the field just refused (space, umlaut, !), so it can say
+  /// why instead of silently dropping it (2026-10-20, test suite find 16).
+  String? _dropped;
+  String? _droppedAt;
   /// Free alternatives to a taken name (up to three).
   List<String> _alternatives = const [];
 
@@ -50,6 +54,7 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
 
   void _onChanged(String _) {
     _debounce?.cancel();
+    if (_controller.text != _droppedAt) _dropped = null;
     final handle = _handle;
     setState(() {
       _failure = null;
@@ -130,7 +135,18 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
     final good = _check == _Check.free && handle != widget.current;
     final bad = _check == _Check.taken || _check == _Check.invalid;
     final Color? stateColor = good ? SmileTheme.success : (bad ? scheme.error : null);
-    final String? status = switch (_check) {
+    final dropped = _dropped;
+    final String? droppedMessage = dropped == null
+        ? null
+        : dropped.trim().isEmpty
+            ? t.smileNameSpace
+            : 'äöüßÄÖÜ'.contains(dropped)
+                ? t.smileNameUmlaut
+                : t.smileNameBadChar(dropped);
+    // Neutral, not red: the name itself may be fine, only a character was
+    // left out.
+    final Color? boxColor = droppedMessage != null ? scheme.onSurfaceVariant : stateColor;
+    final String? status = droppedMessage ?? switch (_check) {
       _Check.free when handle != widget.current => t.smileNameIsFree(handle),
       _Check.taken => t.smileNameIsTaken(handle),
       _Check.invalid => switch (handleProblem(handle)) {
@@ -163,7 +179,16 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
             enableSuggestions: false,
             keyboardType: TextInputType.visiblePassword,
             inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9._@]')),
+              TextInputFormatter.withFunction((old, value) {
+                final refused = RegExp(r'[^A-Za-z0-9._@]').firstMatch(value.text)?.group(0);
+                if (refused == null) return value;
+                final kept = value.text.replaceAll(RegExp(r'[^A-Za-z0-9._@]'), '');
+                setState(() {
+                  _dropped = refused;
+                  _droppedAt = kept.toLowerCase();
+                });
+                return TextEditingValue(text: kept, selection: TextSelection.collapsed(offset: kept.length));
+              }),
               LengthLimitingTextInputFormatter(25),
               TextInputFormatter.withFunction(
                   (old, value) => value.copyWith(text: value.text.toLowerCase(), composing: TextRange.empty)),
@@ -188,11 +213,11 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
             ),
           ),
           const SizedBox(height: SmileSpacing.s),
-          if (status != null && stateColor != null)
+          if (status != null && boxColor != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.m, vertical: SmileSpacing.s),
               decoration: BoxDecoration(
-                color: stateColor.withValues(alpha: 0.14),
+                color: boxColor.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(SmileRadius.m),
               ),
               child: Row(
@@ -200,12 +225,12 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(top: 1),
-                    child: Icon(good ? SmileIcons.check : SmileIcons.warning, size: 18, color: stateColor),
+                    child: Icon(good && dropped == null ? SmileIcons.check : SmileIcons.warning, size: 18, color: boxColor),
                   ),
                   const SizedBox(width: SmileSpacing.s),
                   Expanded(
                     child: Text(status,
-                        style: TextStyle(color: stateColor, fontSize: 13.5, fontWeight: FontWeight.w600, height: 1.35)),
+                        style: TextStyle(color: boxColor, fontSize: 13.5, fontWeight: FontWeight.w600, height: 1.35)),
                   ),
                 ],
               ),

@@ -118,5 +118,13 @@
     "detail": "Gefunden bei Claudes Durchsicht von 0.0.2, wie Fund 13: Noch zu kurz. Mindestens 3 Zeichen: a–z, 0–9, Punkt und Unterstrich. Behoben: Noch zu kurz. Mindestens 3 Zeichen.",
     "status": "behoben",
     "version": "0.0.2"
+  },
+  {
+    "no": 16,
+    "chapter": "ch01",
+    "title": "Smile-Name: Leerzeichen, Umlaute und Sonderzeichen verschwanden ohne Hinweis",
+    "detail": "Frage aus Claudes Durchsicht von 0.0.2 (Schritt 43), Ernst: umsetzen. Das Feld nimmt sie weiterhin nicht an, sagt jetzt aber grau, warum und was stattdessen geht (Punkt oder Unterstrich, ae/oe/ue/ss).",
+    "status": "behoben",
+    "version": "0.0.2"
   }
 ]
