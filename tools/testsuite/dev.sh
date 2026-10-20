@@ -110,3 +110,18 @@ type_into() {
     *) echo "Text kam nicht im Feld ${label:-(einziges)} an: ${info#* * }" >&2; type on_missing >/dev/null 2>&1 && on_missing "Text im Feld ${label}"; return 1 ;;
   esac
 }
+# Two quick taps on the same element (a hasty double tap), logged once.
+double_tap_el() {
+  local xy; for _ in $(seq 1 "${2:-15}"); do xy="$(find_el "$1")" && break; sleep 1; done
+  [ -z "$xy" ] && { echo "Nicht gefunden: $1" >&2; type on_missing >/dev/null 2>&1 && on_missing "$1"; return 1; }
+  a shell "input tap $xy; input tap $xy"; type log_tap >/dev/null 2>&1 && log_tap "$1"; return 0
+}
+# The element exists but cannot be tapped (enabled="false").
+is_disabled() {
+  ui | node -e '
+    const x=require("fs").readFileSync(0,"utf8"),w=process.argv[1];
+    for (const m of x.matchAll(/<node [^>]*>/g)) { const n=m[0];
+      const d=(n.match(/content-desc="([^"]*)"/)||[])[1]||"", t=(n.match(/ text="([^"]*)"/)||[])[1]||"";
+      if (d.startsWith(w)||t.startsWith(w)) process.exit(/ enabled="false"/.test(n)?0:1); }
+    process.exit(1);' "$1"
+}

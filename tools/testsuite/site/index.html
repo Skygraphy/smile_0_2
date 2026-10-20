@@ -88,6 +88,13 @@ textarea:focus{outline:2px solid var(--accent);border-color:transparent}
 .step.open{box-shadow:inset 3px 0 0 var(--accent)}
 .step.changed,.step.branch.changed{box-shadow:inset 3px 0 0 #e6c76a}
 .step.changed .verdict .state{color:#e6c76a}
+.ctx{font-size:13px;color:var(--muted)}
+.ctx summary{cursor:pointer}
+.ctx ul{margin:6px 0 0;padding-left:18px;display:grid;gap:2px;font-variant-numeric:tabular-nums}
+.cl{flex-basis:100%;border-radius:10px;padding:8px 10px;font-size:13px;line-height:1.45}
+.cl.ok{background:#1f2430;color:#a9c4f5}
+.cl.ask{background:#3a2a10;color:#f2c879}
+.step.asked,.step.branch.asked{box-shadow:inset 3px 0 0 #f2a03d}
 .step.branch.open{box-shadow:inset 3px 0 0 var(--accent)}
 .kind{font-size:11px;font-weight:600;letter-spacing:.04em;padding:2px 8px;border-radius:999px;background:var(--raised);color:var(--muted)}
 .kind.branch{background:#2a2433;color:#c4a8f0}
@@ -182,17 +189,51 @@ function hamming(a, b) {
   }
   return d + Math.abs(a.length - b.length) * 4;
 }
+// Claude goes through every new version first: what he is sure of he
+// confirms himself (by "claude", with a reason), where he is unsure he asks
+// (verdict "ask", with a question). Ernst's own verdict always wins.
 function verdictOf(ch, step) {
   const r = state.reviews[key(ch, step)];
   if (!r?.verdict) return { state: "offen", r };
-  const same = r.textHash === step.textHash && r.imgHash && step.imgHash && hamming(r.imgHash, step.imgHash) <= SAME_PICTURE;
-  return same ? { state: r.verdict, r } : { state: "geaendert", r };
+  const same = r.textHash === step.textHash && r.imgHash && step.imgHash && hamming(r.imgHash, step.imgHash) <= SAME_PICTURE
+    && r.ctxHash && r.ctxHash === step.ctxHash;
+  if (!same) {
+    const why = [];
+    if (!r.imgHash || !r.ctxHash) why.push("noch ohne Bild- und Zustandsvergleich bestätigt");
+    else {
+      if (r.textHash !== step.textHash) why.push("Text des Schritts geändert");
+      if (hamming(r.imgHash, step.imgHash) > SAME_PICTURE) why.push("Bildschirm sieht anders aus");
+      if (r.ctxHash !== step.ctxHash) why.push(...stateDiff([r.stateBefore, r.stateAfter], [step.stateBefore, step.stateAfter]).slice(0, 6).map(d => "Zustand: " + d));
+    }
+    return { state: "geaendert", r, why };
+  }
+  if (r.verdict === "ask") return { state: "frage", r };
+  if (r.by === "claude" && r.verdict === "ok") return { state: "claude", r };
+  return { state: r.verdict, r };
+}
+const DONE = ["ok", "no", "claude"];
+
+// What differs between two states, in words (leaf by leaf).
+const LABELS = { rows: "Einträge", files: "Dateien", people: "Personen", server: "Server", handy: "Handy",
+  name: "Name", smileName: "Smile-Name", picture: "Profilbild", angemeldet: "angemeldet" };
+function stateDiff(a, b) {
+  const out = [];
+  const show = v => v === true ? "ja" : v === false ? "nein" : v == null || v === "" ? "nichts" : String(v);
+  const walk = (x, y, path) => {
+    if (x && y && typeof x === "object" && typeof y === "object") {
+      for (const k of new Set([...Object.keys(x), ...Object.keys(y)])) walk(x[k], y[k], [...path, k]);
+    } else if (JSON.stringify(x) !== JSON.stringify(y)) {
+      out.push(path.map(k => LABELS[k] ?? k).join(" › ") + ": " + show(typeof x === "object" ? JSON.stringify(x) : x) + " → " + show(typeof y === "object" ? JSON.stringify(y) : y));
+    }
+  };
+  walk(a ?? {}, b ?? {}, []);
+  return out;
 }
 
 function openSteps() {
   const out = [];
   for (const c of state.index?.chapters ?? []) for (const s of state.chapters[c.id]?.steps ?? []) {
-    if (!["ok", "no"].includes(verdictOf(c.id, s).state)) out.push({ ch: c.id, no: s.no });
+    if (!DONE.includes(verdictOf(c.id, s).state)) out.push({ ch: c.id, no: s.no });
   }
   return out;
 }
@@ -206,7 +247,7 @@ function renderStatus() {
   el.className = "status " + (working ? "work" : "you");
   const when = st.at ? new Date(st.at).toLocaleString("de-AT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
   const youText = open.length
-    ? `${open.length} ${open.length === 1 ? "Schritt wartet" : "Schritte warten"} auf deine Bestätigung.`
+    ? `${open.length} ${open.length === 1 ? "Schritt wartet" : "Schritte warten"} auf dich. Alles andere hat Claude schon geprüft.`
     : "Alles bestätigt. Danke!";
   el.innerHTML = `<span class="dot2"></span>
     <div><div class="what">${esc(working ? "Claude arbeitet gerade" : "Du bist dran")}: ${esc(st.message ?? "")}</div>
@@ -223,7 +264,7 @@ function renderStatus() {
 function counts(ch) {
   const steps = state.chapters[ch]?.steps ?? [];
   let ok = 0, bad = 0;
-  for (const s of steps) { const v = verdictOf(ch, s).state; if (v === "ok") ok++; else if (v === "no") bad++; }
+  for (const s of steps) { const v = verdictOf(ch, s).state; if (v === "ok" || v === "claude") ok++; else if (v === "no") bad++; }
   return { total: steps.length, ok, bad };
 }
 
@@ -310,7 +351,7 @@ function renderChapter() {
       ${state.canWrite ? "" : '<p class="note-off">Bestätigen ist in dieser Ansicht nicht möglich.</p>'}
       ${state.version !== newest() ? `<p class="old">Das ist das Tutorial der älteren Version ${esc(state.version)}, nur zum Ansehen. Bestätigt wird in der aktuellen Version ${esc(newest())}.</p>` : ""}
     </section>
-    ${ch.steps.map(s => `<article class="step${s.kind === "Abzweigung" ? " branch" : ""}${["ok", "no"].includes(verdictOf(ch.id, s).state) ? "" : " open"}" id="s${s.no}">
+    ${ch.steps.map(s => `<article class="step${s.kind === "Abzweigung" ? " branch" : ""}${DONE.includes(verdictOf(ch.id, s).state) ? "" : " open"}" id="s${s.no}">
       <img class="shot" src="v/${state.version}/${ch.id}/${s.image.replace(".png", ".jpg")}" alt="Bildschirm nach Schritt ${s.no}: ${esc(s.title)}" loading="lazy">
       <div class="body">
         <div class="head"><span class="no">${s.no}</span><h2>${esc(s.title)}</h2>
@@ -318,6 +359,7 @@ function renderChapter() {
         <div><p class="lbl">So geht's</p><p class="txt">${esc(s.do)}</p></div>
         <div><p class="lbl">Das siehst du</p><p class="txt">${esc(s.expect)}</p></div>
         ${s.why ? `<div class="why"><p class="lbl">Was dabei passiert</p><p class="txt">${esc(s.why)}</p></div>` : ""}
+        ${s.stateAfter ? (() => { const d = stateDiff(s.stateBefore, s.stateAfter); return `<details class="ctx"><summary>Im Hintergrund: ${d.length ? d.length + (d.length === 1 ? " Änderung" : " Änderungen") : "nichts verändert"}</summary>${d.length ? `<ul>${d.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}</details>`; })() : ""}
         ${s.checks.length ? `<div class="checks">${s.checks.map(c => `<div><span class="dot ${c.ok ? "ok" : "bad"}"></span>${esc(c.desc)}${c.ok ? "" : " (fehlgeschlagen)"}</div>`).join("")}</div>` : ""}
         <div class="verdict" data-key="${key(ch.id, s)}" data-title="${esc(s.title)}" data-no="${s.no}"></div>
       </div></article>`).join("")}`;
@@ -330,14 +372,17 @@ function renderVerdicts() {
     const k = el.dataset.key;
     const step = state.chapters[state.current]?.steps.find(x => x.no === +el.dataset.no);
     const v = step ? verdictOf(state.current, step) : { state: "offen" };
-    const r = v.state === "geaendert" ? {} : (v.r ?? {});
-    el.closest(".step")?.classList.toggle("open", !["ok", "no"].includes(v.state));
+    const r = ["geaendert", "frage", "claude"].includes(v.state) ? {} : (v.r ?? {});
+    el.closest(".step")?.classList.toggle("open", !DONE.includes(v.state));
+    el.closest(".step")?.classList.toggle("asked", v.state === "frage");
     el.closest(".step")?.classList.toggle("changed", v.state === "geaendert");
     const draft = el.querySelector("textarea")?.value;
     const showNote = r.verdict === "no" || el.dataset.open === "1";
     el.innerHTML = `<button class="ok" aria-pressed="${r.verdict === "ok"}" ${state.canWrite && state.version === newest() ? "" : "disabled"}>Passt</button>
       <button class="bad" aria-pressed="${r.verdict === "no"}" ${state.canWrite && state.version === newest() ? "" : "disabled"}>Passt nicht</button>
-      <span class="state">${v.state === "geaendert" ? "Seit deiner Bestätigung verändert oder noch ohne Bildvergleich bestätigt: bitte gegenprüfen." : r.verdict ? "Gespeichert" : ""}</span>
+      <span class="state">${v.state === "geaendert" ? "Seit der Bestätigung verändert: bitte gegenprüfen." + (v.why?.length ? " (" + esc(v.why.join("; ")) + ")" : "") : r.verdict ? "Gespeichert" : ""}</span>
+      ${v.state === "claude" ? `<div class="cl ok">Von Claude geprüft: ${esc(v.r.reason ?? "")} Du kannst trotzdem selbst Passt oder Passt nicht wählen.</div>` : ""}
+      ${v.state === "frage" ? `<div class="cl ask"><b>Frage an dich:</b> ${esc(v.r.question ?? "")}</div>` : ""}
       ${showNote ? `<textarea id="n-${k}" placeholder="Was passt nicht? (kurz)">${esc(draft ?? r.note ?? "")}</textarea>
         <button class="save">Notiz speichern</button>` : ""}`;
     const [ok, bad] = el.querySelectorAll("button.ok, button.bad");
@@ -353,10 +398,11 @@ async function save(k, body) {
   const title = document.querySelector(`.verdict[data-key="${k}"]`)?.dataset.title ?? "";
   const no = +document.querySelector(`.verdict[data-key="${k}"]`)?.dataset.no;
   const step = state.chapters[state.current]?.steps.find(x => x.no === no) ?? {};
-  const prints = { imgHash: step.imgHash ?? null, textHash: step.textHash ?? null };
-  state.reviews[k] = { ...body, chapter: ch, title, ...prints };
+  const prints = { imgHash: step.imgHash ?? null, textHash: step.textHash ?? null, ctxHash: step.ctxHash ?? null,
+    stateBefore: step.stateBefore ?? null, stateAfter: step.stateAfter ?? null };
+  state.reviews[k] = { ...body, chapter: ch, title, by: "ernst", ...prints };
   renderVerdicts(); renderRail();
-  try { await state.db.collection("reviews").doc(k).set({ ...body, chapter: ch, title, version: state.version, ...prints, at: new Date().toISOString() }); }
+  try { await state.db.collection("reviews").doc(k).set({ ...body, chapter: ch, title, by: "ernst", version: state.version, ...prints, at: new Date().toISOString() }); }
   catch (e) { if (e?.code === "invalid_argument") { state.canWrite = false; render(); } }
 }
 

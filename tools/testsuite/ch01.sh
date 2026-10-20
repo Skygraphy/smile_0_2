@@ -71,10 +71,11 @@ type_into "E-Mail-Adresse" "$ANNA"; hide_keyboard
 check "Meldung verschwunden" gone_el "~keine gültige E-Mail-Adresse" 3
 snap 1
 
-step "Code anfordern" "Auf Code anfordern tippen." "Smile meldet, dass ein Code an die Adresse gesendet wurde, und zeigt sechs Kästchen für den Code."
+step "Code anfordern" "Auf Code anfordern tippen (hier absichtlich zweimal schnell)." "Smile meldet, dass ein Code an die Adresse gesendet wurde, und zeigt sechs Kästchen für den Code."
 explain "Der Server erzeugt einen 6-stelligen Code und schickt ihn per Mail. Gibt es zu der Adresse noch kein Konto, wird es dabei angelegt. (Die Test-App verschickt keine Mail, den Code liefert die Testsuite.)"
-tap_el "Code anfordern"; screen "Code-Eingabe"; wait_el "Bestätigen" 10
+double_tap_el "Code anfordern"; screen "Code-Eingabe"; wait_el "Bestätigen" 10
 check "Code-Eingabe sichtbar" wait_el "Wir haben einen Code" 1
+check "Genau ein Konto für Anna, nichts doppelt" sql_is "select count(*) from auth.users where email='$ANNA'" "1"
 hide_keyboard; snap 1
 
 step "Andere E-Mail-Adresse verwenden" "Andere E-Mail-Adresse verwenden antippen." "Zurück auf der Anmeldung, die Adresse steht noch im Feld und kann geändert werden." Abzweigung
@@ -203,9 +204,17 @@ explain "Das gewählte Bild wird hochgeladen und ersetzt das vorige."
 tap_el "Frau, mittleres Alter"; screen "Begrüßung"; gone_el "Testporträts" 10; sleep 2; hide_keyboard
 snap 2
 
-step "Weiter" "Auf Weiter tippen." "Willkommen bei Smile: die leere Alben-Liste mit zwei Wegen, Ich wurde eingeladen und Ich richte Smile ein."
-explain "Jetzt entsteht Annas Profil: Name und Bild werden zusammen gespeichert. Die Testsuite prüft in der Datenbank, dass genau dieses Bild gespeichert ist und keine alten Bilddateien übrig sind."
-tap_el "Weiter"; screen "Startseite (leer)"; wait_el "Willkommen bei Smile" 20
+step "Dasselbe Bild noch einmal" "Kreis antippen, Vorhandenes Bild wählen und noch einmal Frau, mittleres Alter antippen." "Nichts ändert sich sichtbar, das Bild bleibt im Kreis." Abzweigung
+explain "Nachsalzen: dasselbe Bild ein zweites Mal. Es wird zwar erneut hochgeladen, aber die vorige Datei gleich gelöscht; nach Weiter darf es genau eine Bilddatei geben."
+tap_avatar_circle; screen "Profilbild-Auswahl"; tap_el "Vorhandenes Bild"; screen "Bildauswahl"; wait_el "Mann, älter" 30
+tap_el "Frau, mittleres Alter"; screen "Begrüßung"; gone_el "Testporträts" 10; sleep 2; hide_keyboard
+check "Bild im Kreis (Frau, mittleres Alter: lila)" screen_color_near 445 655 "#c9b6e4"
+snap 2
+
+step "Weiter" "Auf Weiter tippen (hier absichtlich zweimal schnell hintereinander)." "Willkommen bei Smile: die leere Alben-Liste mit zwei Wegen, Ich wurde eingeladen und Ich richte Smile ein."
+explain "Jetzt entsteht Annas Profil: Name und Bild werden zusammen gespeichert. Der doppelte Tipp darf nichts doppelt anlegen. Die Testsuite prüft in der Datenbank, dass es genau zwei Profile gibt (Anna und Paul), genau dieses Bild gespeichert ist und keine alten Bilddateien übrig sind."
+double_tap_el "Weiter"; screen "Startseite (leer)"; wait_el "Willkommen bei Smile" 20
+check "Genau zwei Profile (Anna und Paul), nichts doppelt" sql_is "select count(*) from public.profiles" "2"
 check "Name gespeichert: Anna Berger" anna_is display_name "Anna Berger"
 check "Profilbild gespeichert: Frau, mittleres Alter" anna_picture_is frau_mittel
 check "Nur eine Profilbild-Datei, keine Überbleibsel" anna_picture_files_are 1
@@ -264,6 +273,13 @@ tap_el "Anna Maria Berger"; screen "Name ändern"; wait_el "Speichern" 5; type_i
 check "Name wieder Anna Berger" anna_is display_name "Anna Berger"
 snap 1
 
+step "Namen unverändert speichern" "Noch einmal auf den Namen tippen und ohne Änderung Speichern antippen." "Oben steht weiter Anna Berger, nichts ändert sich." Abzweigung
+explain "Nachsalzen: derselbe Name noch einmal. Es darf nichts doppelt oder kaputt gehen."
+tap_el "Anna Berger"; screen "Name ändern"; wait_el "Speichern" 5; tap_el "Speichern"; screen "Einstellungen"; sleep 2; hide_keyboard
+check "Name weiter Anna Berger" anna_is display_name "Anna Berger"
+check "Weiter genau zwei Profile" sql_is "select count(*) from public.profiles" "2"
+snap 1
+
 # ---------------------------------------------------------------- Smile-Name
 step "Smile-Namen wählen" "Smile-Namen wählen antippen." "Ein Vorschlag aus dem Namen steht schon da: @anna.berger. Das Feld hat einen grünen Rahmen und ein Häkchen, darunter grün: @anna.berger ist frei."
 explain "Smile schlägt einen Namen aus Annas Namen vor und fragt beim Server nach, ob er noch frei ist. Frei wird grün angezeigt."
@@ -316,6 +332,13 @@ wait_el "@anna.berger" 10
 check "Smile-Name gespeichert" anna_is handle anna.berger
 snap 1
 
+step "Smile-Namen noch einmal öffnen" "@anna.berger antippen, nichts ändern." "@anna.berger steht im Feld, Speichern ist ausgegraut, denn es gibt nichts zu speichern. Mit Zurück wieder in die Einstellungen." Abzweigung
+explain "Nachsalzen: derselbe Smile-Name lässt sich nicht noch einmal speichern; Speichern wird erst aktiv, wenn sich etwas ändert."
+tap_el "@anna.berger"; screen "Smile-Name"; wait_el "Speichern" 10; hide_keyboard
+check "Speichern ausgegraut" is_disabled "Speichern"
+snap 1
+tap_el "Zurück"; screen "Einstellungen"; wait_el "@anna.berger" 8
+
 step "Meine Karte" "Meine Karte antippen." "Annas Karte: Bild, Name, @anna.berger, ein QR-Code und darunter smileapp.app/@anna.berger. Unten der Knopf Meine Karte teilen."
 explain "Aus dem Smile-Namen entsteht ein Link (smileapp.app/@anna.berger) und daraus der QR-Code."
 tap_el "Meine Karte"; screen "Meine Karte"; wait_el "Meine Karte teilen" 10
@@ -359,9 +382,10 @@ tap_el "Zurück"; screen "Meine Karte (ohne Smile-Name)"; wait_el "@anna.berger 
 check "Nichts gespeichert" anna_is handle ""
 snap 1
 
-step "Vorschlag übernehmen" "@anna.berger übernehmen antippen." "An derselben Stelle wird die Karte fertig: @anna.berger, der QR-Code und smileapp.app/@anna.berger." Abzweigung
-explain "Ein Tipp speichert den freien Vorschlag. Die Karte wird an derselben Stelle fertig, mit Link und QR-Code."
-tap_el "@anna.berger übernehmen"; screen "Meine Karte"; wait_el "Meine Karte teilen" 10
+step "Vorschlag übernehmen" "@anna.berger übernehmen antippen (hier absichtlich zweimal schnell)." "An derselben Stelle wird die Karte fertig: @anna.berger, der QR-Code und smileapp.app/@anna.berger. Keine Fehlermeldung." Abzweigung
+explain "Ein Tipp speichert den freien Vorschlag. Die Karte wird an derselben Stelle fertig, mit Link und QR-Code. Der doppelte Tipp darf weder einen Fehler noch den Wechsel zur Namenswahl auslösen."
+double_tap_el "@anna.berger übernehmen"; screen "Meine Karte"; wait_el "Meine Karte teilen" 10
+check "Keine Namenswahl geöffnet" gone_el "Speichern" 3
 check "Smile-Name gespeichert" anna_is handle anna.berger
 check "QR-Code da" wait_el "smileapp.app/@anna.berger" 3
 snap 2

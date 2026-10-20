@@ -21,6 +21,7 @@ begin_chapter() { # id title intro
   commit="$(git -C "$OUT_ROOT/.." rev-parse --short HEAD)"
   node -e 'require("fs").writeFileSync(process.argv[1], JSON.stringify({id:process.argv[2],title:process.argv[3],intro:process.argv[4],appVersion:process.argv[5],commit:process.argv[6],steps:[]},null,1))' \
     "$(cygpath -w "$CH_DIR/steps.json")" "$1" "$2" "$3" "$ver" "$commit"
+  STATE_BEFORE="$(capture_state)"
 }
 # A button the chapter needs is missing: the run is off track. Stop here
 # (the steps so far stay recorded) instead of failing on every step after.
@@ -53,6 +54,7 @@ snap() {
   sleep "${1:-1}"
   local xml; xml="$(ui)"
   shot "$CH_DIR/$name"
+  local state; state="$(capture_state)"
   if [ -n "$SNAP_MASK" ]; then
     local box; box="$(echo "$xml" | node -e '
       const x=require("fs").readFileSync(0,"utf8"),id=process.argv[1];
@@ -75,9 +77,35 @@ snap() {
       if (l && !els.includes(l)) els.push(l);
     }
     const j=JSON.parse(fs.readFileSync(f)); const nr=+no; j.steps=j.steps.filter(s=>s.no!==nr);
-    j.steps.push({no:nr,title,do:doIt,expect,kind,device,image,checks:JSON.parse(checks),screen:scr,elements:els,why});
+    const after=JSON.parse(process.argv[13]), before=JSON.parse(process.argv[14]||"null");
+    j.steps.push({no:nr,title,do:doIt,expect,kind,device,image,checks:JSON.parse(checks),screen:scr,elements:els,why,stateBefore:before,stateAfter:after});
     j.steps.sort((a,b)=>a.no-b.no); fs.writeFileSync(f,JSON.stringify(j,null,1));' \
-    "$(cygpath -w "$CH_DIR/steps.json")" "$TEST_PKG" "$STEP_NO" "$STEP_TITLE" "$STEP_DO" "$STEP_EXPECT" "$STEP_KIND" "$STEP_DEVICE" "$name" "$STEP_CHECKS" "$SCREEN" "$STEP_WHY"
+    "$(cygpath -w "$CH_DIR/steps.json")" "$TEST_PKG" "$STEP_NO" "$STEP_TITLE" "$STEP_DO" "$STEP_EXPECT" "$STEP_KIND" "$STEP_DEVICE" "$name" "$STEP_CHECKS" "$SCREEN" "$STEP_WHY" \
+    "$state" "${STATE_BEFORE:-null}"
+  STATE_BEFORE="$state"
+}
+# The context of a step (2026-10-20, Ernst: Salz bleibt Salz, but salting
+# twice spoils the dish): what the server holds (testsuite_state(), see
+# state.sql) and what the test app keeps on the phone, with user ids
+# replaced so runs compare. A confirmation only counts in the same context.
+capture_state() {
+  local server phone
+  server="$(curl -s -X POST "$SUPABASE_URL/rest/v1/rpc/testsuite_state" -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+    -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H "Content-Type: application/json" -d '{}')"
+  phone="$(a shell run-as "$TEST_PKG" cat shared_prefs/FlutterSharedPreferences.xml 2>/dev/null)"
+  node -e '
+    const [server,xml]=process.argv.slice(1); const p={};
+    for (const m of xml.matchAll(/<(string|boolean|int|long|set) name="flutter\.([^"]+)"(?: value="([^"]*)")?\s*\/?>(?:([\s\S]*?)<\/\1>)?/g)) {
+      let [, , k, v, body] = m; v = v ?? body ?? "";
+      k = k.replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g, "<person>");
+      if (/auth-token/.test(k)) { p["angemeldet"] = true; continue; }
+      if (/^albums_cache/.test(k)) { try { p[k] = JSON.parse(v.replace(/&quot;/g, "\"")).length + " Alben"; } catch { p[k] = "?"; } continue; }
+      p[k] = v.replace(/&quot;/g, "\"").replace(/^VGhpcyBpcyB0aGUgcHJlZml4IGZvciBhIGxpc3Qu!/, "");
+    }
+    if (!p["angemeldet"]) p["angemeldet"] = false;
+    let s; try { s = JSON.parse(server); } catch { s = { fehler: server.slice(0, 80) }; }
+    const sorted = o => Object.fromEntries(Object.entries(o).sort());
+    console.log(JSON.stringify({ server: s, handy: sorted(p) }));' "$server" "$phone"
 }
 # SQL against the testsuite project; prints the first value of the first row.
 sql_value() {

@@ -3,7 +3,10 @@
 //  - imgHash: a difference hash of the screenshot (status bar and the
 //    navigation bar cut off, 17x16 grey pixels -> 256 bits), so the clock
 //    or the battery don't count, a changed screen does;
-//  - textHash: title, instruction and expected result.
+//  - textHash: title, instruction and expected result;
+//  - ctxHash: the state before and after the step (what the server holds
+//    and the phone keeps): the same screen in another context is not the
+//    same step.
 //   node fingerprint.js <dir with NN.png> <steps.json to update>
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const { execFileSync } = require("child_process");
@@ -23,6 +26,8 @@ for (const s of j.steps) {
   const png = path.join(dir, s.image);
   if (fs.existsSync(png)) s.imgHash = imgHash(png);
   s.textHash = crypto.createHash("sha1").update([s.title, s.do, s.expect].join("\n")).digest("hex").slice(0, 16);
+  // The context: the state before and after the step (server and phone).
+  s.ctxHash = crypto.createHash("sha1").update(JSON.stringify([s.stateBefore ?? null, s.stateAfter ?? null])).digest("hex").slice(0, 16);
 }
 fs.writeFileSync(stepsFile, JSON.stringify(j));
 console.log(`${j.steps.length} Fingerabdrücke`);
