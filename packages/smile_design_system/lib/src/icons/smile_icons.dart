@@ -155,6 +155,9 @@ class SmileIcons {
   static const IconData contacts = IconData(0xe6f8, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData check = IconData(0xe182, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 
+  /// Something went wrong, next to its message (2026-10-20).
+  static const IconData warning = IconData(0xe4e2, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
   /// A tip (2026-10-18).
   static const IconData lightbulb = IconData(0xe2dc, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 

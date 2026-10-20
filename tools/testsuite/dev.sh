@@ -69,8 +69,8 @@ login() {
   wait_el "Bestätigen" 10
   type_text "$(otp_for "$email")"
 }
-# The test pictures/videos (fixtures/media, from fetch_media.js) and the
-# portraits (fixtures/profiles) into the test app's own folder; after
+# The test pictures/videos (fixtures/media, from make_media.js) and the
+# portraits (fixtures/profiles, make_portraits.js) into the test app's own folder; after
 # clear_app, which empties it.
 push_fixtures() {
   local dest=/sdcard/Android/data/$TEST_PKG/files/fixtures

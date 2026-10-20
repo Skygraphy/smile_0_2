@@ -110,6 +110,12 @@ tap_el "class:android.widget.EditText"; type_text "abc"; tap_el "Laden"; screen 
 check "Meldung keine gültige Internetadresse" wait_el "Das ist keine gültige Internetadresse" 5
 snap 1
 
+step "Internetadresse: Datei vom Gerät" "Noch einmal Von einer Internetadresse laden wählen, file:///sdcard/bild.jpg eingeben und Laden antippen." "Eine Meldung erscheint: Das ist keine gültige Internetadresse. Dateien vom Gerät gehen hier nicht." Abzweigung
+tap_avatar_circle; screen "Profilbild-Auswahl"; tap_el "Von einer Internetadresse"; screen "Bild-URL"; wait_el "Laden" 5
+tap_el "class:android.widget.EditText"; type_text "file:///sdcard/bild.jpg"; tap_el "Laden"; screen "Begrüßung"; sleep 2; hide_keyboard
+check "Meldung keine gültige Internetadresse" wait_el "~keine gültige Internetadresse" 5
+snap 1
+
 step "Internetadresse: Abbrechen" "Noch einmal Von einer Internetadresse laden wählen und Abbrechen antippen." "Der Dialog schließt sich, das Bild bleibt wie es war." Abzweigung
 tap_avatar_circle; screen "Profilbild-Auswahl"; tap_el "Von einer Internetadresse"; screen "Bild-URL"; wait_el "Laden" 5
 tap_el "Abbrechen"; screen "Begrüßung"; sleep 1; hide_keyboard

@@ -115,14 +115,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 32),
                           if (_step == _LoginStep.enterEmail) ..._buildEmailStep(),
                           if (_step == _LoginStep.enterCode) ..._buildCodeStep(),
-                          if (_errorMessage != null) ...[
-                            const SizedBox(height: 16),
-                            Text(
-                              _errorMessage!,
-                              style: TextStyle(color: Theme.of(context).colorScheme.error),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -134,6 +126,40 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  /// The message right under the field, above the button: visible with
+  /// the keyboard open (2026-10-20; at the bottom it was hidden behind it).
+  List<Widget> _error() {
+    final message = _errorMessage;
+    if (message == null) return const [];
+    final color = Theme.of(context).colorScheme.error;
+    return [
+      const SizedBox(height: 12),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(SmileIcons.warning, size: 18, color: color),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(message, style: TextStyle(color: color, fontSize: 13.5))),
+        ],
+      ),
+    ];
+  }
+
+  /// Typing again clears the message.
+  void _clearError() {
+    if (_errorMessage != null) setState(() => _errorMessage = null);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(_clearError);
+    _codeController.addListener(_clearError);
   }
 
   List<Widget> _buildEmailStep() {
@@ -150,6 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
         decoration: const InputDecoration(labelText: 'E-Mail-Adresse'),
         onSubmitted: (_) => _requestCode(),
       ),
+      ..._error(),
       const SizedBox(height: 24),
       ElevatedButton(
         onPressed: _isSubmitting ? null : _requestCode,
@@ -188,6 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
           onSubmitted: (_) => _verifyCode(),
         ),
       ),
+      ..._error(),
       const SizedBox(height: 24),
       ElevatedButton(
         onPressed: _isSubmitting ? null : _verifyCode,

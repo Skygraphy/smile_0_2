@@ -1,6 +1,6 @@
 {
   "name": "smile-testsuite",
   "private": true,
-  "description": "Tools for the Smile system tests (see README.md)",
+  "description": "Tools for the Smile system tests (see README.md): ffmpeg for the drawn test videos",
   "devDependencies": { "ffmpeg-static": "5.2.0" }
 }
