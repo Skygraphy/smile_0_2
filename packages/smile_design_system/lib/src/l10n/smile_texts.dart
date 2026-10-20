@@ -346,12 +346,6 @@ abstract class SmileTexts {
   /// **'Hier erscheinen deine Alben. Wie möchtest du anfangen?'**
   String get firstStepsQuestion;
 
-  /// No description provided for @firstStepsYourEmail.
-  ///
-  /// In de, this message translates to:
-  /// **'Eingeladen wirst du über deine E-Mail-Adresse {email}'**
-  String firstStepsYourEmail(String email);
-
   /// No description provided for @albumsLoadError.
   ///
   /// In de, this message translates to:
@@ -3100,11 +3094,35 @@ abstract class SmileTexts {
   /// **'Zu lang. Höchstens 24 Zeichen.'**
   String get smileNameTooLong;
 
-  /// No description provided for @smileNameBadChars.
+  /// No description provided for @smileNameBadChar.
   ///
   /// In de, this message translates to:
-  /// **'Nur a–z, 0–9, Punkt und Unterstrich. Am Anfang ein Buchstabe oder eine Ziffer, kein Punkt am Ende, keine zwei Punkte hintereinander.'**
-  String get smileNameBadChars;
+  /// **'Das Zeichen {char} ist nicht erlaubt. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.'**
+  String smileNameBadChar(String char);
+
+  /// No description provided for @smileNameSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Leerzeichen sind nicht erlaubt. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.'**
+  String get smileNameSpace;
+
+  /// No description provided for @smileNameBadStart.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Anfang muss ein Buchstabe oder eine Ziffer stehen.'**
+  String get smileNameBadStart;
+
+  /// No description provided for @smileNameDotAtEnd.
+  ///
+  /// In de, this message translates to:
+  /// **'Kein Punkt am Ende.'**
+  String get smileNameDotAtEnd;
+
+  /// No description provided for @smileNameDoubleDot.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine zwei Punkte hintereinander.'**
+  String get smileNameDoubleDot;
 
   /// No description provided for @smileNameReserved.
   ///

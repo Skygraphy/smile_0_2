@@ -137,7 +137,12 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
           HandleProblem.tooShort => t.smileNameTooShort,
           HandleProblem.tooLong => t.smileNameTooLong,
           HandleProblem.reserved => t.smileNameReserved,
-          _ => t.smileNameBadChars,
+          HandleProblem.badChar => t.smileNameBadChar(firstBadHandleChar(handle) ?? ''),
+          HandleProblem.space => t.smileNameSpace,
+          HandleProblem.badStart => t.smileNameBadStart,
+          HandleProblem.doubleDot => t.smileNameDoubleDot,
+          HandleProblem.dotAtEnd => t.smileNameDotAtEnd,
+          null => null,
         },
       _ => null,
     };

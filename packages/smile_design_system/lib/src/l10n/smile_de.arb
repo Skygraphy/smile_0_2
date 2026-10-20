@@ -78,14 +78,6 @@
   "firstStepsSetup": "Ich richte Smile ein",
   "firstStepsSetupHint": "Space für dein Zuhause oder deinen Betrieb anlegen",
   "firstStepsQuestion": "Hier erscheinen deine Alben. Wie möchtest du anfangen?",
-  "firstStepsYourEmail": "Eingeladen wirst du über deine E-Mail-Adresse {email}",
-  "@firstStepsYourEmail": {
-    "placeholders": {
-      "email": {
-        "type": "String"
-      }
-    }
-  },
   "albumsLoadError": "Die Alben konnten gerade nicht geladen werden. {error}",
   "@albumsLoadError": {
     "placeholders": {
@@ -998,7 +990,12 @@
   "@smileNameIsTaken": {"placeholders": {"name": {"type": "String"}}},
   "smileNameTooShort": "Noch zu kurz. Mindestens 3 Zeichen: a–z, 0–9, Punkt und Unterstrich.",
   "smileNameTooLong": "Zu lang. Höchstens 24 Zeichen.",
-  "smileNameBadChars": "Nur a–z, 0–9, Punkt und Unterstrich. Am Anfang ein Buchstabe oder eine Ziffer, kein Punkt am Ende, keine zwei Punkte hintereinander.",
+  "smileNameBadChar": "Das Zeichen {char} ist nicht erlaubt. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.",
+  "@smileNameBadChar": {"placeholders": {"char": {"type": "String"}}},
+  "smileNameSpace": "Leerzeichen sind nicht erlaubt. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.",
+  "smileNameBadStart": "Am Anfang muss ein Buchstabe oder eine Ziffer stehen.",
+  "smileNameDotAtEnd": "Kein Punkt am Ende.",
+  "smileNameDoubleDot": "Keine zwei Punkte hintereinander.",
   "smileNameReserved": "Diesen Namen kann man nicht wählen. Bitte wähle einen anderen.",
   "smileNameSuggestions": "Diese sind frei:",
   "myCardHandlePlaceholder": "@ dein Smile-Name",

@@ -104,9 +104,15 @@ class _LoginScreenState extends State<LoginScreen> {
         // overflowing once the on-screen keyboard shrinks the available
         // height (hit in practice once the logo/wordmark made this
         // screen taller -- a plain Center+Column can't scroll at all).
+        // reverse: when the keyboard leaves too little room, the bottom
+        // stays in view (field, button and Andere E-Mail-Adresse), the logo
+        // moves out at the top instead (2026-10-20, test suite find 11).
         child: LayoutBuilder(
           builder: (context, constraints) {
+            // From the window: the Scaffold takes the keyboard out of its body.
+            final keyboardOpen = View.of(context).viewInsets.bottom > 0;
             return SingleChildScrollView(
+              reverse: true,
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: Center(
@@ -118,8 +124,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Center(child: SmileMark(size: 56)),
-                          const SizedBox(height: 12),
+                          if (!keyboardOpen) ...[
+                            const Center(child: SmileMark(size: 56)),
+                            const SizedBox(height: 12),
+                          ],
                           const Center(child: SmileWordmark(fontSize: 32)),
                           const SizedBox(height: 32),
                           if (_step == _LoginStep.enterEmail) ..._buildEmailStep(),

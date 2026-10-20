@@ -124,6 +124,22 @@ void main() {
     await c.hideKeyboard();
     await c.snap();
 
+    c.step('Code-Eingabe mit offener Tastatur', 'Die Tastatur offen lassen.',
+        'Die Seite rückt nach oben: Code-Kästchen, Bestätigen und Andere E-Mail-Adresse verwenden bleiben über der Tastatur sichtbar, das große S ist ausgeblendet.',
+        kind: 'Abzweigung',
+        explain: 'Die Tastatur nimmt fast die halbe Höhe ein. Damit man ohne Wegwischen weiterkommt, bleibt der untere Teil sichtbar und das Logo wandert hinaus. (Die Testsuite legt eine Tastatur über 40 % des Bildschirms; auf dem Bild ist sie als leerer Bereich unten zu sehen.)');
+    final screenH = tester.view.physicalSize.height;
+    tester.view.viewInsets = FakeViewPadding(bottom: screenH * 0.4);
+    await c.settle();
+    final keyboardTop = (screenH * 0.6) / tester.view.devicePixelRatio;
+    bool aboveKeyboard(String what) => c.find_(what).evaluate().isNotEmpty && tester.getRect(c.find_(what).first).bottom <= keyboardTop;
+    await c.check('Bestätigen über der Tastatur', () => aboveKeyboard('Bestätigen'));
+    await c.check('Andere E-Mail-Adresse über der Tastatur', () => aboveKeyboard('Andere E-Mail-Adresse'));
+    await c.check('Großes S ausgeblendet', () => find.byType(SmileMark).evaluate().isEmpty);
+    await c.snap();
+    tester.view.resetViewInsets();
+    await c.settle();
+
     c.step('Andere E-Mail-Adresse verwenden', 'Andere E-Mail-Adresse verwenden antippen.',
         'Zurück auf der Anmeldung, die Adresse steht noch im Feld und kann geändert werden.',
         kind: 'Abzweigung', explain: 'Zurück zur Adresse, falls man sich vertippt hat. Der schon verschickte Code verfällt einfach.');
@@ -353,6 +369,7 @@ void main() {
     await c.check('Profilbild gespeichert: Frau, mittleres Alter',
         () async => await TestBackend.avatarSize((await profile())['avatar_path'] as String) == frauMittelSize);
     await c.check('Nur eine Profilbild-Datei, keine Überbleibsel', () async => await files() == 1);
+    await c.check('Kein Hinweis nur auf die E-Mail-Adresse', () => c.gone('~Eingeladen wirst du', seconds: 1));
     await c.snap();
 
     // ---------------------------------------------------------------- Menü
@@ -472,9 +489,33 @@ void main() {
     c.step('Name mit Punkt am Ende', 'anna. eingeben.', 'Roter Rahmen, darunter rot, was nicht erlaubt ist: kein Punkt am Ende.',
         kind: 'Abzweigung', explain: 'Auch Zeichen an der falschen Stelle werden mit dem genauen Grund gemeldet.');
     await c.typeInto('', 'anna.');
-    await c.check('Rot: Regeln erklärt', () => c.waitFor('~kein Punkt am Ende', seconds: 5));
+    await c.check('Rot: Kein Punkt am Ende', () => c.waitFor('Kein Punkt am Ende', seconds: 5));
+    await c.check('Nur dieser eine Grund, nicht alle Regeln', () => c.gone('~keine zwei Punkte', seconds: 1));
     await c.hideKeyboard();
     await c.snap();
+
+    c.step('Name mit Sonderzeichen', 'anna! x eingeben.', 'Ausrufezeichen und Leerzeichen erscheinen gar nicht erst, im Feld steht @annax.',
+        kind: 'Abzweigung',
+        explain: 'Das Feld nimmt nur a–z, 0–9, Punkt und Unterstrich an (Großbuchstaben werden klein). Andere Zeichen und Leerzeichen kommen gar nicht erst hinein, auch nicht beim Einfügen.');
+    await tester.tap(find.byType(TextField).last);
+    await c.settle();
+    await tester.enterText(find.byType(TextField).last, 'anna! x');
+    c.logTap('Eingabefeld');
+    await c.settle();
+    await c.check('Im Feld steht nur annax', () => tester.widget<TextField>(find.byType(TextField).last).controller?.text == 'annax');
+    await c.hideKeyboard();
+    await c.snap();
+
+    for (final (name, input, message, why) in [
+      ('Name beginnt mit Punkt', '.anna', 'Am Anfang muss ein Buchstabe oder eine Ziffer stehen', 'Punkt und Unterstrich sind erlaubt, nur nicht am Anfang.'),
+      ('Name mit zwei Punkten', 'anna..berger', 'Keine zwei Punkte hintereinander', 'Zwei Punkte hintereinander sind nicht erlaubt.'),
+    ]) {
+      c.step(name, '$input eingeben.', 'Roter Rahmen, darunter rot: $message.', kind: 'Abzweigung', explain: why);
+      await c.typeInto('', input);
+      await c.check('Rot: $message', () => c.waitFor(message, seconds: 5));
+      await c.hideKeyboard();
+      await c.snap();
+    }
 
     c.step('Vergebener Name', 'Stattdessen paul.berger eingeben (den hat Paul schon).',
         'Roter Rahmen, darunter rot: @paul.berger ist schon vergeben. Darunter drei freie Vorschläge, Speichern ist ausgegraut.',

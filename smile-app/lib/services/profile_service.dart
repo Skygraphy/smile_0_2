@@ -32,19 +32,26 @@ bool isValidHandle(String handle) {
       !reserved.contains(handle);
 }
 
-enum HandleProblem { tooShort, tooLong, badChars, reserved }
+enum HandleProblem { tooShort, tooLong, badChar, space, badStart, doubleDot, dotAtEnd, reserved }
 
-/// Why [handle] is not a valid Smile name, so the message can say it
-/// exactly (2026-10-20, test suite find 9); null when it is valid.
+/// Why [handle] is not a valid Smile name, so the message names exactly the
+/// one thing that is wrong (2026-10-20, test suite finds 9 and 11); null
+/// when it is valid. The character for [HandleProblem.badChar] comes from
+/// [firstBadHandleChar].
 HandleProblem? handleProblem(String handle) {
   if (isValidHandle(handle)) return null;
   if (handle.length < 3) return HandleProblem.tooShort;
   if (handle.length > 24) return HandleProblem.tooLong;
-  if (RegExp(r'^[a-z0-9][a-z0-9._]{1,22}[a-z0-9_]$').hasMatch(handle) && !handle.contains('..')) {
-    return HandleProblem.reserved;
-  }
-  return HandleProblem.badChars;
+  final bad = firstBadHandleChar(handle);
+  if (bad != null) return bad == ' ' ? HandleProblem.space : HandleProblem.badChar;
+  if (!RegExp(r'^[a-z0-9]').hasMatch(handle)) return HandleProblem.badStart;
+  if (handle.contains('..')) return HandleProblem.doubleDot;
+  if (handle.endsWith('.')) return HandleProblem.dotAtEnd;
+  return HandleProblem.reserved;
 }
+
+/// The first character a Smile name may not contain, or null.
+String? firstBadHandleChar(String handle) => RegExp(r'[^a-z0-9._]').firstMatch(handle)?.group(0);
 
 /// Variants of a taken name to offer instead (checked for being free by
 /// the caller).

@@ -172,11 +172,6 @@ class SmileTextsDe extends SmileTexts {
       'Hier erscheinen deine Alben. Wie möchtest du anfangen?';
 
   @override
-  String firstStepsYourEmail(String email) {
-    return 'Eingeladen wirst du über deine E-Mail-Adresse $email';
-  }
-
-  @override
   String albumsLoadError(String error) {
     return 'Die Alben konnten gerade nicht geladen werden. $error';
   }
@@ -1823,8 +1818,23 @@ class SmileTextsDe extends SmileTexts {
   String get smileNameTooLong => 'Zu lang. Höchstens 24 Zeichen.';
 
   @override
-  String get smileNameBadChars =>
-      'Nur a–z, 0–9, Punkt und Unterstrich. Am Anfang ein Buchstabe oder eine Ziffer, kein Punkt am Ende, keine zwei Punkte hintereinander.';
+  String smileNameBadChar(String char) {
+    return 'Das Zeichen $char ist nicht erlaubt. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.';
+  }
+
+  @override
+  String get smileNameSpace =>
+      'Leerzeichen sind nicht erlaubt. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.';
+
+  @override
+  String get smileNameBadStart =>
+      'Am Anfang muss ein Buchstabe oder eine Ziffer stehen.';
+
+  @override
+  String get smileNameDotAtEnd => 'Kein Punkt am Ende.';
+
+  @override
+  String get smileNameDoubleDot => 'Keine zwei Punkte hintereinander.';
 
   @override
   String get smileNameReserved =>

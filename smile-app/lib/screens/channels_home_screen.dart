@@ -352,7 +352,6 @@ class _FirstSteps extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
     final theme = Theme.of(context);
-    final email = supabase.auth.currentUser?.email;
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.l),
       children: [
@@ -379,14 +378,6 @@ class _FirstSteps extends StatelessWidget {
         SmileChoiceCard(icon: SmileIcons.news, title: t.firstStepsInvited, hint: t.firstStepsInvitedHint, onTap: onInvited),
         const SizedBox(height: SmileSpacing.m),
         SmileChoiceCard(icon: SmileIcons.space, title: t.firstStepsSetup, hint: t.firstStepsSetupHint, onTap: onSetUp),
-        if (email != null) ...[
-          const SizedBox(height: SmileSpacing.xl),
-          Text(
-            t.firstStepsYourEmail(email),
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-          ),
-        ],
       ],
     );
   }
