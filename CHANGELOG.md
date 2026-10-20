@@ -4,6 +4,16 @@ Jede Version, die getestet wird, bekommt eine eigene Nummer (0.0.1, 0.0.2 …),
 ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 (Tag `v0.0.1` …). Eine neue Version entsteht mit `tools/testsuite/release.sh`.
 
+## 0.0.2 (2026-10-20)
+
+Drei Verbesserungen aus der Durchsicht von Kapitel 1.
+
+Behoben:
+
+- 11: Tastatur verdeckt Bestätigen und Andere E-Mail-Adresse
+- 12: Startseite nannte nur die E-Mail-Adresse als Weg zur Einladung
+- 13: Smile-Name: Meldung zählte alle Regeln auf statt des einen Fehlers
+
 ## 0.0.1 (2026-10-20)
 
 Erste Version mit Testsuite und Tutorial. Kapitel 1 (Erster Start) ist mit

@@ -84,20 +84,23 @@
     "chapter": "ch01",
     "title": "Tastatur verdeckt Bestätigen und Andere E-Mail-Adresse",
     "detail": "Bei offener Tastatur war Bestätigen halb verdeckt und Andere E-Mail-Adresse nicht zu sehen. Behoben 2026-10-20 nach Vorschau: die Seite rückt nach oben, das große S wird bei offener Tastatur ausgeblendet. Schritt Code-Eingabe mit offener Tastatur prüft es.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.2"
   },
   {
     "no": 12,
     "chapter": "ch01",
     "title": "Startseite nannte nur die E-Mail-Adresse als Weg zur Einladung",
     "detail": "Der Satz Eingeladen wirst du über deine E-Mail-Adresse stimmte nur halb (auch Smile-Name, QR, Link, Kontakte). Behoben 2026-10-20 nach Vorschau: Satz entfernt.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.2"
   },
   {
     "no": 13,
     "chapter": "ch01",
     "title": "Smile-Name: Meldung zählte alle Regeln auf statt des einen Fehlers",
     "detail": "Bei @anna. kam der ganze Regelblock. Behoben 2026-10-20 nach Vorschau: eigene Meldung für Anfang, Punkt am Ende, zwei Punkte (Sonderzeichen und Leerzeichen lässt das Feld gar nicht erst zu).",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.2"
   }
 ]
