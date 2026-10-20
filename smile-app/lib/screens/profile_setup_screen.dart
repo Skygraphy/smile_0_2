@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../services/avatar_upload.dart';
 import '../services/profile_service.dart';
 import '../widgets/avatar_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
@@ -28,6 +30,7 @@ class ProfileSetupScreen extends StatefulWidget {
 class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _nameController = TextEditingController();
   String? _avatarUrl;
+  ImageProvider? _picked;
   bool _isSaving = false;
   bool _isPickingAvatar = false;
   String? _errorMessage;
@@ -49,32 +52,33 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   Future<void> _pickAvatar() async {
     final source = await showAvatarSourceSheet(context);
-    if (source == null) return;
+    if (source == null || !mounted) return;
+    final picture = source == AvatarSource.url
+        ? await showAvatarUrlDialog(context)
+        : await pickPictureBytes(source == AvatarSource.camera ? ImageSource.camera : ImageSource.gallery);
+    if (picture == null || !mounted) return;
+    // Shown at once from the phone while it uploads: no detour over the
+    // server, so the circle never falls back to the initials in between
+    // (2026-10-20, test suite find 14).
+    final before = _picked;
+    setState(() {
+      _picked = MemoryImage(picture.bytes);
+      _isPickingAvatar = true;
+    });
     String? url;
-    if (source == AvatarSource.url) {
-      if (!mounted) return;
-      final picture = await showAvatarUrlDialog(context);
-      if (picture == null) return;
-      setState(() => _isPickingAvatar = true);
-      try {
-        url = await widget.profileService.uploadMyAvatarPicked(picture);
-      } catch (e) {
-        if (mounted) setState(() => _errorMessage = 'Bild konnte nicht hochgeladen werden: ${errorReason(context, e)}');
-      }
-    } else {
-      setState(() => _isPickingAvatar = true);
-      try {
-        url = source == AvatarSource.camera
-            ? await widget.profileService.uploadMyAvatarFromCamera()
-            : await widget.profileService.uploadMyAvatarFromGallery();
-      } catch (e) {
-        if (mounted) setState(() => _errorMessage = 'Bild konnte nicht hochgeladen werden: ${errorReason(context, e)}');
-      }
+    try {
+      url = await widget.profileService.uploadMyAvatarPicked(picture);
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = 'Bild konnte nicht hochgeladen werden: ${errorReason(context, e)}');
     }
     if (!mounted) return;
     setState(() {
       _isPickingAvatar = false;
-      if (url != null) _avatarUrl = url;
+      if (url != null) {
+        _avatarUrl = url;
+      } else {
+        _picked = before;
+      }
     });
   }
 
@@ -134,6 +138,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                     builder: (context, _) => SmileAvatar(
                                       name: _nameController.text,
                                       avatarUrl: _avatarUrl,
+                                      image: _picked,
                                       size: 96,
                                     ),
                                   ),

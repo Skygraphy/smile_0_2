@@ -1811,8 +1811,7 @@ class SmileTextsDe extends SmileTexts {
   }
 
   @override
-  String get smileNameTooShort =>
-      'Noch zu kurz. Mindestens 3 Zeichen: a–z, 0–9, Punkt und Unterstrich.';
+  String get smileNameTooShort => 'Noch zu kurz. Mindestens 3 Zeichen.';
 
   @override
   String get smileNameTooLong => 'Zu lang. Höchstens 24 Zeichen.';

@@ -109,8 +109,11 @@ class _LoginScreenState extends State<LoginScreen> {
         // moves out at the top instead (2026-10-20, test suite find 11).
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // From the window: the Scaffold takes the keyboard out of its body.
-            final keyboardOpen = View.of(context).viewInsets.bottom > 0;
+            // From the window (the Scaffold takes the keyboard out of its
+            // body), and only a real keyboard: the last pixels of one that is
+            // closing don't count (a keyboard is well over 200 high).
+            final view = View.of(context);
+            final keyboardOpen = view.viewInsets.bottom / view.devicePixelRatio > 120;
             return SingleChildScrollView(
               reverse: true,
               child: ConstrainedBox(

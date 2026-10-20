@@ -217,6 +217,8 @@ void main() {
     c.screen('Begrüßung');
     await c.gone('Testporträts', seconds: 10);
     await c.check('Zurück auf der Begrüßung', () => c.waitFor('Wie sollen wir dich nennen', seconds: 5));
+    // Within a second, straight from the phone: no initials in between.
+    await c.check('Bild sofort im Kreis (Frau, jung: türkis)', () => c.colorIn('SmileAvatar', '#8ec5c0', seconds: 1));
     await c.hideKeyboard();
     await c.snap();
 
@@ -339,6 +341,8 @@ void main() {
     await c.tap('Frau, mittleres Alter');
     c.screen('Begrüßung');
     await c.gone('Testporträts', seconds: 10);
+    await c.check('Bild sofort im Kreis, ohne Anfangsbuchstaben dazwischen (Frau, mittleres Alter: lila)',
+        () => c.colorIn('SmileAvatar', '#c9b6e4', seconds: 1));
     await c.hideKeyboard();
     await c.snap();
 
@@ -483,6 +487,7 @@ void main() {
         kind: 'Abzweigung', explain: 'Die Regeln prüft die App selbst, ohne den Server zu fragen, und sagt genau, was nicht passt.');
     await c.typeInto('', 'ab');
     await c.check('Rot: Noch zu kurz', () => c.waitFor('~Noch zu kurz', seconds: 5));
+    await c.check('Regeln nicht doppelt in der Meldung', () => c.gone('~Mindestens 3 Zeichen: a', seconds: 1));
     await c.hideKeyboard();
     await c.snap();
 

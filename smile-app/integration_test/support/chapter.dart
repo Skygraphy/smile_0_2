@@ -307,6 +307,13 @@ class Chapter {
   Future<void> hideKeyboard() async {
     FocusManager.instance.primaryFocus?.unfocus();
     await settle();
+    // The screen only looks right once the keyboard is really gone (the
+    // login hides its big S while it is open).
+    final end = DateTime.now().add(const Duration(seconds: 2));
+    while (tester.binding.platformDispatcher.views.first.viewInsets.bottom > 0 && DateTime.now().isBefore(end)) {
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await settle();
   }
 
   /// The colour at [x],[y] (physical pixels) of the last screenshot is close

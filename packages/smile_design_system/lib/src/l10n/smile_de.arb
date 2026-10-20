@@ -988,7 +988,7 @@
   "@smileNameIsFree": {"placeholders": {"name": {"type": "String"}}},
   "smileNameIsTaken": "@{name} ist schon vergeben. Bitte wähle einen anderen.",
   "@smileNameIsTaken": {"placeholders": {"name": {"type": "String"}}},
-  "smileNameTooShort": "Noch zu kurz. Mindestens 3 Zeichen: a–z, 0–9, Punkt und Unterstrich.",
+  "smileNameTooShort": "Noch zu kurz. Mindestens 3 Zeichen.",
   "smileNameTooLong": "Zu lang. Höchstens 24 Zeichen.",
   "smileNameBadChar": "Das Zeichen {char} ist nicht erlaubt. Erlaubt sind a–z, 0–9, Punkt und Unterstrich.",
   "@smileNameBadChar": {"placeholders": {"char": {"type": "String"}}},

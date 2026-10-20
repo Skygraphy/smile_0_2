@@ -3085,7 +3085,7 @@ abstract class SmileTexts {
   /// No description provided for @smileNameTooShort.
   ///
   /// In de, this message translates to:
-  /// **'Noch zu kurz. Mindestens 3 Zeichen: a–z, 0–9, Punkt und Unterstrich.'**
+  /// **'Noch zu kurz. Mindestens 3 Zeichen.'**
   String get smileNameTooShort;
 
   /// No description provided for @smileNameTooLong.

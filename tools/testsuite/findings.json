@@ -102,5 +102,21 @@
     "detail": "Bei @anna. kam der ganze Regelblock. Behoben 2026-10-20 nach Vorschau: eigene Meldung für Anfang, Punkt am Ende, zwei Punkte (Sonderzeichen und Leerzeichen lässt das Feld gar nicht erst zu).",
     "status": "behoben",
     "version": "0.0.2"
+  },
+  {
+    "no": 14,
+    "chapter": "ch01",
+    "title": "Profilbild: nach der Auswahl kurz Anfangsbuchstaben statt Bild",
+    "detail": "Gefunden bei Claudes Durchsicht von 0.0.2: in der Begrüßung zeigte der Kreis nach der Auswahl kurz AB (auch statt eines schon gewählten Bildes), weil das Bild erst hoch- und wieder heruntergeladen wurde. Behoben: das gewählte Bild steht sofort im Kreis, direkt vom Handy.",
+    "status": "behoben",
+    "version": "0.0.2"
+  },
+  {
+    "no": 15,
+    "chapter": "ch01",
+    "title": "Smile-Name: Noch zu kurz wiederholte die Regeln",
+    "detail": "Gefunden bei Claudes Durchsicht von 0.0.2, wie Fund 13: Noch zu kurz. Mindestens 3 Zeichen: a–z, 0–9, Punkt und Unterstrich. Behoben: Noch zu kurz. Mindestens 3 Zeichen.",
+    "status": "behoben",
+    "version": "0.0.2"
   }
 ]
