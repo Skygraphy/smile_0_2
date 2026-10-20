@@ -15,7 +15,7 @@ anna_profile() { sql_value "select coalesce(p.$1::text,'') from public.profiles 
 # Startzustand
 ./reset.sh >/dev/null
 person paul.berger@example.com "Paul Berger" paul.berger   # hat den Smile-Namen paul.berger schon
-clear_app; tips_off; demo_mode
+clear_app; tips_off; push_fixtures; demo_mode
 
 begin_chapter ch01 "Erster Start" "Anna installiert Smile, meldet sich mit ihrer E-Mail-Adresse an, gibt sich einen Namen und ein Profilbild, wählt ihren Smile-Namen und öffnet ihre Karte mit QR-Code."
 
@@ -48,12 +48,12 @@ tap_el "AB"; wait_el "Vorhandenes Bild" 5
 check "Drei Möglichkeiten" three_options
 snap 1
 
-step "Vorhandenes Bild wählen" "Vorhandenes Bild wählen antippen." "Die Bildauswahl öffnet sich. (In der Test-App: 12 Testbilder statt der Galerie.)"
-tap_el "Vorhandenes Bild"; wait_el "Testbild 12" 30
+step "Vorhandenes Bild wählen" "Vorhandenes Bild wählen antippen." "Die Bildauswahl öffnet sich. (In der Test-App: sechs Symbolbilder statt der Galerie.)"
+tap_el "Vorhandenes Bild"; wait_el "Mann, älter" 30
 snap 1
 
-step "Bild aussuchen" "Testbild 2 antippen." "Das Bild erscheint im Kreis über dem Namen."
-tap_el "Testbild 2"; gone_el "Testbilder" 10
+step "Bild aussuchen" "Das Bild Frau, mittleres Alter antippen." "Das Bild erscheint im Kreis über dem Namen."
+tap_el "Frau, mittleres Alter"; gone_el "Testporträts" 10; sleep 2; hide_keyboard
 snap 3
 
 step "Weiter" "Auf Weiter tippen." "Willkommen bei Smile: die leere Alben-Liste mit zwei Wegen, Ich wurde eingeladen und Ich richte Smile ein."
