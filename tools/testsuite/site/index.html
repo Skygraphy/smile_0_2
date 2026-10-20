@@ -86,6 +86,8 @@ textarea:focus{outline:2px solid var(--accent);border-color:transparent}
 .why{background:var(--bg);border-radius:10px;padding:8px 10px}
 .why .txt{font-size:13.5px;color:#cfc7c4}
 .step.open{box-shadow:inset 3px 0 0 var(--accent)}
+.step.changed,.step.branch.changed{box-shadow:inset 3px 0 0 #e6c76a}
+.step.changed .verdict .state{color:#e6c76a}
 .step.branch.open{box-shadow:inset 3px 0 0 var(--accent)}
 .kind{font-size:11px;font-weight:600;letter-spacing:.04em;padding:2px 8px;border-radius:999px;background:var(--raised);color:var(--muted)}
 .kind.branch{background:#2a2433;color:#c4a8f0}
@@ -168,10 +170,29 @@ async function connectDb() {
   db.doc("status/now").onSnapshot(snap => { state.status = snap.exists ? snap.data() : null; renderStatus(); }, () => {});
 }
 
+// A verdict counts only for what was seen: same texts, nearly the same
+// screenshot (difference hash, up to 16 of 256 bits). Otherwise the step is
+// "geaendert" and waits for a new look.
+const SAME_PICTURE = 16;
+function hamming(a, b) {
+  let d = 0;
+  for (let i = 0; i < Math.min(a.length, b.length); i++) {
+    let x = parseInt(a[i], 16) ^ parseInt(b[i], 16);
+    while (x) { d += x & 1; x >>= 1; }
+  }
+  return d + Math.abs(a.length - b.length) * 4;
+}
+function verdictOf(ch, step) {
+  const r = state.reviews[key(ch, step)];
+  if (!r?.verdict) return { state: "offen", r };
+  const same = r.textHash === step.textHash && r.imgHash && step.imgHash && hamming(r.imgHash, step.imgHash) <= SAME_PICTURE;
+  return same ? { state: r.verdict, r } : { state: "geaendert", r };
+}
+
 function openSteps() {
   const out = [];
   for (const c of state.index?.chapters ?? []) for (const s of state.chapters[c.id]?.steps ?? []) {
-    if (!state.reviews[key(c.id, s)]?.verdict) out.push({ ch: c.id, no: s.no });
+    if (!["ok", "no"].includes(verdictOf(c.id, s).state)) out.push({ ch: c.id, no: s.no });
   }
   return out;
 }
@@ -202,7 +223,7 @@ function renderStatus() {
 function counts(ch) {
   const steps = state.chapters[ch]?.steps ?? [];
   let ok = 0, bad = 0;
-  for (const s of steps) { const r = state.reviews[key(ch, s)]; if (r?.verdict === "ok") ok++; else if (r?.verdict === "no") bad++; }
+  for (const s of steps) { const v = verdictOf(ch, s).state; if (v === "ok") ok++; else if (v === "no") bad++; }
   return { total: steps.length, ok, bad };
 }
 
@@ -289,7 +310,7 @@ function renderChapter() {
       ${state.canWrite ? "" : '<p class="note-off">Bestätigen ist in dieser Ansicht nicht möglich.</p>'}
       ${state.version !== newest() ? `<p class="old">Das ist das Tutorial der älteren Version ${esc(state.version)}, nur zum Ansehen. Bestätigt wird in der aktuellen Version ${esc(newest())}.</p>` : ""}
     </section>
-    ${ch.steps.map(s => `<article class="step${s.kind === "Abzweigung" ? " branch" : ""}${state.reviews[key(ch.id, s)]?.verdict ? "" : " open"}" id="s${s.no}">
+    ${ch.steps.map(s => `<article class="step${s.kind === "Abzweigung" ? " branch" : ""}${["ok", "no"].includes(verdictOf(ch.id, s).state) ? "" : " open"}" id="s${s.no}">
       <img class="shot" src="v/${state.version}/${ch.id}/${s.image.replace(".png", ".jpg")}" alt="Bildschirm nach Schritt ${s.no}: ${esc(s.title)}" loading="lazy">
       <div class="body">
         <div class="head"><span class="no">${s.no}</span><h2>${esc(s.title)}</h2>
@@ -298,7 +319,7 @@ function renderChapter() {
         <div><p class="lbl">Das siehst du</p><p class="txt">${esc(s.expect)}</p></div>
         ${s.why ? `<div class="why"><p class="lbl">Was dabei passiert</p><p class="txt">${esc(s.why)}</p></div>` : ""}
         ${s.checks.length ? `<div class="checks">${s.checks.map(c => `<div><span class="dot ${c.ok ? "ok" : "bad"}"></span>${esc(c.desc)}${c.ok ? "" : " (fehlgeschlagen)"}</div>`).join("")}</div>` : ""}
-        <div class="verdict" data-key="${key(ch.id, s)}" data-title="${esc(s.title)}"></div>
+        <div class="verdict" data-key="${key(ch.id, s)}" data-title="${esc(s.title)}" data-no="${s.no}"></div>
       </div></article>`).join("")}`;
   document.querySelectorAll(".shot").forEach(img => img.onclick = () => { $("#zoomImg").src = img.src; $("#zoom").showModal(); });
   renderVerdicts();
@@ -306,13 +327,17 @@ function renderChapter() {
 
 function renderVerdicts() {
   document.querySelectorAll(".verdict").forEach(el => {
-    const k = el.dataset.key, r = state.reviews[k] ?? {};
-    el.closest(".step")?.classList.toggle("open", !r.verdict);
+    const k = el.dataset.key;
+    const step = state.chapters[state.current]?.steps.find(x => x.no === +el.dataset.no);
+    const v = step ? verdictOf(state.current, step) : { state: "offen" };
+    const r = v.state === "geaendert" ? {} : (v.r ?? {});
+    el.closest(".step")?.classList.toggle("open", !["ok", "no"].includes(v.state));
+    el.closest(".step")?.classList.toggle("changed", v.state === "geaendert");
     const draft = el.querySelector("textarea")?.value;
     const showNote = r.verdict === "no" || el.dataset.open === "1";
     el.innerHTML = `<button class="ok" aria-pressed="${r.verdict === "ok"}" ${state.canWrite && state.version === newest() ? "" : "disabled"}>Passt</button>
       <button class="bad" aria-pressed="${r.verdict === "no"}" ${state.canWrite && state.version === newest() ? "" : "disabled"}>Passt nicht</button>
-      <span class="state">${r.verdict ? "Gespeichert" : ""}</span>
+      <span class="state">${v.state === "geaendert" ? "Seit deiner Bestätigung verändert oder noch ohne Bildvergleich bestätigt: bitte gegenprüfen." : r.verdict ? "Gespeichert" : ""}</span>
       ${showNote ? `<textarea id="n-${k}" placeholder="Was passt nicht? (kurz)">${esc(draft ?? r.note ?? "")}</textarea>
         <button class="save">Notiz speichern</button>` : ""}`;
     const [ok, bad] = el.querySelectorAll("button.ok, button.bad");
@@ -326,9 +351,12 @@ async function save(k, body) {
   if (!state.db) return;
   const ch = k.slice(0, k.indexOf("--"));
   const title = document.querySelector(`.verdict[data-key="${k}"]`)?.dataset.title ?? "";
-  state.reviews[k] = { ...body, chapter: ch, title };
+  const no = +document.querySelector(`.verdict[data-key="${k}"]`)?.dataset.no;
+  const step = state.chapters[state.current]?.steps.find(x => x.no === no) ?? {};
+  const prints = { imgHash: step.imgHash ?? null, textHash: step.textHash ?? null };
+  state.reviews[k] = { ...body, chapter: ch, title, ...prints };
   renderVerdicts(); renderRail();
-  try { await state.db.collection("reviews").doc(k).set({ ...body, chapter: ch, title, version: state.version, at: new Date().toISOString() }); }
+  try { await state.db.collection("reviews").doc(k).set({ ...body, chapter: ch, title, version: state.version, ...prints, at: new Date().toISOString() }); }
   catch (e) { if (e?.code === "invalid_argument") { state.canWrite = false; render(); } }
 }
 

@@ -33,6 +33,7 @@ for dir in out/ch[0-9][0-9]; do
     const fs=require("fs"),[src,dst,no,ran,ver]=process.argv.slice(1);const j=JSON.parse(fs.readFileSync(src));
     j.no=+no; j.ranAt=ran; j.appVersion=j.appVersion||ver; fs.writeFileSync(dst,JSON.stringify(j));' \
     "$(cygpath -w "$dir/steps.json")" "$(cygpath -w "$dest/steps.json")" "${id#ch}" "$(date -r "$dir/steps.json" '+%d.%m.%Y %H:%M')" "$ver"
+  node fingerprint.js "$(cygpath -w "$dir")" "$(cygpath -w "$dest/steps.json")"
 done
 
 rm -rf "$SITE"; mkdir -p "$SITE/data" "$SITE/v"
