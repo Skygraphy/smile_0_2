@@ -164,6 +164,13 @@ tap_el "Abbrechen"; screen "Begrüßung"; sleep 1; hide_keyboard
 check "Dialog geschlossen" gone_el "Bild-URL" 3
 snap 1
 
+step "Internetadresse: daneben tippen" "Noch einmal Von einer Internetadresse laden wählen und oben neben den Dialog tippen." "Der Dialog schließt sich, das Bild bleibt wie es war." Abzweigung
+explain "Ein Tipp neben den Dialog wirkt wie Abbrechen."
+tap_avatar_circle; screen "Profilbild-Auswahl"; tap_el "Von einer Internetadresse"; screen "Bild-URL"; wait_el "Laden" 5
+tap_at 540 250 "Schließen"; screen "Begrüßung"; sleep 1; hide_keyboard
+check "Dialog geschlossen" gone_el "Laden" 3
+snap 1
+
 step "Internetadresse: Bild laden" "Von einer Internetadresse laden wählen, die Adresse eines Bildes eingeben und Laden antippen." "Der Dialog zeigt kurz, dass geladen wird, und schließt sich. Das Bild von der Adresse steht im Kreis (hier Frau, älter)." Abzweigung
 explain "Die App lädt das Bild im Dialog herunter und prüft es. Erst wenn es wirklich ein Bild ist, schließt sich der Dialog und das Bild wird hochgeladen. Das zuvor gewählte Bild wird gleich wieder gelöscht, damit nichts übrig bleibt."
 tap_avatar_circle; screen "Profilbild-Auswahl"; tap_el "Von einer Internetadresse"; screen "Bild-URL"; wait_el "Laden" 5
@@ -284,10 +291,15 @@ check "Rot: schon vergeben" wait_el "~ist schon vergeben" 8
 check "Freie Vorschläge" wait_el "paul.berger1" 8
 hide_keyboard; snap 1
 
-step "Vorschlag antippen" "Den Vorschlag paul.berger1 antippen." "paul.berger1 steht im Feld, grün: @paul.berger1 ist frei." Abzweigung
-explain "Ein Tipp übernimmt den Vorschlag ins Feld; gespeichert ist noch nichts."
+step "Vorschlag antippen" "Nacheinander alle drei Vorschläge antippen: paul_berger, paul.berger2 und zuletzt paul.berger1." "Jeder Vorschlag steht nach dem Tippen im Feld und ist grün frei; am Ende paul.berger1." Abzweigung
+explain "Ein Tipp übernimmt den Vorschlag ins Feld; gespeichert ist noch nichts. Alle drei Vorschläge werden geprüft, weil jeder ein eigener Knopf ist."
+for s in paul_berger paul.berger2; do
+  tap_el "$s"; sleep 2; hide_keyboard
+  check "Grün: @$s ist frei" wait_el "~@$s ist frei" 6
+  type_into "" "paul.berger"; hide_keyboard; wait_el "paul.berger1" 8
+done
 tap_el "paul.berger1"; sleep 2; hide_keyboard
-check "Grün: ist frei" wait_el "~ist frei" 6
+check "Grün: @paul.berger1 ist frei" wait_el "~@paul.berger1 ist frei" 6
 hide_keyboard; snap 1
 
 step "Smile-Name: Zurück ohne Speichern" "Zurück antippen, ohne zu speichern." "Wieder die Einstellungen, dort steht weiter Smile-Namen wählen." Abzweigung
