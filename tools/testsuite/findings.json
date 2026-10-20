@@ -1,0 +1,8 @@
+[
+  {"no": 1, "chapter": "ch01", "title": "Fehlermeldung bei der Anmeldung ist verdeckt",
+   "detail": "Kann der Code nicht angefordert werden, steht die Meldung unter Dieses Gerät als Frame verwenden. Bei offener Tastatur sieht man sie nicht, es scheint einfach nichts zu passieren. Lösung kommt mit Vorschau.",
+   "status": "offen"},
+  {"no": 2, "chapter": "ch01", "title": "Profilbild beim ersten Start ging verloren",
+   "detail": "Das Bild aus der Begrüßung wurde hochgeladen, aber nie im Profil eingetragen, weil das Profil erst mit Weiter entsteht. Betraf alle neuen Nutzer. Jetzt speichert Weiter Name und Bild zusammen.",
+   "status": "behoben"}
+]

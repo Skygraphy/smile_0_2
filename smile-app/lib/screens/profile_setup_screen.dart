@@ -83,7 +83,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       _errorMessage = null;
     });
     try {
-      await widget.profileService.setDisplayName(name);
+      await widget.profileService.setDisplayName(name, withAvatar: _avatarUrl != null);
       widget.onDone();
     } catch (e) {
       if (mounted) setState(() => _errorMessage = 'Speichern fehlgeschlagen: ${errorReason(context, e)}');

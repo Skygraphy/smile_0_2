@@ -4,6 +4,7 @@
 export MSYS_NO_PATHCONV=1
 ADB="${ADB:-/c/Users/ernst/AppData/Local/Android/Sdk/platform-tools/adb.exe}"
 TEST_PKG=com.smile.smile_app.test
+TESTSUITE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 a() { "$ADB" -s "$DEV" "$@"; }
 ui() { a shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; a shell cat /sdcard/ui.xml; }
 # Center of the first element whose text, content-desc or hint starts with
@@ -12,8 +13,12 @@ find_el() {
   ui | node -e '
     const x=require("fs").readFileSync(0,"utf8"), w=process.argv[1];
     for (const m of x.matchAll(/<node [^>]*>/g)) {
-      const n=m[0], c=(n.match(/ class="([^"]*)"/)||[])[1]||"", h=(n.match(/ hint="([^"]*)"/)||[])[1]||"", t=(n.match(/ text="([^"]*)"/)||[])[1]||"", d=(n.match(/content-desc="([^"]*)"/)||[])[1]||"";
-      if (t.startsWith(w)||d.startsWith(w)||h.startsWith(w)||(w.startsWith("class:")&&c===w.slice(6))) { const b=n.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/); console.log(((+b[1]+ +b[3])>>1)+" "+((+b[2]+ +b[4])>>1)); process.exit(0); }
+      const n=m[0], c=(n.match(/ class="([^"]*)"/)||[])[1]||"", h=(n.match(/ hint="([^"]*)"/)||[])[1]||"",
+        t=(n.match(/ text="([^"]*)"/)||[])[1]||"", d=(n.match(/content-desc="([^"]*)"/)||[])[1]||"";
+      if (t.startsWith(w)||d.startsWith(w)||h.startsWith(w)||(w.startsWith("class:")&&c===w.slice(6))) {
+        const b=n.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/);
+        console.log(((+b[1]+ +b[3])>>1)+" "+((+b[2]+ +b[4])>>1)); process.exit(0);
+      }
     } process.exit(1);' "$1"
 }
 # Waits up to $2 seconds (default 15) for an element, then taps it.
@@ -22,18 +27,37 @@ tap_el() {
   echo "Nicht gefunden: $1" >&2; return 1
 }
 wait_el() { for _ in $(seq 1 "${2:-15}"); do find_el "$1" >/dev/null && return 0; sleep 1; done; echo "Nicht gefunden: $1" >&2; return 1; }
+gone_el() { for _ in $(seq 1 "${2:-15}"); do find_el "$1" >/dev/null || return 0; sleep 1; done; return 1; }
 type_text() { a shell input text "$(echo "$1" | sed 's/ /%s/g')"; }
+hide_keyboard() { a shell input keyevent 111; }
 shot() { a exec-out screencap -p > "$1"; }
-start_app() { a shell am start -n $TEST_PKG/com.smile.smile_app.MainActivity >/dev/null; }
+start_app() { a shell am start -n $TEST_PKG/com.smile.smile_app.MainActivity >/dev/null 2>&1; }
+# Clean status bar for the screenshots: no private notification icons.
+demo_mode() {
+  a shell settings put global sysui_demo_allowed 1
+  a shell am broadcast -a com.android.systemui.demo -e command enter >/dev/null
+  a shell am broadcast -a com.android.systemui.demo -e command notifications -e visible false >/dev/null
+}
 # Fresh test app, notifications already allowed (no system dialog in runs).
-clear_app() { a shell pm clear $TEST_PKG >/dev/null; a shell pm grant $TEST_PKG android.permission.POST_NOTIFICATIONS; }
+clear_app() {
+  a shell pm clear $TEST_PKG >/dev/null
+  a shell pm grant $TEST_PKG android.permission.POST_NOTIFICATIONS
+}
+# Tips off for chapter runs (they have their own chapter): put into the
+# fresh app's preferences before its first start (debug build: run-as).
+tips_off() {
+  a push "$(cygpath -w "$TESTSUITE_DIR/fixtures/prefs_tips_off.xml")" /data/local/tmp/smile_prefs.xml >/dev/null
+  a shell chmod 644 /data/local/tmp/smile_prefs.xml
+  a shell "run-as $TEST_PKG sh -c 'mkdir -p shared_prefs && cp /data/local/tmp/smile_prefs.xml shared_prefs/FlutterSharedPreferences.xml'"
+}
+# The 6-digit code the mail would have brought.
+otp_for() { deno run --node-modules-dir=none --allow-net --allow-env "$(cygpath -w "$TESTSUITE_DIR/otp.ts")" "$1"; }
 # Signs a test person in on a freshly cleared test app.
 login() {
   local email="$1"
   start_app
   tap_el "class:android.widget.EditText" 20; type_text "$email"
   tap_el "Code anfordern"
-  sleep 2
-  local code; code="$(deno run --node-modules-dir=none --allow-net --allow-env "$(dirname "${BASH_SOURCE[0]}")/otp.ts" "$email")"
-  type_text "$code"
+  wait_el "Bestätigen" 10
+  type_text "$(otp_for "$email")"
 }

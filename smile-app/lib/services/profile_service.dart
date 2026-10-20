@@ -93,11 +93,15 @@ class ProfileService {
     }
   }
 
-  Future<void> setDisplayName(String name) async {
+  /// [withAvatar]: the picture chosen before the profile existed (first
+  /// start) is saved along -- its own update had no row to change then
+  /// (found by the test suite, 2026-10-20).
+  Future<void> setDisplayName(String name, {bool withAvatar = false}) async {
     final userId = supabase.auth.currentUser!.id;
     await supabase.from('profiles').upsert({
       'user_id': userId,
       'display_name': name,
+      if (withAvatar) 'avatar_path': 'users/$userId',
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     });
   }

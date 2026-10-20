@@ -1,0 +1,207 @@
+<title>Smile Tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: chapter rail on the left (a strip on phones), the chapter's steps as rows of phone screenshot + text + verdict on the right; Smile's own dark look, coral as the one accent. */
+:root{
+  color-scheme:dark;
+  --bg:#121212; --surface:#1b1918; --raised:#252221; --line:#332d2b;
+  --fg:#ececec; --muted:#a8a09d; --accent:#FF6F61; --on-accent:#1f0f0d;
+  --ok:#6cc58f; --ok-bg:#1d2e24; --bad:#ff8a7a; --bad-bg:#3a201c; --open:#8f8885;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);margin:0;padding-inline:16px;padding-block:20px 64px;font-size:15px;line-height:1.5}
+.app{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:260px minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:820px){.app{grid-template-columns:minmax(0,1fr)}}
+header.top{max-width:1180px;margin:0 auto 22px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px}
+.word{font-weight:700;font-size:26px;letter-spacing:-.01em}.word i{font-style:normal;color:var(--accent)}
+header.top .sub{color:var(--muted);font-size:14px}
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);display:grid;gap:6px}
+@media (max-width:820px){nav.rail{position:static;grid-auto-flow:column;grid-auto-columns:minmax(200px,1fr);overflow-x:auto;padding-bottom:4px}}
+.rail button{all:unset;cursor:pointer;display:grid;gap:4px;padding:12px 14px;border-radius:12px;background:var(--surface)}
+.rail button:focus-visible{outline:2px solid var(--accent)}
+.rail button[aria-current="true"]{background:var(--raised);box-shadow:inset 3px 0 0 var(--accent)}
+.rail .t{font-weight:600;font-size:14.5px}
+.rail .meta{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:4px;border-radius:2px;background:var(--line);overflow:hidden;display:flex}
+.bar span{display:block;height:100%}
+.bar .o{background:var(--ok)}.bar .b{background:var(--bad)}
+main{display:grid;gap:22px;min-width:0}
+.intro{display:grid;gap:6px}
+.intro h1{margin:0;font-size:24px;text-wrap:balance}
+.intro p{margin:0;color:var(--muted);max-width:68ch}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--raised);color:var(--muted);font-variant-numeric:tabular-nums}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}.chip.bad{background:var(--bad-bg);color:var(--bad)}
+.step{display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;padding:18px;border-radius:16px;background:var(--surface)}
+@media (max-width:560px){.step{grid-template-columns:minmax(0,1fr)}.shot{max-width:240px}}
+.shot{width:100%;border-radius:14px;border:1px solid var(--line);cursor:zoom-in;display:block;background:#000}
+.body{display:grid;gap:10px;align-content:start;min-width:0}
+.head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.no{color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums}
+.head h2{margin:0;font-size:17px}
+.dev{margin-left:auto;font-size:12px;color:var(--muted)}
+.lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0}
+.txt{margin:0;max-width:62ch}
+.checks{display:grid;gap:4px;font-size:13px}
+.checks div{display:flex;gap:8px;align-items:baseline}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;transform:translateY(-1px)}
+.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}
+.verdict{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-top:4px}
+.verdict button{font:inherit;font-size:14px;font-weight:600;border-radius:999px;padding:8px 18px;cursor:pointer;border:1px solid var(--line);background:var(--raised);color:var(--fg)}
+.verdict button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.verdict button.ok[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#0e1a12}
+.verdict button.bad[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#2a0d09}
+.verdict .state{font-size:12.5px;color:var(--muted)}
+textarea{width:100%;min-height:64px;resize:vertical;font:inherit;font-size:14px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px}
+textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+.save{font-size:13px;font-weight:600;border-radius:999px;padding:6px 14px;cursor:pointer;border:0;background:var(--accent);color:var(--on-accent)}
+.finds{display:grid;gap:8px}
+.find{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:12px 14px;border-radius:12px;background:var(--surface)}
+.find .n{color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums}
+.find p{margin:2px 0 0;color:var(--muted);font-size:13.5px}
+.empty{color:var(--muted);padding:24px;border-radius:16px;background:var(--surface)}
+.note-off{color:var(--muted);font-size:12.5px}
+dialog{border:0;padding:0;background:transparent;max-width:min(92vw,520px)}
+dialog::backdrop{background:rgba(0,0,0,.8)}
+dialog img{width:100%;border-radius:16px;display:block}
+@media (prefers-reduced-motion:no-preference){.rail button,.verdict button{transition:background .15s}}
+</style>
+
+<header class="top">
+  <div class="word">S<i>m</i>ile Tutorial</div>
+  <div class="sub">Jeder Schritt wurde auf echten Geräten mit erfundenen Daten durchgespielt. Bitte pro Schritt bestätigen.</div>
+</header>
+<div class="app">
+  <nav class="rail" id="rail" aria-label="Kapitel"></nav>
+  <main id="main"><div class="empty">Kapitel werden geladen …</div></main>
+</div>
+<dialog id="zoom"><img id="zoomImg" alt=""></dialog>
+
+<script>
+const state = { index: null, chapters: {}, reviews: {}, current: null, db: null, canWrite: true };
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const key = (ch, no) => `${ch}-${String(no).padStart(2, "0")}`;
+
+async function load() {
+  try {
+    state.index = await (await fetch("data/index.json")).json();
+    for (const c of state.index.chapters) {
+      state.chapters[c.id] = await (await fetch(`${c.id}/steps.json`)).json();
+    }
+  } catch (e) {
+    $("#main").innerHTML = '<div class="empty">Die Kapitel konnten nicht geladen werden. Bitte die Seite neu laden.</div>';
+    return;
+  }
+  let saved = null;
+  try { saved = localStorage.getItem("chapter"); } catch {}
+  state.current = state.chapters[saved] ? saved : state.index.chapters[0]?.id;
+  render();
+  connectDb();
+}
+
+async function connectDb() {
+  const db = await window.claude?.use?.("db");
+  if (!db) { state.canWrite = false; render(); return; }
+  state.db = db;
+  db.collection("reviews").onSnapshot(snap => {
+    state.reviews = {};
+    for (const d of snap.docs) state.reviews[d.id] = d.data();
+    renderRail(); renderVerdicts();
+  }, () => { state.canWrite = false; render(); });
+}
+
+function counts(ch) {
+  const steps = state.chapters[ch]?.steps ?? [];
+  let ok = 0, bad = 0;
+  for (const s of steps) { const r = state.reviews[key(ch, s.no)]; if (r?.verdict === "ok") ok++; else if (r?.verdict === "no") bad++; }
+  return { total: steps.length, ok, bad };
+}
+
+function renderRail() {
+  const rail = $("#rail");
+  rail.innerHTML = state.index.chapters.map(c => {
+    const { total, ok, bad } = counts(c.id);
+    const pct = n => total ? (n / total * 100).toFixed(1) : 0;
+    return `<button data-ch="${c.id}" aria-current="${c.id === state.current}">
+      <span class="t">${esc(c.no)}. ${esc(c.title)}</span>
+      <span class="meta">${ok} von ${total} bestätigt${bad ? ` · ${bad} passt nicht` : ""}</span>
+      <span class="bar"><span class="o" style="width:${pct(ok)}%"></span><span class="b" style="width:${pct(bad)}%"></span></span>
+    </button>`;
+  }).join("") + `<button data-ch="finds" aria-current="${state.current === "finds"}">
+      <span class="t">Funde</span><span class="meta">${state.index.findings.length} gefunden · ${state.index.findings.filter(f => f.status === "behoben").length} behoben</span></button>`;
+  rail.querySelectorAll("button").forEach(b => b.onclick = () => {
+    state.current = b.dataset.ch;
+    try { localStorage.setItem("chapter", state.current); } catch {}
+    render(); window.scrollTo({ top: 0 });
+  });
+}
+
+function renderFinds() {
+  const f = state.index.findings;
+  $("#main").innerHTML = `<section class="intro"><h1>Funde</h1>
+    <p>Alles, was beim Durchspielen aufgefallen ist. Behobene Funde sind in der Test-App schon korrigiert und werden beim nächsten Lauf mitgeprüft.</p></section>
+    <div class="finds">${f.map(x => `<div class="find"><span class="n">${x.no}</span>
+      <div><strong>${esc(x.title)}</strong><p>${esc(x.detail)}</p></div>
+      <span class="chip ${x.status === "behoben" ? "ok" : "bad"}">${esc(x.status)}</span></div>`).join("")}</div>`;
+}
+
+function renderChapter() {
+  const ch = state.chapters[state.current];
+  const autoOk = ch.steps.flatMap(s => s.checks).filter(c => c.ok).length;
+  const autoAll = ch.steps.flatMap(s => s.checks).length;
+  $("#main").innerHTML = `<section class="intro">
+      <h1>${esc(ch.no ?? "")}${ch.no ? ". " : ""}${esc(ch.title)}</h1>
+      <p>${esc(ch.intro)}</p>
+      <div class="chips"><span class="chip ${autoOk === autoAll ? "ok" : "bad"}">${autoOk} von ${autoAll} automatischen Prüfungen bestanden</span>
+      <span class="chip">Lauf vom ${esc(ch.ranAt ?? "")}</span></div>
+      ${state.canWrite ? "" : '<p class="note-off">Bestätigen ist in dieser Ansicht nicht möglich.</p>'}
+    </section>
+    ${ch.steps.map(s => `<article class="step" id="s${s.no}">
+      <img class="shot" src="${ch.id}/${s.image.replace(".png", ".jpg")}" alt="Bildschirm nach Schritt ${s.no}: ${esc(s.title)}" loading="lazy">
+      <div class="body">
+        <div class="head"><span class="no">${s.no}</span><h2>${esc(s.title)}</h2><span class="dev">${esc(s.device)}</span></div>
+        <div><p class="lbl">So geht's</p><p class="txt">${esc(s.do)}</p></div>
+        <div><p class="lbl">Das siehst du</p><p class="txt">${esc(s.expect)}</p></div>
+        ${s.checks.length ? `<div class="checks">${s.checks.map(c => `<div><span class="dot ${c.ok ? "ok" : "bad"}"></span>${esc(c.desc)}${c.ok ? "" : " (fehlgeschlagen)"}</div>`).join("")}</div>` : ""}
+        <div class="verdict" data-key="${key(ch.id, s.no)}"></div>
+      </div></article>`).join("")}`;
+  document.querySelectorAll(".shot").forEach(img => img.onclick = () => { $("#zoomImg").src = img.src; $("#zoom").showModal(); });
+  renderVerdicts();
+}
+
+function renderVerdicts() {
+  document.querySelectorAll(".verdict").forEach(el => {
+    const k = el.dataset.key, r = state.reviews[k] ?? {};
+    const draft = el.querySelector("textarea")?.value;
+    const showNote = r.verdict === "no" || el.dataset.open === "1";
+    el.innerHTML = `<button class="ok" aria-pressed="${r.verdict === "ok"}" ${state.canWrite ? "" : "disabled"}>Passt</button>
+      <button class="bad" aria-pressed="${r.verdict === "no"}" ${state.canWrite ? "" : "disabled"}>Passt nicht</button>
+      <span class="state">${r.verdict ? "Gespeichert" : ""}</span>
+      ${showNote ? `<textarea id="n-${k}" placeholder="Was passt nicht? (kurz)">${esc(draft ?? r.note ?? "")}</textarea>
+        <button class="save">Notiz speichern</button>` : ""}`;
+    const [ok, bad] = el.querySelectorAll("button.ok, button.bad");
+    ok.onclick = () => { el.dataset.open = "0"; save(k, { verdict: "ok", note: "" }); };
+    bad.onclick = () => { el.dataset.open = "1"; save(k, { verdict: "no", note: el.querySelector("textarea")?.value ?? r.note ?? "" }); };
+    el.querySelector(".save")?.addEventListener("click", () => save(k, { verdict: "no", note: el.querySelector("textarea").value }));
+  });
+}
+
+async function save(k, body) {
+  if (!state.db) return;
+  const [ch, no] = [k.slice(0, k.lastIndexOf("-")), +k.slice(k.lastIndexOf("-") + 1)];
+  state.reviews[k] = { ...body, chapter: ch, step: no };
+  renderVerdicts(); renderRail();
+  try { await state.db.collection("reviews").doc(k).set({ ...body, chapter: ch, step: no, at: new Date().toISOString() }); }
+  catch (e) { if (e?.code === "invalid_argument") { state.canWrite = false; render(); } }
+}
+
+function render() {
+  renderRail();
+  if (state.current === "finds") renderFinds(); else if (state.current) renderChapter();
+}
+$("#zoom").onclick = () => $("#zoom").close();
+load();
+</script>

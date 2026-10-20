@@ -7,3 +7,6 @@ supabase/.branches/
 .DS_Store
 *.log
 
+
+# Testsuite: screenshots of the runs stay local
+tools/testsuite/out/
