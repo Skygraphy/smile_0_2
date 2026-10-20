@@ -10,3 +10,5 @@ supabase/.branches/
 
 # Testsuite: screenshots of the runs stay local
 tools/testsuite/out/
+tools/testsuite/fixtures/media/
+tools/testsuite/node_modules/

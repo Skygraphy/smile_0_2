@@ -61,3 +61,14 @@ login() {
   wait_el "Bestätigen" 10
   type_text "$(otp_for "$email")"
 }
+# The test pictures/videos (fixtures/media, from fetch_media.js) and the
+# portraits (fixtures/profiles) into the test app's own folder; after
+# clear_app, which empties it.
+push_fixtures() {
+  local dest=/sdcard/Android/data/$TEST_PKG/files/fixtures
+  a shell mkdir -p $dest
+  for d in media profiles; do
+    [ -d "$TESTSUITE_DIR/fixtures/$d" ] && a push "$(cygpath -w "$TESTSUITE_DIR/fixtures/$d")" $dest/ >/dev/null
+  done
+  return 0
+}

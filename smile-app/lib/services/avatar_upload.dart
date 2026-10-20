@@ -31,8 +31,9 @@ typedef PickedPicture = ({Uint8List bytes, String mimeType});
 
 Future<PickedPicture?> pickPictureBytes(ImageSource source) async {
   if (smileTestMode) {
-    final test = (await pickTestMedia(multiple: false, videos: false)).firstOrNull;
-    return test == null ? null : (bytes: await test.readAsBytes(), mimeType: 'image/png');
+    final test = (await pickTestMedia(multiple: false, videos: false, profiles: true)).firstOrNull;
+    if (test == null) return null;
+    return (bytes: await test.readAsBytes(), mimeType: test.path.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
   }
   final picked = await ImagePicker().pickImage(
     source: source,
