@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../services/avatar_upload.dart';
 import '../services/profile_service.dart';
 import '../widgets/avatar_picker.dart';
 import 'package:smile_design_system/smile_design_system.dart';
@@ -34,6 +33,15 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   String? _errorMessage;
 
   @override
+  void initState() {
+    super.initState();
+    // Typing again clears the message (2026-10-20, test suite find 6).
+    _nameController.addListener(() {
+      if (_errorMessage != null) setState(() => _errorMessage = null);
+    });
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
@@ -45,13 +53,11 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     String? url;
     if (source == AvatarSource.url) {
       if (!mounted) return;
-      final enteredUrl = await showAvatarUrlDialog(context);
-      if (enteredUrl == null || enteredUrl.trim().isEmpty) return;
+      final picture = await showAvatarUrlDialog(context);
+      if (picture == null) return;
       setState(() => _isPickingAvatar = true);
       try {
-        url = await widget.profileService.uploadMyAvatarFromUrl(enteredUrl.trim());
-      } on AvatarUrlException catch (e) {
-        if (mounted) setState(() => _errorMessage = e.message);
+        url = await widget.profileService.uploadMyAvatarPicked(picture);
       } catch (e) {
         if (mounted) setState(() => _errorMessage = 'Bild konnte nicht hochgeladen werden: ${errorReason(context, e)}');
       }
@@ -166,11 +172,22 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                             onSubmitted: (_) => _save(),
                           ),
                           if (_errorMessage != null) ...[
-                            const SizedBox(height: 16),
-                            Text(
-                              _errorMessage!,
-                              style: TextStyle(color: Theme.of(context).colorScheme.error),
-                              textAlign: TextAlign.center,
+                            const SizedBox(height: 12),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 1),
+                                  child: Icon(SmileIcons.warning, size: 18, color: Theme.of(context).colorScheme.error),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _errorMessage!,
+                                    style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 13.5),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                           const SizedBox(height: 24),

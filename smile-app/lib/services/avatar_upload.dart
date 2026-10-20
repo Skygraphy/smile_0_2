@@ -49,11 +49,11 @@ Future<PickedPicture?> pickPictureBytes(ImageSource source) async {
 Future<void> uploadPictureBytes(String objectPath, PickedPicture picture) =>
     _upload(objectPath, picture.bytes, picture.mimeType);
 
-/// Downloads whatever the URL points to and uploads it as-is -- throws
-/// [AvatarUrlException] with a user-facing reason instead of a raw
-/// exception if the URL isn't reachable or isn't actually an image, so
-/// the caller can show it directly.
-Future<String> uploadAvatarFromUrl(String objectPath, String url) async {
+/// Downloads what the URL points to and checks it is a picture -- throws
+/// [AvatarUrlException] with a user-facing reason if the address isn't a
+/// web address, isn't reachable or isn't a picture. Uploaded like a picked
+/// picture afterwards.
+Future<PickedPicture> fetchPictureFromUrl(String url) async {
   final uri = Uri.tryParse(url);
   if (uri == null || !uri.isAbsolute || !(uri.isScheme('http') || uri.isScheme('https'))) {
     throw AvatarUrlException('Das ist keine gültige Internetadresse.');
@@ -72,8 +72,7 @@ Future<String> uploadAvatarFromUrl(String objectPath, String url) async {
   if (!contentType.startsWith('image/')) {
     throw AvatarUrlException('Die Adresse zeigt auf kein Bild.');
   }
-  await _upload(objectPath, response.bodyBytes, contentType);
-  return objectPath;
+  return (bytes: response.bodyBytes, mimeType: contentType.split(';').first.trim());
 }
 
 Future<void> _upload(String objectPath, Uint8List bytes, String mimeType) async {

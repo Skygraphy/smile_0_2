@@ -119,12 +119,12 @@ Future<bool> changeObjectPicture(
       );
     case _PictureChoice.url:
       if (!context.mounted) return false;
-      final url = (await showAvatarUrlDialog(context))?.trim();
-      if (url == null || url.isEmpty) return false;
+      final picture = await showAvatarUrlDialog(context);
+      if (picture == null) return false;
       return local.run(
-        overrides: {key: LocalPicture.url(url)},
+        overrides: {key: LocalPicture.bytes(picture.bytes)},
         commit: () async {
-          savedPath = await pictures.fromUrl(kind, id, url);
+          savedPath = await pictures.uploadPicked(kind, id, picture);
           await pictures.save(kind, id, savedPath);
         },
         warmUp: warmUp,

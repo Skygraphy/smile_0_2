@@ -32,6 +32,30 @@ bool isValidHandle(String handle) {
       !reserved.contains(handle);
 }
 
+enum HandleProblem { tooShort, tooLong, badChars, reserved }
+
+/// Why [handle] is not a valid Smile name, so the message can say it
+/// exactly (2026-10-20, test suite find 9); null when it is valid.
+HandleProblem? handleProblem(String handle) {
+  if (isValidHandle(handle)) return null;
+  if (handle.length < 3) return HandleProblem.tooShort;
+  if (handle.length > 24) return HandleProblem.tooLong;
+  if (RegExp(r'^[a-z0-9][a-z0-9._]{1,22}[a-z0-9_]$').hasMatch(handle) && !handle.contains('..')) {
+    return HandleProblem.reserved;
+  }
+  return HandleProblem.badChars;
+}
+
+/// Variants of a taken name to offer instead (checked for being free by
+/// the caller).
+List<String> handleAlternatives(String handle) => [
+      '${handle}1',
+      handle.contains('.') ? handle.replaceAll('.', '_') : '${handle}_',
+      '${handle}2',
+      '$handle.smile',
+      '${handle}3',
+    ].where(isValidHandle).toSet().toList();
+
 /// '@Ernst.Schiener ' -> 'ernst.schiener'.
 String normalizeHandle(String raw) => raw.trim().replaceFirst(RegExp('^@'), '').toLowerCase();
 
@@ -110,8 +134,6 @@ class ProfileService {
   Future<String?> uploadMyAvatarFromCamera() => _setAvatar(pickAndUploadFromCamera(_newAvatarPath()));
 
   Future<String?> uploadMyAvatarFromGallery() => _setAvatar(pickAndUploadFromGallery(_newAvatarPath()));
-
-  Future<String?> uploadMyAvatarFromUrl(String url) => _setAvatar(uploadAvatarFromUrl(_newAvatarPath(), url));
 
   /// A picture already picked (and shown at once, LocalChanges).
   Future<String?> uploadMyAvatarPicked(PickedPicture picture) => _setAvatar(() async {

@@ -989,6 +989,13 @@ class SmileTextsDe extends SmileTexts {
       'Das Video kann gerade nicht abgespielt werden.';
 
   @override
+  String get loginEmailMissing => 'Bitte gib deine E-Mail-Adresse ein.';
+
+  @override
+  String get loginEmailInvalid =>
+      'Das ist keine gültige E-Mail-Adresse. Bitte prüfe sie.';
+
+  @override
   String get loginSendFailed =>
       'Die E-Mail mit dem Code konnte gerade nicht gesendet werden. Bitte versuche es gleich noch einmal.';
 
@@ -1797,6 +1804,52 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get smileNameFree => 'Frei';
+
+  @override
+  String smileNameIsFree(String name) {
+    return '@$name ist frei. Mit Speichern gehört er dir.';
+  }
+
+  @override
+  String smileNameIsTaken(String name) {
+    return '@$name ist schon vergeben. Bitte wähle einen anderen.';
+  }
+
+  @override
+  String get smileNameTooShort =>
+      'Noch zu kurz. Mindestens 3 Zeichen: a–z, 0–9, Punkt und Unterstrich.';
+
+  @override
+  String get smileNameTooLong => 'Zu lang. Höchstens 24 Zeichen.';
+
+  @override
+  String get smileNameBadChars =>
+      'Nur a–z, 0–9, Punkt und Unterstrich. Am Anfang ein Buchstabe oder eine Ziffer, kein Punkt am Ende, keine zwei Punkte hintereinander.';
+
+  @override
+  String get smileNameReserved =>
+      'Diesen Namen kann man nicht wählen. Bitte wähle einen anderen.';
+
+  @override
+  String get smileNameSuggestions => 'Diese sind frei:';
+
+  @override
+  String get myCardHandlePlaceholder => '@ dein Smile-Name';
+
+  @override
+  String get myCardQrPlaceholder => 'Hier erscheint dein QR-Code';
+
+  @override
+  String get myCardPreviewHint =>
+      'Mit einem Smile-Namen bekommst du diese Karte. Wer sie scannt, kann dich einladen.';
+
+  @override
+  String myCardTakeSuggestion(String name) {
+    return '@$name übernehmen';
+  }
+
+  @override
+  String get myCardOtherName => 'Anderen Namen wählen';
 
   @override
   String get smileNameTaken => 'Schon vergeben';

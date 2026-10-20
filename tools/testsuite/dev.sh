@@ -80,3 +80,33 @@ push_fixtures() {
   done
   return 0
 }
+# Input fields by their label (what the field shows as its name, e.g.
+# "Name", "E-Mail-Adresse", "https://"); "" = the only or topmost-in-a-dialog
+# field (the last one in the screen tree). field_info prints "x y text".
+field_info() {
+  ui | node -e '
+    const x=require("fs").readFileSync(0,"utf8"), w=process.argv[1]; let hit=null;
+    for (const m of x.matchAll(/<node [^>]*>/g)) { const n=m[0];
+      if (!/class="android.widget.EditText"/.test(n)) continue;
+      const h=(n.match(/ hint="([^"]*)"/)||[])[1]||"", t=(n.match(/ text="([^"]*)"/)||[])[1]||"";
+      if (w && !h.startsWith(w)) continue;
+      const b=n.match(/bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/);
+      hit=((+b[1]+ +b[3])>>1)+" "+((+b[2]+ +b[4])>>1)+" "+t.replace(/&amp;/g,"&");
+    } if (hit) { console.log(hit); process.exit(0); } process.exit(1);' "$1"
+}
+# Clears the field, types the text and checks it arrived in exactly that
+# field; stops the chapter if not (a wrong field would run it off track).
+type_into() {
+  local label="$1" text="$2" info x y
+  for _ in $(seq 1 10); do info="$(field_info "$label")" && break; sleep 1; done
+  [ -z "$info" ] && { echo "Eingabefeld nicht gefunden: ${label:-(einziges)}" >&2; type on_missing >/dev/null 2>&1 && on_missing "Eingabefeld ${label}"; return 1; }
+  read -r x y _ <<< "$info"
+  a shell input tap "$x" "$y"; type log_tap >/dev/null 2>&1 && log_tap "Eingabefeld${label:+: $label}"
+  a shell input keyevent KEYCODE_MOVE_END; for _ in $(seq 1 40); do a shell input keyevent 67; done
+  type_text "$text"; sleep 1
+  info="$(field_info "$label")"
+  case "${info#* * }" in
+    *"$text"*) return 0 ;;
+    *) echo "Text kam nicht im Feld ${label:-(einziges)} an: ${info#* * }" >&2; type on_missing >/dev/null 2>&1 && on_missing "Text im Feld ${label}"; return 1 ;;
+  esac
+}

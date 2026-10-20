@@ -19,8 +19,80 @@ class MyCardScreen extends StatefulWidget {
   State<MyCardScreen> createState() => _MyCardScreenState();
 }
 
+/// A dashed outline for what the card will show once there is a Smile name.
+class _Placeholder extends StatelessWidget {
+  const _Placeholder({required this.child, required this.radius, this.padding = EdgeInsets.zero});
+
+  final Widget child;
+  final double radius;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+        painter: _DashedBorder(Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.55), radius),
+        child: Padding(padding: padding, child: child),
+      );
+}
+
+class _DashedBorder extends CustomPainter {
+  _DashedBorder(this.color, this.radius);
+
+  final Color color;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    final r = radius.clamp(0, size.shortestSide / 2).toDouble();
+    final path = Path()..addRRect(RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(r)));
+    for (final metric in path.computeMetrics()) {
+      for (double d = 0; d < metric.length; d += 10) {
+        canvas.drawPath(metric.extractPath(d, d + 5), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorder old) => old.color != color || old.radius != radius;
+}
+
 class _MyCardScreenState extends State<MyCardScreen> {
   late String? _handle = widget.profile.handle;
+  final _profiles = ProfileService();
+  /// Without a Smile name: the proposal from the name, if it is free
+  /// (2026-10-20, test suite find 10) -- taken over with one tap.
+  String? _suggestion;
+  bool _taking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_handle == null) _findSuggestion();
+  }
+
+  Future<void> _findSuggestion() async {
+    final proposal = suggestHandle(widget.profile.displayName);
+    if (!isValidHandle(proposal)) return;
+    try {
+      if (await _profiles.isHandleAvailable(proposal) && mounted) setState(() => _suggestion = proposal);
+    } catch (_) {}
+  }
+
+  Future<void> _takeSuggestion(String handle) async {
+    setState(() => _taking = true);
+    try {
+      await _profiles.setHandle(handle);
+      if (mounted) setState(() => _handle = handle);
+    } catch (_) {
+      // Taken meanwhile or offline: the full choice instead.
+      if (mounted) await _chooseName();
+    } finally {
+      if (mounted) setState(() => _taking = false);
+    }
+  }
 
   Future<void> _chooseName() async {
     final saved = await Navigator.of(context).push<String>(
@@ -72,6 +144,31 @@ class _MyCardScreenState extends State<MyCardScreen> {
                       Text(widget.profile.displayName,
                           textAlign: TextAlign.center,
                           style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600)),
+                      if (handle == null) ...[
+                        const SizedBox(height: SmileSpacing.s),
+                        _Placeholder(
+                          radius: 999,
+                          padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.m, vertical: 4),
+                          child: Text(t.myCardHandlePlaceholder, style: TextStyle(color: muted, fontSize: 14)),
+                        ),
+                        const SizedBox(height: SmileSpacing.l),
+                        _Placeholder(
+                          radius: SmileRadius.l,
+                          child: SizedBox(
+                            width: 200,
+                            height: 200,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(SmileIcons.handle, size: 40, color: muted),
+                                const SizedBox(height: SmileSpacing.s),
+                                Text(t.myCardQrPlaceholder,
+                                    textAlign: TextAlign.center, style: TextStyle(color: muted, fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                       if (handle != null) ...[
                         const SizedBox(height: 2),
                         Text('@$handle',
@@ -90,7 +187,7 @@ class _MyCardScreenState extends State<MyCardScreen> {
                   ),
                 ),
                 const SizedBox(height: SmileSpacing.l),
-                Text(handle != null ? t.myCardHint : t.myCardNeedsName,
+                Text(handle != null ? t.myCardHint : t.myCardPreviewHint,
                     textAlign: TextAlign.center, style: TextStyle(color: muted, height: 1.45)),
                 const SizedBox(height: SmileSpacing.l),
                 if (handle != null)
@@ -99,12 +196,23 @@ class _MyCardScreenState extends State<MyCardScreen> {
                     icon: const Icon(SmileIcons.shareOut),
                     label: Text(t.shareMyCard),
                   )
-                else
-                  FilledButton.icon(
-                    onPressed: _chooseName,
-                    icon: const Icon(SmileIcons.handle),
-                    label: Text(t.smileNameChoose),
-                  ),
+                else ...[
+                  if (_suggestion != null) ...[
+                    FilledButton(
+                      onPressed: _taking ? null : () => _takeSuggestion(_suggestion!),
+                      child: _taking
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                          : Text(t.myCardTakeSuggestion(_suggestion!)),
+                    ),
+                    const SizedBox(height: SmileSpacing.s),
+                    OutlinedButton(onPressed: _taking ? null : _chooseName, child: Text(t.myCardOtherName)),
+                  ] else
+                    FilledButton.icon(
+                      onPressed: _chooseName,
+                      icon: const Icon(SmileIcons.handle),
+                      label: Text(t.smileNameChoose),
+                    ),
+                ],
               ],
             ),
           ),

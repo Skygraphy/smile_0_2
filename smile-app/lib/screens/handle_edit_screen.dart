@@ -29,6 +29,8 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
   _Check _check = _Check.none;
   bool _saving = false;
   String? _failure;
+  /// Free alternatives to a taken name (up to three).
+  List<String> _alternatives = const [];
 
   @override
   void initState() {
@@ -49,7 +51,10 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
   void _onChanged(String _) {
     _debounce?.cancel();
     final handle = _handle;
-    setState(() => _failure = null);
+    setState(() {
+      _failure = null;
+      _alternatives = const [];
+    });
     if (handle.isEmpty) {
       setState(() => _check = _Check.none);
       return;
@@ -73,7 +78,27 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
         return;
       }
       if (mounted && _handle == handle) setState(() => _check = free ? _Check.free : _Check.taken);
+      if (!free) unawaited(_findAlternatives(handle));
     });
+  }
+
+  Future<void> _findAlternatives(String handle) async {
+    final found = <String>[];
+    for (final candidate in handleAlternatives(handle)) {
+      if (found.length == 3 || !mounted || _handle != handle) break;
+      try {
+        if (await widget.profileService.isHandleAvailable(candidate)) found.add(candidate);
+      } catch (_) {
+        return;
+      }
+    }
+    if (mounted && _handle == handle) setState(() => _alternatives = found);
+  }
+
+  void _take(String alternative) {
+    _controller.text = alternative;
+    _controller.selection = TextSelection.collapsed(offset: alternative.length);
+    _onChanged(alternative);
   }
 
   Future<void> _save(String? handle) async {
@@ -99,12 +124,27 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
     final scheme = Theme.of(context).colorScheme;
     final muted = scheme.onSurfaceVariant;
     final canSave = !_saving && _check == _Check.free && _handle != widget.current;
-    final (String? status, Color statusColor) = switch (_check) {
-      _Check.free when _handle != widget.current => (t.smileNameFree, scheme.primary),
-      _Check.taken => (t.smileNameTaken, scheme.error),
-      _Check.invalid => (t.smileNameInvalid, scheme.error),
-      _ => (null, muted),
+    // Free in green, taken or against the rules in red, each saying
+    // exactly what is the matter (2026-10-20, test suite find 9).
+    final handle = _handle;
+    final good = _check == _Check.free && handle != widget.current;
+    final bad = _check == _Check.taken || _check == _Check.invalid;
+    final Color? stateColor = good ? SmileTheme.success : (bad ? scheme.error : null);
+    final String? status = switch (_check) {
+      _Check.free when handle != widget.current => t.smileNameIsFree(handle),
+      _Check.taken => t.smileNameIsTaken(handle),
+      _Check.invalid => switch (handleProblem(handle)) {
+          HandleProblem.tooShort => t.smileNameTooShort,
+          HandleProblem.tooLong => t.smileNameTooLong,
+          HandleProblem.reserved => t.smileNameReserved,
+          _ => t.smileNameBadChars,
+        },
+      _ => null,
     };
+    OutlineInputBorder border(Color? color) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(SmileRadius.m),
+          borderSide: color == null ? BorderSide.none : BorderSide(color: color, width: 2),
+        );
     return Scaffold(
       appBar: AppBar(title: Text(t.smileName)),
       body: ListView(
@@ -129,20 +169,54 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
             decoration: InputDecoration(
               prefixText: '@',
               filled: true,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(SmileRadius.m), borderSide: BorderSide.none),
+              border: border(stateColor),
+              enabledBorder: border(stateColor),
+              focusedBorder: border(stateColor),
               suffixIcon: _check == _Check.checking
                   ? const Padding(
                       padding: EdgeInsets.all(14),
                       child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
                     )
-                  : null,
+                  : stateColor == null
+                      ? null
+                      : Icon(good ? SmileIcons.check : SmileIcons.warning, color: stateColor),
             ),
           ),
           const SizedBox(height: SmileSpacing.s),
-          SizedBox(
-            height: 20,
-            child: status == null ? null : Text(status, style: TextStyle(color: statusColor, fontSize: 13)),
-          ),
+          if (status != null && stateColor != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.m, vertical: SmileSpacing.s),
+              decoration: BoxDecoration(
+                color: stateColor.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(SmileRadius.m),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Icon(good ? SmileIcons.check : SmileIcons.warning, size: 18, color: stateColor),
+                  ),
+                  const SizedBox(width: SmileSpacing.s),
+                  Expanded(
+                    child: Text(status,
+                        style: TextStyle(color: stateColor, fontSize: 13.5, fontWeight: FontWeight.w600, height: 1.35)),
+                  ),
+                ],
+              ),
+            )
+          else
+            const SizedBox(height: 20),
+          if (_check == _Check.taken && _alternatives.isNotEmpty) ...[
+            const SizedBox(height: SmileSpacing.s),
+            Text(t.smileNameSuggestions, style: TextStyle(color: muted, fontSize: 13)),
+            const SizedBox(height: SmileSpacing.xs),
+            Wrap(
+              spacing: SmileSpacing.s,
+              runSpacing: SmileSpacing.xs,
+              children: [for (final a in _alternatives) ActionChip(label: Text(a), onPressed: () => _take(a))],
+            ),
+          ],
           const SizedBox(height: SmileSpacing.s),
           Text(t.smileNameRules, style: TextStyle(color: muted, fontSize: 13)),
           const SizedBox(height: SmileSpacing.m),

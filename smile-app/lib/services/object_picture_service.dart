@@ -20,8 +20,6 @@ class ObjectPictureService {
 
   Future<String?> fromGallery(ObjectKind kind, String id) => pickAndUploadFromGallery(_newPath(kind, id));
 
-  Future<String> fromUrl(ObjectKind kind, String id, String url) => uploadAvatarFromUrl(_newPath(kind, id), url);
-
   /// Uploads a picture already picked (and shown) and returns its path.
   Future<String> uploadPicked(ObjectKind kind, String id, PickedPicture picture) async {
     final path = _newPath(kind, id);

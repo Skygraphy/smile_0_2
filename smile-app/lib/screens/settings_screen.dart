@@ -132,10 +132,10 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
     final LocalPicture shown;
     final Future<void> Function() commit;
     if (source == AvatarSource.url) {
-      final enteredUrl = (await showAvatarUrlDialog(context))?.trim();
-      if (enteredUrl == null || enteredUrl.isEmpty) return;
-      shown = LocalPicture.url(enteredUrl);
-      commit = () => widget.profileService.uploadMyAvatarFromUrl(enteredUrl);
+      final picture = await showAvatarUrlDialog(context);
+      if (picture == null) return;
+      shown = LocalPicture.bytes(picture.bytes);
+      commit = () => widget.profileService.uploadMyAvatarPicked(picture);
     } else {
       final picked = await pickPictureBytes(source == AvatarSource.camera ? ImageSource.camera : ImageSource.gallery);
       if (picked == null) return;

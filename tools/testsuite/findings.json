@@ -4,34 +4,79 @@
     "chapter": "ch01",
     "title": "Fehlermeldung bei der Anmeldung ist verdeckt",
     "detail": "Kann der Code nicht angefordert werden, steht die Meldung unter Dieses Gerät als Frame verwenden. Bei offener Tastatur sieht man sie nicht, es scheint einfach nichts zu passieren. Behoben 2026-10-20: die Meldung steht jetzt direkt unter dem Eingabefeld, mit Warnzeichen, und verschwindet beim Weitertippen.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.1"
   },
   {
     "no": 2,
     "chapter": "ch01",
     "title": "Profilbild beim ersten Start ging verloren",
     "detail": "Das Bild aus der Begrüßung wurde hochgeladen, aber nie im Profil eingetragen, weil das Profil erst mit Weiter entsteht. Betraf alle neuen Nutzer. Jetzt speichert Weiter Name und Bild zusammen.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.1"
   },
   {
     "no": 3,
     "chapter": "ch01",
     "title": "Falscher Code: Meldung nicht sichtbar",
     "detail": "Wer einen falschen oder abgelaufenen Code eingibt, sieht nichts. Die Meldung Der Code stimmt nicht wird erzeugt, steht aber unter Andere E-Mail-Adresse verwenden und damit unter der Tastatur. Gleiche Ursache wie Fund 1; Behoben 2026-10-20: die Meldung steht jetzt direkt unter dem Eingabefeld, mit Warnzeichen, und verschwindet beim Weitertippen.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.1"
   },
   {
     "no": 4,
     "chapter": "ch01",
     "title": "Geändertes Profilbild zeigt weiter das alte",
     "detail": "Jedes Profilbild lag unter derselben Adresse, deshalb zeigten Handys weiter das Bild, das sie sich gemerkt hatten, auf dem eigenen und auf fremden Handys. Jetzt bekommt jedes Bild eine eigene Datei (wie bei Spaces, Alben und Frames), die Datenbank löscht die vorige (Migration 0086). Kapitel 1 prüft es am Bildschirm und in der Datenbank.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.1"
   },
   {
     "no": 5,
     "chapter": "ch01",
     "title": "Bild von Internetadresse: Fehler kommt zu spät",
-    "detail": "Nach Laden schließt sich der Dialog sofort; eine falsche Adresse oder ein nicht ladbares Bild wird erst danach auf der Seite gemeldet, die Eingabe ist weg. Gefunden von Ernst beim Durchsehen. Vorschlag: der Dialog bleibt offen, bis das Bild geladen ist, und meldet Fehler direkt unter dem Feld (Vorschau). Gilt für Profil, Space, Album und Frame.",
-    "status": "offen"
+    "detail": "Nach Laden schließt sich der Dialog sofort; eine falsche Adresse oder ein nicht ladbares Bild wird erst danach auf der Seite gemeldet, die Eingabe ist weg. Gefunden von Ernst beim Durchsehen. Vorschlag: der Dialog bleibt offen, bis das Bild geladen ist, und meldet Fehler direkt unter dem Feld (Vorschau). Gilt für Profil, Space, Album und Frame. Behoben 2026-10-20: der Dialog lädt das Bild selbst und schließt sich erst, wenn es da ist; falsche Adresse, Datei vom Gerät, kein Bild oder nichts unter der Adresse werden unter dem Feld gemeldet.",
+    "status": "behoben",
+    "version": "0.0.1"
+  },
+  {
+    "no": 6,
+    "chapter": "ch01",
+    "title": "Bitte gib deinen Namen ein bleibt stehen",
+    "detail": "Nach Weiter ohne Namen blieb die Meldung auch dann stehen, als der Name schon eingetragen war. Behoben 2026-10-20 nach dem Muster der Anmeldung: Warnzeichen, unter dem Feld, verschwindet beim Tippen.",
+    "status": "behoben",
+    "version": "0.0.1"
+  },
+  {
+    "no": 7,
+    "chapter": "ch01",
+    "title": "Code anfordern ohne Adresse: keine Rückmeldung",
+    "detail": "Mit leerem Feld passiert beim Antippen von Code anfordern gar nichts. Ernst: bitte einen Hinweis. Es kommt die Meldung Bitte gib deine E-Mail-Adresse ein, unter dem Feld wie die anderen Meldungen. Behoben 2026-10-20: Meldung Bitte gib deine E-Mail-Adresse ein unter dem Feld.",
+    "status": "behoben",
+    "version": "0.0.1"
+  },
+  {
+    "no": 8,
+    "chapter": "ch01",
+    "title": "Falsch geschriebene E-Mail-Adresse wird nicht erkannt",
+    "detail": "Eine Adresse wie anna@ wird nicht geprüft. Ernst: Hinweis, wenn die Mail nicht erreicht werden kann. Eine falsch geschriebene Adresse wird sofort gemeldet; scheitert der Versand, kommt die Meldung aus Fund 1. Ob ein Postfach existiert, kann keine App vorher wissen. Behoben 2026-10-20: falsch geschriebene Adressen werden vor dem Anfordern gemeldet.",
+    "status": "behoben",
+    "version": "0.0.1"
+  },
+  {
+    "no": 9,
+    "chapter": "ch01",
+    "title": "Smile-Name: Frei und Fehler zu unauffällig",
+    "detail": "Ernst: Frei soll grün erscheinen, Schon vergeben und Regelverstoß rot und präsenter. Vorschau gezeigt. Behoben 2026-10-20 nach Vorschau: grüner Rahmen und Hinweis bei frei, roter bei vergeben oder Regelverstoß mit genauem Grund, dazu freie Vorschläge.",
+    "status": "behoben",
+    "version": "0.0.1"
+  },
+  {
+    "no": 10,
+    "chapter": "ch01",
+    "title": "Meine Karte ohne Smile-Namen wirkt leer",
+    "detail": "Ernst: der Bildschirm ist zu leer. Vorschlag: die ganze Karte als Vorschau mit Platzhaltern und Ein-Tipp-Übernahme des freien Vorschlags. Vorschau gezeigt. Behoben 2026-10-20 nach Vorschau: die ganze Karte als Vorschau mit Platzhaltern, Vorschlag mit einem Tipp übernehmen.",
+    "status": "behoben",
+    "version": "0.0.1"
   }
 ]

@@ -1690,6 +1690,18 @@ abstract class SmileTexts {
   /// **'Das Video kann gerade nicht abgespielt werden.'**
   String get videoNotPlayable;
 
+  /// No description provided for @loginEmailMissing.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte gib deine E-Mail-Adresse ein.'**
+  String get loginEmailMissing;
+
+  /// No description provided for @loginEmailInvalid.
+  ///
+  /// In de, this message translates to:
+  /// **'Das ist keine gültige E-Mail-Adresse. Bitte prüfe sie.'**
+  String get loginEmailInvalid;
+
   /// No description provided for @loginSendFailed.
   ///
   /// In de, this message translates to:
@@ -3063,6 +3075,78 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Frei'**
   String get smileNameFree;
+
+  /// No description provided for @smileNameIsFree.
+  ///
+  /// In de, this message translates to:
+  /// **'@{name} ist frei. Mit Speichern gehört er dir.'**
+  String smileNameIsFree(String name);
+
+  /// No description provided for @smileNameIsTaken.
+  ///
+  /// In de, this message translates to:
+  /// **'@{name} ist schon vergeben. Bitte wähle einen anderen.'**
+  String smileNameIsTaken(String name);
+
+  /// No description provided for @smileNameTooShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch zu kurz. Mindestens 3 Zeichen: a–z, 0–9, Punkt und Unterstrich.'**
+  String get smileNameTooShort;
+
+  /// No description provided for @smileNameTooLong.
+  ///
+  /// In de, this message translates to:
+  /// **'Zu lang. Höchstens 24 Zeichen.'**
+  String get smileNameTooLong;
+
+  /// No description provided for @smileNameBadChars.
+  ///
+  /// In de, this message translates to:
+  /// **'Nur a–z, 0–9, Punkt und Unterstrich. Am Anfang ein Buchstabe oder eine Ziffer, kein Punkt am Ende, keine zwei Punkte hintereinander.'**
+  String get smileNameBadChars;
+
+  /// No description provided for @smileNameReserved.
+  ///
+  /// In de, this message translates to:
+  /// **'Diesen Namen kann man nicht wählen. Bitte wähle einen anderen.'**
+  String get smileNameReserved;
+
+  /// No description provided for @smileNameSuggestions.
+  ///
+  /// In de, this message translates to:
+  /// **'Diese sind frei:'**
+  String get smileNameSuggestions;
+
+  /// No description provided for @myCardHandlePlaceholder.
+  ///
+  /// In de, this message translates to:
+  /// **'@ dein Smile-Name'**
+  String get myCardHandlePlaceholder;
+
+  /// No description provided for @myCardQrPlaceholder.
+  ///
+  /// In de, this message translates to:
+  /// **'Hier erscheint dein QR-Code'**
+  String get myCardQrPlaceholder;
+
+  /// No description provided for @myCardPreviewHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit einem Smile-Namen bekommst du diese Karte. Wer sie scannt, kann dich einladen.'**
+  String get myCardPreviewHint;
+
+  /// No description provided for @myCardTakeSuggestion.
+  ///
+  /// In de, this message translates to:
+  /// **'@{name} übernehmen'**
+  String myCardTakeSuggestion(String name);
+
+  /// No description provided for @myCardOtherName.
+  ///
+  /// In de, this message translates to:
+  /// **'Anderen Namen wählen'**
+  String get myCardOtherName;
 
   /// No description provided for @smileNameTaken.
   ///

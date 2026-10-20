@@ -15,8 +15,12 @@ lock_device() {
 begin_chapter() { # id title intro
   CH_ID="$1"; CH_DIR="$OUT_ROOT/$1"; STEP_NO=0
   rm -rf "$CH_DIR"; mkdir -p "$CH_DIR"; : > "$CH_DIR/taps.tsv"
-  node -e 'require("fs").writeFileSync(process.argv[1], JSON.stringify({id:process.argv[2],title:process.argv[3],intro:process.argv[4],steps:[]},null,1))' \
-    "$(cygpath -w "$CH_DIR/steps.json")" "$1" "$2" "$3"
+  # The app version and code state this run tests (CHANGELOG.md, git tag vX.Y.Z).
+  local ver commit
+  ver="$(sed -n 's/^version: \([^+]*\).*/\1/p' "$OUT_ROOT/../../../smile-app/pubspec.yaml")"
+  commit="$(git -C "$OUT_ROOT/.." rev-parse --short HEAD)"
+  node -e 'require("fs").writeFileSync(process.argv[1], JSON.stringify({id:process.argv[2],title:process.argv[3],intro:process.argv[4],appVersion:process.argv[5],commit:process.argv[6],steps:[]},null,1))' \
+    "$(cygpath -w "$CH_DIR/steps.json")" "$1" "$2" "$3" "$ver" "$commit"
 }
 # A button the chapter needs is missing: the run is off track. Stop here
 # (the steps so far stay recorded) instead of failing on every step after.
@@ -26,9 +30,11 @@ screen() { SCREEN="$1"; }
 # step "Titel" "Anleitung" "Erwartet" [Hauptweg|Abzweigung] [Gerät]
 step() {
   STEP_NO=$((STEP_NO+1)); STEP_TITLE="$1"; STEP_DO="$2"; STEP_EXPECT="$3"
-  STEP_KIND="${4:-Hauptweg}"; STEP_DEVICE="${5:-S26}"; STEP_CHECKS="[]"; SNAP_MASK=""
+  STEP_KIND="${4:-Hauptweg}"; STEP_DEVICE="${5:-S26}"; STEP_CHECKS="[]"; SNAP_MASK=""; STEP_WHY=""
   echo "Schritt $STEP_NO: $1"
 }
+# explain "Was dabei passiert": what happens behind the screen, in plain words.
+explain() { STEP_WHY="$1"; }
 # check "Beschreibung" command... : records whether the command succeeds.
 check() {
   local desc="$1"; shift
@@ -58,7 +64,7 @@ snap() {
       \$b.Save(\$p); \$g.Dispose(); \$b.Dispose()"
   fi
   echo "$xml" | node -e '
-    const fs=require("fs"),x=fs.readFileSync(0,"utf8"),[f,pkg,no,title,doIt,expect,kind,device,image,checks,scr]=process.argv.slice(1);
+    const fs=require("fs"),x=fs.readFileSync(0,"utf8"),[f,pkg,no,title,doIt,expect,kind,device,image,checks,scr,why]=process.argv.slice(1);
     const els=[];
     for (const m of x.matchAll(/<node [^>]*>/g)) { const n=m[0];
       if ((n.match(/ package="([^"]*)"/)||[])[1]!==pkg || !/ clickable="true"/.test(n)) continue;
@@ -69,9 +75,9 @@ snap() {
       if (l && !els.includes(l)) els.push(l);
     }
     const j=JSON.parse(fs.readFileSync(f)); const nr=+no; j.steps=j.steps.filter(s=>s.no!==nr);
-    j.steps.push({no:nr,title,do:doIt,expect,kind,device,image,checks:JSON.parse(checks),screen:scr,elements:els});
+    j.steps.push({no:nr,title,do:doIt,expect,kind,device,image,checks:JSON.parse(checks),screen:scr,elements:els,why});
     j.steps.sort((a,b)=>a.no-b.no); fs.writeFileSync(f,JSON.stringify(j,null,1));' \
-    "$(cygpath -w "$CH_DIR/steps.json")" "$TEST_PKG" "$STEP_NO" "$STEP_TITLE" "$STEP_DO" "$STEP_EXPECT" "$STEP_KIND" "$STEP_DEVICE" "$name" "$STEP_CHECKS" "$SCREEN"
+    "$(cygpath -w "$CH_DIR/steps.json")" "$TEST_PKG" "$STEP_NO" "$STEP_TITLE" "$STEP_DO" "$STEP_EXPECT" "$STEP_KIND" "$STEP_DEVICE" "$name" "$STEP_CHECKS" "$SCREEN" "$STEP_WHY"
 }
 # SQL against the testsuite project; prints the first value of the first row.
 sql_value() {

@@ -37,8 +37,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String get _email => _emailController.text.trim();
 
+  /// Written like an address: something@something.domain (2026-10-20,
+  /// test suite finds 7 and 8). Whether the mailbox exists only the mail
+  /// itself can tell.
+  static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$');
+
   Future<void> _requestCode() async {
-    if (_email.isEmpty) return;
+    final t = SmileTexts.of(context);
+    if (_email.isEmpty || !_emailPattern.hasMatch(_email)) {
+      setState(() => _errorMessage = _email.isEmpty ? t.loginEmailMissing : t.loginEmailInvalid);
+      return;
+    }
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;

@@ -14,6 +14,10 @@ class SmileTheme {
 
   /// PANTONE 16-1546 TCX "Living Coral" -- the app's one seed color.
   static const primary = Color(0xFFFF6F61);
+
+  /// Something is fine / free (2026-10-20): green next to the coral, only
+  /// for that meaning, never as decoration.
+  static const success = Color(0xFF6CC58F);
   static const onPrimary = Color(0xFF3A1410);
   static const primaryContainer = Color(0xFF4A241D);
   static const onPrimaryContainer = Color(0xFFFFDAD3);
