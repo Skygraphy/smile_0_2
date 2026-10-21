@@ -4,6 +4,15 @@ Jede Version, die getestet wird, bekommt eine eigene Nummer (0.0.1, 0.0.2 …),
 ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 (Tag `v0.0.1` …). Eine neue Version entsteht mit `tools/testsuite/release.sh`.
 
+## 0.0.7 (2026-10-21)
+
+Kapitel 4 (Im Album) dazu.
+
+Behoben:
+
+- 25: Zurück-Geste verließ das Album statt Auswahl oder Ausgeblendete zu schließen
+- 26: Diashow: Fehler, wenn die Einstellungen ein ladendes Video ersetzen
+
 ## 0.0.6 (2026-10-21)
 
 Datumsmarke und lange Namen.
