@@ -10,8 +10,15 @@ import '../icons/smile_icons.dart';
 /// kind is still recognisable; type icons remain in headers, the bottom
 /// bar, empty states and -- as a small badge -- in mixed lists.
 
-/// "Enkelkinder" -> "EN", "Urlaub 2026" -> "UR", "Live-Test" -> "LI".
+/// "Enkelkinder" -> "EN", "Urlaub 2026" -> "UR", "Live-Test" -> "LI";
+/// two words with letters take one letter each, like people's initials:
+/// "Familie Berger" -> "FB" (decided 2026-10-21, test suite find 21).
 String smileInitialsOf(String name) {
+  final words = name
+      .split(RegExp(r'\s+'))
+      .where((w) => RegExp(r'^[A-Za-zÄÖÜäöüß]').hasMatch(w))
+      .toList();
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
   final letters = name.replaceAll(RegExp(r'[^A-Za-zÄÖÜäöüß]'), '');
   if (letters.isEmpty) return name.trim().isEmpty ? '?' : name.trim().substring(0, 1).toUpperCase();
   return letters.substring(0, letters.length >= 2 ? 2 : 1).toUpperCase();

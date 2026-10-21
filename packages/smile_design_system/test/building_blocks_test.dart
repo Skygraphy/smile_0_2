@@ -113,6 +113,9 @@ void main() {
     expect(smileInitialsOf("Urlaub 2026"), "UR");
     expect(smileInitialsOf("Live-Test"), "LI");
     expect(smileInitialsOf("Küche"), "KÜ");
+    expect(smileInitialsOf("Familie Berger"), "FB");
+    expect(smileInitialsOf("Hotel Sacher Wien"), "HS");
+    expect(smileInitialsOf("Oma und Opa"), "OU");
   });
 
   testWidgets("an album without a photo shows its initials", (tester) async {

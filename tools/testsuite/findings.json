@@ -158,5 +158,12 @@
     "detail": "Behoben: ein gerade gewähltes Titelbild wird bei Automatisch sofort verworfen.",
     "status": "behoben",
     "version": "0.0.3"
+  },
+  {
+    "no": 21,
+    "chapter": "ch02",
+    "title": "Space aus mehreren Wörtern: Anfangsbuchstaben wie bei Personen",
+    "detail": "Frage aus Claudes Durchsicht von 0.0.3, Ernst: ja. Familie Berger zeigt FB statt FA; ein Wort bleibt wie bisher (Enkelkinder EN, Urlaub 2026 UR).",
+    "status": "behoben"
   }
 ]

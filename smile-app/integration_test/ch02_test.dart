@@ -305,13 +305,13 @@ void main() {
       await c.snap();
 
       c.step('Bild des Space entfernen', 'Auf das Bild tippen und Bild entfernen wählen.',
-          'Statt des Bildes stehen wieder die Anfangsbuchstaben FA.',
+          'Statt des Bildes stehen wieder die Anfangsbuchstaben FB.',
           kind: 'Abzweigung', explain: 'Bild entfernen gibt es erst, wenn ein Bild da ist. Danach zeigt Smile wieder die Anfangsbuchstaben.');
       await c.tap('Bild ändern');
       c.screen('Bild für den Space');
       await c.tap('Bild entfernen', seconds: 3);
       c.screen('Space');
-      await c.check('Anfangsbuchstaben FA', () => c.waitFor('FA', seconds: 5));
+      await c.check('Anfangsbuchstaben FB', () => c.waitFor('FB', seconds: 5));
       await c.check('Bild auf dem Server entfernt', () async {
         for (var i = 0; i < 20; i++) {
           if ((await space())['avatar_path'] == null) return true;
