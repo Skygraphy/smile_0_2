@@ -73,6 +73,15 @@ class Chapter {
   /// Screenshot, tappable elements and state close the step.
   Future<void> snap() async {
     await settle();
+    // In an album the floating date only shows while scrolling; the picture
+    // shows the album at rest, as one sees it after scrolling (find 23).
+    if (_screen == 'Album' || _screen == 'Album (leer)') {
+      final end = DateTime.now().add(const Duration(milliseconds: 1900));
+      while (DateTime.now().isBefore(end)) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await settle();
+    }
     final img = await _grab();
     _lastShot = img;
     final file = File('${(await outDir()).path}/${_no.toString().padLeft(2, '0')}.png');

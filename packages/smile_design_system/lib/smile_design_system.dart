@@ -10,6 +10,7 @@ export 'src/theme/smile_tokens.dart';
 export 'src/widgets/smile_avatar.dart';
 export 'src/widgets/smile_confirm_dialog.dart';
 export 'src/widgets/smile_empty_state.dart';
+export 'src/widgets/smile_fit_text.dart';
 export 'src/widgets/smile_info_page.dart';
 export 'src/widgets/smile_mark.dart';
 export 'src/widgets/smile_named_text.dart';

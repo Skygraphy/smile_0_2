@@ -133,6 +133,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     _loadFrames();
     unawaited(_loadMyStatus());
     _scrollController.addListener(_updateStickyDate);
+    _scrollController.addListener(_onScrolling);
     // Already there (e.g. waiting from before): no tick for those.
     _ticked.addAll(_pendingUploads.map((p) => p.id));
     UploadQueue.instance.addListener(_onQueue);
@@ -535,6 +536,19 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// footprint of the top, whether or not that's the one being replaced.
   static const _stickyOverlayFootprintPx = 40.0;
 
+  /// Like WhatsApp, the floating date only shows while scrolling and a
+  /// moment after; at rest it never covers a photo or its title
+  /// (2026-10-21, test suite find 23).
+  bool _scrolling = false;
+  Timer? _scrollingTimer;
+  void _onScrolling() {
+    if (!_scrolling) setState(() => _scrolling = true);
+    _scrollingTimer?.cancel();
+    _scrollingTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted) setState(() => _scrolling = false);
+    });
+  }
+
   void _updateStickyDate() {
     final stackBox = _feedStackKey.currentContext?.findRenderObject() as RenderBox?;
     if (stackBox == null || !stackBox.attached) return;
@@ -584,6 +598,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     _messenger?.hideCurrentSnackBar();
     // Only clear it if no other feed took over in the meantime.
     if (ForegroundNotifications.openAlbumId == widget.channelId) ForegroundNotifications.openAlbumId = null;
+    _scrollingTimer?.cancel();
     _scrollController.dispose();
     UploadQueue.instance.removeListener(_onQueue);
     unawaited(_queueFailures?.cancel());
@@ -1332,7 +1347,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                           children: [
                             albumCover(widget.channelId, _shownName, _covers, size: 36),
                             const SizedBox(width: SmileSpacing.m),
-                            Expanded(child: Text(_shownName, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            Expanded(child: SmileFitText(_shownName)),
                           ],
                         ),
                       ),
@@ -1507,7 +1522,13 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                             top: 8,
                             left: 0,
                             right: 0,
-                            child: Center(child: _DateSeparator(date: _stickyDate!, floating: true)),
+                            child: IgnorePointer(
+                              child: AnimatedOpacity(
+                                opacity: _scrolling ? 1 : 0,
+                                duration: const Duration(milliseconds: 250),
+                                child: Center(child: _DateSeparator(date: _stickyDate!, floating: true)),
+                              ),
+                            ),
                           ),
                       ],
                     );

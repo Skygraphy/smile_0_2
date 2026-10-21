@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'smile_fit_text.dart';
+
 import '../theme/smile_tokens.dart';
 
 /// Rounded square carrying an object icon (Space, Album, Frame). Square,
@@ -78,10 +80,8 @@ class SmileObjectTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  SmileFitText(
                     title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, fontSize: 16.5),
                   ),
                   if (sub != null && sub.isNotEmpty)
