@@ -4,6 +4,14 @@ Jede Version, die getestet wird, bekommt eine eigene Nummer (0.0.1, 0.0.2 …),
 ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 (Tag `v0.0.1` …). Eine neue Version entsteht mit `tools/testsuite/release.sh`.
 
+## 0.0.4 (2026-10-21)
+
+Anfangsbuchstaben wie bei Personen.
+
+Behoben:
+
+- 21: Space aus mehreren Wörtern: Anfangsbuchstaben wie bei Personen
+
 ## 0.0.3 (2026-10-21)
 
 Kapitel 2 (Space und Alben) dazu, vier Verbesserungen daraus.
