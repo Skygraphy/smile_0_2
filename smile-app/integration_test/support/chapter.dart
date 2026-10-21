@@ -75,7 +75,7 @@ class Chapter {
     await settle();
     // In an album the floating date only shows while scrolling; the picture
     // shows the album at rest, as one sees it after scrolling (find 23).
-    if (_screen == 'Album' || _screen == 'Album (leer)') {
+    if (_screen == 'Album' || _screen == 'Album (leer)' || _screen.startsWith('Auswahl') || _screen == 'Ausgeblendete') {
       final end = DateTime.now().add(const Duration(milliseconds: 1900));
       while (DateTime.now().isBefore(end)) {
         await tester.pump(const Duration(milliseconds: 100));

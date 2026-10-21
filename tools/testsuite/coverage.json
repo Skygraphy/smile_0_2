@@ -48,7 +48,8 @@
    "UR": "Bild ändern",
    "SO": "Bild ändern",
    "Urlaub 2026": "Album umbenennen",
-   "Sommerurlaub 2026": "Album umbenennen"
+   "Sommerurlaub 2026": "Album umbenennen",
+   "Geburtstage": "Album umbenennen"
   },
   "Startseite": {
    "Sommerurlaub 2026 · Noch keine Fotos · gerade eben": "Geburtstage",
@@ -57,6 +58,13 @@
   "Senden an": {
    "WE · Weihnachten · Familie Berger": "Sommerurlaub 2026",
    "Geburtstage · Familie Berger": "Sommerurlaub 2026"
+  },
+  "Diashow": {
+   "Omas 80. Geburtstag": "Bildschirm antippen",
+   "Geburtstage · Anna Berger": "Bildschirm antippen"
+  },
+  "Diashow-Einstellungen": {
+   "Geburtstage · Anna Berger": "Bildschirm antippen"
   }
  },
  "Space": {
@@ -88,5 +96,8 @@
   "Geburtstage": "ch02",
   "Sommerurlau": "ch02",
   "Sommerurlaub 2026": "ch02"
+ },
+ "_rows": {
+  "Startseite": "Geburtstage"
  }
 }

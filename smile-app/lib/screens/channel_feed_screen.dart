@@ -1314,7 +1314,19 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   @override
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
-    return Scaffold(
+    // Android back: first ends the selection or the hidden view, like the
+    // arrow at the top, instead of leaving the album (2026-10-21, find 25).
+    return PopScope(
+      canPop: !_selectionMode && !_showingHidden,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (_selectionMode) {
+          _clearSelection();
+        } else if (_showingHidden) {
+          _toggleHiddenView();
+        }
+      },
+      child: Scaffold(
       appBar: _selectionMode
           ? AppBar(
               leading: IconButton(icon: const Icon(SmileIcons.close), onPressed: _clearSelection),
@@ -1536,6 +1548,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                 ),
               ],
             ),
+    ),
     );
   }
 }

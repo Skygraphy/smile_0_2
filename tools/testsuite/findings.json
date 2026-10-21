@@ -190,5 +190,19 @@
     "detail": "Ernst: Titel usw. erst verkleinern, erst ab einer Mindestgröße … verwenden. Behoben: Namen in Listen und in der Titelleiste eines Albums werden bis auf drei Viertel kleiner, erst dann …",
     "status": "behoben",
     "version": "0.0.6"
+  },
+  {
+    "no": 25,
+    "chapter": "ch04",
+    "title": "Zurück-Geste verließ das Album statt Auswahl oder Ausgeblendete zu schließen",
+    "detail": "In der Auswahl und bei Ausgeblendete anzeigen führte die Zurück-Geste von Android aus dem Album hinaus auf die Startseite. Behoben: Zurück beendet zuerst die Auswahl bzw. die ausgeblendete Ansicht, wie der Pfeil oben und wie in WhatsApp.",
+    "status": "behoben"
+  },
+  {
+    "no": 26,
+    "chapter": "ch04",
+    "title": "Diashow: Fehler, wenn die Einstellungen ein ladendes Video ersetzen",
+    "detail": "Gefunden vom Test-Rahmen: änderte man die Einstellungen, während ein Video der Diashow lud, rief die App für das schon entfernte Video noch setState auf. Behoben.",
+    "status": "behoben"
   }
 ]

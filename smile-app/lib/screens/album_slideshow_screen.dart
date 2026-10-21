@@ -483,12 +483,18 @@ class _VideoSlideState extends State<_VideoSlide> {
     }
     controller.addListener(() {
       final v = controller.value;
-      if (!_ended && v.isInitialized && v.duration > Duration.zero && v.position >= v.duration) {
+      if (mounted && !_ended && v.isInitialized && v.duration > Duration.zero && v.position >= v.duration) {
         _ended = true;
         widget.onEnded();
       }
     });
     await controller.setVolume(widget.withSound ? 1 : 0);
+    // Gone meanwhile (e.g. the settings changed the slides): don't touch
+    // it any more (2026-10-22, test suite find 26).
+    if (!mounted) {
+      await controller.dispose();
+      return;
+    }
     setState(() => _controller = controller);
     if (widget.active) await controller.play();
   }

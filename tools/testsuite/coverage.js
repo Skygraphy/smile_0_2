@@ -6,6 +6,9 @@ const fs = require("fs"), path = require("path");
 const [outDir, dataDir] = process.argv.slice(2);
 const declared = JSON.parse(fs.readFileSync(path.join(__dirname, "coverage.json"), "utf8"));
 const aliases = declared._aliases ?? {};
+// Screens whose rows (labels with " · ") are all the same kind of element:
+// one of them tapped (the named tap) counts for all, e.g. album rows.
+const rows = declared._rows ?? {};
 
 const screens = new Map(); // screen -> Map(label -> {seen:[chapter,step], tested:[...], later})
 const taps = []; // {chapter, screen, label}
@@ -29,6 +32,9 @@ for (const ch of fs.readdirSync(outDir).filter(d => /^ch\d\d$/.test(d)).sort()) 
 const matches = (element, tap, screen) => {
   const alias = aliases[screen]?.[element];
   if (alias && alias === tap) return true;
+  // A photo or video tile is named by its time ("23:31 · Titel").
+  if (/^\d\d:\d\d/.test(element)) return tap.startsWith("Foto") || tap.startsWith("Video");
+  if (rows[screen] && element.includes(" · ") && tap === rows[screen]) return true;
   if (tap === "class:android.widget.EditText") return element.startsWith("Eingabefeld");
   if (element.startsWith(tap) || tap.startsWith(element)) return true;
   // A row read out as several parts ("UR · Urlaub 2026"): one of them tapped.
