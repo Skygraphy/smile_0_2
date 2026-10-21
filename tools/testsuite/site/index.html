@@ -278,8 +278,8 @@ function renderRail() {
     const pct = n => total ? (n / total * 100).toFixed(1) : 0;
     return `<button data-ch="${c.id}" aria-current="${c.id === state.current}">
       <span class="t">${esc(c.no)}. ${esc(c.title)}</span>
-      <span class="meta">${ok} von ${total} bestätigt${bad ? ` · ${bad} passt nicht` : ""}</span>
-      <span class="bar"><span class="o" style="width:${pct(ok)}%"></span><span class="b" style="width:${pct(bad)}%"></span></span>
+      <span class="meta">${state.version !== newest() ? `${total} Schritte, nur zum Nachlesen` : `${ok} von ${total} bestätigt${bad ? ` · ${bad} passt nicht` : ""}`}</span>
+      ${state.version !== newest() ? "" : `<span class="bar"><span class="o" style="width:${pct(ok)}%"></span><span class="b" style="width:${pct(bad)}%"></span></span>`}
     </button>`;
   }).join("") + `<button data-ch="coverage" aria-current="${state.current === "coverage"}">
       <span class="t">Abdeckung</span><span class="meta">${state.coverage.tested} geprüft · ${state.coverage.later} später · ${state.coverage.open} offen</span>
@@ -371,6 +371,13 @@ function renderVerdicts() {
   document.querySelectorAll(".verdict").forEach(el => {
     const k = el.dataset.key;
     const step = state.chapters[state.current]?.steps.find(x => x.no === +el.dataset.no);
+    // An older version is only for reading: no checking status at all there
+    // (the confirmations belong to the newest version).
+    if (state.version !== newest()) {
+      el.closest(".step")?.classList.remove("open", "asked", "changed");
+      el.innerHTML = "";
+      return;
+    }
     const v = step ? verdictOf(state.current, step) : { state: "offen" };
     const r = ["geaendert", "frage", "claude"].includes(v.state) ? {} : (v.r ?? {});
     el.closest(".step")?.classList.toggle("open", !DONE.includes(v.state));
@@ -380,7 +387,7 @@ function renderVerdicts() {
     const showNote = r.verdict === "no" || el.dataset.open === "1";
     el.innerHTML = `<button class="ok" aria-pressed="${r.verdict === "ok"}" ${state.canWrite && state.version === newest() ? "" : "disabled"}>Passt</button>
       <button class="bad" aria-pressed="${r.verdict === "no"}" ${state.canWrite && state.version === newest() ? "" : "disabled"}>Passt nicht</button>
-      <span class="state">${v.state === "geaendert" ? "Seit der Bestätigung verändert: bitte gegenprüfen." + (v.why?.length ? " (" + esc(v.why.join("; ")) + ")" : "") : r.verdict ? "Gespeichert" : ""}</span>
+      <span class="state">${v.state === "geaendert" ? "Dieser Schritt hat sich seit der letzten Bestätigung verändert. Claude sieht ihn sich zuerst an; du musst nichts tun." : r.verdict ? "Gespeichert" : ""}</span>
       ${v.state === "claude" ? `<div class="cl ok">Von Claude geprüft: ${esc(v.r.reason ?? "")} Du kannst trotzdem selbst Passt oder Passt nicht wählen.</div>` : ""}
       ${v.state === "frage" ? `<div class="cl ask"><b>Frage an dich:</b> ${esc(v.r.question ?? "")}</div>` : ""}
       ${showNote ? `<textarea id="n-${k}" placeholder="Was passt nicht? (kurz)">${esc(draft ?? r.note ?? "")}</textarea>

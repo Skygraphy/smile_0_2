@@ -119,6 +119,11 @@ class UploadQueue extends ChangeNotifier {
     _connectivity ??= Connectivity().onConnectivityChanged.listen((result) {
       if (!result.contains(ConnectivityResult.none)) unawaited(process());
     });
+    // The test app's offline switch going off counts as the connection
+    // coming back.
+    Offline.simulated.addListener(() {
+      if (!Offline.simulated.value) unawaited(process());
+    });
     // The background worker asks a running app to send (UploadWorker.kt).
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'process') unawaited(process());
@@ -753,7 +758,8 @@ class UploadQueue extends ChangeNotifier {
   /// WorkManager (UploadWorker.kt): sends what is left once there is a
   /// connection, even with Smile closed.
   Future<void> _scheduleBackground(bool needed) async {
-    if (_inBackground) return;
+    // The background worker knows nothing of the test app's offline switch.
+    if (_inBackground || Offline.simulated.value) return;
     try {
       await _channel.invokeMethod(needed ? 'schedule' : 'cancel');
     } catch (_) {}

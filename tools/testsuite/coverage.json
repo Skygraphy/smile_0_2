@@ -53,6 +53,10 @@
   "Startseite": {
    "Sommerurlaub 2026 · Noch keine Fotos · gerade eben": "Geburtstage",
    "WE · Weihnachten · Noch keine Fotos · gerade eben": "Geburtstage"
+  },
+  "Senden an": {
+   "WE · Weihnachten · Familie Berger": "Sommerurlaub 2026",
+   "Geburtstage · Familie Berger": "Sommerurlaub 2026"
   }
  },
  "Space": {
@@ -75,5 +79,14 @@
   "Geteilt mit": "ch08",
   "Album verlassen": "ch05",
   "Album löschen": "ch11"
+ },
+ "Album": {
+  "0": "ch04",
+  "1": "ch04",
+  "2": "ch04",
+  "GE · Geburtstage": "ch02",
+  "Geburtstage": "ch02",
+  "Sommerurlau": "ch02",
+  "Sommerurlaub 2026": "ch02"
  }
 }

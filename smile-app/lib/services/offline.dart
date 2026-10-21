@@ -17,6 +17,11 @@ class Offline {
 
   static void reachedServer() => isOffline.value = false;
 
+  /// The test app's offline switch (tools/testsuite, chapter 3): while set,
+  /// the phone counts as having no network, without touching its Wi-Fi
+  /// (the test tools talk to it over Wi-Fi). Never set in the real app.
+  static final simulated = ValueNotifier<bool>(false);
+
   /// No connection (as opposed to a real refusal by the server).
   static bool isConnectionError(Object error) {
     if (error is SocketException || error is TimeoutException || error is HttpException) return true;
@@ -33,6 +38,7 @@ class Offline {
 
   /// Whether the phone has any network at all (Wi-Fi or mobile data).
   static Future<bool> hasNetwork() async {
+    if (simulated.value) return false;
     try {
       return !(await Connectivity().checkConnectivity()).contains(ConnectivityResult.none);
     } catch (_) {

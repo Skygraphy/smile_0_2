@@ -166,5 +166,12 @@
     "detail": "Frage aus Claudes Durchsicht von 0.0.3, Ernst: ja. Familie Berger zeigt FB statt FA; ein Wort bleibt wie bisher (Enkelkinder EN, Urlaub 2026 UR).",
     "status": "behoben",
     "version": "0.0.4"
+  },
+  {
+    "no": 22,
+    "chapter": "ch03",
+    "title": "Senden an: mit offener Tastatur unten abgeschnitten",
+    "detail": "Beim Titel-Eintippen nach der Kamera auf der Startseite war die Seite 30 Punkte zu lang (Bild immer bildschirmbreit). Gefunden vom Test-Rahmen, seit die Test-App nicht mehr an Crashlytics meldet. Behoben: das Bild wird kleiner, wenn der Platz knapp ist.",
+    "status": "behoben"
   }
 ]

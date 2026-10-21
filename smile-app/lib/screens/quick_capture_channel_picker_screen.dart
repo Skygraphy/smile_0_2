@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:io';
 
 import 'dart:async';
@@ -115,10 +116,15 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
     final channels = _channels;
     return Scaffold(
       appBar: AppBar(title: Text(SmileTexts.of(context).sendTo)),
-      body: Column(
+      // The preview gives way when the keyboard is open (typing a title), so
+      // the title and the albums stay on screen (2026-10-21, test suite find 22).
+      body: LayoutBuilder(builder: (context, box) {
+        final side = math.min(box.maxWidth, math.max(96.0, box.maxHeight - 200));
+        return Column(
         children: [
-          AspectRatio(
-            aspectRatio: 1,
+          SizedBox(
+            width: side,
+            height: side,
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: ClipRRect(
@@ -182,7 +188,8 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
                       ),
           ),
         ],
-      ),
+      );
+      }),
     );
   }
 }
