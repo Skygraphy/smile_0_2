@@ -49,7 +49,10 @@ node -e '
       const j=JSON.parse(fs.readFileSync(path.join(site,"v",v,id,"steps.json")));return {id,no:j.no,title:j.title,steps:j.steps.length,ranAt:j.ranAt};});
     const head=(log.match(new RegExp("^## "+v.replace(/\./g,"\\.")+" \\(([^)]*)\\)","m"))||[])[1]||"";
     return {version:v,date:head,changelog:section(v),chapters};});
+  // The page may hold at most 512 files: only the two newest versions keep
+  // their tutorial (pictures); older ones stay listed with their changes.
+  versions.forEach((x,i)=>{ if(i>=2){ x.archived=true; fs.rmSync(path.join(site,"v",x.version),{recursive:true,force:true}); } });
   fs.writeFileSync(path.join(site,"data","index.json"),JSON.stringify({versions,findings:JSON.parse(fs.readFileSync(findings))}));' \
   "$(cygpath -w "$SITE")" "$(cygpath -w findings.json)" "$(cygpath -w ../../CHANGELOG.md)"
 node coverage.js "$(cygpath -w out)" "$(cygpath -w "$SITE/data")"
-echo "$SITE: $(ls "$SITE/v" | tr '\n' ' ')"
+echo "$SITE: $(ls "$SITE/v" | tr '\n' ' ')(ältere nur in Versionen)"

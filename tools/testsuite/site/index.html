@@ -279,7 +279,7 @@ function renderRail() {
   const rail = $("#rail");
   const versions = state.index.versions;
   rail.innerHTML = `<label class="ver"><span>Version</span>
-      <select id="ver">${versions.map(v => `<option value="${esc(v.version)}"${v.version === state.version ? " selected" : ""}>${esc(v.version)}${v.version === newest() ? " (aktuell)" : ""}</option>`).join("")}</select></label>` +
+      <select id="ver">${versions.filter(v => !v.archived).map(v => `<option value="${esc(v.version)}"${v.version === state.version ? " selected" : ""}>${esc(v.version)}${v.version === newest() ? " (aktuell)" : ""}</option>`).join("")}</select></label>` +
     state.index.chapters.map(c => {
     const { total, ok, bad } = counts(c.id);
     const pct = n => total ? (n / total * 100).toFixed(1) : 0;
@@ -322,7 +322,7 @@ function renderVersions() {
     .replace(/(<li>.*?<\/li>)+/gs, m => `<ul>${m}</ul>`);
   $("#main").innerHTML = `<section class="intro"><h1>Versionen</h1>
     <p>Jede Version, die du testest, hat eine eigene Nummer, ein eigenes Tutorial und einen festen Stand im Code. Oben links kannst du ältere Tutorials ansehen.</p></section>
-    <div class="vers">${state.index.versions.map(v => `<section class="vcard"><h2>${esc(v.version)}${v.version === newest() ? ' <span class="chip ok">aktuell</span>' : ""}<span class="meta">${esc(v.date)} · ${v.chapters.length} ${v.chapters.length === 1 ? "Kapitel" : "Kapitel"}</span></h2>${md(v.changelog)}</section>`).join("")}</div>`;
+    <div class="vers">${state.index.versions.map(v => `<section class="vcard"><h2>${esc(v.version)}${v.version === newest() ? ' <span class="chip ok">aktuell</span>' : ""}<span class="meta">${esc(v.date)} · ${v.chapters.length} Kapitel${v.archived ? " · Tutorial nicht mehr gespeichert" : ""}</span></h2>${md(v.changelog)}</section>`).join("")}</div>`;
 }
 
 function chapterName(id) {

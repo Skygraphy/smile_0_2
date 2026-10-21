@@ -152,11 +152,9 @@ class Chapter {
       if (key.contains('auth-token')) {
         phone['angemeldet'] = true;
       } else if (key.startsWith('albums_cache')) {
-        try {
-          phone[key] = '${(jsonDecode(v as String) as List).length} Alben';
-        } catch (_) {
-          phone[key] = '?';
-        }
+        // A cache the app fills in the background, a moment earlier or
+        // later: no context, it would only make steps look changed.
+        continue;
       } else {
         final text = v is List ? v.join(',') : '$v';
         // Long values (e.g. the upload queue's picture data) only by size:
