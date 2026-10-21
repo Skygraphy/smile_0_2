@@ -5,6 +5,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'services/test_media.dart';
 import 'services/tips.dart';
 import 'services/perf.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -73,12 +74,18 @@ Future<void> main() async {
     firebaseReady = true;
     // Monitoring stage 2 (2026-10-07): crashes and uncaught errors reach
     // Firebase Crashlytics, so we learn about them without anyone reporting.
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
-    unawaited(FirebaseCrashlytics.instance.setCustomKey('app', 'smile-app'));
+    // Not the test app (2026-10-21): its runs are no crashes of real users,
+    // and the test chapters must see their errors themselves.
+    if (smileTestMode) {
+      unawaited(FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false));
+    } else {
+      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+      unawaited(FirebaseCrashlytics.instance.setCustomKey('app', 'smile-app'));
+    }
   } catch (e) {
     debugPrint('SmileStart: Firebase failed: $e');
   }

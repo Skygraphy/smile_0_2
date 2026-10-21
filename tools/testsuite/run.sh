@@ -44,5 +44,6 @@ t3=$(date +%s)
 a pull "$REMOTE/." "$(cygpath -w "$OUT")" >/dev/null
 a logcat -d -s flutter > "$OUT/run.log" 2>/dev/null || true
 [ -f "$OUT/failed.txt" ] && echo "ABGEBROCHEN: $(cat "$OUT/failed.txt")"
+grep -q "Some tests failed" "$OUT/run.log" && { echo "TEST-RAHMEN MELDET FEHLER:"; grep -h -A3 "EXCEPTION CAUGHT" "$OUT/run.log" | sed "s/^.*flutter *: *//" | grep -v "^═" | head -8; }
 grep -h "PRÜFUNG FEHLGESCHLAGEN" "$OUT/run.log" | sed 's/^.*flutter *: *//' | sort -u || true
 echo "Bauen: $((t1-t0)) s, Vorbereiten: $((t2-t1)) s, Kapitel: $((t3-t2)) s, Schritte: $(ls "$OUT"/*.png 2>/dev/null | wc -l)"

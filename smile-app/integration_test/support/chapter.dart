@@ -25,6 +25,10 @@ class Chapter {
     timeDilation = 0.05;
   }
 
+  /// The app replaces it with its friendly one; the test framework wants the
+  /// original back at the end.
+  final ErrorWidgetBuilder _errorWidgetBuilder = ErrorWidget.builder;
+
   final WidgetTester tester;
   final IntegrationTestWidgetsFlutterBinding binding;
   final String id;
@@ -102,6 +106,9 @@ class Chapter {
 
   /// Writes steps.json and taps.tsv, then the signal for the PC.
   Future<void> finish({required String appVersion, Object? error}) async {
+    // The test framework checks these are back to normal.
+    timeDilation = 1.0;
+    ErrorWidget.builder = _errorWidgetBuilder;
     final dir = await outDir();
     await File('${dir.path}/steps.json').writeAsString(const JsonEncoder.withIndent(' ').convert(
         {'id': id, 'title': title, 'intro': intro, 'appVersion': appVersion, 'ranAt': DateTime.now().toIso8601String(), 'steps': _steps}));
