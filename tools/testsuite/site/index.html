@@ -150,9 +150,8 @@ async function load() {
   try {
     state.index = await (await fetch("data/index.json")).json();
     state.coverage = await (await fetch("data/coverage.json")).json();
-    let savedVersion = null;
-    try { savedVersion = localStorage.getItem("version"); } catch {}
-    await setVersion(savedVersion);
+    // Always the newest version first; an older one is only opened on purpose.
+    await setVersion(null);
   } catch (e) {
     $("#main").innerHTML = '<div class="empty">Die Kapitel konnten nicht geladen werden. Bitte die Seite neu laden.</div>';
     return;
@@ -242,19 +241,27 @@ function renderStatus() {
   const el = $("#status"), st = state.status;
   if (!st) { el.hidden = true; return; }
   el.hidden = false;
-  const open = openSteps();
+  const old = state.version !== newest();
+  const open = old ? [] : openSteps();
   const working = st.phase === "arbeitet";
   el.className = "status " + (working ? "work" : "you");
   const when = st.at ? new Date(st.at).toLocaleString("de-AT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
-  const youText = open.length
+  const youText = old
+    ? `Du siehst gerade die ältere Version ${state.version}. Die aktuelle ist ${newest()}.`
+    : open.length
     ? `${open.length} ${open.length === 1 ? "Schritt wartet" : "Schritte warten"} auf dich. Alles andere hat Claude schon geprüft.`
     : "Alles bestätigt. Danke!";
   el.innerHTML = `<span class="dot2"></span>
     <div><div class="what">${esc(working ? "Claude arbeitet gerade" : "Du bist dran")}: ${esc(st.message ?? "")}</div>
       <div class="more">${working ? esc(st.detail ?? "Bitte warten, die Seite meldet sich, sobald etwas für dich bereit ist.") : esc(youText)}
         Die Seite aktualisiert sich selbst, du musst nichts neu laden.${when ? " Stand: " + esc(when) + "." : ""}</div></div>
-    ${!working && open.length ? `<button class="go">Zum ersten offenen Schritt</button>` : ""}`;
-  el.querySelector(".go")?.addEventListener("click", () => {
+    ${old ? `<button class="go new">Zur aktuellen Version</button>` : !working && open.length ? `<button class="go">Zum ersten offenen Schritt</button>` : ""}`;
+  el.querySelector(".go.new")?.addEventListener("click", async () => {
+    await setVersion(newest());
+    if (!state.chapters[state.current]) state.current = state.index.chapters[0]?.id;
+    render();
+  });
+  el.querySelector(".go:not(.new)")?.addEventListener("click", () => {
     const first = open[0];
     state.current = first.ch; render();
     requestAnimationFrame(() => document.getElementById("s" + first.no)?.scrollIntoView({ behavior: "smooth", block: "start" }));
@@ -419,6 +426,7 @@ function render() {
   else if (state.current === "versions") renderVersions();
   else if (state.current === "coverage") renderCoverage();
   else if (state.current) renderChapter();
+  renderStatus();
 }
 $("#zoom").onclick = () => $("#zoom").close();
 load();

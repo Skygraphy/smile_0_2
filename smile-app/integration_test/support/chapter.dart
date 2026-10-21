@@ -149,7 +149,10 @@ class Chapter {
           phone[key] = '?';
         }
       } else {
-        phone[key] = v is List ? v.join(',') : '$v';
+        final text = v is List ? v.join(',') : '$v';
+        // Long values (e.g. the upload queue's picture data) only by size:
+        // they say nothing about the context and would bloat every review.
+        phone[key] = text.length > 200 ? '${text.length} Zeichen' : text;
       }
     }
     phone.putIfAbsent('angemeldet', () => false);

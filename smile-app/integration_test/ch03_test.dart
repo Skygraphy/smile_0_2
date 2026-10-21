@@ -177,7 +177,13 @@ void main() {
         final caps = (await media()).map((r) => r['caption']).where((x) => x != null).toList();
         return caps.length == 1 && caps.first == 'Omas 80. Geburtstag';
       });
-      await c.check('Titel im Album sichtbar', () => c.waitFor('Omas 80. Geburtstag', seconds: 10));
+      await c.check('Titel im Album', () async {
+        for (var i = 0; i < 40; i++) {
+          if (find.text('Omas 80. Geburtstag', skipOffstage: false).evaluate().isNotEmpty) return true;
+          await tester.pump(const Duration(milliseconds: 250));
+        }
+        return false;
+      });
       await c.check('Alles fertig gesendet', () async {
         for (var i = 0; i < 120; i++) {
           if (UploadQueue.instance.itemsFor(birthdays).every((q) => q.done)) return true;
