@@ -80,7 +80,22 @@ class _NameDialog extends StatefulWidget {
 }
 
 class _NameDialogState extends State<_NameDialog> {
-  late final _controller = TextEditingController(text: widget.initialValue);
+  late final _controller = TextEditingController(text: widget.initialValue)
+    ..addListener(() {
+      if (_missing) setState(() => _missing = false);
+    });
+
+  /// Confirmed without a name: says so under the field instead of closing
+  /// silently (2026-10-21, test suite find 19).
+  bool _missing = false;
+
+  void _confirm() {
+    if (_controller.text.trim().isEmpty) {
+      setState(() => _missing = true);
+      return;
+    }
+    Navigator.of(context).pop(_controller.text);
+  }
 
   @override
   void dispose() {
@@ -110,12 +125,12 @@ class _NameDialogState extends State<_NameDialog> {
         controller: _controller,
         autofocus: true,
         textCapitalization: TextCapitalization.sentences,
-        decoration: InputDecoration(labelText: t.name, hintText: widget.hint),
-        onSubmitted: (value) => Navigator.of(context).pop(value),
+        decoration: InputDecoration(labelText: t.name, hintText: widget.hint, errorText: _missing ? t.nameMissing : null),
+        onSubmitted: (_) => _confirm(),
       ),
       actions: [
         TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.actionCancel)),
-        TextButton(onPressed: () => Navigator.of(context).pop(_controller.text), child: Text(widget.confirmLabel)),
+        TextButton(onPressed: _confirm, child: Text(widget.confirmLabel)),
       ],
     );
   }

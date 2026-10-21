@@ -679,8 +679,14 @@ abstract class SmileTexts {
   /// No description provided for @createSpaceHint.
   ///
   /// In de, this message translates to:
-  /// **'Name, z. B. Familie Müller oder Hotel Sacher'**
+  /// **'z. B. Familie Müller'**
   String get createSpaceHint;
+
+  /// No description provided for @nameMissing.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte gib einen Namen ein.'**
+  String get nameMissing;
 
   /// No description provided for @create.
   ///
@@ -745,7 +751,7 @@ abstract class SmileTexts {
   /// No description provided for @createAlbumHint.
   ///
   /// In de, this message translates to:
-  /// **'Name, z. B. Enkelkinder oder Lobby'**
+  /// **'z. B. Enkelkinder'**
   String get createAlbumHint;
 
   /// No description provided for @noAlbumYet.

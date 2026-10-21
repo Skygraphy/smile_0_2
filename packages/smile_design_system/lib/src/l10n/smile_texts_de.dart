@@ -366,7 +366,10 @@ class SmileTextsDe extends SmileTexts {
   String get createSpace => 'Space anlegen';
 
   @override
-  String get createSpaceHint => 'Name, z. B. Familie Müller oder Hotel Sacher';
+  String get createSpaceHint => 'z. B. Familie Müller';
+
+  @override
+  String get nameMissing => 'Bitte gib einen Namen ein.';
 
   @override
   String get create => 'Anlegen';
@@ -403,7 +406,7 @@ class SmileTextsDe extends SmileTexts {
   }
 
   @override
-  String get createAlbumHint => 'Name, z. B. Enkelkinder oder Lobby';
+  String get createAlbumHint => 'z. B. Enkelkinder';
 
   @override
   String get noAlbumYet => 'Noch kein Album';

@@ -126,5 +126,33 @@
     "detail": "Frage aus Claudes Durchsicht von 0.0.2 (Schritt 43), Ernst: umsetzen. Das Feld nimmt sie weiterhin nicht an, sagt jetzt aber grau, warum und was stattdessen geht (Punkt oder Unterstrich, ae/oe/ue/ss).",
     "status": "behoben",
     "version": "0.0.2"
+  },
+  {
+    "no": 17,
+    "chapter": "ch02",
+    "title": "Bild entfernen fehlte gleich nach dem Wählen eines Bildes",
+    "detail": "Space (auch Album, Frame): solange das neue Bild noch hochlud, bot die Auswahl Bild entfernen nicht an. Behoben: ein gerade gewähltes Bild zählt mit.",
+    "status": "behoben"
+  },
+  {
+    "no": 18,
+    "chapter": "ch02",
+    "title": "Beispieltext im Namensfeld abgeschnitten",
+    "detail": "Name, z. B. Familie Mülle… Behoben: kürzer, z. B. Familie Müller bzw. z. B. Enkelkinder.",
+    "status": "behoben"
+  },
+  {
+    "no": 19,
+    "chapter": "ch02",
+    "title": "Anlegen ohne Namen schloss das Fenster stumm",
+    "detail": "Space/Album anlegen ohne Namen: jetzt bleibt das Fenster offen mit Bitte gib einen Namen ein (wie Fund 6).",
+    "status": "behoben"
+  },
+  {
+    "no": 20,
+    "chapter": "ch02",
+    "title": "Titelbild: Automatisch zeigte noch einige Sekunden das alte Bild",
+    "detail": "Behoben: ein gerade gewähltes Titelbild wird bei Automatisch sofort verworfen.",
+    "status": "behoben"
   }
 ]

@@ -73,6 +73,14 @@ class TestBackend {
         body: {'user_id': id, 'display_name': name, 'handle': ?handle});
   }
 
+  /// A profile picture, stored as the app does (`users/<id>/<ms>`).
+  static Future<void> setAvatar(String email, Uint8List bytes, String contentType) async {
+    final id = await userId(email);
+    final path = 'users/$id/${DateTime.now().millisecondsSinceEpoch}';
+    await putPublic(path, bytes, contentType);
+    await _send('PATCH', '/rest/v1/profiles?user_id=eq.$id', body: {'avatar_path': path});
+  }
+
   /// The 6-digit code the mail would have brought.
   static Future<String> otp(String email) async {
     await userId(email);

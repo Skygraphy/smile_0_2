@@ -25,6 +25,15 @@ Future<bool> changeObjectPicture(
   final t = SmileTexts.of(context);
   final pictures = service ?? ObjectPictureService();
   final isAlbum = kind == ObjectKind.album;
+  final key = switch (kind) {
+    ObjectKind.space => LocalChanges.spacePicture(id),
+    ObjectKind.frame => LocalChanges.framePicture(id),
+    ObjectKind.album => LocalChanges.albumCover(id),
+  };
+  // A picture just chosen (still uploading) counts too, so it can be
+  // removed right away (2026-10-21, test suite find 17).
+  final pending = LocalChanges.instance.picture(key);
+  final hasPicture = pending != null ? !pending.removed : hasCustomPicture;
 
   final choice = await showModalBottomSheet<_PictureChoice>(
     context: context,
@@ -62,7 +71,7 @@ Future<bool> changeObjectPicture(
             title: Text(t.pictureFromWeb),
             onTap: () => Navigator.of(context).pop(_PictureChoice.url),
           ),
-          if (hasCustomPicture)
+          if (hasPicture)
             ListTile(
               leading: Icon(isAlbum ? SmileIcons.restore : SmileIcons.delete, color: Theme.of(context).colorScheme.primary),
               title: Text(
@@ -80,11 +89,6 @@ Future<bool> changeObjectPicture(
   // The new picture shows at once, everywhere, while it uploads; if saving
   // fails it goes away again with a message (LocalChanges, 2026-10-09).
   final local = LocalChanges.instance;
-  final key = switch (kind) {
-    ObjectKind.space => LocalChanges.spacePicture(id),
-    ObjectKind.frame => LocalChanges.framePicture(id),
-    ObjectKind.album => LocalChanges.albumCover(id),
-  };
   final affects = switch (kind) {
     ObjectKind.space => tablesChanged({'spaces'}, spaceIds: {id}),
     ObjectKind.frame => tablesChanged({'frames'}),
@@ -106,7 +110,7 @@ Future<bool> changeObjectPicture(
       );
     case _PictureChoice.camera:
     case _PictureChoice.gallery:
-      final picked = await pickPictureBytes(choice == _PictureChoice.camera ? ImageSource.camera : ImageSource.gallery);
+      final picked = await pickPictureBytes(choice == _PictureChoice.camera ? ImageSource.camera : ImageSource.gallery, person: false);
       if (picked == null) return false;
       return local.run(
         overrides: {key: LocalPicture.bytes(picked.bytes)},
@@ -132,7 +136,9 @@ Future<bool> changeObjectPicture(
       );
     case _PictureChoice.remove:
       // Back to automatic (album): which photo that is, only the server
-      // knows -- shown as soon as it answered.
+      // knows -- shown as soon as it answered. A picture chosen a moment
+      // ago must not linger meanwhile (2026-10-21, test suite find 20).
+      if (isAlbum) local.drop([key]);
       return local.run(
         overrides: isAlbum ? const {} : {key: const LocalPicture.removed()},
         commit: () => isAlbum ? pictures.resetAlbumCover(id) : pictures.save(kind, id, null),

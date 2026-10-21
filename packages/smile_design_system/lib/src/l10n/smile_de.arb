@@ -206,7 +206,8 @@
   "spacesEmptyTitle": "Noch kein eigener Space",
   "spacesEmptyMessage": "Einen Space brauchst du nur, wenn du selbst Frames aufstellst oder Alben verwaltest, für dein Zuhause oder deinen Betrieb.",
   "createSpace": "Space anlegen",
-  "createSpaceHint": "Name, z. B. Familie Müller oder Hotel Sacher",
+  "createSpaceHint": "z. B. Familie Müller",
+  "nameMissing": "Bitte gib einen Namen ein.",
   "create": "Anlegen",
   "youAreAdmin": "Du bist Admin",
   "youAreCoAdmin": "Du bist Co-Admin",
@@ -229,7 +230,7 @@
       "space": {"type": "String"}
     }
   },
-  "createAlbumHint": "Name, z. B. Enkelkinder oder Lobby",
+  "createAlbumHint": "z. B. Enkelkinder",
   "noAlbumYet": "Noch kein Album",
   "sharedIntoSpace": "Mit diesem Space geteilt",
   "sharedIntoSpaceHint": "Alben anderer Spaces, die hier nur angesehen werden",

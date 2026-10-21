@@ -29,9 +29,11 @@ Future<String?> _pickAndUpload(String objectPath, ImageSource source) async {
 /// it uploads (LocalChanges, 2026-10-09).
 typedef PickedPicture = ({Uint8List bytes, String mimeType});
 
-Future<PickedPicture?> pickPictureBytes(ImageSource source) async {
+/// [person]: a picture of someone (the test app then offers its portraits,
+/// otherwise its test photos, e.g. for a Space or an album).
+Future<PickedPicture?> pickPictureBytes(ImageSource source, {bool person = true}) async {
   if (smileTestMode) {
-    final test = (await pickTestMedia(multiple: false, videos: false, profiles: true)).firstOrNull;
+    final test = (await pickTestMedia(multiple: false, videos: false, profiles: person)).firstOrNull;
     if (test == null) return null;
     return (bytes: await test.readAsBytes(), mimeType: test.path.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg');
   }
