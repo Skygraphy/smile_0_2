@@ -180,13 +180,15 @@
     "chapter": "ch03",
     "title": "Datumsmarke Heute verdeckte den Titel des obersten Fotos",
     "detail": "Frage aus Claudes Durchsicht von 0.0.5, Ernst: nicht verdecken. Behoben: die schwebende Datumsmarke zeigt sich nur beim Scrollen und blendet sich danach aus (wie in WhatsApp).",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.6"
   },
   {
     "no": 24,
     "chapter": "ch03",
     "title": "Lange Namen wurden gleich abgeschnitten",
     "detail": "Ernst: Titel usw. erst verkleinern, erst ab einer Mindestgröße … verwenden. Behoben: Namen in Listen und in der Titelleiste eines Albums werden bis auf drei Viertel kleiner, erst dann …",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.6"
   }
 ]
