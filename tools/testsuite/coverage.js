@@ -30,14 +30,19 @@ const matches = (element, tap, screen) => {
   const alias = aliases[screen]?.[element];
   if (alias && alias === tap) return true;
   if (tap === "class:android.widget.EditText") return element.startsWith("Eingabefeld");
-  return element.startsWith(tap) || tap.startsWith(element);
+  if (element.startsWith(tap) || tap.startsWith(element)) return true;
+  // A row read out as several parts ("UR · Urlaub 2026"): one of them tapped.
+  return element.split(" · ").includes(tap);
 };
+// Flutter's own drag handle on bottom sheets ("Gitter"), not part of Smile.
+const ignored = new Set(["Gitter"]);
 
 const result = [];
 let tested = 0, later = 0, open = 0;
 for (const [screen, m] of screens) {
   const elements = [];
   for (const [label, e] of m) {
+    if (ignored.has(label)) continue;
     const hit = taps.filter(t => t.screen === screen && matches(label, t.label, screen));
     const promise = Object.entries(declared[screen] ?? {}).find(([prefix]) => label.startsWith(prefix));
     let status = "offen", where = null;

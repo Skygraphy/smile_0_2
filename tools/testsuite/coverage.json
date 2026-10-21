@@ -1,28 +1,79 @@
 {
-  "_": "Elements a chapter sees but that are tested in another chapter: screen -> element label (prefix) -> chapter id. Everything a chapter taps counts by itself; whatever is neither tapped nor listed here shows as nicht geprüft.",
-  "Anmeldung": {
-    "Dieses Gerät als Frame verwenden": "ch06"
+ "_": "Elements a chapter sees but that are tested in another chapter: screen -> element label (prefix) -> chapter id. Everything a chapter taps counts by itself; whatever is neither tapped nor listed here shows as nicht geprüft.",
+ "Anmeldung": {
+  "Dieses Gerät als Frame verwenden": "ch06"
+ },
+ "Startseite (leer)": {
+  "Aufnehmen": "ch03",
+  "Neuigkeiten": "ch09",
+  "Ich wurde eingeladen": "ch05",
+  "Ich richte Smile ein": "ch02",
+  "Alben": "ch02",
+  "Spaces": "ch02"
+ },
+ "Menü": {
+  "Code scannen": "ch05"
+ },
+ "Einstellungen": {
+  "Tipps": "ch10",
+  "Konto löschen": "ch11",
+  "Bevorzugter Frame": "ch07"
+ },
+ "_aliases": {
+  "Begrüßung": {
+   "?": "Profilbild-Kreis",
+   "AB": "Profilbild-Kreis"
   },
-  "Startseite (leer)": {
-    "Aufnehmen": "ch03",
-    "Neuigkeiten": "ch09",
-    "Ich wurde eingeladen": "ch05",
-    "Ich richte Smile ein": "ch02",
-    "Alben": "ch02",
-    "Spaces": "ch02"
+  "Space": {
+   "FA": "Bild ändern",
+   "Familie Berger": "Space umbenennen",
+   "Familie Berger-Huber": "Space umbenennen",
+   "Sommerurlaub 2026": "Urlaub 2026",
+   "GE · Geburtstage": "Urlaub 2026",
+   "WE · Weihnachten": "Urlaub 2026"
   },
-  "Menü": {
-    "Code scannen": "ch05"
+  "Space anlegen": {
+   "Eingabefeld: Bitte gib einen Namen ein.": "Eingabefeld: Name"
   },
-  "Einstellungen": {
-    "Tipps": "ch10",
-    "Konto löschen": "ch11",
-    "Bevorzugter Frame": "ch07"
+  "Menü des Space": {
+   "Menü schließen": "Schließen"
   },
-  "_aliases": {
-    "Begrüßung": {
-      "?": "Profilbild-Kreis",
-      "AB": "Profilbild-Kreis"
-    }
+  "Album (leer)": {
+   "UR · Urlaub 2026": "Infos zum Album",
+   "Sommerurlaub 2026": "Infos zum Album",
+   "WE · Weihnachten": "Infos zum Album",
+   "GE · Geburtstage": "Infos zum Album"
+  },
+  "Album-Infos": {
+   "UR": "Bild ändern",
+   "SO": "Bild ändern",
+   "Urlaub 2026": "Album umbenennen",
+   "Sommerurlaub 2026": "Album umbenennen"
+  },
+  "Startseite": {
+   "Sommerurlaub 2026 · Noch keine Fotos · gerade eben": "Geburtstage",
+   "WE · Weihnachten · Noch keine Fotos · gerade eben": "Geburtstage"
   }
+ },
+ "Space": {
+  "Frame": "ch06",
+  "Co-Admin": "ch08",
+  "0 Frames": "ch06",
+  "Admins": "ch08",
+  "Papierkorb": "ch04",
+  "Space löschen": "ch11"
+ },
+ "Menü des Space": {
+  "Frame verbinden": "ch06",
+  "Co-Admin einladen": "ch08"
+ },
+ "Album-Infos": {
+  "Einladen": "ch05",
+  "Mit Space teilen": "ch08",
+  "Du · Admin": "ch05",
+  "Person einladen": "ch05",
+  "Geteilt mit": "ch08",
+  "Album verlassen": "ch05",
+  "Album löschen": "ch11"
+ }
 }
