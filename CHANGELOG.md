@@ -4,6 +4,17 @@ Jede Version, die getestet wird, bekommt eine eigene Nummer (0.0.1, 0.0.2 …),
 ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 (Tag `v0.0.1` …). Eine neue Version entsteht mit `tools/testsuite/release.sh`.
 
+## 0.0.3 (2026-10-21)
+
+Kapitel 2 (Space und Alben) dazu, vier Verbesserungen daraus.
+
+Behoben:
+
+- 17: Bild entfernen fehlte gleich nach dem Wählen eines Bildes
+- 18: Beispieltext im Namensfeld abgeschnitten
+- 19: Anlegen ohne Namen schloss das Fenster stumm
+- 20: Titelbild: Automatisch zeigte noch einige Sekunden das alte Bild
+
 ## 0.0.2 (2026-10-20)
 
 Sechs Verbesserungen aus der Durchsicht von Kapitel 1.
