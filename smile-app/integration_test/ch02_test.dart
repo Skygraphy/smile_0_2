@@ -48,6 +48,15 @@ void main() {
       return r.isEmpty ? {} : r.first as Map;
     }
 
+    // Files of one picture folder (state.sql names them), once the old ones are cleaned up.
+    Future<bool> filesSettle(String key, int count) async {
+      for (var i = 0; i < 40; i++) {
+        if ((((await TestBackend.state())['files'] as Map)[key] as int? ?? 0) == count) return true;
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+      }
+      return false;
+    }
+
     Future<List<String>> albumNames() async =>
         [for (final r in await TestBackend.select('channels', 'select=name&order=name')) (r as Map)['name'] as String];
 
@@ -302,6 +311,7 @@ void main() {
         }
         return false;
       });
+      await c.check('Genau eine Bilddatei, keine Überbleibsel', () => filesSettle('avatars/spaces/Familie Berger', 1));
       await c.snap();
 
       c.step('Bild des Space entfernen', 'Auf das Bild tippen und Bild entfernen wählen.',
@@ -319,6 +329,7 @@ void main() {
         }
         return false;
       });
+      await c.check('Keine Bilddatei mehr', () => filesSettle('avatars/spaces/Familie Berger', 0));
       await c.snap();
 
       c.step('Bild des Space aufnehmen', 'Auf das Bild tippen, Foto aufnehmen, dann Haus mit Garten antippen.',
@@ -338,6 +349,7 @@ void main() {
         }
         return false;
       });
+      await c.check('Genau eine Bilddatei, keine Überbleibsel', () => filesSettle('avatars/spaces/Familie Berger', 1));
       await c.snap();
 
       c.step('Bild des Space von einer Internetadresse', 'Auf das Bild tippen, Von einer Internetadresse laden, die Adresse eines Bildes (Haus am Abend) eingeben und Laden antippen.',
@@ -360,6 +372,7 @@ void main() {
         }
         return false;
       });
+      await c.check('Genau eine Bilddatei, keine Überbleibsel', () => filesSettle('avatars/spaces/Familie Berger', 1));
       await c.hideKeyboard();
       await c.snap();
 
@@ -490,6 +503,7 @@ void main() {
         }
         return false;
       });
+      await c.check('Genau eine Bilddatei, keine Überbleibsel', () => filesSettle('avatars/channels/Sommerurlaub 2026', 1));
       await c.snap();
 
       c.step('Titelbild: automatisch', 'Auf das Bild tippen und Automatisch: neuestes Foto wählen.',
@@ -507,6 +521,7 @@ void main() {
         }
         return false;
       });
+      await c.check('Keine Bilddatei mehr', () => filesSettle('avatars/channels/Sommerurlaub 2026', 0));
       await c.snap();
 
       c.step('Titelbild aufnehmen', 'Auf das Bild tippen, Foto aufnehmen, dann Strand antippen.', 'Der Strand ist wieder das Titelbild.',
@@ -525,6 +540,7 @@ void main() {
         }
         return false;
       });
+      await c.check('Genau eine Bilddatei, keine Überbleibsel', () => filesSettle('avatars/channels/Sommerurlaub 2026', 1));
       await c.snap();
 
       c.step('Titelbild von einer Internetadresse', 'Auf das Bild tippen, Von einer Internetadresse laden, die Adresse eines Bildes (Strand am Abend) eingeben und Laden antippen.',
@@ -547,6 +563,7 @@ void main() {
         }
         return false;
       });
+      await c.check('Genau eine Bilddatei, keine Überbleibsel', () => filesSettle('avatars/channels/Sommerurlaub 2026', 1));
       await c.hideKeyboard();
       await c.snap();
 
