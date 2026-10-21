@@ -172,6 +172,7 @@
     "chapter": "ch03",
     "title": "Senden an: mit offener Tastatur unten abgeschnitten",
     "detail": "Beim Titel-Eintippen nach der Kamera auf der Startseite war die Seite 30 Punkte zu lang (Bild immer bildschirmbreit). Gefunden vom Test-Rahmen, seit die Test-App nicht mehr an Crashlytics meldet. Behoben: das Bild wird kleiner, wenn der Platz knapp ist.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.5"
   }
 ]
