@@ -214,5 +214,21 @@
     "detail": "Frage aus Claudes Durchsicht von 0.0.7 (Diashow-Einstellungen), Ernst: coral. Behoben im Design-System: gewählte Optionen sind coral mit hellem Text, überall (auch Frame-Wiedergabe); sie bleiben antippbar, ein Tipp ändert nichts.",
     "status": "behoben",
     "version": "0.0.8"
+  },
+  {
+    "no": 28,
+    "chapter": "ch05",
+    "title": "Buchstabenleiste in den Kontakten lief über",
+    "detail": "Mit großer Systemschrift (S26) passten die 27 Buchstaben A bis Z nicht in die Höhe, unten fehlten 49 Pixel. Behoben: jeder Buchstabe bekommt einen gleichen Anteil und wird nur kleiner, wenn der Platz nicht reicht.",
+    "status": "behoben",
+    "version": "0.0.9"
+  },
+  {
+    "no": 29,
+    "chapter": "ch05",
+    "title": "Album-Seite nach dem Verlassen meldete einen Fehler",
+    "detail": "Kam beim Verlassen eines Albums gerade eine Aktualisierung an, lud die Seite des Albums neu und scheiterte (nicht mehr im Album); das wurde als Fehler gemeldet. Behoben: die Seite schließt sich dann still und Smile geht zur Startseite.",
+    "status": "behoben",
+    "version": "0.0.9"
   }
 ]
