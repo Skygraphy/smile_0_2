@@ -27,18 +27,21 @@ begin
     into people
     from auth.users u left join public.profiles p on p.user_id = u.id;
   -- Files per bucket and first folder, ids replaced so runs compare:
-  -- users/<id> becomes the email, spaces/<id> and channels/<id> the name.
+  -- users/<id> becomes the email, spaces/<id> and channels/<id> the name,
+  -- photos and videos (<album id>/<media id>...) count per album name.
   select coalesce(jsonb_object_agg(k, c order by k), '{}'::jsonb) into files from (
     select o.bucket_id || '/' || coalesce(
              u.email,
              'spaces/' || s.name,
              'channels/' || ch.name,
+             'Album ' || alb.name,
              split_part(o.name, '/', 1) || '/' || split_part(o.name, '/', 2)) as k,
            count(*) as c
       from storage.objects o
       left join auth.users u on split_part(o.name, '/', 1) = 'users' and u.id::text = split_part(o.name, '/', 2)
       left join public.spaces s on split_part(o.name, '/', 1) = 'spaces' and s.id::text = split_part(o.name, '/', 2)
       left join public.channels ch on split_part(o.name, '/', 1) = 'channels' and ch.id::text = split_part(o.name, '/', 2)
+      left join public.channels alb on alb.id::text = split_part(o.name, '/', 1)
      group by 1) f;
   return jsonb_build_object('rows', counts, 'people', people, 'files', files);
 end;
