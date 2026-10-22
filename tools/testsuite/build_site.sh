@@ -46,7 +46,11 @@ node -e '
   const section=v=>{const m=log.split(/^## /m).find(s=>s.startsWith(v+" "));return m?m.split("\n").slice(1).join("\n").trim():"";};
   const versions=fs.readdirSync(path.join(site,"v")).sort(cmp).reverse().map(v=>{
     const chapters=fs.readdirSync(path.join(site,"v",v)).filter(d=>/^ch\d\d$/.test(d)).sort().map(id=>{
-      const j=JSON.parse(fs.readFileSync(path.join(site,"v",v,id,"steps.json")));return {id,no:j.no,title:j.title,steps:j.steps.length,ranAt:j.ranAt};});
+      const j=JSON.parse(fs.readFileSync(path.join(site,"v",v,id,"steps.json")));
+      // A confirmation belongs to a step by its title: two steps of one
+      // chapter must never share one (2026-10-22: ch04 "Zurück ins Album").
+      const seen=new Map();for(const s of j.steps){const k=s.title.toLowerCase();if(seen.has(k)){console.error("Doppelter Schritt-Titel in "+v+"/"+id+": "+s.title+" (Schritt "+seen.get(k)+" und "+s.no+")");process.exit(1);}seen.set(k,s.no);}
+      return {id,no:j.no,title:j.title,steps:j.steps.length,ranAt:j.ranAt};});
     const head=(log.match(new RegExp("^## "+v.replace(/\./g,"\\.")+" \\(([^)]*)\\)","m"))||[])[1]||"";
     return {version:v,date:head,changelog:section(v),chapters};});
   // The page may hold at most 512 files: only the two newest versions keep

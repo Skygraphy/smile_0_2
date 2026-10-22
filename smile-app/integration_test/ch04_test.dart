@@ -370,7 +370,7 @@ void main() {
       await c.check('Nicht mehr ausgeblendet', () => eventually(() async => (await TestBackend.select('media_item_hides', 'select=media_item_id')).isEmpty));
       await c.snap();
 
-      c.step('Zurück ins Album', 'Die Zurück-Geste von Android.', 'Das Album, der Herbstwald ist wieder da.',
+      c.step('Aus den Ausgeblendeten zurück', 'Die Zurück-Geste von Android.', 'Das Album, der Herbstwald ist wieder da.',
           explain: 'Zurück führt aus den ausgeblendeten Fotos ins Album, nicht aus dem Album hinaus.');
       await c.back();
       c.screen('Album');
