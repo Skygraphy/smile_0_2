@@ -109,3 +109,46 @@ class TestBackend {
   /// Everything the server holds right now (testsuite_state(), state.sql).
   static Future<Map<String, dynamic>> state() async => (await rpc('testsuite_state') as Map).cast<String, dynamic>();
 }
+
+/// A test person without a device acting by themselves, as the app would
+/// for them: signed in with a login code, only their own rights (RLS) and
+/// the same Edge Functions (chapter 5 on: Paul and Lena answer Anna).
+class TestUser {
+  TestUser._(this.email, this.id, this._token);
+
+  final String email;
+  final String id;
+  final String _token;
+
+  static Future<TestUser> signIn(String email) async {
+    final code = await TestBackend.otp(email);
+    final session = await TestBackend._send('POST', '/auth/v1/verify', body: {'type': 'email', 'email': email, 'token': code});
+    return TestUser._(email, (session['user'] as Map)['id'] as String, session['access_token'] as String);
+  }
+
+  Map<String, String> get _h =>
+      {'apikey': TestBackend._key, 'Authorization': 'Bearer $_token', 'Content-Type': 'application/json'};
+
+  /// An Edge Function; its answer, refusals included ({error: ...}).
+  Future<Map<String, dynamic>> edge(String fn, Map<String, Object?> body) async {
+    TestBackend._guard();
+    final res = await http.post(Uri.parse('${TestBackend.url}/functions/v1/$fn'), headers: _h, body: jsonEncode(body));
+    return (jsonDecode(res.body) as Map).cast<String, dynamic>();
+  }
+
+  /// PostgREST as this person: e.g. patch('channel_membership_requests', 'id=eq.x', {...}).
+  Future<List> patch(String table, String query, Map<String, Object?> body) => _rest('PATCH', '$table?$query', body);
+  Future<List> insert(String table, Map<String, Object?> body) => _rest('POST', table, body);
+  Future<List> delete(String table, String query) => _rest('DELETE', '$table?$query', null);
+  Future<List> select(String table, String query) => _rest('GET', '$table?$query', null);
+
+  Future<List> _rest(String method, String path, Object? body) async {
+    TestBackend._guard();
+    final req = http.Request(method, Uri.parse('${TestBackend.url}/rest/v1/$path'))
+      ..headers.addAll({..._h, 'Prefer': 'return=representation'});
+    if (body != null) req.body = jsonEncode(body);
+    final res = await http.Response.fromStream(await req.send());
+    if (res.statusCode >= 300) throw StateError('$method $path als $email: ${res.statusCode} ${res.body}');
+    return res.body.isEmpty ? const [] : jsonDecode(res.body) as List;
+  }
+}

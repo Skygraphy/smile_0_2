@@ -464,18 +464,27 @@ class _ContactsInviteScreenState extends State<ContactsInviteScreen> {
                             onVerticalDragUpdate: (d) => railAt(d.localPosition.dy, box.maxHeight),
                             onVerticalDragEnd: (_) => setState(() => _dragLetter = null),
                             onVerticalDragCancel: () => setState(() => _dragLetter = null),
+                            // An equal share each, smaller only when it doesn't fit
+                            // (2026-10-22, test suite find 28: with a large system
+                            // font the rail overflowed on the S26).
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 for (final letter in _letters)
-                                  Text(
-                                    letter,
-                                    style: TextStyle(
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: letter == _dragLetter
-                                          ? scheme.primary
-                                          : muted.withValues(alpha: letterOffsets.containsKey(letter) ? 1 : 0.35),
+                                  Expanded(
+                                    child: Center(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          letter,
+                                          style: TextStyle(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: letter == _dragLetter
+                                                ? scheme.primary
+                                                : muted.withValues(alpha: letterOffsets.containsKey(letter) ? 1 : 0.35),
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                               ],

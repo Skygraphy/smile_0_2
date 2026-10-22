@@ -213,8 +213,6 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
     );
   }
 
-  /// "Ich wurde eingeladen": invitations arrive by email address and wait
-  /// in Neuigkeiten -- there is no invite code to type in.
   /// "Ich wurde eingeladen": scan the QR code or type the code (2026-10-11).
   Future<void> _scanCode() async {
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ScanCodeScreen()));

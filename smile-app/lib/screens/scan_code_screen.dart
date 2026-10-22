@@ -8,6 +8,7 @@ import '../main.dart';
 import '../services/invite_links.dart';
 import '../services/invite_service.dart';
 import '../services/offline.dart';
+import '../services/test_media.dart' show smileTestMode;
 import '../widgets/friendly_error.dart';
 import 'channel_feed_screen.dart';
 import 'person_screen.dart';
@@ -29,7 +30,10 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
   final _service = InviteService();
   // A code from a link is redeemed right away: no camera unless that fails
   // (it was started and disposed at once, 2026-10-17).
-  late final _scanner = MobileScannerController(formats: const [BarcodeFormat.qrCode], autoStart: widget.initial == null);
+  // The test app never opens the camera: no real picture may end up in a
+  // test or the tutorial (2026-10-22).
+  late final _scanner =
+      MobileScannerController(formats: const [BarcodeFormat.qrCode], autoStart: !smileTestMode && widget.initial == null);
   late bool _busy = widget.initial != null;
 
   @override
@@ -155,7 +159,7 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
   void _resume() {
     if (!mounted) return;
     setState(() => _busy = false);
-    unawaited(_scanner.start());
+    if (!smileTestMode) unawaited(_scanner.start());
   }
 
   Future<void> _finish(RedeemResult result) async {
@@ -208,6 +212,9 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
+                if (smileTestMode)
+                  const ColoredBox(color: Colors.black)
+                else
                 MobileScanner(
                   controller: _scanner,
                   onDetect: _onDetect,

@@ -130,6 +130,13 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     } catch (e) {
       if (CacheMissException.isIn(e)) return;
       if (!mounted) return;
+      // No longer in it (left just now, or removed meanwhile): nothing to
+      // show here any more -- back home, no message (2026-10-22, test suite
+      // find 29).
+      if (e is MembershipServiceException && e.code == 'not_a_channel_member') {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        return;
+      }
       setState(() => _errorMessage = SmileTexts.of(context).albumInfoLoadError(errorReason(context, e)));
     }
   }

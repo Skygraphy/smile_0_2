@@ -48,6 +48,23 @@ class Chapter {
 
   void screen(String name) => _screen = name;
 
+  /// Old messages (SnackBars) gone, as they would be after a few seconds --
+  /// the test is faster than a person (chapter 5).
+  void clearMessages() {
+    for (final m in tester.stateList<ScaffoldMessengerState>(find.byType(ScaffoldMessenger))) {
+      m.clearSnackBars();
+    }
+  }
+
+  /// Pictures from the internet load in real time: before a screenshot
+  /// that shows profile pictures (else their initials stand in).
+  Future<void> letLoad({double seconds = 1.5}) async {
+    final end = DateTime.now().add(Duration(milliseconds: (seconds * 1000).round()));
+    while (DateTime.now().isBefore(end)) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  }
+
   void step(String title, String doIt, String expect, {String kind = 'Hauptweg', String explain = ''}) {
     _no++;
     _current = {'title': title, 'do': doIt, 'expect': expect, 'kind': kind, 'why': explain};
