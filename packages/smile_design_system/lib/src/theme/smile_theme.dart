@@ -85,6 +85,14 @@ class SmileTheme {
         backgroundColor: primary,
         foregroundColor: onPrimary,
       ),
+      // A chosen option is coral like a switch that is on -- not the grey
+      // that reads as "not available" (2026-10-22, Ernst, test suite find 27).
+      chipTheme: ChipThemeData(
+        selectedColor: primary,
+        checkmarkColor: onPrimary,
+        secondaryLabelStyle: TextStyle(color: onPrimary, fontWeight: FontWeight.w600),
+        labelStyle: TextStyle(color: scheme.onSurface),
+      ),
       // Bottom bar (Alben / Spaces / Profil): the selected tab gets a soft
       // coral pill and a coral filled icon, everything else stays neutral.
       navigationBarTheme: NavigationBarThemeData(

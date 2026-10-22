@@ -257,7 +257,7 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                     ChoiceChip(
                       label: Text(name),
                       selected: value == selected,
-                      onSelected: value == selected ? null : (_) => set(change(value)),
+                      onSelected: (_) { if (value != selected) set(change(value)); },
                     ),
                 ],
               ),

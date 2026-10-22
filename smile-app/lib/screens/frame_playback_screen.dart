@@ -103,7 +103,7 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
                 ChoiceChip(
                   label: Text(name),
                   selected: value == selected,
-                  onSelected: value == selected ? null : (_) => _save({column: value}),
+                  onSelected: (_) { if (value != selected) _save({column: value}); },
                 ),
             ],
           ),

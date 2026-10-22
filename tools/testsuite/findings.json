@@ -206,5 +206,12 @@
     "detail": "Gefunden vom Test-Rahmen: änderte man die Einstellungen, während ein Video der Diashow lud, rief die App für das schon entfernte Video noch setState auf. Behoben.",
     "status": "behoben",
     "version": "0.0.7"
+  },
+  {
+    "no": 27,
+    "chapter": "ch04",
+    "title": "Gewählte Option sah grau und gesperrt aus",
+    "detail": "Frage aus Claudes Durchsicht von 0.0.7 (Diashow-Einstellungen), Ernst: coral. Behoben im Design-System: gewählte Optionen sind coral mit hellem Text, überall (auch Frame-Wiedergabe); sie bleiben antippbar, ein Tipp ändert nichts.",
+    "status": "behoben"
   }
 ]
