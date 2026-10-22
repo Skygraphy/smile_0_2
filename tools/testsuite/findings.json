@@ -212,6 +212,7 @@
     "chapter": "ch04",
     "title": "Gewählte Option sah grau und gesperrt aus",
     "detail": "Frage aus Claudes Durchsicht von 0.0.7 (Diashow-Einstellungen), Ernst: coral. Behoben im Design-System: gewählte Optionen sind coral mit hellem Text, überall (auch Frame-Wiedergabe); sie bleiben antippbar, ein Tipp ändert nichts.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.8"
   }
 ]
