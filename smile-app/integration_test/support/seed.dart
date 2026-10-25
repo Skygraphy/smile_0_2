@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smile_app/services/channel_service.dart';
+import 'package:smile_app/services/membership_service.dart';
 import 'package:smile_app/services/object_picture_service.dart';
 import 'package:smile_app/services/space_service.dart';
 import 'package:smile_app/services/upload_queue.dart';
@@ -14,6 +15,9 @@ import 'backend.dart';
 import 'chapter.dart';
 
 const anna = 'anna.berger@example.com';
+const paulMail = 'paul.berger@example.com';
+const lenaMail = 'lena.huber@example.com';
+const tomMail = 'tom.berger@example.com';
 
 /// What a chapter starts from: the ids it needs.
 class Seed {
@@ -101,4 +105,50 @@ Future<Seed> endOfChapter4(WidgetTester tester) async {
   final kerzen = (await items(birthdays))[2]['id'] as String;
   await pictures.setAlbumCoverPhoto(birthdays, kerzen);
   return Seed(spaceId: spaceId, albums: {'Geburtstage': birthdays, 'Sommerurlaub 2026': summer, 'Weihnachten': christmas});
+}
+
+/// The end of chapter 5, on top of [endOfChapter4] (Anna signed in):
+/// Geburtstage with Anna, Lena and Tom; Lena's Space Familie Huber with
+/// Wanderungen (Anna and Tom in it) and Bergtouren (Anna left again);
+/// Anna's invitation to Lena for Weihnachten still open. Everyone has a
+/// profile picture.
+Future<Seed> endOfChapter5(WidgetTester tester) async {
+  final seed = await endOfChapter4(tester);
+  final support = (await getApplicationSupportDirectory()).path;
+  Future<void> picture(String mail, String file) async =>
+      TestBackend.setAvatar(mail, await File('$support/fixtures/profiles/$file').readAsBytes(), 'image/png');
+  await picture(paulMail, 'mann_mittel.png');
+  await TestBackend.person(lenaMail, 'Lena Huber', handle: 'lena.huber');
+  await picture(lenaMail, 'frau_jung.png');
+  await TestBackend.person(tomMail, 'Tom Berger', handle: 'tom.berger');
+  await picture(tomMail, 'mann_jung.png');
+  final lena = await TestUser.signIn(lenaMail);
+  final tom = await TestUser.signIn(tomMail);
+  final annaId = await TestBackend.userId(anna);
+  final members = MembershipService();
+
+  // Anna invites, the other one accepts (as in chapter 5).
+  Future<void> accept(TestUser who, String album) async {
+    final open = await who.select('channel_membership_requests', 'select=id&status=eq.pending&channel_id=eq.$album&user_id=eq.${who.id}');
+    await who.patch('channel_membership_requests', 'id=eq.${open.first['id']}', {'status': 'accepted'});
+  }
+
+  final birthdays = seed.albums['Geburtstage']!;
+  for (final who in [lena, tom]) {
+    await members.inviteMember(channelId: birthdays, userId: who.id);
+    await accept(who, birthdays);
+  }
+  await members.inviteMember(channelId: seed.albums['Weihnachten']!, userId: lena.id);
+
+  final huber = (await lena.insert('spaces', {'name': 'Familie Huber'})).first['id'];
+  final hiking = (await lena.insert('channels', {'space_id': huber, 'name': 'Wanderungen'})).first['id'] as String;
+  await lena.insert('channels', {'space_id': huber, 'name': 'Bergtouren'});
+  await lena.edge('invite-channel-member', {'channel_id': hiking, 'user_id': annaId});
+  final annaInvite = (await TestBackend.select(
+          'channel_membership_requests', 'select=id&status=eq.pending&channel_id=eq.$hiking&user_id=eq.$annaId'))
+      .first['id'] as String;
+  await members.decideMembershipRequest(annaInvite, accept: true);
+  await lena.edge('invite-channel-member', {'channel_id': hiking, 'user_id': tom.id});
+  await accept(tom, hiking);
+  return Seed(spaceId: seed.spaceId, albums: {...seed.albums, 'Wanderungen': hiking});
 }

@@ -19,7 +19,7 @@ import 'backend.dart';
 /// the phone for seconds. The app writes screenshots and steps.json itself;
 /// tools/testsuite/run.sh starts it and fetches them into `out/chNN`.
 class Chapter {
-  Chapter(this.tester, this.binding, {required this.id, required this.title, required this.intro}) {
+  Chapter(this.tester, this.binding, {required this.id, required this.title, required this.intro, this.device = 'S26'}) {
     // Animations (tap ripple, page changes) run 20x faster: the screenshots
     // show the same end state, the waiting for them shrinks to nothing.
     timeDilation = 0.05;
@@ -34,6 +34,10 @@ class Chapter {
   final String id;
   final String title;
   final String intro;
+
+  /// Which device the steps were recorded on (chapter 6 on: a second part
+  /// runs on the Frame, tools/testsuite/merge.js puts both together by time).
+  final String device;
 
   final _steps = <Map<String, Object?>>[];
   final _taps = <List<String>>[];
@@ -111,7 +115,8 @@ class Chapter {
     _steps.add({
       'no': _no,
       ..._current,
-      'device': 'S26',
+      'device': device,
+      'at': DateTime.now().millisecondsSinceEpoch,
       'image': '${_no.toString().padLeft(2, '0')}.png',
       'checks': _checks,
       'screen': _screen,
@@ -180,7 +185,11 @@ class Chapter {
       }
     }
     phone.putIfAbsent('angemeldet', () => false);
-    return {'server': server, 'handy': Map.fromEntries(phone.entries.toList()..sort((a, b) => a.key.compareTo(b.key)))};
+    // The Frame's own part under its own name (merge.js keeps both).
+    return {
+      'server': server,
+      device == 'S26' ? 'handy' : 'frame': Map.fromEntries(phone.entries.toList()..sort((a, b) => a.key.compareTo(b.key))),
+    };
   }
 
   // ------------------------------------------------------------ the screen

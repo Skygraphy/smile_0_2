@@ -15,6 +15,11 @@ import '../frame_mode.dart';
 /// Frame types that code in here once; there is no more code shown *by*
 /// this screen, and nothing to poll for -- claim-frame-pairing returns
 /// this Frame's own credentials directly.
+/// The test app (--dart-define=SMILE_TEST=true) never opens the camera: no
+/// real picture may end up in a test or the tutorial (2026-10-25). Read
+/// here, not from the app's code: the Frame stays apart from the app.
+const bool _testApp = bool.fromEnvironment('SMILE_TEST');
+
 class PairingScreen extends StatefulWidget {
   PairingScreen({super.key, PairingService? pairingService, FrameCredentialsStore? credentialsStore})
       : pairingService = pairingService ?? PairingService(),
@@ -34,7 +39,7 @@ class _PairingScreenState extends State<PairingScreen> {
   /// The QR code shown by the Smile app first (2026-10-11); typing the
   /// code is the alternative.
   bool _typing = false;
-  final _scanner = MobileScannerController(formats: const [BarcodeFormat.qrCode]);
+  final _scanner = MobileScannerController(formats: const [BarcodeFormat.qrCode], autoStart: !_testApp);
 
   @override
   void dispose() {
@@ -100,17 +105,25 @@ class _PairingScreenState extends State<PairingScreen> {
     return Scaffold(
       // Opened from the sign-in ("Dieses Gerät als Frame verwenden"): back.
       appBar: Navigator.of(context).canPop() ? AppBar() : null,
+      // With the keyboard open (a tablet lying sideways has little room
+      // left) the page scrolls and the field and Verbinden stay in sight;
+      // the big S makes room (2026-10-25, test suite find 30: 125 pixels
+      // overflowed, the button was under the keyboard).
       body: SafeArea(
         child: Center(
-          child: Padding(
+          child: SingleChildScrollView(
+            reverse: true,
             padding: const EdgeInsets.all(32),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SmileMark(size: 56),
-                  const SizedBox(height: 16),
+                  if (MediaQuery.viewInsetsOf(context).bottom < 120) ...[
+                    const SmileMark(size: 56),
+                    const SizedBox(height: 16),
+                  ],
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -135,6 +148,9 @@ class _PairingScreenState extends State<PairingScreen> {
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
+                            if (_testApp)
+                              const ColoredBox(color: Colors.black)
+                            else
                             MobileScanner(
                               controller: _scanner,
                               onDetect: _onDetect,
@@ -189,7 +205,7 @@ class _PairingScreenState extends State<PairingScreen> {
                   TextButton(
                     onPressed: () {
                       setState(() => _typing = false);
-                      unawaited(_scanner.start());
+                      if (!_testApp) unawaited(_scanner.start());
                     },
                     child: Text(t.frameScanInstead),
                   ),

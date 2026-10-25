@@ -230,5 +230,12 @@
     "detail": "Kam beim Verlassen eines Albums gerade eine Aktualisierung an, lud die Seite des Albums neu und scheiterte (nicht mehr im Album); das wurde als Fehler gemeldet. Behoben: die Seite schließt sich dann still und Smile geht zur Startseite.",
     "status": "behoben",
     "version": "0.0.9"
+  },
+  {
+    "no": 30,
+    "chapter": "ch06",
+    "title": "Frame verbinden am Tablet: Knopf unter der Tastatur",
+    "detail": "Am quer liegenden Tablet passte die Seite Frame verbinden mit offener Tastatur nicht auf den Bildschirm (125 Pixel zu viel, gelb-schwarze Streifen); der Knopf Verbinden und die Fehlermeldung lagen unter der Tastatur. Ernst hat es am X200 gesehen. Behoben: die Seite lässt sich verschieben, das große S macht Platz.",
+    "status": "behoben"
   }
 ]

@@ -30,7 +30,8 @@
       "Familie Berger-Huber": "Space umbenennen",
       "Sommerurlaub 2026": "Urlaub 2026",
       "GE · Geburtstage": "Urlaub 2026",
-      "WE · Weihnachten": "Urlaub 2026"
+      "WE · Weihnachten": "Urlaub 2026",
+      "Geburtstage": "Urlaub 2026"
     },
     "Space anlegen": {
       "Eingabefeld: Bitte gib einen Namen ein.": "Eingabefeld: Name"
@@ -68,6 +69,9 @@
     },
     "Kontakte": {
       "A · B · C · D · E · F · G · H · I · J · K · L · M · N · O · P · Q · R · S · T · U · V · W · X · Y · Z · #": "Buchstabenleiste"
+    },
+    "Frame: Diashow": {
+      "Noch keine Fotos": "Bildschirm antippen"
     }
   },
   "Space": {
@@ -76,7 +80,8 @@
     "0 Frames": "ch06",
     "Admins": "ch08",
     "Papierkorb": "ch04",
-    "Space löschen": "ch11"
+    "Space löschen": "ch11",
+    "WO · Wohnzimmer": "ch07"
   },
   "Menü des Space": {
     "Frame verbinden": "ch06",
@@ -103,7 +108,8 @@
   "_rows": {
     "Startseite": "Geburtstage",
     "Album-Infos": "Paul Berger",
-    "Kontakte": "Max Moser"
+    "Kontakte": "Max Moser",
+    "Frame: Diashow": "Bildschirm antippen"
   },
   "Neuigkeiten": {
     "WA · Einladung ins Album": "ch09",
@@ -112,5 +118,27 @@
     "PB · Einladung beantwortet": "ch09",
     "LH · Neue Anfrage": "ch09",
     "Alle entfernen": "ch09"
+  },
+  "Frame-Code": {
+    "Zurück": "ch07"
+  },
+  "Fernbedienung": {
+    "Neueste 20 Fotos": "ch07",
+    "LIEBLINGSBILDER": "ch07",
+    "Ton bei Videos": "ch07",
+    "Bedienstufe": "ch07",
+    "Wiedergabe": "ch07",
+    "Bedienung am Frame": "ch07",
+    "Alben verwalten": "ch07",
+    "Einstellungen & Gerät": "ch07",
+    "Geburtstage · läuft gerade": "ch07"
+  },
+  "Frames": {
+    "WO · Wohnzimmer": "ch07",
+    "Ton an": "ch07",
+    "Album wechseln": "ch07",
+    "Alben · Tab 1 von 3": "ch07",
+    "Frames · Tab 2 von 3": "ch07",
+    "Spaces · Tab 3 von 3": "ch07"
   }
 }
