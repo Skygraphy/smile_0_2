@@ -178,7 +178,10 @@ class Chapter {
         // later: no context, it would only make steps look changed.
         continue;
       } else {
-        final text = v is List ? v.join(',') : '$v';
+        var text = v is List ? v.join(',') : '$v';
+        // Today's date (e.g. the day of the last tip) only as "heute": the
+        // context must not change just because a run is on another day.
+        if (text == DateTime.now().toIso8601String().substring(0, 10)) text = 'heute';
         // Long values (e.g. the upload queue's picture data) only by size:
         // they say nothing about the context and would bloat every review.
         phone[key] = text.length > 200 ? '${text.length} Zeichen' : text;
