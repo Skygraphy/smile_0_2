@@ -5,7 +5,7 @@
   },
   "Startseite (leer)": {
     "Aufnehmen": "ch03",
-    "Neuigkeiten": "ch09",
+    "Neuigkeiten": "ch10",
     "Ich wurde eingeladen": "ch05",
     "Ich richte Smile ein": "ch02",
     "Alben": "ch02",
@@ -15,8 +15,8 @@
     "Code scannen": "ch05"
   },
   "Einstellungen": {
-    "Tipps": "ch10",
-    "Konto löschen": "ch11",
+    "Tipps": "ch11",
+    "Konto löschen": "ch12",
     "Bevorzugter Frame": "ch07"
   },
   "_aliases": {
@@ -71,7 +71,10 @@
       "A · B · C · D · E · F · G · H · I · J · K · L · M · N · O · P · Q · R · S · T · U · V · W · X · Y · Z · #": "Buchstabenleiste"
     },
     "Frame: Diashow": {
-      "Noch keine Fotos": "Bildschirm antippen"
+      "Noch keine Fotos": "Bildschirm antippen",
+      "Erster Abend am Meer": "Bildschirm antippen",
+      "Omas 80. Geburtstag": "Bildschirm antippen",
+      "Obst für alle": "Bildschirm antippen"
     },
     "Diashow-Auswahl": {
       "Code-Kästchen": "50"
@@ -79,29 +82,47 @@
     "Album wählen (Diashow)": {
       "Geburtstage": "Sommerurlaub 2026",
       "Weihnachten": "Sommerurlaub 2026"
+    },
+    "Frames": {
+      "Alben · Tab 1 von 3": "Alben",
+      "Frames · Tab 2 von 3": "Frames",
+      "Spaces · Tab 3 von 3": "Spaces"
+    },
+    "Fernbedienung": {
+      "Bedienung am Frame · Nur zuschauen": "Bedienstufe",
+      "Geburtstage · läuft gerade": "Sommerurlaub 2026",
+      "Geburtstage": "Sommerurlaub 2026"
+    },
+    "Frame: Album wählen": {
+      "Geburtstage": "Sommerurlaub 2026"
+    },
+    "Frame: Dauer": {
+      "5 Sekunden": "20 Sekunden",
+      "10 Sekunden": "20 Sekunden",
+      "1 Minute": "20 Sekunden"
     }
   },
   "Space": {
     "Frame": "ch06",
-    "Co-Admin": "ch08",
+    "Co-Admin": "ch09",
     "0 Frames": "ch06",
-    "Admins": "ch08",
+    "Admins": "ch09",
     "Papierkorb": "ch04",
-    "Space löschen": "ch11",
-    "WO · Wohnzimmer": "ch07"
+    "Space löschen": "ch12",
+    "WO · Wohnzimmer": "ch08"
   },
   "Menü des Space": {
     "Frame verbinden": "ch06",
-    "Co-Admin einladen": "ch08"
+    "Co-Admin einladen": "ch09"
   },
   "Album-Infos": {
     "Einladen": "ch05",
-    "Mit Space teilen": "ch08",
+    "Mit Space teilen": "ch09",
     "Du · Admin": "ch05",
     "Person einladen": "ch05",
-    "Geteilt mit": "ch08",
+    "Geteilt mit": "ch09",
     "Album verlassen": "ch05",
-    "Album löschen": "ch11"
+    "Album löschen": "ch12"
   },
   "Album": {
     "0": "ch04",
@@ -120,33 +141,27 @@
     "Diashow": "Bildschirm antippen"
   },
   "Neuigkeiten": {
-    "WA · Einladung ins Album": "ch09",
-    "GE · Einladung ins Album": "ch09",
-    "TB · Einladung beantwortet": "ch09",
-    "PB · Einladung beantwortet": "ch09",
-    "LH · Neue Anfrage": "ch09",
-    "Alle entfernen": "ch09"
+    "WA · Einladung ins Album": "ch10",
+    "GE · Einladung ins Album": "ch10",
+    "TB · Einladung beantwortet": "ch10",
+    "PB · Einladung beantwortet": "ch10",
+    "LH · Neue Anfrage": "ch10",
+    "Alle entfernen": "ch10"
   },
   "Frame-Code": {
-    "Zurück": "ch07"
+    "Zurück": "ch08"
   },
   "Fernbedienung": {
-    "Neueste 20 Fotos": "ch07",
-    "LIEBLINGSBILDER": "ch07",
-    "Ton bei Videos": "ch07",
-    "Bedienstufe": "ch07",
-    "Wiedergabe": "ch07",
-    "Bedienung am Frame": "ch07",
-    "Alben verwalten": "ch07",
-    "Einstellungen & Gerät": "ch07",
-    "Geburtstage · läuft gerade": "ch07"
+    "LIEBLINGSBILDER": "ch08",
+    "Ton bei Videos": "ch08",
+    "Wiedergabe": "ch08",
+    "Alben verwalten": "ch08",
+    "Einstellungen & Gerät": "ch08"
   },
   "Frames": {
-    "WO · Wohnzimmer": "ch07",
-    "Ton an": "ch07",
-    "Album wechseln": "ch07",
-    "Alben · Tab 1 von 3": "ch07",
-    "Frames · Tab 2 von 3": "ch07",
-    "Spaces · Tab 3 von 3": "ch07"
+    "WO · Wohnzimmer": "ch08"
+  },
+  "Frame: Einstellungen": {
+    "": "ch08"
   }
 }

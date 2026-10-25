@@ -13,7 +13,7 @@ declare
 begin
   -- How many rows each table holds (logs left out: they grow by themselves).
   for t in select tablename from pg_tables
-           where schemaname = 'public' and tablename not in ('internal_calls', 'health_alerts', 'app_releases')
+           where schemaname = 'public' and tablename not in ('internal_calls', 'health_alerts', 'app_releases', 'testsuite_signals')
            order by tablename loop
     execute format('select count(*) from public.%I', t.tablename) into n;
     counts := counts || jsonb_build_object(t.tablename, n);
@@ -67,3 +67,13 @@ end;
 $$;
 revoke all on function public.testsuite_reset() from public, anon, authenticated;
 grant execute on function public.testsuite_reset() to service_role;
+
+-- Signals between the two parts of a chapter that runs on two devices
+-- (chapter 7 on: the phone waits until the Frame has taken its picture and
+-- the other way round). Service role only (RLS on, no policies); emptied
+-- by testsuite_reset() like every table; not part of the state above.
+create table if not exists public.testsuite_signals (
+  name text primary key,
+  at timestamptz not null default now()
+);
+alter table public.testsuite_signals enable row level security;

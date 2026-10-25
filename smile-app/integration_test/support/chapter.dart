@@ -60,6 +60,16 @@ class Chapter {
     }
   }
 
+  /// Waits for the other device's signal (TestBackend.signal), the app
+  /// running on meanwhile; a missing one stops the chapter.
+  Future<void> awaitSignal(String name, {double seconds = 120}) async {
+    final end = DateTime.now().add(Duration(milliseconds: (seconds * 1000).round()));
+    while (!await TestBackend.hasSignal(name)) {
+      if (DateTime.now().isAfter(end)) throw TestFailure('Das andere Gerät hat sich nicht gemeldet ($name)');
+      await tester.pump(const Duration(milliseconds: 400));
+    }
+  }
+
   /// Pictures from the internet load in real time: before a screenshot
   /// that shows profile pictures (else their initials stand in).
   Future<void> letLoad({double seconds = 1.5}) async {

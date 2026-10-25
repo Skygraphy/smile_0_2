@@ -141,7 +141,12 @@ class OfflineCachingClient extends http.BaseClient {
 
 /// No answer on the phone for a "from the phone" load (see
 /// OfflineCachingClient.fromPhone) -- never shown to anyone.
-class CacheMissException implements Exception {
+///
+/// Deliberately not an [Exception]: the Supabase database client retries
+/// a GET after any Exception, with pauses -- a miss then took 7 seconds
+/// before the screen asked the server at all (2026-10-25, test suite find
+/// 32: the Frame's remote showed no albums for that long).
+class CacheMissException {
   const CacheMissException();
 
   /// Also when a library wrapped it into its own exception.

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/offline_http_client.dart';
+import '../services/perf.dart';
 
 import '../services/avatar_upload.dart';
 import '../services/channel_picker_service.dart';
@@ -76,8 +77,12 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
   /// What it showed last, at once from the phone -- then from the server
   /// (2026-10-12: every info page opened with a spinner first).
   Future<void> _loadFromPhoneThenServer() async {
+    Perf.start('remote from phone');
     await OfflineCachingClient.fromPhone(_load);
+    Perf.end('remote from phone');
+    Perf.start('remote from server');
     await _load();
+    Perf.end('remote from server', '${_assignments?.length} albums');
   }
 
   Future<void> _load() async {

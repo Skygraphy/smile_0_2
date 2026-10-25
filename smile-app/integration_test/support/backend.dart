@@ -106,6 +106,14 @@ class TestBackend {
     return res.statusCode == 200 ? res.bodyBytes.length : null;
   }
 
+  /// A signal between the two parts of a chapter on two devices (chapter
+  /// 7 on, table testsuite_signals in state.sql): "I took my picture".
+  static Future<void> signal(String name) => _send('POST', '/rest/v1/testsuite_signals',
+      headers: {'Prefer': 'resolution=merge-duplicates'}, body: {'name': name});
+
+  static Future<bool> hasSignal(String name) async =>
+      (await select('testsuite_signals', 'select=name&name=eq.${Uri.encodeComponent(name)}')).isNotEmpty;
+
   /// Everything the server holds right now (testsuite_state(), state.sql).
   static Future<Map<String, dynamic>> state() async => (await rpc('testsuite_state') as Map).cast<String, dynamic>();
 }
