@@ -4,6 +4,14 @@ Jede Version, die getestet wird, bekommt eine eigene Nummer (0.0.1, 0.0.2 …),
 ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 (Tag `v0.0.1` …). Eine neue Version entsteht mit `tools/testsuite/release.sh`.
 
+## 0.0.10 (2026-10-25)
+
+Neues Kapitel 6: Frame verbinden.
+
+Behoben:
+
+- 30: Frame verbinden am Tablet: Knopf unter der Tastatur
+
 ## 0.0.9 (2026-10-22)
 
 Neues Kapitel 5: Leute einladen.
