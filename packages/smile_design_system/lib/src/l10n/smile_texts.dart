@@ -3783,6 +3783,66 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Hochkant oder quer gestellt, das Bild dreht mit. Auch wenn die automatische Drehung am Gerät aus ist.'**
   String get rotateWithDeviceHint;
+
+  /// No description provided for @homeSlideshowRecent.
+  ///
+  /// In de, this message translates to:
+  /// **'Aktuelles aus allen Alben'**
+  String get homeSlideshowRecent;
+
+  /// No description provided for @homeSlideshowRecentHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Die neuesten Fotos und Videos, egal aus welchem Album'**
+  String get homeSlideshowRecentHint;
+
+  /// No description provided for @homeSlideshowRotateHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Alles, was du sehen kannst, Album für Album'**
+  String get homeSlideshowRotateHint;
+
+  /// No description provided for @homeSlideshowOneAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Album …'**
+  String get homeSlideshowOneAlbum;
+
+  /// No description provided for @homeSlideshowOneAlbumHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Dann wählst du das Album aus'**
+  String get homeSlideshowOneAlbumHint;
+
+  /// No description provided for @homeSlideshowSettingsHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Dauer, Reihenfolge, Videos und Ton stellst du wie bisher in der Diashow über das Zahnrad ein.'**
+  String get homeSlideshowSettingsHint;
+
+  /// No description provided for @homeSlideshowStart.
+  ///
+  /// In de, this message translates to:
+  /// **'Diashow starten'**
+  String get homeSlideshowStart;
+
+  /// No description provided for @homeSlideshowPickAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Welches Album?'**
+  String get homeSlideshowPickAlbum;
+
+  /// No description provided for @homeSlideshowNothing.
+  ///
+  /// In de, this message translates to:
+  /// **'Hier gibt es noch keine Fotos oder Videos.'**
+  String get homeSlideshowNothing;
+
+  /// No description provided for @slideshowPosition.
+  ///
+  /// In de, this message translates to:
+  /// **'{n} von {total}'**
+  String slideshowPosition(int n, int total);
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

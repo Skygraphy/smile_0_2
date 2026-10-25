@@ -124,9 +124,28 @@ class SlideshowPrefs {
 /// time, videos play to the end (or as long as a photo), swipe to go on by
 /// hand, tap for the name, the settings and closing.
 class AlbumSlideshowScreen extends StatefulWidget {
-  const AlbumSlideshowScreen({super.key, required this.albumName, required this.items});
+  const AlbumSlideshowScreen({
+    super.key,
+    required this.albumName,
+    required this.items,
+    this.albumOf = const {},
+    this.headline,
+    this.albumByAlbum = false,
+  });
 
   final String albumName;
+
+  /// From the start page (2026-10-25, Ernst: "wie am Frame"): the album of
+  /// each item by its id, shown instead of [albumName].
+  final Map<String, String> albumOf;
+
+  /// What plays ("Aktuelles", "Alle Alben im Wechsel"), shown top left
+  /// with the position.
+  final String? headline;
+
+  /// "Alle Alben im Wechsel": album after album (in [albumOf]'s order),
+  /// the chosen order inside each album.
+  final bool albumByAlbum;
 
   /// Ready photos and videos, newest first.
   final List<MediaItem> items;
@@ -194,6 +213,17 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
           ..shuffle(Random(_shuffleSeed));
       default:
         list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    }
+    if (widget.albumByAlbum) {
+      final albums = widget.albumOf.values.toSet().toList();
+      int rank(MediaItem i) => albums.indexOf(widget.albumOf[i.id] ?? '');
+      // A stable sort: the order above stays inside each album.
+      final indexed = list.indexed.toList()
+        ..sort((a, b) {
+          final byAlbum = rank(a.$2).compareTo(rank(b.$2));
+          return byAlbum != 0 ? byAlbum : a.$1.compareTo(b.$1);
+        });
+      return [for (final e in indexed) e.$2];
     }
     return list;
   }
@@ -407,6 +437,21 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                             ],
                           ),
                         ),
+                        if (items.isNotEmpty && widget.headline != null)
+                          Align(
+                            alignment: Alignment.topLeft,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.55),
+                                borderRadius: BorderRadius.circular(SmileRadius.m),
+                              ),
+                              child: Text(
+                                '${widget.headline} · ${t.slideshowPosition(_index % items.length + 1, items.length)}',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ),
                         if (items.isNotEmpty)
                           Align(
                             alignment: Alignment.bottomLeft,
@@ -417,7 +462,7 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                                 borderRadius: BorderRadius.circular(SmileRadius.m),
                               ),
                               child: Text(
-                                [widget.albumName, if (_current.senderDisplayName != null) _current.senderDisplayName!].join(' · '),
+                                [widget.albumOf[_current.id] ?? widget.albumName, if (_current.senderDisplayName != null) _current.senderDisplayName!].join(' · '),
                                 style: const TextStyle(color: Colors.white),
                               ),
                             ),

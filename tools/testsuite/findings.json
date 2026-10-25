@@ -238,5 +238,12 @@
     "detail": "Am quer liegenden Tablet passte die Seite Frame verbinden mit offener Tastatur nicht auf den Bildschirm (125 Pixel zu viel, gelb-schwarze Streifen); der Knopf Verbinden und die Fehlermeldung lagen unter der Tastatur. Ernst hat es am X200 gesehen. Behoben: die Seite lässt sich verschieben, das große S macht Platz.",
     "status": "behoben",
     "version": "0.0.10"
+  },
+  {
+    "no": 31,
+    "chapter": "ch04",
+    "title": "Wunsch: Diashow von der Startseite wie am Frame",
+    "detail": "Ernst 2026-10-25: auf der Startseite gab es keine Diashow. Neu (nach Vorschau, von Ernst freigegeben): Diashow-Zeichen oben, Auswahl Aktuelles aus allen Alben (10, 20, 50, 100), Alle Alben im Wechsel oder Ein Album; die Diashow zeigt oben, was läuft, und unten bei jedem Foto das Album.",
+    "status": "behoben"
   }
 ]

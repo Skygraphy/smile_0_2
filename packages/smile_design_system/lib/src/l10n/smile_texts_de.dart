@@ -2214,4 +2214,40 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get rotateWithDeviceHint =>
       'Hochkant oder quer gestellt, das Bild dreht mit. Auch wenn die automatische Drehung am Gerät aus ist.';
+
+  @override
+  String get homeSlideshowRecent => 'Aktuelles aus allen Alben';
+
+  @override
+  String get homeSlideshowRecentHint =>
+      'Die neuesten Fotos und Videos, egal aus welchem Album';
+
+  @override
+  String get homeSlideshowRotateHint =>
+      'Alles, was du sehen kannst, Album für Album';
+
+  @override
+  String get homeSlideshowOneAlbum => 'Ein Album …';
+
+  @override
+  String get homeSlideshowOneAlbumHint => 'Dann wählst du das Album aus';
+
+  @override
+  String get homeSlideshowSettingsHint =>
+      'Dauer, Reihenfolge, Videos und Ton stellst du wie bisher in der Diashow über das Zahnrad ein.';
+
+  @override
+  String get homeSlideshowStart => 'Diashow starten';
+
+  @override
+  String get homeSlideshowPickAlbum => 'Welches Album?';
+
+  @override
+  String get homeSlideshowNothing =>
+      'Hier gibt es noch keine Fotos oder Videos.';
+
+  @override
+  String slideshowPosition(int n, int total) {
+    return '$n von $total';
+  }
 }

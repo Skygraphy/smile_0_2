@@ -519,6 +519,122 @@ void main() {
       await c.check('Annas Profilbild (lila) in der Personenliste', () => c.colorIn('SmileAvatar', '#c9b6e4', seconds: 8));
       await c.snap();
 
+      // ---------------------------------------------------------------- Diashow von der Startseite (2026-10-25)
+      Future<void> showChrome() async {
+        await c.tapAt(tester.getCenter(find.byType(Scaffold).last), 'Bildschirm antippen');
+        await c.settle();
+      }
+
+      Future<void> closeSlideshow() async {
+        await tester.tap(find.byIcon(SmileIcons.close).last, warnIfMissed: false);
+        c.logTap('Schließen');
+        await c.settle();
+      }
+
+      Future<void> openHomeSlideshow() async {
+        await c.tap('Diashow');
+        c.screen('Diashow-Auswahl');
+        await c.waitFor('Diashow starten', seconds: 5);
+      }
+
+      Future<void> start() async {
+        await Scrollable.ensureVisible(find.text('Diashow starten', skipOffstage: false).evaluate().first);
+        await c.tap('Diashow starten');
+        c.screen('Diashow');
+        await c.settle(max: const Duration(seconds: 2));
+      }
+
+      c.step('Diashow von der Startseite', 'Zweimal zurück zur Startseite, dann oben auf das Diashow-Zeichen.',
+          'Von unten erscheint Diashow mit WAS LÄUFT: Aktuelles aus allen Alben (gewählt, mit 10, 20, 50 und 100), Alle Alben im Wechsel und Ein Album. Unten Diashow starten.',
+          explain: 'Neu in 0.0.11: eine Diashow aus allen Alben, so wie am Frame.');
+      await c.back();
+      await c.back();
+      c.screen('Startseite');
+      await c.waitFor('Sommerurlaub 2026', seconds: 5);
+      await openHomeSlideshow();
+      await c.check('Drei Möglichkeiten', () async =>
+          await c.waitFor('Aktuelles aus allen Alben', seconds: 2) &&
+          await c.waitFor('Alle Alben im Wechsel', seconds: 1) &&
+          await c.waitFor('Ein Album', seconds: 1));
+      await c.check('20 gewählt', () => tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '20')).selected);
+      await c.snap();
+
+      c.step('Startseite-Diashow: daneben tippen', 'Oben neben die Auswahl tippen.', 'Die Auswahl schließt sich, keine Diashow.',
+          kind: 'Abzweigung', explain: 'Nichts passiert.');
+      await c.tapAt(const Offset(200, 100), 'Schließen');
+      c.screen('Startseite');
+      await c.check('Zu', () => c.gone('Diashow starten', seconds: 3));
+      await c.snap();
+
+      c.step('Startseite-Diashow: Aktuelles', 'Wieder das Diashow-Zeichen, 50 wählen, Diashow starten, dann auf den Bildschirm tippen.',
+          'Die Diashow läuft. Oben links steht Aktuelles · 1 von 6, unten das Album und wer das Foto geschickt hat.',
+          explain: 'Die neuesten 50 Fotos und Videos aus allen Alben. Anna hat zusammen erst 6, also laufen alle 6.');
+      await openHomeSlideshow();
+      await c.tap('Aktuelles aus allen Alben');
+      await tester.tap(find.text('50').last, warnIfMissed: false);
+      c.logTap('50');
+      await c.settle();
+      await start();
+      await showChrome();
+      await c.check('Aktuelles, 6 Fotos und Videos', () => c.waitFor('Aktuelles · 1 von 6', seconds: 3));
+      await c.snap();
+
+      c.step('Startseite-Diashow beenden', 'Oben rechts auf das Kreuz.', 'Wieder die Startseite.', kind: 'Abzweigung',
+          explain: 'Das Kreuz beendet die Diashow.');
+      await closeSlideshow();
+      c.screen('Startseite');
+      await c.check('Startseite', () => c.waitFor('Sommerurlaub 2026', seconds: 5));
+      await c.snap();
+
+      c.step('Startseite-Diashow: alle Alben im Wechsel', 'Diashow-Zeichen, Alle Alben im Wechsel, Diashow starten, auf den Bildschirm tippen.',
+          'Zuerst ist 50 noch gewählt, wie beim letzten Mal. Dann läuft die Diashow: oben links Alle Alben im Wechsel · 1 von 6.',
+          explain: 'Alles, was Anna sehen kann, Album für Album. Smile merkt sich die letzte Wahl.');
+      await openHomeSlideshow();
+      await c.check('50 gemerkt', () => tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '50')).selected);
+      await c.tap('Alle Alben im Wechsel');
+      await start();
+      await showChrome();
+      await c.check('Alle Alben im Wechsel', () => c.waitFor('Alle Alben im Wechsel · 1 von 6', seconds: 3));
+      await c.snap();
+
+      c.step('Startseite-Diashow: ein Album', 'Kreuz, dann Diashow-Zeichen, Ein Album, Diashow starten.',
+          'Smile fragt: Welches Album? mit allen Alben.', explain: 'Wie die Diashow im Album, nur von der Startseite aus.');
+      await closeSlideshow();
+      c.screen('Startseite');
+      await c.waitFor('Sommerurlaub 2026', seconds: 5);
+      await openHomeSlideshow();
+      await c.tap('Ein Album');
+      await Scrollable.ensureVisible(find.text('Diashow starten', skipOffstage: false).evaluate().first);
+      await c.tap('Diashow starten');
+      c.screen('Album wählen (Diashow)');
+      await c.check('Frage', () => c.waitFor('Welches Album?', seconds: 5));
+      await c.snap();
+
+      c.step('Welches Album: daneben tippen', 'Neben die Frage tippen.', 'Die Frage schließt sich, wieder die Startseite, keine Diashow.',
+          kind: 'Abzweigung', explain: 'Nichts passiert.');
+      await c.tapAt(const Offset(200, 100), 'Schließen');
+      c.screen('Startseite');
+      await c.check('Zu', () => c.gone('Welches Album?', seconds: 3));
+      await c.snap();
+
+      c.step('Album für die Diashow', 'Diashow-Zeichen, Ein Album ist noch gewählt, Diashow starten, Sommerurlaub 2026 antippen, dann auf den Bildschirm tippen.',
+          'Die Diashow zeigt das eine Foto aus dem Sommerurlaub; unten Sommerurlaub 2026 · Anna Berger.',
+          explain: 'Nur dieses Album läuft.');
+      await openHomeSlideshow();
+      await Scrollable.ensureVisible(find.text('Diashow starten', skipOffstage: false).evaluate().first);
+      await c.tap('Diashow starten');
+      c.screen('Album wählen (Diashow)');
+      await c.waitFor('Welches Album?', seconds: 5);
+      await tester.tap(find.text('Sommerurlaub 2026').last, warnIfMissed: false);
+      c.logTap('Sommerurlaub 2026');
+      c.screen('Diashow');
+      await c.settle(max: const Duration(seconds: 2));
+      await showChrome();
+      await c.check('Sommerurlaub', () => c.waitFor('Sommerurlaub 2026 · Anna Berger', seconds: 5));
+      await c.snap();
+
+      await closeSlideshow();
+      c.screen('Startseite');
       await c.finish(appVersion: version);
     } catch (e) {
       await c.finish(appVersion: version, error: e);

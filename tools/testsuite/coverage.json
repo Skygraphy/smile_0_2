@@ -72,6 +72,13 @@
     },
     "Frame: Diashow": {
       "Noch keine Fotos": "Bildschirm antippen"
+    },
+    "Diashow-Auswahl": {
+      "Code-Kästchen": "50"
+    },
+    "Album wählen (Diashow)": {
+      "Geburtstage": "Sommerurlaub 2026",
+      "Weihnachten": "Sommerurlaub 2026"
     }
   },
   "Space": {
@@ -109,7 +116,8 @@
     "Startseite": "Geburtstage",
     "Album-Infos": "Paul Berger",
     "Kontakte": "Max Moser",
-    "Frame: Diashow": "Bildschirm antippen"
+    "Frame: Diashow": "Bildschirm antippen",
+    "Diashow": "Bildschirm antippen"
   },
   "Neuigkeiten": {
     "WA · Einladung ins Album": "ch09",

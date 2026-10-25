@@ -15,6 +15,7 @@ import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/local_display.dart';
 import '../widgets/album_covers.dart';
+import '../widgets/home_slideshow.dart';
 import '../widgets/top_bar_actions.dart';
 import '../services/offline.dart';
 import 'channel_feed_screen.dart';
@@ -274,12 +275,16 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
     return Scaffold(
       appBar: AppBar(
         title: const SmileWordmark(fontSize: 20),
-        actions: smileTopBarActions(
+        actions: [
+          // A slideshow of all albums, like on a Frame (2026-10-25).
+          HomeSlideshowButton(albums: _channels ?? const []),
+          ...smileTopBarActions(
           onPhotoSent: _load,
           primary: _managed.isEmpty ? null : SmileMenuEntry(icon: SmileIcons.add, label: SmileTexts.of(context).newAlbum, onTap: _newAlbum),
           onChanged: _load,
           tipAnchors: _tipAnchors,
         ),
+        ],
       ),
       body: _body(channels),
     );
