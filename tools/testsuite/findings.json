@@ -244,13 +244,15 @@
     "chapter": "ch04",
     "title": "Wunsch: Diashow von der Startseite wie am Frame",
     "detail": "Ernst 2026-10-25: auf der Startseite gab es keine Diashow. Neu (nach Vorschau, von Ernst freigegeben): Diashow-Zeichen oben, Auswahl Aktuelles aus allen Alben (10, 20, 50, 100), Alle Alben im Wechsel oder Ein Album; die Diashow zeigt oben, was läuft, und unten bei jedem Foto das Album.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.11"
   },
   {
     "no": 32,
     "chapter": "ch07",
     "title": "Seiten zeigten beim ersten Öffnen 7 Sekunden lang zu wenig",
     "detail": "Fernbedienung (keine Alben), dazu Album-Infos, Space, Frames, Frame-Einstellungen und Neuigkeiten: beim ersten Öffnen suchten sie erst im Speicher des Handys; ohne Treffer wiederholte die Server-Bibliothek das wie einen Netzfehler mit Pausen, erst nach etwa 7 Sekunden kam der Server dran. Behoben: ein fehlender Treffer gilt nicht mehr als Netzfehler.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.11"
   }
 ]

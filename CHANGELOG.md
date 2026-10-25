@@ -4,6 +4,15 @@ Jede Version, die getestet wird, bekommt eine eigene Nummer (0.0.1, 0.0.2 …),
 ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 (Tag `v0.0.1` …). Eine neue Version entsteht mit `tools/testsuite/release.sh`.
 
+## 0.0.11 (2026-10-25)
+
+Neu: Diashow von der Startseite; Kapitel 7 Frame bedienen.
+
+Behoben:
+
+- 31: Wunsch: Diashow von der Startseite wie am Frame
+- 32: Seiten zeigten beim ersten Öffnen 7 Sekunden lang zu wenig
+
 ## 0.0.10 (2026-10-25)
 
 Neues Kapitel 6: Frame verbinden.
