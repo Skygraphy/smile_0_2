@@ -604,7 +604,7 @@ void main() {
       await frameShows(7);
 
       c.clearMessages();
-      c.step('Zurück zur Fernbedienung', 'Oben links zurück.', 'Bei Wiedergabe steht jetzt Ein Album · Der Reihe nach · 10 Sekunden.',
+      c.step('Wiedergabe: zurück zur Fernbedienung', 'Oben links zurück.', 'Bei Wiedergabe steht jetzt Ein Album · Der Reihe nach · 10 Sekunden.',
           explain: 'Die Kurzfassung der Einstellungen.');
       await backTo(FrameRemoteScreen);
       c.screen('Fernbedienung');

@@ -140,7 +140,7 @@ class FrameSettingsInfo {
 
   factory FrameSettingsInfo.fromJson(Map<String, dynamic> json) => FrameSettingsInfo(
         displayMode: json['display_mode'] as String? ?? 'slideshow',
-        slideshowIntervalSeconds: json['slideshow_interval_seconds'] as int? ?? 8,
+        slideshowIntervalSeconds: json['slideshow_interval_seconds'] as int? ?? 10,
         channelSwitchEnabled: json['channel_switch_enabled'] as bool? ?? false,
         videoSound: json['video_sound'] as bool? ?? true,
         maxLocalCacheGb: (json['max_local_cache_gb'] as num?)?.toDouble(),

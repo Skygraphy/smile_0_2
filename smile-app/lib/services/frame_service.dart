@@ -61,7 +61,7 @@ class SmileFrame {
   int get recentCount => playback['recent_count'] as int? ?? 20;
   String get playOrder => playback['play_order'] as String? ?? 'oldest';
   String get endBehavior => playback['end_behavior'] as String? ?? 'loop';
-  int get intervalSeconds => playback['slideshow_interval_seconds'] as int? ?? 8;
+  int get intervalSeconds => playback['slideshow_interval_seconds'] as int? ?? 10;
   bool get showNewImmediately => playback['show_new_immediately'] as bool? ?? true;
   bool get showClock => playback['show_clock'] as bool? ?? false;
   bool get showSender => playback['show_sender'] as bool? ?? true;

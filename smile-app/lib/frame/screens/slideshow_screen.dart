@@ -471,7 +471,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         !_newestRound) {
       return;
     }
-    final seconds = _settings?.slideshowIntervalSeconds ?? 8;
+    final seconds = _settings?.slideshowIntervalSeconds ?? 10;
     // Never cut a video short (2026-10-09): a video reached any other way
     // than by this timer -- from the overview, after an album switch --
     // used to be skipped after at most one interval.
@@ -782,7 +782,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   Future<void> _pickDuration() async {
     _hideBar?.cancel();
     final t = SmileTexts.of(context);
-    final current = _settings?.slideshowIntervalSeconds ?? 8;
+    final current = _settings?.slideshowIntervalSeconds ?? 10;
     final picked = await showModalBottomSheet<int>(
       context: context,
       showDragHandle: true,
@@ -837,7 +837,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     String? hhmm(String? v) => v == null || v.length < 5 ? null : v.substring(0, 5);
     var quietFrom = hhmm(s?.quietFrom);
     var quietTo = hhmm(s?.quietTo);
-    final seconds = s?.slideshowIntervalSeconds ?? 8;
+    final seconds = s?.slideshowIntervalSeconds ?? 10;
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -1392,7 +1392,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           image: MemoryImage(bytes),
           fillMode: SmileFillMode.parse(settings?.fillMode),
           slowZoom: settings?.slowZoom ?? true,
-          duration: Duration(seconds: settings?.slideshowIntervalSeconds ?? 8),
+          duration: Duration(seconds: settings?.slideshowIntervalSeconds ?? 10),
         );
       },
     );
