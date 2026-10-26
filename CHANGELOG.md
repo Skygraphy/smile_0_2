@@ -4,6 +4,17 @@ Jede Version, die getestet wird, bekommt eine eigene Nummer (0.0.1, 0.0.2 …),
 ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 (Tag `v0.0.1` …). Eine neue Version entsteht mit `tools/testsuite/release.sh`.
 
+## 0.0.15 (2026-10-26)
+
+Kapitel 10: Pushes und Neuigkeiten
+
+Behoben:
+
+- 41: Co-Admin-Rolle abgeben: Knopf Abgeben, Alben nur aus der Rolle werden verlassen
+- 42: Mehrere Fotos: bei offener App mehrere Mitteilungen statt einer
+- 43: Verlauf: lange Meldungen abgeschnitten
+- 44: Eigenes Foto bleibt im Album, obwohl es gelöscht wurde
+
 ## 0.0.14 (2026-10-26)
 
 Kapitel 9: Teilen und Co-Admin

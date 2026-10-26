@@ -324,27 +324,31 @@
     "chapter": "ch09",
     "title": "Co-Admin-Rolle abgeben: Knopf Abgeben, Alben nur aus der Rolle werden verlassen",
     "detail": "Der Knopf hieß Verlassen (Ernst: Abgeben). Wer die Rolle abgab, blieb in allen Alben des Space. Jetzt (Mittelweg, Ernst 2026-10-26): Alben, in die man nur als Co-Admin kam und in die man nichts gesendet hat, werden verlassen; eingeladene oder selbst bespielte bleiben; eine Übergabe behält alles. Migration 0088.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.15"
   },
   {
     "no": 42,
     "chapter": "ch10",
     "title": "Mehrere Fotos: bei offener App mehrere Mitteilungen statt einer",
     "detail": "Schickt jemand Fotos kurz hintereinander, soll oben eine einzige Mitteilung stehen, die mitzählt (2, dann 3 neue Fotos). War Smile offen, standen beide da. Ursache: Firebase entfernt den Schlüssel collapse_key aus den Daten und gibt ihn getrennt mit. Behoben in der App, am Server ändert sich nichts.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.15"
   },
   {
     "no": 43,
     "chapter": "ch10",
     "title": "Verlauf: lange Meldungen abgeschnitten",
     "detail": "Du wurdest eingeladen, den Space … als Co-Admin mitzuverwalten. Annehmen unter Neuigkeiten. endete mit „Annehmen unt…“. Jetzt bis fünf Zeilen, die Meldung steht ganz da.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.15"
   },
   {
     "no": 44,
     "chapter": "ch10",
     "title": "Eigenes Foto bleibt im Album, obwohl es gelöscht wurde",
     "detail": "Anna schickt ein Foto, Lena löscht es, bevor Anna das Album öffnet. Anna sah das Foto danach noch eine Weile (das Handy hielt seine eigene Kopie, bis der Server das Foto liefert, was nie geschah). Jetzt verschwindet es sofort.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.15"
   }
 ]
