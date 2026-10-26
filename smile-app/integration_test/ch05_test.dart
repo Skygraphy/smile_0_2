@@ -270,6 +270,8 @@ void main() {
       await c.typeInto('Name oder @Smile-Name', '@paul.berger');
       await c.hideKeyboard();
       await c.check('Paul gefunden', () => c.waitFor('Paul Berger', seconds: 8));
+      // His picture, not the initials shown while it loads (0.0.15 review).
+      await c.check('Mit Bild', () => c.gone('PB', seconds: 10));
       await c.snap();
 
       c.clearMessages();
