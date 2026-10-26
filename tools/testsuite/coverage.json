@@ -31,7 +31,10 @@
       "Sommerurlaub 2026": "Urlaub 2026",
       "GE · Geburtstage": "Urlaub 2026",
       "WE · Weihnachten": "Urlaub 2026",
-      "Geburtstage": "Urlaub 2026"
+      "Geburtstage": "Urlaub 2026",
+      "FH": "Bild ändern",
+      "Familie Huber": "Space umbenennen",
+      "WA · Wanderungen": "Urlaub 2026"
     },
     "Space anlegen": {
       "Eingabefeld: Bitte gib einen Namen ein.": "Eingabefeld: Name"
@@ -148,7 +151,9 @@
     "Kontakte": "Max Moser",
     "Frame: Diashow": "Bildschirm antippen",
     "Diashow": "Bildschirm antippen",
-    "Lieblingsbilder": "Foto"
+    "Lieblingsbilder": "Foto",
+    "Spaces": "Familie Berger",
+    "Space-Auswahl": "Familie Berger"
   },
   "Neuigkeiten": {
     "WA · Einladung ins Album": "ch10",
@@ -156,7 +161,11 @@
     "TB · Einladung beantwortet": "ch10",
     "PB · Einladung beantwortet": "ch10",
     "LH · Neue Anfrage": "ch10",
-    "Alle entfernen": "ch10"
+    "Alle entfernen": "ch10",
+    "FH · Einladung als Co-Admin": "ch10",
+    "FB · Du bist jetzt Admin": "ch10",
+    "LH · Einladung beantwortet": "ch10",
+    "BE · Album mit dir geteilt": "ch10"
   },
   "Frame-Code": {
     "Zurück": "ch08"

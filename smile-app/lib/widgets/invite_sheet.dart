@@ -200,6 +200,8 @@ class _InviteSheetState extends State<_InviteSheet> {
                               leading: SmileAvatar(name: person.name, avatarUrl: person.avatarUrl, size: 40),
                               title: person.name,
                               subtitle: [if (person.handle != null) '@${person.handle}', reason].join(' · '),
+                              // Why not, in full (2026-10-26, like Fund 36).
+                              subtitleMaxLines: 2,
                             ),
                           )
                         else
@@ -210,6 +212,7 @@ class _InviteSheetState extends State<_InviteSheet> {
                               if (person.handle != null) '@${person.handle}',
                               ?(widget.subtitle?.call(person) ?? person.context),
                             ].join(' · '),
+                            subtitleMaxLines: 2,
                             onTap: () => widget.onPerson(person),
                           ),
                     ],
@@ -217,14 +220,19 @@ class _InviteSheetState extends State<_InviteSheet> {
                 },
               ),
             ),
-            const Divider(height: SmileSpacing.l),
-            // The phone book, like WhatsApp (2026-10-17).
-            if (widget.onContacts != null)
-              SmileActionRow(icon: SmileIcons.contacts, label: t.fromContacts, onTap: widget.onContacts!),
-            SmileActionRow(icon: SmileIcons.inviteCode, label: t.showQrCode, onTap: widget.onShowQr),
-            if (widget.onShareCode != null)
-              SmileActionRow(icon: SmileIcons.shareOut, label: t.shareInviteLink, onTap: widget.onShareCode!),
-            SmileActionRow(icon: SmileIcons.email, label: t.inviteByEmail, onTap: widget.onEmail),
+            // While searching, the people found get the room (Fund 40,
+            // 2026-10-26: with the keyboard open the found person was cut
+            // off under these rows).
+            if (_query.isEmpty) ...[
+              const Divider(height: SmileSpacing.l),
+              // The phone book, like WhatsApp (2026-10-17).
+              if (widget.onContacts != null)
+                SmileActionRow(icon: SmileIcons.contacts, label: t.fromContacts, onTap: widget.onContacts!),
+              SmileActionRow(icon: SmileIcons.inviteCode, label: t.showQrCode, onTap: widget.onShowQr),
+              if (widget.onShareCode != null)
+                SmileActionRow(icon: SmileIcons.shareOut, label: t.shareInviteLink, onTap: widget.onShareCode!),
+              SmileActionRow(icon: SmileIcons.email, label: t.inviteByEmail, onTap: widget.onEmail),
+            ],
             const SizedBox(height: SmileSpacing.m),
           ],
         ),

@@ -302,5 +302,19 @@
     "detail": "Bis sich das Tablet zum ersten Mal meldet, stand Noch nicht verbunden, was nach erfolgreichem Koppeln verwirrt. Ernst hat die Entscheidung Claude überlassen.",
     "status": "behoben",
     "version": "0.0.13"
+  },
+  {
+    "no": 39,
+    "chapter": "ch09",
+    "title": "Geteiltes Album annehmen: der eigene Space des Albums stand zur Wahl",
+    "detail": "War Anna Co-Admin im Space des Albums, bot Mit welchem Space? genau diesen an; wählte sie ihn, schlug das Annehmen fehl. Behoben: der Space des Albums steht nicht mehr zur Wahl. Dazu: Anfragen zum Teilen (Möchte das Album mit dem eigenen Space sehen) und Einladungen neben Häkchen und Kreuz dürfen bis zu drei Zeilen haben, die Begründung bei nicht wählbaren Personen zwei.",
+    "status": "behoben"
+  },
+  {
+    "no": 40,
+    "chapter": "ch09",
+    "title": "Suche im Einladen-Fenster: gefundene Person abgeschnitten",
+    "detail": "Mit offener Tastatur war die gefundene Person nur halb zu sehen, die Zeilen Aus Kontakten, QR-Code zeigen usw. nahmen den Platz. Behoben: während man sucht, stehen nur die gefundenen Personen da.",
+    "status": "behoben"
   }
 ]

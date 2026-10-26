@@ -116,17 +116,27 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
 
   Future<void> _acceptShareInvite(ChannelRequest request) async {
     final t = SmileTexts.of(context);
-    if (_mySpaces.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.needOwnSpace)));
+    final messenger = ScaffoldMessenger.of(context);
+    // Never the album's own Space (Fund 39, 2026-10-26: as its Co-Admin it
+    // was offered too, and choosing it failed). Visible only to its admins.
+    String? home;
+    try {
+      home = (await supabase.from('channels').select('space_id').eq('id', request.channelId).maybeSingle())?['space_id']
+          as String?;
+    } catch (_) {}
+    if (!mounted) return;
+    final spaces = _mySpaces.where((s) => s['id'] != home).toList();
+    if (spaces.isEmpty) {
+      messenger.showSnackBar(SnackBar(content: Text(t.needOwnSpace)));
       return;
     }
-    var spaceId = _mySpaces.length == 1 ? _mySpaces.first['id'] as String : null;
+    var spaceId = spaces.length == 1 ? spaces.first['id'] as String : null;
     spaceId ??= await showDialog<String>(
       context: context,
       builder: (context) => SimpleDialog(
         title: Text(t.chooseSpace),
         children: [
-          for (final space in _mySpaces)
+          for (final space in spaces)
             SimpleDialogOption(
               onPressed: () => Navigator.of(context).pop(space['id'] as String),
               child: Row(
@@ -230,7 +240,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                   title: invite.spaceName ?? invite.spaceId,
                   subtitleIcon: SmileIcons.coAdmin,
                   subtitle: t.inviteCoAdminFrom(invite.founderLabel),
-                  subtitleMaxLines: 2,
+                  subtitleMaxLines: 3,
                   trailing: _decide(
                     onAccept: () => _run(
                       () => widget.spaceService.decideCoOwnerInvite(invite.id, accept: true),
@@ -252,7 +262,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                   subtitle: request.kind == RequestKind.membership
                       ? t.inviteMemberFrom(request.counterpartLabel)
                       : t.inviteShareFrom(request.counterpartLabel),
-                  subtitleMaxLines: 2,
+                  subtitleMaxLines: 3,
                   trailing: _decide(
                     onAccept: () => request.kind == RequestKind.membership
                         ? _run(
@@ -288,6 +298,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                   subtitle: request.kind == RequestKind.membership
                       ? t.requestMemberFrom(request.counterpartLabel)
                       : t.requestShareFrom(request.counterpartLabel),
+                  subtitleMaxLines: 3,
                   trailing: _decide(
                     onAccept: () => _run(
                       () => request.kind == RequestKind.membership
