@@ -58,5 +58,14 @@ node -e '
   versions.forEach((x,i)=>{ if(i>=1){ x.archived=true; fs.rmSync(path.join(site,"v",x.version),{recursive:true,force:true}); } });
   fs.writeFileSync(path.join(site,"data","index.json"),JSON.stringify({versions,findings:JSON.parse(fs.readFileSync(findings))}));' \
   "$(cygpath -w "$SITE")" "$(cygpath -w findings.json)" "$(cygpath -w ../../CHANGELOG.md)"
+# One file per chapter for its pictures (shots.json, name -> data URL): a
+# version has more pictures than the page may hold files (0.0.15: 540).
+node -e '
+  const fs=require("fs"),path=require("path"),v=path.join(process.argv[1],"v");
+  for(const ver of fs.readdirSync(v))for(const id of fs.readdirSync(path.join(v,ver))){
+    const dir=path.join(v,ver,id),out={};
+    for(const f of fs.readdirSync(dir).filter(f=>f.endsWith(".jpg")).sort()){
+      out[f]="data:image/jpeg;base64,"+fs.readFileSync(path.join(dir,f)).toString("base64");fs.rmSync(path.join(dir,f));}
+    fs.writeFileSync(path.join(dir,"shots.json"),JSON.stringify(out));}' "$(cygpath -w "$SITE")"
 node coverage.js "$(cygpath -w out)" "$(cygpath -w "$SITE/data")"
 echo "$SITE: $(ls "$SITE/v" | tr '\n' ' ')(ältere nur in Versionen)"

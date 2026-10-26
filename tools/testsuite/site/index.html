@@ -346,8 +346,22 @@ function renderCoverage() {
     }).join("")}</div>`;
 }
 
+// The pictures of a chapter come as one file (v/<version>/chNN/shots.json,
+// name -> data URL), loaded when the chapter is opened: a version would
+// otherwise need more files than the page may hold (0.0.15: 540 pictures).
+const shots = {};
+function shotsOf(id) {
+  const k = `${state.version}/${id}`;
+  if (!shots[k]) {
+    shots[k] = fetch(`v/${state.version}/${id}/shots.json`).then(r => r.json()).catch(() => ({}));
+    shots[k].then(v => { shots[k] = v; if (state.current === id) render(); });
+  }
+  return shots[k] instanceof Promise ? null : shots[k];
+}
+
 function renderChapter() {
   const ch = state.chapters[state.current];
+  const pics = shotsOf(ch.id);
   const autoOk = ch.steps.flatMap(s => s.checks).filter(c => c.ok).length;
   const autoAll = ch.steps.flatMap(s => s.checks).length;
   $("#main").innerHTML = `<section class="intro">
@@ -359,7 +373,7 @@ function renderChapter() {
       ${state.version !== newest() ? `<p class="old">Das ist das Tutorial der älteren Version ${esc(state.version)}, nur zum Ansehen. Bestätigt wird in der aktuellen Version ${esc(newest())}.</p>` : ""}
     </section>
     ${ch.steps.map(s => `<article class="step${s.kind === "Abzweigung" ? " branch" : ""}${DONE.includes(verdictOf(ch.id, s).state) ? "" : " open"}" id="s${s.no}">
-      <img class="shot" src="v/${state.version}/${ch.id}/${s.image.replace(".png", ".jpg")}" alt="Bildschirm nach Schritt ${s.no}: ${esc(s.title)}" loading="lazy">
+      <img class="shot" src="${pics?.[s.image.replace(".png", ".jpg")] ?? ""}" alt="Bildschirm nach Schritt ${s.no}: ${esc(s.title)}" loading="lazy">
       <div class="body">
         <div class="head"><span class="no">${s.no}</span><h2>${esc(s.title)}</h2>
           <span class="kind${s.kind === "Abzweigung" ? " branch" : ""}">${esc(s.kind ?? "Hauptweg")}</span><span class="dev">${esc(s.device)}${s.screen ? " · " + esc(s.screen) : ""}</span></div>
