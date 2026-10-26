@@ -55,7 +55,7 @@ node -e '
     return {version:v,date:head,changelog:section(v),chapters};});
   // The page may hold at most 512 files: only the two newest versions keep
   // their tutorial (pictures); older ones stay listed with their changes.
-  versions.forEach((x,i)=>{ if(i>=2){ x.archived=true; fs.rmSync(path.join(site,"v",x.version),{recursive:true,force:true}); } });
+  versions.forEach((x,i)=>{ if(i>=1){ x.archived=true; fs.rmSync(path.join(site,"v",x.version),{recursive:true,force:true}); } });
   fs.writeFileSync(path.join(site,"data","index.json"),JSON.stringify({versions,findings:JSON.parse(fs.readFileSync(findings))}));' \
   "$(cygpath -w "$SITE")" "$(cygpath -w findings.json)" "$(cygpath -w ../../CHANGELOG.md)"
 node coverage.js "$(cygpath -w out)" "$(cygpath -w "$SITE/data")"
