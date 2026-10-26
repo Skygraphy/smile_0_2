@@ -4,6 +4,16 @@ Jede Version, die getestet wird, bekommt eine eigene Nummer (0.0.1, 0.0.2 …),
 ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 (Tag `v0.0.1` …). Eine neue Version entsteht mit `tools/testsuite/release.sh`.
 
+## 0.0.12 (2026-10-26)
+
+Kapitel 8: Frame-Einstellungen und Wiedergabe
+
+Behoben:
+
+- 33: Frame-Seite: Jetzt zeigen hieß nur Zeigen
+- 34: Neuer Frame zeigte das falsche Album
+- 35: Schalter auf der Frame-Seite sprang kurz zurück
+
 ## 0.0.11 (2026-10-25)
 
 Neu: Diashow von der Startseite; Kapitel 7 Frame bedienen.
