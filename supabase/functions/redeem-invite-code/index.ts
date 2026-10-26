@@ -69,11 +69,18 @@ async function albumMember(admin: Admin, channel: any, userId: string, via: stri
   const result = { kind: "album_member", channel_id: channel.id, channel_name: channel.name };
   const { data: member } = await admin
     .from("channel_members")
-    .select("user_id")
+    .select("user_id, via_co_admin")
     .eq("channel_id", channel.id)
     .eq("user_id", userId)
     .maybeSingle();
-  if (member) return jsonResponse({ status: "already_member", ...result });
+  if (member) {
+    // In only through the Co-Admin role so far: the code makes it
+    // deliberate, so it stays after stepping down (migrations/0088).
+    if (member.via_co_admin) {
+      await admin.from("channel_members").update({ via_co_admin: false }).eq("channel_id", channel.id).eq("user_id", userId);
+    }
+    return jsonResponse({ status: "already_member", ...result });
+  }
 
   const { data: pending } = await admin
     .from("channel_membership_requests")

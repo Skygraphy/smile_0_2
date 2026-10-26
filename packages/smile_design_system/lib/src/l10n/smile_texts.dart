@@ -880,6 +880,12 @@ abstract class SmileTexts {
   /// **'Co-Admin-Rolle abgeben'**
   String get stepDown;
 
+  /// No description provided for @actionStepDown.
+  ///
+  /// In de, this message translates to:
+  /// **'Abgeben'**
+  String get actionStepDown;
+
   /// No description provided for @stepDownMessage.
   ///
   /// In de, this message translates to:

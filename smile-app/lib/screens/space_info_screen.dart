@@ -285,7 +285,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
       context,
       title: isSelf ? '${t.stepDown}?' : t.removeCoAdminTitle(coAdmin.label),
       message: isSelf ? t.stepDownMessage : t.removeCoAdminMessage,
-      confirmLabel: isSelf ? t.actionLeave : t.actionRemove,
+      confirmLabel: isSelf ? t.actionStepDown : t.actionRemove,
       destructive: true,
     );
     if (!confirmed) return;

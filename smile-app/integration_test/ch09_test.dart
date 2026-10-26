@@ -415,13 +415,15 @@ void main() {
 
       c.clearMessages();
       c.step('Als Co-Admin entfernen', 'Tom antippen, Als Co-Admin entfernen, Entfernen.', 'Tom steht nicht mehr bei Admins.',
-          explain: 'Tom verliert die Verwaltungsrechte, seine Alben bleiben, wie sie sind.');
+          explain: 'Tom verliert die Verwaltungsrechte. Aus den Alben, in die er nur als Co-Admin kam, ist er auch draußen; in Geburtstage, wohin Anna ihn eingeladen hatte, bleibt er.');
       await coAdminCard('Tom Berger');
       await c.tap('Als Co-Admin entfernen');
       c.screen('Co-Admin entfernen?');
       await c.tap('Entfernen', last: true);
       c.screen('Space');
       await c.check('Server: Tom weg', () => eventually(() async => !await isCoAdmin(berger, tom.id)));
+      await c.check('Tom bleibt in Geburtstage (eingeladen)', () async => (await TestBackend.select('channel_members', 'select=user_id&channel_id=eq.$birthdays&user_id=eq.${tom.id}')).isNotEmpty);
+      await c.check('Tom nicht mehr in Weihnachten (nur durch die Rolle)', () async => (await TestBackend.select('channel_members', 'select=user_id&channel_id=eq.${seed.albums['Weihnachten']}&user_id=eq.${tom.id}')).isEmpty);
       await c.check('Tom weg', () => c.gone('Tom Berger', seconds: 8));
       await c.snap();
 
@@ -487,7 +489,7 @@ void main() {
 
       c.clearMessages();
       c.step('Als Co-Admin: eigene Rolle', 'Bei Admins auf Du tippen, Co-Admin-Rolle abgeben, dann Abbrechen.',
-          'Die Frage Co-Admin-Rolle abgeben? Du verlierst deine Verwaltungsrechte über diesen Space. Nach Abbrechen bleibt alles.',
+          'Die Frage Co-Admin-Rolle abgeben? Du verlierst deine Verwaltungsrechte über diesen Space, mit Abbrechen und Abgeben. Nach Abbrechen bleibt alles.',
           kind: 'Abzweigung', explain: 'Jeder Co-Admin kann selbst aufhören.');
       await scrollTo(find.text('Du'));
       await tapExact('Du');
@@ -812,8 +814,10 @@ void main() {
 
       // ---------------------------------------------------------------- Co-Admin-Rolle abgeben
       c.clearMessages();
-      c.step('Co-Admin-Rolle abgeben', 'Zurück, unten Spaces, Familie Huber, bei Admins Du, Co-Admin-Rolle abgeben, Verlassen.',
-          'Zurück auf Spaces; Familie Huber steht dort nicht mehr.', explain: 'Anna verwaltet Familie Huber nicht mehr mit.');
+      c.step('Co-Admin-Rolle abgeben', 'Zurück, unten Spaces, Familie Huber, bei Admins Du, Co-Admin-Rolle abgeben, Abgeben.',
+          'Zurück auf Spaces; Familie Huber steht dort nicht mehr.',
+          explain: 'Anna verwaltet Familie Huber nicht mehr mit. Aus Bergtouren, wo sie nur als Co-Admin drin war, ist sie auch draußen; '
+              'in Wanderungen, wohin Lena sie eingeladen hatte, bleibt sie.');
       await c.back();
       c.screen('Startseite');
       await openSpace('Familie Huber');
@@ -822,19 +826,19 @@ void main() {
       c.screen('Co-Admin-Karte');
       await c.tap('Co-Admin-Rolle abgeben');
       c.screen('Abgeben-Frage');
-      await c.tap('Verlassen', last: true);
+      await c.tap('Abgeben', last: true);
       c.screen('Spaces');
       await c.check('Server: nicht mehr Co-Admin', () => eventually(() async => !await isCoAdmin(huber, annaId)));
+      await c.check('Nicht mehr in Bergtouren (nur durch die Rolle)', () async => (await TestBackend.select('channel_members', 'select=user_id&channel_id=eq.$mountains&user_id=eq.$annaId')).isEmpty);
+      await c.check('Weiter in Wanderungen (eingeladen)', () async => (await TestBackend.select('channel_members', 'select=user_id&channel_id=eq.${seed.albums['Wanderungen']}&user_id=eq.$annaId')).isNotEmpty);
       await c.check('Familie Huber weg', () => c.gone('Familie Huber', seconds: 10));
       await c.snap();
 
       await home();
       c.clearMessages();
-      c.step('Ein geteiltes Album', 'Lena nimmt Anna aus Bergtouren. Auf der Startseite Bergtouren öffnen.',
+      c.step('Ein geteiltes Album', 'Auf der Startseite Bergtouren öffnen.',
           'Das Album Bergtouren; unten statt des Plus der Knopf Member werden.',
-          explain: 'Als Co-Admin war Anna automatisch Member in Lenas Alben, das bleibt auch nach dem Abgeben (so beschlossen). '
-              'Lena nimmt sie aus Bergtouren; jetzt sieht Anna es nur noch, weil es mit Familie Berger geteilt ist. Mitmachen kann sie, wenn Lena zustimmt.');
-      await lena.delete('channel_members', 'channel_id=eq.$mountains&user_id=eq.$annaId');
+          explain: 'Anna sieht Bergtouren jetzt nur noch, weil es mit Familie Berger geteilt ist. Mitmachen kann sie, wenn Lena zustimmt.');
       await until(ChannelFeedScreen, () => c.tap('Bergtouren'));
       c.screen('Album');
       await c.check('Member werden', () => c.waitFor('Member werden', seconds: 10));

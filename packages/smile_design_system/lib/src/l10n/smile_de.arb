@@ -273,6 +273,7 @@
   },
   "removeCoAdminMessage": "Die Person verliert die Verwaltungsrechte über diesen Space.",
   "stepDown": "Co-Admin-Rolle abgeben",
+  "actionStepDown": "Abgeben",
   "stepDownMessage": "Du verlierst deine Verwaltungsrechte über diesen Space.",
   "trashTitle": "Papierkorb",
   "deleteSpace": "Space löschen",

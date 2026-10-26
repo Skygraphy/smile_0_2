@@ -318,5 +318,12 @@
     "detail": "Mit offener Tastatur war die gefundene Person nur halb zu sehen, die Zeilen Aus Kontakten, QR-Code zeigen usw. nahmen den Platz. Behoben: während man sucht, stehen nur die gefundenen Personen da.",
     "status": "behoben",
     "version": "0.0.14"
+  },
+  {
+    "no": 41,
+    "chapter": "ch09",
+    "title": "Co-Admin-Rolle abgeben: Knopf Abgeben, Alben nur aus der Rolle werden verlassen",
+    "detail": "Der Knopf hieß Verlassen (Ernst: Abgeben). Wer die Rolle abgab, blieb in allen Alben des Space. Jetzt (Mittelweg, Ernst 2026-10-26): Alben, in die man nur als Co-Admin kam und in die man nichts gesendet hat, werden verlassen; eingeladene oder selbst bespielte bleiben; eine Übergabe behält alles. Migration 0088.",
+    "status": "behoben"
   }
 ]

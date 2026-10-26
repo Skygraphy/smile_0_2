@@ -483,6 +483,9 @@ class SmileTextsDe extends SmileTexts {
   String get stepDown => 'Co-Admin-Rolle abgeben';
 
   @override
+  String get actionStepDown => 'Abgeben';
+
+  @override
   String get stepDownMessage =>
       'Du verlierst deine Verwaltungsrechte über diesen Space.';
 
