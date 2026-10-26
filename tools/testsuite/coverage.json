@@ -100,6 +100,15 @@
       "5 Sekunden": "20 Sekunden",
       "10 Sekunden": "20 Sekunden",
       "1 Minute": "20 Sekunden"
+    },
+    "Wiedergabe": {
+      "Wie ein Foto (8 s)": "Wie ein Foto (10 s)"
+    },
+    "Frame-Seite": {
+      "WO": "Bild ändern",
+      "ST": "Bild ändern",
+      "Wohnzimmer": "Frame umbenennen",
+      "Stube": "Frame umbenennen"
     }
   },
   "Space": {
@@ -138,7 +147,8 @@
     "Album-Infos": "Paul Berger",
     "Kontakte": "Max Moser",
     "Frame: Diashow": "Bildschirm antippen",
-    "Diashow": "Bildschirm antippen"
+    "Diashow": "Bildschirm antippen",
+    "Lieblingsbilder": "Foto"
   },
   "Neuigkeiten": {
     "WA · Einladung ins Album": "ch10",
@@ -163,5 +173,8 @@
   },
   "Frame: Einstellungen": {
     "": "ch08"
+  },
+  "Frame löschen?": {
+    "Löschen": "ch12"
   }
 }

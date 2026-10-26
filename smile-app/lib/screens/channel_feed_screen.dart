@@ -2057,7 +2057,7 @@ class _FramePickSheetState extends State<_FramePickSheet> {
             const SizedBox(height: SmileSpacing.s),
             FilledButton(
               onPressed: () => Navigator.of(context).pop((frameId: _picked, remember: _remember)),
-              child: Text(t.showNow),
+              child: Text(t.showOnFrameButton),
             ),
           ],
         ),

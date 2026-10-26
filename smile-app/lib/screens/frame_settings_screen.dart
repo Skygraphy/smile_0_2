@@ -55,8 +55,14 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
   @override
   Future<void> onSync() async {
     if (await closeIfGone(context, table: 'frames', id: widget.frame.id)) return;
+    // A reload meanwhile would show a switch as it was before the last tap
+    // (Fund 35, 2026-10-26: off-on-off quickly showed on for a moment).
+    if (_saving > 0) return;
     await _load();
   }
+
+  /// Switch saves under way.
+  int _saving = 0;
 
   /// What it showed last, at once from the phone -- then from the server
   /// (2026-10-12: every info page opened with a spinner first).
@@ -160,12 +166,14 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
   }
 
   Future<void> _saveSetting(Future<void> Function() save) async {
+    _saving++;
     final saved = await LocalChanges.instance.run(
       overrides: const {},
       commit: save,
       affects: tablesChanged({'frames'}, spaceIds: {widget.spaceId}),
     );
-    if (!saved && mounted) await _load();
+    _saving--;
+    if ((!saved || _saving == 0) && mounted) await _load();
   }
 
   String get _shownName => frameNameOf(_frame.id, _frame.name);

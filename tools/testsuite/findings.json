@@ -254,5 +254,29 @@
     "detail": "Fernbedienung (keine Alben), dazu Album-Infos, Space, Frames, Frame-Einstellungen und Neuigkeiten: beim ersten Öffnen suchten sie erst im Speicher des Handys; ohne Treffer wiederholte die Server-Bibliothek das wie einen Netzfehler mit Pausen, erst nach etwa 7 Sekunden kam der Server dran. Behoben: ein fehlender Treffer gilt nicht mehr als Netzfehler.",
     "status": "behoben",
     "version": "0.0.11"
+  },
+  {
+    "no": 33,
+    "chapter": "ch08",
+    "title": "Frame-Seite: Jetzt zeigen hieß nur Zeigen",
+    "detail": "Auf der Seite eines Frames (Alben verwalten, Menü eines Albums) stand statt Jetzt zeigen nur Zeigen: zwei Texte hatten denselben Schlüssel, der spätere gewann. Behoben, dazu ein Test, der doppelte Schlüssel künftig meldet; zwei weitere doppelte (gleicher Text) entfernt.",
+    "status": "behoben",
+    "version": "0.0.12"
+  },
+  {
+    "no": 34,
+    "chapter": "ch08",
+    "title": "Neuer Frame zeigte das falsche Album",
+    "detail": "Verband sich das Tablet genau in dem Moment, in dem Anna die Alben dazugab und Geburtstage zeigen ließ, schrieb sein erster Abgleich das erste Album (Sommerurlaub 2026) über Annas Wahl. Behoben (Server, get-media-batch): der Frame merkt sich sein Album nur noch, wenn es inzwischen niemand anders gesetzt hat; sonst gilt die neue Wahl.",
+    "status": "behoben",
+    "version": "0.0.12"
+  },
+  {
+    "no": 35,
+    "chapter": "ch08",
+    "title": "Schalter auf der Frame-Seite sprang kurz zurück",
+    "detail": "Album-Wechsel erlauben schnell aus und wieder ein: der Schalter zeigte für einen Moment den alten Stand, weil das Neuladen nach dem ersten Tipp erst nach dem zweiten ankam. Behoben: während ein Schalter speichert, lädt die Seite nicht neu, danach einmal.",
+    "status": "behoben",
+    "version": "0.0.12"
   }
 ]

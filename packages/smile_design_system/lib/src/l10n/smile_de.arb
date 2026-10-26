@@ -656,12 +656,6 @@
   },
   "ok": "OK",
   "dontSend": "Nicht senden",
-  "selectedCount": "{count} ausgewählt",
-  "@selectedCount": {
-    "placeholders": {
-      "count": {"type": "int"}
-    }
-  },
   "allSelected": "Alle {count} ausgewählt",
   "@allSelected": {
     "placeholders": {
@@ -1088,7 +1082,7 @@
   "showOnMyFrame": "Auf dem Frame zeigen",
   "pickFrameToShow": "Auf welchem Frame zeigen?",
   "rememberFrame": "Diesen Frame künftig immer nehmen",
-  "showNow": "Zeigen",
+  "showOnFrameButton": "Zeigen",
   "preferredFrame": "Bevorzugter Frame",
   "preferredFrameAsk": "Jedes Mal fragen",
   "preferredFrameHint": "Ein Tipp auf das Frame-Symbol im Album zeigt es dort sofort.",
@@ -1099,7 +1093,6 @@
   "allowCaptions": "Titel ein- oder ausblenden",
   "rotateWithDevice": "Bild dreht sich mit dem Frame",
   "recentCountLabel": "Wie viele aktuelle Fotos",
-  "quietOff": "Aus",
   "quietPreset": "{from} – {to} Uhr",
   "@quietPreset": {"placeholders": {"from": {"type": "String"}, "to": {"type": "String"}}},
   "alsoLabel": "Dazu",

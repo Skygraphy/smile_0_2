@@ -1075,7 +1075,7 @@ abstract class SmileTexts {
   /// No description provided for @showNow.
   ///
   /// In de, this message translates to:
-  /// **'Zeigen'**
+  /// **'Jetzt zeigen'**
   String get showNow;
 
   /// No description provided for @showHereNow.
@@ -3645,6 +3645,12 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Diesen Frame künftig immer nehmen'**
   String get rememberFrame;
+
+  /// No description provided for @showOnFrameButton.
+  ///
+  /// In de, this message translates to:
+  /// **'Zeigen'**
+  String get showOnFrameButton;
 
   /// No description provided for @preferredFrame.
   ///

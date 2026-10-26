@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
   // the ready photos in the chosen one.
   const { data: visibleRows, error: visibleError } = await supabase.rpc("frame_visible_channels", { p_frame: claims.frame_id });
   if (visibleError) return jsonResponse({ error: "fetch_failed" }, 500);
-  const assignedChannels = (visibleRows ?? []).map((r: { channel_id: string; name: string; sort_order: number }) => ({
+  let assignedChannels = (visibleRows ?? []).map((r: { channel_id: string; name: string; sort_order: number }) => ({
     channel_id: r.channel_id,
     name: r.name,
     sort_order: r.sort_order,
@@ -206,7 +206,30 @@ Deno.serve(async (req) => {
   // first page: a continued page may still be the album from before a
   // switch made meanwhile in the app.
   if (!body.fetch_channel_id && firstPage && (channelId ?? null) !== (frame.current_channel_id ?? null)) {
-    await supabase.from("frames").update({ current_channel_id: channelId ?? null }).eq("id", claims.frame_id);
+    let update = supabase.from("frames").update({ current_channel_id: channelId ?? null }).eq("id", claims.frame_id);
+    // Only over what was read above, unless picked on the Frame itself: an
+    // album set meanwhile in the app wins (Fund 34, 2026-10-26: a Frame
+    // pairing while Anna added albums and tapped Jetzt zeigen wrote its
+    // first album over hers).
+    if (!body.select_channel_id) {
+      update = frame.current_channel_id == null
+        ? update.is("current_channel_id", null)
+        : update.eq("current_channel_id", frame.current_channel_id);
+    }
+    const { data: updated } = await update.select("id");
+    if ((updated ?? []).length === 0) {
+      const { data: fresh } = await supabase.from("frames").select("current_channel_id").eq("id", claims.frame_id).maybeSingle();
+      const { data: freshRows } = await supabase.rpc("frame_visible_channels", { p_frame: claims.frame_id });
+      const freshChannels = (freshRows ?? []).map((r: { channel_id: string; name: string; sort_order: number }) => ({
+        channel_id: r.channel_id,
+        name: r.name,
+        sort_order: r.sort_order,
+      }));
+      if (fresh?.current_channel_id && freshChannels.some((a: { channel_id: string }) => a.channel_id === fresh.current_channel_id)) {
+        assignedChannels = freshChannels;
+        channelId = fresh.current_channel_id as string;
+      }
+    }
   }
   // Picking an album on the Frame means: show this one (2026-10-14) -- also
   // when it played all albums in turn or the newest.

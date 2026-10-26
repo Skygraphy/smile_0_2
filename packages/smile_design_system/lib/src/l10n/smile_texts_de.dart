@@ -594,7 +594,7 @@ class SmileTextsDe extends SmileTexts {
   String get showingNow => 'Läuft gerade';
 
   @override
-  String get showNow => 'Zeigen';
+  String get showNow => 'Jetzt zeigen';
 
   @override
   String get showHereNow => 'Hier jetzt zeigen';
@@ -2135,6 +2135,9 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get rememberFrame => 'Diesen Frame künftig immer nehmen';
+
+  @override
+  String get showOnFrameButton => 'Zeigen';
 
   @override
   String get preferredFrame => 'Bevorzugter Frame';
