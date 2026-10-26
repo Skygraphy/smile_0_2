@@ -384,7 +384,7 @@ void main() {
 
       // ================================================================ Wiedergabe
       c.clearMessages();
-      c.step('Wiedergabe öffnen', 'Auf Wiedergabe (Ein Album · Der Reihe nach · 8 Sekunden) tippen.',
+      c.step('Wiedergabe öffnen', 'Auf Wiedergabe (Ein Album · Der Reihe nach · 10 Sekunden) tippen.',
           'Die Seite Wiedergabe: Was läuft, Reihenfolge, Anzeigedauer, Am Ende, Videos, Bildschirm füllen und die Schalter.',
           explain: 'Was und wie der Frame abspielt, stellt immer die App ein, egal welche Bedienstufe er hat.');
       await scrollTo(c.find_('Wiedergabe'));
