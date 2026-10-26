@@ -278,5 +278,29 @@
     "detail": "Album-Wechsel erlauben schnell aus und wieder ein: der Schalter zeigte für einen Moment den alten Stand, weil das Neuladen nach dem ersten Tipp erst nach dem zweiten ankam. Behoben: während ein Schalter speichert, lädt die Seite nicht neu, danach einmal.",
     "status": "behoben",
     "version": "0.0.12"
+  },
+  {
+    "no": 36,
+    "chapter": "ch05",
+    "title": "Untertitel neben Knöpfen wurden abgeschnitten",
+    "detail": "Möchte Member werden, Eingeladen · Annahme ausstehend und Einladungen in den Neuigkeiten endeten mit …, weil daneben Häkchen und Kreuz stehen. Ernst: in eine zweite Zeile umbrechen. Umgesetzt.",
+    "status": "behoben",
+    "version": "0.0.13"
+  },
+  {
+    "no": 37,
+    "chapter": "ch05",
+    "title": "Videos senden: Auswahl jetzt koralle",
+    "detail": "Die gewählte Stufe war dunkelrot hinterlegt, Auswahlen sonst koralle. Ernst: koralle. Gilt für alle Umschalter dieser Art.",
+    "status": "behoben",
+    "version": "0.0.13"
+  },
+  {
+    "no": 38,
+    "chapter": "ch06",
+    "title": "Frame direkt nach dem Koppeln: Verbunden · meldet sich gleich",
+    "detail": "Bis sich das Tablet zum ersten Mal meldet, stand Noch nicht verbunden, was nach erfolgreichem Koppeln verwirrt. Ernst hat die Entscheidung Claude überlassen.",
+    "status": "behoben",
+    "version": "0.0.13"
   }
 ]

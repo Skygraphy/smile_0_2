@@ -4,6 +4,16 @@ Jede Version, die getestet wird, bekommt eine eigene Nummer (0.0.1, 0.0.2 …),
 ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 (Tag `v0.0.1` …). Eine neue Version entsteht mit `tools/testsuite/release.sh`.
 
+## 0.0.13 (2026-10-26)
+
+Antworten zu Kapitel 5 und 6 umgesetzt
+
+Behoben:
+
+- 36: Untertitel neben Knöpfen wurden abgeschnitten
+- 37: Videos senden: Auswahl jetzt koralle
+- 38: Frame direkt nach dem Koppeln: Verbunden · meldet sich gleich
+
 ## 0.0.12 (2026-10-26)
 
 Kapitel 8: Frame-Einstellungen und Wiedergabe
