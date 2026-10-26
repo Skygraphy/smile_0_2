@@ -4,6 +4,15 @@ Jede Version, die getestet wird, bekommt eine eigene Nummer (0.0.1, 0.0.2 …),
 ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 (Tag `v0.0.1` …). Eine neue Version entsteht mit `tools/testsuite/release.sh`.
 
+## 0.0.14 (2026-10-26)
+
+Kapitel 9: Teilen und Co-Admin
+
+Behoben:
+
+- 39: Geteiltes Album annehmen: der eigene Space des Albums stand zur Wahl
+- 40: Suche im Einladen-Fenster: gefundene Person abgeschnitten
+
 ## 0.0.13 (2026-10-26)
 
 Antworten zu Kapitel 5 und 6 umgesetzt
