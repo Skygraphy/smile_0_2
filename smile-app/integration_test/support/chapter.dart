@@ -261,6 +261,17 @@ class Chapter {
     }, skipOffstage: true);
   }
 
+  /// The text [what] is on screen and shown in full, not cut off with "…"
+  /// (0.0.13: subtitles next to buttons wrap into a second line).
+  bool fullyShown(String what) {
+    final f = find.text(what);
+    if (f.evaluate().isEmpty) return false;
+    return f.evaluate().every((e) {
+      final r = e.renderObject;
+      return r is RenderParagraph && !r.didExceedMaxLines;
+    });
+  }
+
   /// Waits until it is there (real time: the network answers meanwhile).
   Future<bool> waitFor(String what, {double seconds = 10}) async {
     final sw = Stopwatch()..start();

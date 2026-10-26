@@ -780,6 +780,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                 leading: SmileAvatar(name: request.counterpartLabel, avatarUrl: request.counterpartAvatarUrl, size: 40),
                 title: request.counterpartLabel,
                 subtitle: t.wantsToJoin,
+                subtitleMaxLines: 2,
                 trailing: _decideButtons(
                   onAccept: () => _run(() => widget.membershipService.decideMembershipRequest(request.id, accept: true)),
                   onDecline: () =>
@@ -792,6 +793,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                 title: request.counterpartLabel,
                 subtitleIcon: SmileIcons.pending,
                 subtitle: t.invitedWaiting,
+                subtitleMaxLines: 2,
                 trailing: IconButton(
                   icon: Icon(SmileIcons.close, color: muted),
                   tooltip: t.actionWithdraw,
@@ -838,6 +840,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                   title: request.counterpartLabel,
                   subtitleIcon: SmileIcons.pending,
                   subtitle: t.invitedWaiting,
+                  subtitleMaxLines: 2,
                   trailing: IconButton(
                     icon: Icon(SmileIcons.close, color: muted),
                     tooltip: t.actionWithdraw,

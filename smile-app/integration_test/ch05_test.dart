@@ -281,6 +281,7 @@ void main() {
       await c.check('Meldung', () => c.waitFor('Einladung an Paul Berger gesendet', seconds: 8));
       await c.check('Offene Einladung im Server', () async => (await requestOf(birthdays, paul.id))?['status'] == 'pending');
       await c.check('Wartet', () => c.waitFor('Eingeladen · Annahme ausstehend', seconds: 8));
+      await c.check('Ganz zu lesen, nicht abgeschnitten', () => c.fullyShown('Eingeladen · Annahme ausstehend'));
       await c.snap();
 
       c.clearMessages();
@@ -449,6 +450,7 @@ void main() {
       final lenaAsk = await lena.edge('redeem-invite-code', {'code': code, 'via': 'typed'});
       await c.check('Anfrage im Server', () => lenaAsk['status'] == 'requested');
       await c.check('Lena fragt', () => c.waitFor('Möchte Member werden', seconds: 20));
+      await c.check('Ganz zu lesen, nicht abgeschnitten', () => c.fullyShown('Möchte Member werden'));
       await c.letLoad();
       await c.snap();
 
@@ -717,6 +719,7 @@ void main() {
       await c.tap('Neuigkeiten', seconds: 10);
       c.screen('Neuigkeiten');
       await c.check('Einladung', () => c.waitFor('Lena Huber lädt dich als Member ein', seconds: 20));
+      await c.check('Ganz zu lesen, nicht abgeschnitten', () => c.fullyShown('Lena Huber lädt dich als Member ein'));
       await c.snap();
 
       c.clearMessages();

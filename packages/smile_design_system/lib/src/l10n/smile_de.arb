@@ -752,7 +752,7 @@
       "time": {"type": "String"}
     }
   },
-  "frameNeverOnline": "Noch nicht verbunden",
+  "frameNeverOnline": "Verbunden · meldet sich gleich",
   "batteryShort": "Akku {level} %",
   "@batteryShort": {
     "placeholders": {

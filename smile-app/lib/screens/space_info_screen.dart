@@ -582,6 +582,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
                   title: invite.label,
                   subtitleIcon: SmileIcons.pending,
                   subtitle: t.invitedWaiting,
+                  subtitleMaxLines: 2,
                   trailing: IconButton(
                     icon: Icon(SmileIcons.close, color: muted),
                     tooltip: t.actionWithdraw,

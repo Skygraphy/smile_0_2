@@ -671,6 +671,7 @@ void main() {
     c.screen('Einstellungen');
     await c.tap('Hoch');
     await c.check('Hinweis 720p', () => c.waitFor('~720p, sehr scharf', seconds: 3));
+    await c.check('Hoch koralle', () => c.colorIn('SegmentedButton<VideoQuality>', '#FF6F61', fx: 0.07, fy: 0.5));
     await c.snap();
 
     c.step('Videos senden: Niedrig', 'Niedrig antippen.', 'Darunter steht: 360p, für kleine Bildschirme, rund 6 MB pro Minute.',
@@ -683,6 +684,7 @@ void main() {
         kind: 'Abzweigung', explain: 'Zurück auf den Standard, damit die folgenden Kapitel vom gleichen Stand ausgehen.');
     await c.tap('Mittel');
     await c.check('Hinweis 480p', () => c.waitFor('~Genau wie WhatsApp', seconds: 3));
+    await c.check('Mittel koralle', () => c.colorIn('SegmentedButton<VideoQuality>', '#FF6F61', fx: 0.38, fy: 0.5));
     await c.snap();
 
     // ---------------------------------------------------------------- Abmelden

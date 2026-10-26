@@ -93,6 +93,21 @@ class SmileTheme {
         secondaryLabelStyle: TextStyle(color: onPrimary, fontWeight: FontWeight.w600),
         labelStyle: TextStyle(color: scheme.onSurface),
       ),
+      // Segmented choices (e.g. Videos senden): the chosen one coral like a
+      // chosen chip (2026-10-26, Ernst).
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected) ? primary : null,
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected) ? onPrimary : scheme.onSurface,
+          ),
+          textStyle: WidgetStateProperty.resolveWith(
+            (states) => TextStyle(fontWeight: states.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w400),
+          ),
+        ),
+      ),
       // Bottom bar (Alben / Spaces / Profil): the selected tab gets a soft
       // coral pill and a coral filled icon, everything else stays neutral.
       navigationBarTheme: NavigationBarThemeData(

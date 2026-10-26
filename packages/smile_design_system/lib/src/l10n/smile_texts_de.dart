@@ -1186,7 +1186,7 @@ class SmileTextsDe extends SmileTexts {
   }
 
   @override
-  String get frameNeverOnline => 'Noch nicht verbunden';
+  String get frameNeverOnline => 'Verbunden · meldet sich gleich';
 
   @override
   String batteryShort(int level) {

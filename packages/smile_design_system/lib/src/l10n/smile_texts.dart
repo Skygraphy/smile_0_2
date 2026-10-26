@@ -1999,7 +1999,7 @@ abstract class SmileTexts {
   /// No description provided for @frameNeverOnline.
   ///
   /// In de, this message translates to:
-  /// **'Noch nicht verbunden'**
+  /// **'Verbunden · meldet sich gleich'**
   String get frameNeverOnline;
 
   /// No description provided for @batteryShort.

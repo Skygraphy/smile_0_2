@@ -230,6 +230,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                   title: invite.spaceName ?? invite.spaceId,
                   subtitleIcon: SmileIcons.coAdmin,
                   subtitle: t.inviteCoAdminFrom(invite.founderLabel),
+                  subtitleMaxLines: 2,
                   trailing: _decide(
                     onAccept: () => _run(
                       () => widget.spaceService.decideCoOwnerInvite(invite.id, accept: true),
@@ -251,6 +252,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                   subtitle: request.kind == RequestKind.membership
                       ? t.inviteMemberFrom(request.counterpartLabel)
                       : t.inviteShareFrom(request.counterpartLabel),
+                  subtitleMaxLines: 2,
                   trailing: _decide(
                     onAccept: () => request.kind == RequestKind.membership
                         ? _run(
