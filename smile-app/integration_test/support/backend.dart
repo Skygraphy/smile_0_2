@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -146,9 +147,50 @@ class TestUser {
 
   /// PostgREST as this person: e.g. patch('channel_membership_requests', 'id=eq.x', {...}).
   Future<List> patch(String table, String query, Map<String, Object?> body) => _rest('PATCH', '$table?$query', body);
-  Future<List> insert(String table, Map<String, Object?> body) => _rest('POST', table, body);
+  Future<List> insert(String table, Object body) => _rest('POST', table, body);
   Future<List> delete(String table, String query) => _rest('DELETE', '$table?$query', null);
   Future<List> select(String table, String query) => _rest('GET', '$table?$query', null);
+
+  /// Photos into an album the way the app sends them (migrations/0071):
+  /// the files into the media buckets, then one insert as "ready", which
+  /// raises the same "new photos" push. Returns the new ids.
+  Future<List<String>> sendPhotos(String channelId, List<Uint8List> photos) async {
+    TestBackend._guard();
+    final ids = [for (final _ in photos) _uuid()];
+    for (var i = 0; i < photos.length; i++) {
+      for (final (bucket, suffix) in [('media-display', 'display'), ('media-thumbnails', 'thumb')]) {
+        final res = await http.post(Uri.parse('${TestBackend.url}/storage/v1/object/$bucket/$channelId/${ids[i]}_$suffix.jpg'),
+            headers: {'apikey': TestBackend._key, 'Authorization': 'Bearer $_token', 'Content-Type': 'image/jpeg'},
+            body: photos[i]);
+        if (res.statusCode >= 300) throw StateError('Upload als $email: ${res.statusCode} ${res.body}');
+      }
+    }
+    await insert('media_items', [
+      for (var i = 0; i < photos.length; i++)
+        {
+          'id': ids[i],
+          'channel_id': channelId,
+          'sender_id': id,
+          'media_type': 'photo',
+          'mime_type': 'image/jpeg',
+          'storage_path_original': '$channelId/${ids[i]}_display.jpg',
+          'storage_path_display': '$channelId/${ids[i]}_display.jpg',
+          'storage_path_thumbnail': '$channelId/${ids[i]}_thumb.jpg',
+          'processing_status': 'ready',
+          'file_size_bytes': photos[i].length,
+        },
+    ]);
+    return ids;
+  }
+
+  static String _uuid() {
+    final r = Random.secure();
+    final b = List<int>.generate(16, (_) => r.nextInt(256));
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    final h = b.map((x) => x.toRadixString(16).padLeft(2, '0')).join();
+    return '${h.substring(0, 8)}-${h.substring(8, 12)}-${h.substring(12, 16)}-${h.substring(16, 20)}-${h.substring(20)}';
+  }
 
   Future<List> _rest(String method, String path, Object? body) async {
     TestBackend._guard();

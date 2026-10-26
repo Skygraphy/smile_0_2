@@ -390,7 +390,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                         leading: SmileTypeBadge(icon: _historyIcon(data['type'] as String?), child: _historyImage(data)),
                         title: entry['title'] as String,
                         subtitle: entry['body'] as String,
-                        subtitleMaxLines: 3,
+                        subtitleMaxLines: 5, // the whole message, never cut off (Fund 43)
                         trailing: Text(
                           _when(t, DateTime.parse(entry['created_at'] as String).toLocal()),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: muted),

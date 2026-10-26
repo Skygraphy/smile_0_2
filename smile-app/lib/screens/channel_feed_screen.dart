@@ -623,6 +623,12 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
 
   Future<void> _load() async {
     final List<MediaItem> items;
+    // Own photos already in the album on the server before this load
+    // started (a photo is ready the moment it is in).
+    final sentBefore = {
+      for (final p in _pendingUploads)
+        if (p.done && !p.isVideo && p.mediaItemId != null) p.mediaItemId!,
+    };
     try {
       items = _showingHidden
           ? await widget.mediaService.fetchHiddenMedia(widget.channelId)
@@ -693,6 +699,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       // local-preview -> blurry-server-preview -> real-thumbnail.
       for (final p in _pendingUploads) {
         if (p.done && p.mediaItemId != null && items.any((i) => i.id == p.mediaItemId && i.isReady)) {
+          UploadQueue.instance.forget(p);
+        } else if (sentBefore.contains(p.mediaItemId) && !items.any((i) => i.id == p.mediaItemId)) {
+          // Sent, but no longer on the server: someone deleted it meanwhile
+          // (Fund 44, 2026-10-26) -- the local copy must not stay behind.
           UploadQueue.instance.forget(p);
         }
       }

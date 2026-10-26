@@ -61,10 +61,15 @@ class ForegroundNotifications {
     // an open Neuigkeiten picks it up right away.
     SyncBus.emit(const SyncEvent(tables: {'user_notifications'}, channelIds: {}, spaceIds: {}));
     if (data['type'] == 'new_photo' && data['channel_id'] != null && data['channel_id'] == openAlbumId) return;
+    // FCM drops "collapse_key" from the data and hands it over as
+    // collapseKey instead (Fund 42, 2026-10-26); without one, that is the
+    // app's package name.
+    final batch = data['collapse_key'] as String? ??
+        (message.collapseKey?.startsWith('com.smile.') == false ? message.collapseKey : null);
     await _plugin.show(
       // Same collapse key (a batch of photos) -> same id, so the newer
       // notification replaces the older one, as FCM's tag does in the background.
-      id: (data['collapse_key'] as String?)?.hashCode ??
+      id: batch?.hashCode ??
           message.messageId?.hashCode ??
           DateTime.now().millisecondsSinceEpoch.remainder(1 << 31),
       title: notification.title,

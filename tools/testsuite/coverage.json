@@ -34,7 +34,11 @@
       "Geburtstage": "Urlaub 2026",
       "FH": "Bild ändern",
       "Familie Huber": "Space umbenennen",
-      "WA · Wanderungen": "Urlaub 2026"
+      "WA · Wanderungen": "Urlaub 2026",
+      "DH": "Bild ändern",
+      "Die Hubers": "Space umbenennen",
+      "WA · Wanderungen 2026": "Urlaub 2026",
+      "KL · Klettersteige": "Urlaub 2026"
     },
     "Space anlegen": {
       "Eingabefeld: Bitte gib einen Namen ein.": "Eingabefeld: Name"
@@ -46,14 +50,19 @@
       "UR · Urlaub 2026": "Infos zum Album",
       "Sommerurlaub 2026": "Infos zum Album",
       "WE · Weihnachten": "Infos zum Album",
-      "GE · Geburtstage": "Infos zum Album"
+      "GE · Geburtstage": "Infos zum Album",
+      "WA · Wanderungen 2026": "Infos zum Album"
     },
     "Album-Infos": {
       "UR": "Bild ändern",
       "SO": "Bild ändern",
       "Urlaub 2026": "Album umbenennen",
       "Sommerurlaub 2026": "Album umbenennen",
-      "Geburtstage": "Album umbenennen"
+      "Geburtstage": "Album umbenennen",
+      "WE": "Bild ändern",
+      "KL": "Bild ändern",
+      "Weihnachten": "Album umbenennen",
+      "Klettersteige": "Album umbenennen"
     },
     "Startseite": {
       "Sommerurlaub 2026 · Noch keine Fotos · gerade eben": "Geburtstage",
