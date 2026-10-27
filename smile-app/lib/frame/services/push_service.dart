@@ -17,6 +17,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // One app (2026-10-11): only a device that is a Frame syncs here; a
   // person's phone gets its notifications shown by the system itself.
   if (!await FrameCredentialsStore().isProvisioned()) return;
+  debugPrint('SmileFrameTiming: push (background) ${message.data['type']}');
   await Firebase.initializeApp();
   await performBackgroundSync();
 }

@@ -136,6 +136,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     // bypassing the 2-minute foreground poll interval.
     PushSyncSignal.onSyncRequested = () => unawaited(_sync());
     PushSyncSignal.onCommand = _onCommand;
+    PushSyncSignal.onSettings = (json) => _applySettings(FrameSettingsInfo.fromJson(json));
     widget.syncService.onEarlyResult = _applyEarly;
     _minuteTimer = Timer.periodic(const Duration(seconds: 15), (_) => _tickClock());
     _init();
@@ -170,6 +171,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     WidgetsBinding.instance.removeObserver(this);
     PushSyncSignal.onSyncRequested = null;
     PushSyncSignal.onCommand = null;
+    PushSyncSignal.onSettings = null;
     widget.syncService.onEarlyResult = null;
     _syncTimer?.cancel();
     _advanceTimer?.cancel();
@@ -214,6 +216,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   }
 
   Future<void> _sync() async {
+    debugPrint('SmileFrameTiming: sync start');
     final result = await widget.syncService.sync(fcmToken: _fcmToken);
     if (!mounted) return;
     if (result.unpaired) {
@@ -232,7 +235,22 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   /// The server's first answer, before the rest of the sync (SyncService.
   /// onEarlyResult): settings and album switches take effect right away.
   void _applyEarly(SyncResult early) {
+    debugPrint('SmileFrameTiming: settings applied (early) captions=${early.settings?.showCaptions} interval=${early.settings?.slideshowIntervalSeconds}');
     if (mounted) _apply(early);
+  }
+
+  /// Only the settings, straight from a push -- photos and albums come with
+  /// the sync that follows (2026-10-27).
+  void _applySettings(FrameSettingsInfo settings) {
+    if (!mounted || !_loadedOnce) return;
+    debugPrint('SmileFrameTiming: settings applied (push) captions=${settings.showCaptions} interval=${settings.slideshowIntervalSeconds}');
+    setState(() {
+      _settings = settings;
+      _rebuildPlaylist();
+    });
+    _updateQuiet();
+    _updateRotation();
+    _restartAdvanceTimer();
   }
 
   void _apply(SyncResult result) {

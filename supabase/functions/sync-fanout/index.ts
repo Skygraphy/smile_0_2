@@ -10,6 +10,7 @@
 // Vault (sync_fanout_secret) and this function from its own env.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse } from "../_shared/cors.ts";
+import { FRAME_SETTING_COLUMNS, frameSettings } from "../_shared/frame-settings.ts";
 import { sendDataMessage } from "../_shared/fcm.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -56,7 +57,7 @@ Deno.serve(async (req) => {
       ? supabaseAdmin.from("user_push_tokens").select("id, fcm_token").in("user_id", users)
       : Promise.resolve({ data: [] }),
     frames.length > 0
-      ? supabaseAdmin.from("frames").select("fcm_token").in("id", frames).not("fcm_token", "is", null)
+      ? supabaseAdmin.from("frames").select(`fcm_token, ${FRAME_SETTING_COLUMNS}`).in("id", frames).not("fcm_token", "is", null)
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -75,9 +76,16 @@ Deno.serve(async (req) => {
         }
       }
     }),
-    ...(frameTokens ?? []).map(async (f: { fcm_token: string }) => {
+    // deno-lint-ignore no-explicit-any
+    ...(frameTokens ?? []).map(async (f: Record<string, any>) => {
       try {
-        await sendDataMessage(f.fcm_token, { type: "sync_now" });
+        // A change of the Frame itself carries its settings along: the Frame
+        // shows them at once and syncs the rest afterwards (2026-10-27,
+        // measured: 1.4 s before, of which 0.9 s the Frame's own sync).
+        await sendDataMessage(
+          f.fcm_token,
+          body.table === "frames" ? { type: "sync_now", settings: JSON.stringify(frameSettings(f)) } : { type: "sync_now" },
+        );
         sent++;
       } catch {
         // Best-effort -- the Frame's periodic poll is the real guarantee.

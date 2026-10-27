@@ -9,6 +9,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { verifyFrameAccessToken } from "../_shared/frame-jwt.ts";
+import { frameSettings } from "../_shared/frame-settings.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
@@ -130,29 +131,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  const settings = {
-    display_mode: frame.display_mode,
-    slideshow_interval_seconds: frame.slideshow_interval_seconds,
-    channel_switch_enabled: frame.channel_switch_enabled,
-    video_sound: frame.video_sound,
-    max_local_cache_gb: frame.max_local_cache_gb,
-    control_level: frame.control_level,
-    controls: frame.controls,
-    content_mode: frame.content_mode,
-    recent_count: frame.recent_count,
-    play_order: frame.play_order,
-    end_behavior: frame.end_behavior,
-    show_new_immediately: frame.show_new_immediately,
-    show_clock: frame.show_clock,
-    show_sender: frame.show_sender,
-    quiet_from: frame.quiet_from,
-    quiet_to: frame.quiet_to,
-    video_length: frame.video_length,
-    fill_mode: frame.fill_mode,
-    slow_zoom: frame.slow_zoom,
-    rotate_with_device: frame.rotate_with_device,
-    show_captions: frame.show_captions,
-  };
+  const settings = frameSettings(frame);
 
   if (body.fcm_token || body.battery_level !== undefined || body.is_charging !== undefined) {
     await supabase
