@@ -35,12 +35,14 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
     if (_saving > 0) return;
     try {
       final fresh = await widget.frameService.getFrame(_frame.id);
+      debugPrint('SmilePlayback: reload end=${fresh.endBehavior} saving=$_saving');
       if (mounted && _saving == 0) setState(() => _frame = fresh);
     } catch (_) {}
   }
 
   /// Shown at once; the Frame follows within seconds.
   Future<void> _save(Map<String, dynamic> changes) async {
+    debugPrint('SmilePlayback: save $changes');
     final before = _frame;
     setState(() => _frame = _frame.withSettings(changes));
     _saving++;
@@ -50,6 +52,7 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
       affects: tablesChanged({'frames'}, spaceIds: {?widget.spaceId}),
     );
     _saving--;
+    debugPrint('SmilePlayback: saved $changes ok=$saved');
     if (!saved && mounted) setState(() => _frame = before);
   }
 
