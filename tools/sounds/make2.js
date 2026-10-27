@@ -1,4 +1,4 @@
-// The send tone is 'tupf' (J, Ernst 2026-10-27); the receive tone 'eingang' is in make.js.
+// Send tone 'knopf' (H), receive tone 'tupf' (J): Ernst 2026-10-27.
 // Round 2: full ("satt"), short, simple -- low/mid pitch, soft attack, quick decay.
 const fs=require('fs'),path=require('path');const SR=44100;
 function wav(s){const b=Buffer.alloc(44+s.length*2);b.write('RIFF',0);b.writeUInt32LE(36+s.length*2,4);b.write('WAVE',8);b.write('fmt ',12);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(SR,24);b.writeUInt32LE(SR*2,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(s.length*2,40);s.forEach((v,i)=>b.writeInt16LE(Math.max(-1,Math.min(1,v))*32767|0,44+i*2));return b;}
