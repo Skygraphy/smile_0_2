@@ -516,6 +516,7 @@ void main() {
           (await TestBackend.select('channel_shares', 'select=space_id&channel_id=eq.$mountains&space_id=eq.$berger')).isNotEmpty));
       await c.check('Lena bekommt Bescheid', () => eventually(() async =>
           (await history(lena.id)).any((r) => r['body'] == 'Anna Berger hat das Album Bergtouren für den eigenen Space angenommen.')));
+      await c.check('Einladung weg', () => c.gone('Lena Huber möchte das Album mit deinem Space teilen', seconds: 10));
       await c.snap();
 
       c.clearMessages();
@@ -573,6 +574,7 @@ void main() {
           (await TestBackend.select('space_co_owners', 'select=user_id&space_id=eq.$huber&user_id=eq.$annaId')).isNotEmpty));
       await c.check('Lena bekommt Bescheid', () => eventually(() =>
           hasEntry(lena.id, 'Anna Berger hat deine Einladung als Co-Admin von Die Hubers angenommen.')));
+      await c.check('Einladung weg', () => c.gone('Lena Huber lädt dich als Co-Admin ein', seconds: 10));
       await c.snap();
 
       c.clearMessages();
