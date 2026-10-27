@@ -194,5 +194,12 @@
   },
   "Frame löschen?": {
     "Löschen": "ch12"
+  },
+  "_overlays": {
+    "Tipp": [
+      "TIPP",
+      "Verstanden",
+      "Keine Tipps mehr"
+    ]
   }
 }

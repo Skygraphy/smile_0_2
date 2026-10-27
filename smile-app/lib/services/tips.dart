@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
@@ -96,7 +97,13 @@ class Tips {
   static void offerFirst(BuildContext context, List<(TipId, GlobalKey?)> candidates) {
     if (candidates.isEmpty) return;
     Future<void> check() async {
-      if (!context.mounted || !enabled.value) return;
+      if (!context.mounted) return;
+      // Switched off: keep waiting, they may be switched on again while the
+      // page is open (Fund 45, 2026-10-27).
+      if (!enabled.value) {
+        Timer(_quiet, check);
+        return;
+      }
       final prefs = await _prefs();
       if (prefs == null || !context.mounted) return;
       final seen = prefs.getStringList(_seenKey) ?? const [];
@@ -114,6 +121,9 @@ class Tips {
       await prefs.setString(_dayKey, _today());
       if (!context.mounted) return;
       _show(context, id, anchor);
+      // The page's next tip on another day, even if the page stays open
+      // that long (the start page does; Fund 45).
+      Timer(_quiet, check);
     }
 
     Timer(_quiet, check);
@@ -279,7 +289,19 @@ class _TipLayer extends StatelessWidget {
     return Stack(
       children: [
         // A tap beside the tip closes it for today; the page stays visible.
-        Positioned.fill(child: GestureDetector(behavior: HitTestBehavior.translucent, onTap: onLater)),
+        // The button it points at is left out: a tap there reaches the
+        // button itself and closes the tip too (Fund 46, 2026-10-27).
+        Positioned.fill(
+          child: _Hole(
+            hole: target?.inflate(4),
+            child: GestureDetector(behavior: HitTestBehavior.translucent, onTap: onLater),
+          ),
+        ),
+        if (target != null)
+          Positioned.fromRect(
+            rect: target.inflate(4),
+            child: Listener(behavior: HitTestBehavior.translucent, onPointerUp: (_) => onLater()),
+          ),
         if (target != null)
           Positioned.fromRect(
             rect: target.inflate(4),
@@ -295,5 +317,31 @@ class _TipLayer extends StatelessWidget {
         placed,
       ],
     );
+  }
+}
+
+/// Lets taps inside [hole] through to what lies below.
+class _Hole extends SingleChildRenderObjectWidget {
+  const _Hole({required this.hole, super.child});
+
+  final Rect? hole;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderHole(hole);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderHole renderObject) => renderObject.hole = hole;
+}
+
+class _RenderHole extends RenderProxyBox {
+  _RenderHole(this.hole);
+
+  Rect? hole;
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    final h = hole;
+    if (h != null && h.contains(localToGlobal(position))) return false;
+    return super.hitTest(result, position: position);
   }
 }

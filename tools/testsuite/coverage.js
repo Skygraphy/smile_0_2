@@ -9,6 +9,9 @@ const aliases = declared._aliases ?? {};
 // Screens whose rows (labels with " · ") are all the same kind of element:
 // one of them tapped (the named tap) counts for all, e.g. album rows.
 const rows = declared._rows ?? {};
+// Layers over a page (a tip): only their own controls count there; the
+// page below is covered on its own screen.
+const overlays = declared._overlays ?? {};
 
 const screens = new Map(); // screen -> Map(label -> {seen:[chapter,step], tested:[...], later})
 const taps = []; // {chapter, screen, label}
@@ -49,6 +52,7 @@ for (const [screen, m] of screens) {
   const elements = [];
   for (const [label, e] of m) {
     if (ignored.has(label)) continue;
+    if (overlays[screen] && !overlays[screen].some(p => label.startsWith(p))) continue;
     const hit = taps.filter(t => t.screen === screen && matches(label, t.label, screen));
     const promise = Object.entries(declared[screen] ?? {}).find(([prefix]) => label.startsWith(prefix));
     let status = "offen", where = null;
