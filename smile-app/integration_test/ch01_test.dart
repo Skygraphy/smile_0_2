@@ -13,6 +13,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus_platform_interface/share_plus_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smile_app/main.dart' as app;
+import 'package:smile_app/screens/my_card_screen.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import 'support/backend.dart';
@@ -593,7 +594,13 @@ void main() {
     c.step('Meine Karte', 'Meine Karte antippen.',
         'Annas Karte: Bild, Name, @anna.berger, ein QR-Code und darunter smileapp.app/@anna.berger. Unten der Knopf Meine Karte teilen.',
         explain: 'Aus dem Smile-Namen entsteht ein Link (smileapp.app/@anna.berger) und daraus der QR-Code.');
-    await c.tap('Meine Karte');
+    // Until the card is open: a tap while the settings still build up gets lost (0.0.17 run).
+    for (var i = 0; i < 4 && find.byType(MyCardScreen).evaluate().isEmpty; i++) {
+      await c.tap('Meine Karte');
+      for (var t = 0; t < 30 && find.byType(MyCardScreen).evaluate().isEmpty; t++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+    }
     c.screen('Meine Karte');
     await c.waitFor('Meine Karte teilen', seconds: 10);
     await c.check('Link auf der Karte', () => c.waitFor('smileapp.app/@anna.berger', seconds: 3));
