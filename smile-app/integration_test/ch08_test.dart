@@ -133,6 +133,14 @@ void main() {
         await tester.tap(f, warnIfMissed: false);
         c.logTap(label);
         await c.settle();
+        // Shown as chosen? Tells a lost tap from a choice the app did not save.
+        await c.check('$label gewählt', () async {
+          for (var i = 0; i < 20; i++) {
+            if (f.evaluate().isNotEmpty && tester.widget<ChoiceChip>(f.first).selected) return true;
+            await tester.pump(const Duration(milliseconds: 100));
+          }
+          return false;
+        });
       }
 
       Future<void> menu() async {
