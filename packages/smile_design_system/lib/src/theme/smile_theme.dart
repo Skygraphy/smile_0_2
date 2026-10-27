@@ -19,8 +19,10 @@ class SmileTheme {
   /// for that meaning, never as decoration.
   static const success = Color(0xFF6CC58F);
   static const onPrimary = Color(0xFF3A1410);
-  static const primaryContainer = Color(0xFF4A241D);
-  static const onPrimaryContainer = Color(0xFFFFDAD3);
+  /// Buttons and switched-on tiles (2026-10-27, Ernst: no more brown):
+  /// a neutral grey, the coral is in their text and icon.
+  static const primaryContainer = Color(0xFF2E2E2E);
+  static const onPrimaryContainer = primary;
 
   /// True neutral grays/black -- no hue, so they never pick up a coral
   /// (or any other) tint. Also the source for the Android adaptive
@@ -113,7 +115,7 @@ class SmileTheme {
       navigationBarTheme: NavigationBarThemeData(
         height: 64,
         backgroundColor: surfaceContainerLow,
-        indicatorColor: primary.withValues(alpha: 0.14),
+        indicatorColor: primaryContainer,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(

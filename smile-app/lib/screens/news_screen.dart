@@ -428,7 +428,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
   Widget _dismissBackground(BuildContext context, Alignment alignment) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
-      color: scheme.primary.withValues(alpha: 0.14),
+      color: scheme.primaryContainer,
       alignment: alignment,
       padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.xl),
       child: Icon(SmileIcons.delete, color: scheme.primary),

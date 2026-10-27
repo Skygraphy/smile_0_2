@@ -356,7 +356,7 @@ class _LevelOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: selected ? scheme.primary.withValues(alpha: 0.14) : scheme.surfaceContainer,
+      color: selected ? scheme.primaryContainer : scheme.surfaceContainer,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(SmileRadius.l),
         side: BorderSide(color: selected ? scheme.primary : Colors.transparent, width: 2),

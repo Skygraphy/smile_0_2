@@ -268,7 +268,7 @@ class SmileChoiceCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: scheme.primary.withValues(alpha: 0.14),
+                  color: scheme.primaryContainer,
                   borderRadius: BorderRadius.circular(SmileRadius.m),
                 ),
                 alignment: Alignment.center,

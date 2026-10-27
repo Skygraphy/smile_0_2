@@ -49,7 +49,7 @@ Future<void> _choose(BuildContext context, List<ChannelWithActivity> albums) asy
         Widget option(_What value, String title, String hint, {Widget? extra}) {
           final selected = what == value;
           return Material(
-            color: selected ? scheme.primary.withValues(alpha: 0.14) : scheme.surfaceContainer,
+            color: selected ? scheme.primaryContainer : scheme.surfaceContainer,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(SmileRadius.l),
               side: BorderSide(color: selected ? scheme.primary : Colors.transparent, width: 2),

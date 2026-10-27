@@ -160,7 +160,7 @@ class _ContactsInviteScreenState extends State<ContactsInviteScreen> {
             children: [
               CircleAvatar(
                 radius: 36,
-                backgroundColor: scheme.primary.withValues(alpha: 0.16),
+                backgroundColor: scheme.primaryContainer,
                 child: Icon(SmileIcons.contacts, size: 34, color: scheme.primary),
               ),
               const SizedBox(height: SmileSpacing.m),

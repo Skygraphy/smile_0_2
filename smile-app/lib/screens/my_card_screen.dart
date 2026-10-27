@@ -134,7 +134,7 @@ class _MyCardScreenState extends State<MyCardScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color.alphaBlend(scheme.primary.withValues(alpha: 0.18), scheme.surfaceContainerHigh), scheme.surfaceContainerHigh],
+                      colors: [scheme.primaryContainer, scheme.surfaceContainerHigh],
                     ),
                   ),
                   child: Column(

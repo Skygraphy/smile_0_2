@@ -46,7 +46,7 @@ class SmileRoleBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: highlight ? scheme.primary.withValues(alpha: 0.14) : scheme.surfaceContainerHigh,
+        color: highlight ? scheme.primaryContainer : scheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(SmileRadius.pill),
       ),
       child: Row(

@@ -128,7 +128,7 @@ class _CodeBox extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: isActive
-            ? theme.colorScheme.primary.withValues(alpha: 0.18)
+            ? theme.colorScheme.primaryContainer
             : theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
