@@ -372,13 +372,15 @@
     "chapter": "ch12",
     "title": "Nach Frame löschen: Fernbedienung des gelöschten Frames",
     "detail": "Nach dem Löschen eines Frames landete man auf dessen Fernbedienung, die ihn neu laden wollte und einen Hinweis zum Nochmal-Versuchen zeigte. Jetzt schließt sie sich mit; man ist wieder auf der Startseite.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.17"
   },
   {
     "no": 48,
     "chapter": "ch12",
     "title": "Papierkorb: Datum abgeschnitten",
     "detail": "Unter einem gelöschten Album stand „in Familie Berger · gelöscht von Anna Berger · endgültig weg am …“ – das wichtigste, das Datum, fehlte. Jetzt bis drei Zeilen, alles zu lesen.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.17"
   }
 ]

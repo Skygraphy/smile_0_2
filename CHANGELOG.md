@@ -4,6 +4,15 @@ Jede Version, die getestet wird, bekommt eine eigene Nummer (0.0.1, 0.0.2 …),
 ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 (Tag `v0.0.1` …). Eine neue Version entsteht mit `tools/testsuite/release.sh`.
 
+## 0.0.17 (2026-10-27)
+
+Kapitel 12: Aufräumen
+
+Behoben:
+
+- 47: Nach Frame löschen: Fernbedienung des gelöschten Frames
+- 48: Papierkorb: Datum abgeschnitten
+
 ## 0.0.16 (2026-10-27)
 
 Kapitel 11: Tipps
