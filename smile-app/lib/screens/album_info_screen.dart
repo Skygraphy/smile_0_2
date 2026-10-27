@@ -557,6 +557,30 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     }
   }
 
+  /// A shared-in album of someone else out of one of the caller's Spaces
+  /// in one step (2026-10-27, Ernst): the share ends -- and with it the
+  /// album on that Space's Frames (migrations/0044) -- and, when it was the
+  /// last way in, the membership too. The album stays with its owner.
+  Future<void> _removeFromSpace(SharedSpaceRef space, String owner, {required bool leaveToo}) async {
+    final t = SmileTexts.of(context);
+    final confirmed = await showSmileConfirmDialog(
+      context,
+      title: t.removeFromSpaceTitle(_shownName, space.name),
+      message: t.removeFromSpaceMessage(owner, space.name),
+      names: [_shownName, space.name, owner],
+      confirmLabel: t.actionRemove,
+      destructive: true,
+    );
+    if (!confirmed) return;
+    try {
+      await widget.membershipService.revokeShare(channelId: widget.channelId, spaceId: space.id);
+      if (leaveToo) await widget.membershipService.leaveChannel(widget.channelId);
+      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
+    }
+  }
+
   Future<void> _delete() async {
     final t = SmileTexts.of(context);
     final confirmed = await showSmileConfirmDialog(
@@ -715,6 +739,9 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     final pendingShareInvites = (inbox?.shareRequests ?? []).where(isInvite).toList();
     final homeSpace = roster.homeSpaceName;
     final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    // Someone else's album, shared into Spaces the caller manages.
+    final myShares = isManager ? const <SharedSpaceRef>[] : roster.sharedSpaces.where((s) => s.callerManages).toList();
+    final owner = roster.administratorName ?? homeSpace ?? '';
 
     return ListView(
       children: [
@@ -734,6 +761,21 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
           onRename: isManager ? _rename : null,
           renameTooltip: t.renameAlbum,
         ),
+        if (myShares.isNotEmpty && homeSpace != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.s, SmileSpacing.l, 0),
+            child: Container(
+              padding: const EdgeInsets.all(SmileSpacing.m),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(SmileRadius.m),
+              ),
+              child: Text(
+                t.sharedAlbumOwnedBy(owner, homeSpace, myShares.map((s) => s.name).join(', ')),
+                style: TextStyle(color: muted, fontSize: 13, height: 1.45),
+              ),
+            ),
+          ),
         if (isManager)
           SmileQuickActions(actions: [
             SmileQuickAction(icon: SmileIcons.invite, label: t.actionInvite, onTap: _inviteMember),
@@ -890,13 +932,22 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
           ),
 
         // --- Leave / delete --------------------------------------------
-        if (isMember || isManager)
+        if (isMember || isManager || myShares.isNotEmpty)
           SmileInfoSection(
             children: [
+              for (final space in myShares)
+                SmileActionRow(
+                  icon: SmileIcons.delete,
+                  label: t.removeFromSpace(space.name),
+                  hint: t.removeFromSpaceHint(owner),
+                  destructive: true,
+                  onTap: () => _removeFromSpace(space, owner, leaveToo: isMember && myShares.length == 1),
+                ),
               // Managers too (decision 2026-10-01): they become members of
               // every album automatically (migrations/0052), so they must be
               // able to leave one they don't want to post in.
-              if (isMember) SmileActionRow(icon: SmileIcons.leave, label: t.leaveAlbum, destructive: true, onTap: _leave),
+              if (isMember && myShares.isEmpty)
+                SmileActionRow(icon: SmileIcons.leave, label: t.leaveAlbum, destructive: true, onTap: _leave),
               if (isManager)
                 SmileActionRow(icon: SmileIcons.delete, label: t.deleteAlbum, destructive: true, onTap: _delete),
             ],

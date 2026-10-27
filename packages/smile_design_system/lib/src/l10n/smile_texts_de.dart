@@ -320,6 +320,31 @@ class SmileTextsDe extends SmileTexts {
       'Du siehst die Fotos dieses Albums danach nicht mehr.';
 
   @override
+  String sharedAlbumOwnedBy(String owner, String home, String space) {
+    return 'Dieses Album gehört $owner aus dem Space $home und ist mit deinem Space $space geteilt.';
+  }
+
+  @override
+  String removeFromSpace(String space) {
+    return 'Aus $space entfernen';
+  }
+
+  @override
+  String removeFromSpaceHint(String owner) {
+    return 'Das Album gehört $owner und bleibt erhalten.';
+  }
+
+  @override
+  String removeFromSpaceTitle(String album, String space) {
+    return '$album aus $space entfernen?';
+  }
+
+  @override
+  String removeFromSpaceMessage(String owner, String space) {
+    return 'Danach siehst du das Album nicht mehr: nicht in deiner Albumliste und nicht auf deinen Frames, und du kannst dort nichts mehr posten.\n\nEs gehört $owner und bleibt mit allen Fotos erhalten. $owner kann es wieder mit $space teilen.';
+  }
+
+  @override
   String get deleteAlbum => 'Album löschen';
 
   @override

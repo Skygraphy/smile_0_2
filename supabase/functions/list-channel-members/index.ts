@@ -71,6 +71,15 @@ Deno.serve(async (req) => {
     fetchProfilesByUserId(supabaseAdmin, (memberships ?? []).map((m) => m.user_id as string)),
   ]);
 
+  // A shared-in album of someone else (2026-10-27, Ernst): the Spaces of
+  // the caller it is shared into -- there it can be taken out in one step
+  // ("Aus Bergoma entfernen") -- and who it belongs to.
+  const managed = await Promise.all(
+    sharedSpaces.map((s) => supabaseAdmin.rpc("access_manages_space", { p_user: userId, p_space: s.id })),
+  );
+  const ownerId = homeSpace?.owner_id as string | undefined;
+  const ownerProfile = ownerId ? (await fetchProfilesByUserId(supabaseAdmin, [ownerId])).get(ownerId) : undefined;
+
   const members = (memberships ?? []).map((m) => {
     const profile = profilesByUserId.get(m.user_id as string);
     return {
@@ -83,10 +92,11 @@ Deno.serve(async (req) => {
 
   return await respond({
     members,
-    shared_spaces: sharedSpaces,
+    shared_spaces: sharedSpaces.map((s, i) => ({ ...s, caller_manages: managed[i].data === true })),
     caller_is_sco: access.isSco,
     administrator_user_id: homeSpace?.owner_id ?? null,
     home_space_name: homeSpace?.name ?? null,
+    administrator_name: ownerProfile?.display_name ?? null,
     co_admin_user_ids: (coOwnerRows ?? []).map((r) => r.user_id as string),
   });
 });

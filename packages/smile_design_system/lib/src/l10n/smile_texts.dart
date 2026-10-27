@@ -604,6 +604,36 @@ abstract class SmileTexts {
   /// **'Du siehst die Fotos dieses Albums danach nicht mehr.'**
   String get leaveAlbumMessage;
 
+  /// No description provided for @sharedAlbumOwnedBy.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieses Album gehört {owner} aus dem Space {home} und ist mit deinem Space {space} geteilt.'**
+  String sharedAlbumOwnedBy(String owner, String home, String space);
+
+  /// No description provided for @removeFromSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Aus {space} entfernen'**
+  String removeFromSpace(String space);
+
+  /// No description provided for @removeFromSpaceHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Album gehört {owner} und bleibt erhalten.'**
+  String removeFromSpaceHint(String owner);
+
+  /// No description provided for @removeFromSpaceTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'{album} aus {space} entfernen?'**
+  String removeFromSpaceTitle(String album, String space);
+
+  /// No description provided for @removeFromSpaceMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Danach siehst du das Album nicht mehr: nicht in deiner Albumliste und nicht auf deinen Frames, und du kannst dort nichts mehr posten.\n\nEs gehört {owner} und bleibt mit allen Fotos erhalten. {owner} kann es wieder mit {space} teilen.'**
+  String removeFromSpaceMessage(String owner, String space);
+
   /// No description provided for @deleteAlbum.
   ///
   /// In de, this message translates to:

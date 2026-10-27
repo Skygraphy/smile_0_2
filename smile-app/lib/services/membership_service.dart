@@ -23,7 +23,7 @@ class ChannelMember {
 /// A Space this channel is currently shared into (view-only) --
 /// migrations/0031_architecture_reset.sql's `channel_shares`.
 class SharedSpaceRef {
-  SharedSpaceRef({required this.id, required this.name, this.avatarUrl});
+  SharedSpaceRef({required this.id, required this.name, this.avatarUrl, this.callerManages = false});
 
   final String id;
   final String name;
@@ -31,10 +31,15 @@ class SharedSpaceRef {
   /// The Space's own picture (migrations/0066), else initials.
   final String? avatarUrl;
 
+  /// The caller manages this Space: a shared-in album can be taken out of
+  /// it ("Aus Bergoma entfernen", 2026-10-27).
+  final bool callerManages;
+
   factory SharedSpaceRef.fromJson(Map<String, dynamic> json) => SharedSpaceRef(
         id: json['id'] as String,
         name: json['name'] as String,
         avatarUrl: json['avatar_url'] as String?,
+        callerManages: json['caller_manages'] as bool? ?? false,
       );
 }
 
@@ -45,6 +50,7 @@ class ChannelRoster {
     required this.callerIsSco,
     this.administratorUserId,
     this.homeSpaceName,
+    this.administratorName,
     this.coAdminUserIds = const {},
   });
 
@@ -58,6 +64,9 @@ class ChannelRoster {
 
   /// "Album in `home Space`" on the info page.
   final String? homeSpaceName;
+
+  /// Who the album belongs to (the home Space's Administrator).
+  final String? administratorName;
 
   /// The home Space's Co-Admins (space_co_owners), for role badges.
   final Set<String> coAdminUserIds;
@@ -175,6 +184,7 @@ class MembershipService {
       callerIsSco: data['caller_is_sco'] as bool,
       administratorUserId: data['administrator_user_id'] as String?,
       homeSpaceName: data['home_space_name'] as String?,
+      administratorName: data['administrator_name'] as String?,
       coAdminUserIds: ((data['co_admin_user_ids'] as List?) ?? const []).cast<String>().toSet(),
     );
   }

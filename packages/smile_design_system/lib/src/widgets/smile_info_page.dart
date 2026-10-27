@@ -186,12 +186,16 @@ class SmileActionRow extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.destructive = false,
+    this.hint,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final bool destructive;
+
+  /// A muted line under the label ("Das Album gehört Roman ...").
+  final String? hint;
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +210,18 @@ class SmileActionRow extends StatelessWidget {
           children: [
             Icon(icon, color: iconColor, size: 22),
             const SizedBox(width: SmileSpacing.l),
-            Expanded(child: Text(label, style: TextStyle(color: textColor, fontSize: 15))),
+            Expanded(
+              child: hint == null
+                  ? Text(label, style: TextStyle(color: textColor, fontSize: 15))
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(label, style: TextStyle(color: textColor, fontSize: 15)),
+                        const SizedBox(height: 2),
+                        Text(hint!, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12.5)),
+                      ],
+                    ),
+            ),
           ],
         ),
       ),
