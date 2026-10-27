@@ -26,6 +26,9 @@ class _FrameControlsScreenState extends State<FrameControlsScreen> with SyncRelo
   /// Saves under way: a reload meanwhile would undo what is shown.
   int _saving = 0;
 
+  /// Counts the saves: a reload begun before the latest one is stale (Fund 49).
+  int _saves = 0;
+
   @override
   bool isSyncRelevant(SyncEvent event) => event.tables.contains('frames');
 
@@ -35,9 +38,10 @@ class _FrameControlsScreenState extends State<FrameControlsScreen> with SyncRelo
   @override
   Future<void> onSync() async {
     if (_saving > 0) return;
+    final saves = _saves;
     try {
       final fresh = await widget.frameService.getFrame(_frame.id);
-      if (mounted && _saving == 0) setState(() => _frame = fresh);
+      if (mounted && _saving == 0 && _saves == saves) setState(() => _frame = fresh);
     } catch (_) {}
   }
 
@@ -47,6 +51,7 @@ class _FrameControlsScreenState extends State<FrameControlsScreen> with SyncRelo
     final before = _frame;
     setState(() => _frame = _frame.withSettings(changes));
     _saving++;
+    _saves++;
     final saved = await LocalChanges.instance.run(
       overrides: const {},
       commit: () => widget.frameService.updateSettings(frameId: _frame.id, changes: changes),

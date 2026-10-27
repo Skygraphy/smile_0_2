@@ -64,6 +64,10 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
   /// Switch saves under way.
   int _saving = 0;
 
+  /// Counts the saves: a load begun before the latest one must not put the
+  /// switches back (Fund 49).
+  int _saves = 0;
+
   /// What it showed last, at once from the phone -- then from the server
   /// (2026-10-12: every info page opened with a spinner first).
   Future<void> _loadFromPhoneThenServer() async {
@@ -75,6 +79,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
     unawaited(loadAlbumCovers().then((c) {
       if (mounted) setState(() => _covers = c);
     }));
+    final saves = _saves;
     try {
       final results = await Future.wait<dynamic>([
         widget.frameService.getFrame(widget.frame.id),
@@ -82,7 +87,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
       ]);
       if (!mounted) return;
       setState(() {
-        _frame = results[0] as SmileFrame;
+        if (_saving == 0 && _saves == saves) _frame = results[0] as SmileFrame;
         _assignments = results[1] as List<FrameChannelAssignment>;
         _errorMessage = null;
       });
@@ -168,6 +173,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
 
   Future<void> _saveSetting(Future<void> Function() save) async {
     _saving++;
+    _saves++;
     final saved = await LocalChanges.instance.run(
       overrides: const {},
       commit: save,

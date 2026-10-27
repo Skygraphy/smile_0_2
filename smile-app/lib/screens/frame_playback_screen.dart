@@ -24,6 +24,12 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
   /// Saves under way: a reload meanwhile would undo what is shown.
   int _saving = 0;
 
+  /// Counts the saves: a reload that started before the latest one brings
+  /// old values and must not replace what was just chosen (Fund 49,
+  /// 2026-10-27: "Übersicht zeigen" was saved, a reload begun a moment
+  /// earlier showed "Endlosschleife" again, and a tap on it then did nothing).
+  int _saves = 0;
+
   @override
   bool isSyncRelevant(SyncEvent event) => event.tables.contains('frames');
 
@@ -33,10 +39,12 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
   @override
   Future<void> onSync() async {
     if (_saving > 0) return;
+    final saves = _saves;
     try {
       final fresh = await widget.frameService.getFrame(_frame.id);
-      debugPrint('SmilePlayback: reload end=${fresh.endBehavior} saving=$_saving');
-      if (mounted && _saving == 0) setState(() => _frame = fresh);
+      final stale = _saves != saves;
+      debugPrint('SmilePlayback: reload end=${fresh.endBehavior} saving=$_saving stale=$stale');
+      if (mounted && _saving == 0 && !stale) setState(() => _frame = fresh);
     } catch (_) {}
   }
 
@@ -46,6 +54,7 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
     final before = _frame;
     setState(() => _frame = _frame.withSettings(changes));
     _saving++;
+    _saves++;
     final saved = await LocalChanges.instance.run(
       overrides: const {},
       commit: () => widget.frameService.updateSettings(frameId: _frame.id, changes: changes),
