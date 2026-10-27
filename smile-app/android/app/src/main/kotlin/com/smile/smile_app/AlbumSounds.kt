@@ -9,7 +9,7 @@ import android.media.SoundPool
  * Smile's own short album sounds (2026-10-27, like WhatsApp's chat tones):
  * "send" when photos/videos have been sent, "receive" when someone else's
  * arrive in the album that is open. Both are generated, not copied
- * (tools/sounds/make.js). Quiet whenever the phone is on silent or vibrate.
+ * (tools/sounds/make.js, make2.js). Quiet whenever the phone is on silent or vibrate.
  */
 class AlbumSounds(context: Context) {
     private val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
