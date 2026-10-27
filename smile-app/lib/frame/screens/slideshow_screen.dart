@@ -1291,20 +1291,25 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         ),
       if (c.next) _BigButton(icon: SmileIcons.nextItem, label: t.ctrlNext, main: true, onTap: () => act(() => _advance(1))),
     ];
+    // Also framed when the app chose it under "Was läuft" (Ernst 2026-10-27:
+    // Lieblingsbilder played, the button looked off).
+    final mode = _settings?.contentMode;
+    final newestOn = _newestRound || (!_favoritesRound && mode == 'recent');
+    final favoritesOn = _favoritesRound || (!_newestRound && mode == 'favorites');
     final playing = <Widget>[
       // On while its round runs: a tap ends it (2026-10-14).
       if (c.newest)
         _BigButton(
           icon: SmileIcons.newest,
           label: t.ctrlNewest,
-          active: _newestRound,
+          active: newestOn,
           onTap: () => act(_newestRound ? _endRound : _playNewest),
         ),
       if (c.favorites && (_hasFavorites || _favoritesRound))
         _BigButton(
-          icon: _favoritesRound ? SmileIcons.heartFilled : SmileIcons.heart,
+          icon: favoritesOn ? SmileIcons.heartFilled : SmileIcons.heart,
           label: t.favorites,
-          active: _favoritesRound,
+          active: favoritesOn,
           onTap: () => act(_favoritesRound ? _endRound : _playFavorites),
         ),
       if (_canSwitchAlbum) _BigButton(icon: SmileIcons.switchAlbum, label: t.ctrlAlbum, onTap: _pickChannel),
