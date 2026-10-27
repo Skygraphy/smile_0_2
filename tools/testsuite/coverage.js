@@ -12,6 +12,9 @@ const rows = declared._rows ?? {};
 // Layers over a page (a tip): only their own controls count there; the
 // page below is covered on its own screen.
 const overlays = declared._overlays ?? {};
+// The same page in another state (e.g. the start page while still empty):
+// its taps count for both.
+const sameAs = declared._sameAs ?? {};
 
 const screens = new Map(); // screen -> Map(label -> {seen:[chapter,step], tested:[...], later})
 const taps = []; // {chapter, screen, label}
@@ -53,7 +56,7 @@ for (const [screen, m] of screens) {
   for (const [label, e] of m) {
     if (ignored.has(label)) continue;
     if (overlays[screen] && !overlays[screen].some(p => label.startsWith(p))) continue;
-    const hit = taps.filter(t => t.screen === screen && matches(label, t.label, screen));
+    const hit = taps.filter(t => (t.screen === screen || t.screen === sameAs[screen]) && matches(label, t.label, screen));
     const promise = Object.entries(declared[screen] ?? {}).find(([prefix]) => label.startsWith(prefix));
     let status = "offen", where = null;
     if (hit.length) { status = "geprüft"; where = [...new Set(hit.map(h => h.chapter))]; tested++; }

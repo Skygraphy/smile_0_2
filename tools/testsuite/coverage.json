@@ -7,17 +7,14 @@
     "Aufnehmen": "ch03",
     "Neuigkeiten": "ch10",
     "Ich wurde eingeladen": "ch05",
-    "Ich richte Smile ein": "ch02",
-    "Alben": "ch02",
-    "Spaces": "ch02"
+    "Ich richte Smile ein": "ch02"
   },
   "Menü": {
     "Code scannen": "ch05"
   },
   "Einstellungen": {
     "Tipps": "ch11",
-    "Konto löschen": "ch12",
-    "Bevorzugter Frame": "ch07"
+    "Konto löschen": "ch12"
   },
   "_aliases": {
     "Begrüßung": {
@@ -121,6 +118,12 @@
       "ST": "Bild ändern",
       "Wohnzimmer": "Frame umbenennen",
       "Stube": "Frame umbenennen"
+    },
+    "Einstellungen": {
+      "Bevorzugter Frame · Wohnzimmer · Ein Tipp auf das Frame-Symbol im Album zeigt es dort sofort.": "Jedes Mal fragen"
+    },
+    "Frame: Einstellungen": {
+      "Wie ein Foto (20 s)": "Wie ein Foto (10 s)"
     }
   },
   "Space": {
@@ -162,19 +165,8 @@
     "Diashow": "Bildschirm antippen",
     "Lieblingsbilder": "Foto",
     "Spaces": "Familie Berger",
-    "Space-Auswahl": "Familie Berger"
-  },
-  "Neuigkeiten": {
-    "WA · Einladung ins Album": "ch10",
-    "GE · Einladung ins Album": "ch10",
-    "TB · Einladung beantwortet": "ch10",
-    "PB · Einladung beantwortet": "ch10",
-    "LH · Neue Anfrage": "ch10",
-    "Alle entfernen": "ch10",
-    "FH · Einladung als Co-Admin": "ch10",
-    "FB · Du bist jetzt Admin": "ch10",
-    "LH · Einladung beantwortet": "ch10",
-    "BE · Album mit dir geteilt": "ch10"
+    "Space-Auswahl": "Familie Berger",
+    "Neuigkeiten": "Einladung beantwortet"
   },
   "Frame-Code": {
     "Zurück": "ch08"
@@ -189,9 +181,6 @@
   "Frames": {
     "WO · Wohnzimmer": "ch08"
   },
-  "Frame: Einstellungen": {
-    "": "ch08"
-  },
   "Frame löschen?": {
     "Löschen": "ch12"
   },
@@ -201,5 +190,8 @@
       "Verstanden",
       "Keine Tipps mehr"
     ]
+  },
+  "_sameAs": {
+    "Startseite (leer)": "Startseite"
   }
 }

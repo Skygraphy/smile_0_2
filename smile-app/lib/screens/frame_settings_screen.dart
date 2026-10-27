@@ -147,7 +147,8 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
     if (!confirmed) return;
     try {
       await widget.frameService.deleteFrame(_frame.id);
-      if (mounted) Navigator.of(context).pop();
+      // true = deleted: whoever opened this page closes its own too (Fund 47).
+      if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
     }

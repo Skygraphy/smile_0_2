@@ -324,12 +324,18 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     final frame = _frame;
     final spaceId = _spaceId;
     if (frame == null || spaceId == null) return;
-    await Navigator.of(context).push(
+    final deleted = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => FrameSettingsScreen(frame: frame, spaceId: spaceId, spaceName: _spaceName, frameService: _service),
       ),
     );
-    if (mounted) await _load();
+    if (!mounted) return;
+    // The Frame is gone: no remote for it any more (Fund 47, 2026-10-27).
+    if (deleted == true) {
+      Navigator.of(context).pop();
+      return;
+    }
+    await _load();
   }
 
   @override

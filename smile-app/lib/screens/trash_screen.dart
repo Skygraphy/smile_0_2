@@ -99,7 +99,7 @@ class _TrashScreenState extends State<TrashScreen> with SyncReload {
                         if (item.deletedByName != null) t.trashDeletedBy(item.deletedByName!),
                         t.trashGoneOn(_date(item.purgeAfter)),
                       ].join(' · '),
-                  subtitleMaxLines: 2,
+                      subtitleMaxLines: 3, // the date must not be cut off (Fund 48)
                       trailing: IconButton(
                         icon: Icon(SmileIcons.restore, color: Theme.of(context).colorScheme.primary),
                         tooltip: t.actionRestore,
