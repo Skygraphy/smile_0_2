@@ -17,7 +17,9 @@ class AlbumSounds(context: Context) {
         .setMaxStreams(2)
         .setAudioAttributes(
             AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                // The notification volume, like WhatsApp's chat tones -- the
+                // system volume is often at 0 (S26, 2026-10-27: nothing heard).
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_INSTANT)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build()
         )
