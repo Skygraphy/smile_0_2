@@ -108,6 +108,8 @@ void main() {
           explain: 'So endet Kapitel 2: der Space Familie Berger mit drei leeren Alben.');
       c.screen('Startseite');
       await c.check('Drei Alben, noch keine Fotos', () async => (await media()).isEmpty);
+      // The cover of Sommerurlaub 2026, not the initials shown while it loads (0.0.17 review).
+      await c.check('Titelbild geladen', () => c.gone('SO', seconds: 15));
       await c.snap();
 
       c.step('Album Geburtstage öffnen', 'Geburtstage antippen.', 'Das leere Album mit Kamera und + rechts unten.',
