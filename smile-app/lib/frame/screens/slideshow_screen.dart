@@ -245,6 +245,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     if (!mounted || !_loadedOnce) return;
     debugPrint('SmileFrameTiming: settings applied (push) captions=${settings.showCaptions} interval=${settings.slideshowIntervalSeconds}');
     setState(() {
+      if (_choiceChanged(_settings, settings)) _startOver();
       _settings = settings;
       _rebuildPlaylist();
     });
@@ -262,15 +263,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     // going and hid the switch).
     final albumChanged = _currentChannelId != null && result.channelId != null && result.channelId != _currentChannelId;
     setState(() {
-      if (albumChanged) {
-        _newestRound = false;
-        _favoritesRound = false;
-        _spotlight = null;
-        _showGrid = false;
-        _playlist = [];
-        _currentIndex = 0;
-        _slideNumber++;
-      }
+      if (albumChanged || _choiceChanged(_settings, result.settings)) _startOver();
       _deactivated = result.deactivated;
       _offlineExpired = result.offlineExpired;
       _offlineRetryTimer?.cancel();
@@ -291,6 +284,25 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final pending = _pendingShowId;
     if (pending != null) _showMedia(pending, retry: false);
     _restartAdvanceTimer();
+  }
+
+  /// "Was läuft" (or its order or count) chosen anew in the app: the new
+  /// choice wins at once (Ernst 2026-10-27: it kept the photo on screen,
+  /// or a running "Neueste"/Lieblingsbilder round, and seemed not to react).
+  static bool _choiceChanged(FrameSettingsInfo? before, FrameSettingsInfo? now) =>
+      before != null &&
+      now != null &&
+      (before.contentMode != now.contentMode || before.playOrder != now.playOrder || before.recentCount != now.recentCount);
+
+  /// From the first photo of what is to be shown, any round ended.
+  void _startOver() {
+    _newestRound = false;
+    _favoritesRound = false;
+    _spotlight = null;
+    _showGrid = false;
+    _playlist = [];
+    _currentIndex = 0;
+    _slideNumber++;
   }
 
   // --- The playlist -----------------------------------------------------

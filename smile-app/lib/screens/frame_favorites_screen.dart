@@ -186,7 +186,8 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
               ],
             )
           : AppBar(
-              title: Text(t.favorites),
+              // Smaller rather than cut off next to "Hinzufügen" (2026-10-27).
+              title: FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerStart, child: Text(t.favorites)),
               actions: [
                 TextButton.icon(onPressed: _add, icon: const Icon(SmileIcons.add), label: Text(t.addShort)),
                 if (shown.isNotEmpty)
