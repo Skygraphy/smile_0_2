@@ -356,13 +356,15 @@
     "chapter": "ch11",
     "title": "Tipps kamen auf einer offenen Seite nicht mehr",
     "detail": "Jede Seite bot ihre Tipps nur einmal an: nach dem ersten Tipp, oder wenn die Tipps beim Öffnen aus waren, kam dort nichts mehr, solange Smile lief. Wer die Tipps wieder einschaltete, sah auf der Startseite keine; ihre weiteren Tipps kamen an den Folgetagen nur nach einem Neustart. Jetzt wartet jede Seite weiter.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.16"
   },
   {
     "no": 46,
     "chapter": "ch11",
     "title": "Tipp auf den leuchtenden Knopf schloss nur den Tipp",
     "detail": "Zeigt eine Sprechblase auf einen Knopf (z. B. Diashow), schloss ein Tipp auf genau diesen Knopf nur die Sprechblase. Jetzt löst er auch den Knopf aus.",
-    "status": "behoben"
+    "status": "behoben",
+    "version": "0.0.16"
   }
 ]

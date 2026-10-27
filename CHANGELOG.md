@@ -4,6 +4,15 @@ Jede Version, die getestet wird, bekommt eine eigene Nummer (0.0.1, 0.0.2 …),
 ein Tutorial (Testsuite, `tools/testsuite`) und einen festen Stand im Git
 (Tag `v0.0.1` …). Eine neue Version entsteht mit `tools/testsuite/release.sh`.
 
+## 0.0.16 (2026-10-27)
+
+Kapitel 11: Tipps
+
+Behoben:
+
+- 45: Tipps kamen auf einer offenen Seite nicht mehr
+- 46: Tipp auf den leuchtenden Knopf schloss nur den Tipp
+
 ## 0.0.15 (2026-10-26)
 
 Kapitel 10: Pushes und Neuigkeiten
