@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../main.dart';
+import '../services/album_sounds.dart';
 import '../services/media_cache_service.dart';
 import '../services/media_service.dart';
 import '../services/membership_service.dart';
@@ -81,6 +82,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   }
 
   List<MediaItem>? _items;
+
+  /// What the server had at the last load: others' new photos since then
+  /// make the "receive" plop (AlbumSounds), not the album's first load.
+  Set<String>? _seenIds;
   late String _channelName = widget.channelName;
   /// This phone's own photos/videos on their way (UploadQueue), newest
   /// first -- shown at once, the server's copy takes over once it's there.
@@ -690,6 +695,12 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     }
 
     setState(() => _items = items);
+    if (!_showingHidden) {
+      final me = supabase.auth.currentUser?.id;
+      final seen = _seenIds;
+      if (seen != null && items.any((i) => i.isReady && i.senderId != me && !seen.contains(i.id))) AlbumSounds.received();
+      _seenIds = {for (final i in items) i.id};
+    }
     if (items.isNotEmpty) WidgetsBinding.instance.addPostFrameCallback((_) => _offerTip());
     if (!_showingHidden) {
       // Keep showing the full-quality local bytes (no spinner, no interim

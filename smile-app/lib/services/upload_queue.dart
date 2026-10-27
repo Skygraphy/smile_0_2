@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'album_sounds.dart';
 import 'media_service.dart';
 import 'media_shrink.dart';
 import 'offline.dart';
@@ -666,6 +667,7 @@ class UploadQueue extends ChangeNotifier {
       ..progress = null;
     await _deleteDir(item);
     notifyListeners();
+    AlbumSounds.sent();
     // The album swaps to the server's copy and forgets it; if it isn't
     // open, this does.
     Timer(const Duration(minutes: 2), () => forget(item));

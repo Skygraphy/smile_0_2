@@ -3526,6 +3526,24 @@ abstract class SmileTexts {
   /// **'Die Tipps kommen wieder von vorne.'**
   String get tipsResetDone;
 
+  /// No description provided for @soundsSection.
+  ///
+  /// In de, this message translates to:
+  /// **'Töne'**
+  String get soundsSection;
+
+  /// No description provided for @albumSounds.
+  ///
+  /// In de, this message translates to:
+  /// **'Töne im Album'**
+  String get albumSounds;
+
+  /// No description provided for @albumSoundsHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Plopp beim Senden und bei neuen Fotos im offenen Album. Ist das Handy lautlos, bleibt Smile still.'**
+  String get albumSoundsHint;
+
   /// No description provided for @tipFrameButton.
   ///
   /// In de, this message translates to:

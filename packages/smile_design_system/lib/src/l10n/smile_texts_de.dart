@@ -2063,6 +2063,16 @@ class SmileTextsDe extends SmileTexts {
   String get tipsResetDone => 'Die Tipps kommen wieder von vorne.';
 
   @override
+  String get soundsSection => 'Töne';
+
+  @override
+  String get albumSounds => 'Töne im Album';
+
+  @override
+  String get albumSoundsHint =>
+      'Ein Plopp beim Senden und bei neuen Fotos im offenen Album. Ist das Handy lautlos, bleibt Smile still.';
+
+  @override
   String get tipFrameButton =>
       'Ein Tipp auf das Frame-Symbol zeigt dieses Album sofort am Frame. Lang drücken öffnet die Fernbedienung.';
 

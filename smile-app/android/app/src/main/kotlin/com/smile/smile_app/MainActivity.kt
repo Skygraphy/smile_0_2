@@ -84,10 +84,21 @@ class MainActivity : FlutterActivity() {
             result.success(null)
         }
         queueChannel = queue
+        // Album sounds (AlbumSounds.kt): never on a Frame.
+        val sounds = AlbumSounds(applicationContext)
+        albumSounds = sounds
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "smile/sounds").setMethodCallHandler { call, result ->
+            if (call.method == "play" && !isFrame(this)) sounds.play(call.arguments as? String)
+            result.success(null)
+        }
     }
+
+    private var albumSounds: AlbumSounds? = null
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         queueChannel = null
+        albumSounds?.release()
+        albumSounds = null
         super.cleanUpFlutterEngine(flutterEngine)
     }
 

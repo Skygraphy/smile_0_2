@@ -18,6 +18,7 @@ import '../services/video_quality.dart';
 import '../services/upload_queue.dart';
 import 'avatar_viewer_screen.dart';
 import 'handle_edit_screen.dart';
+import '../services/album_sounds.dart';
 import '../services/tips.dart';
 import 'my_card_screen.dart';
 import '../services/frame_service.dart';
@@ -418,6 +419,22 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                             ),
                           ],
                         ),
+                      ),
+                    ),
+                  ],
+                ),
+                // "Töne im Album" (2026-10-27, like WhatsApp's chat tones).
+                SmileInfoSection(
+                  title: t.soundsSection,
+                  children: [
+                    ValueListenableBuilder<bool>(
+                      valueListenable: AlbumSounds.enabled,
+                      builder: (context, on, _) => SwitchListTile(
+                        secondary: Icon(SmileIcons.soundOn, color: scheme.onSurfaceVariant),
+                        title: Text(t.albumSounds),
+                        subtitle: Text(t.albumSoundsHint),
+                        value: on,
+                        onChanged: (v) => AlbumSounds.setEnabled(v),
                       ),
                     ),
                   ],

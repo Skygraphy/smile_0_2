@@ -5,6 +5,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'services/album_sounds.dart';
 import 'services/test_media.dart';
 import 'services/tips.dart';
 import 'services/perf.dart';
@@ -127,6 +128,8 @@ Future<void> main() async {
   unawaited(InviteLinks.start());
   // Tips on or off (2026-10-18).
   unawaited(Tips.load());
+  // "Töne im Album" on or off (2026-10-27).
+  unawaited(AlbumSounds.load());
   Perf.mark('runApp');
   runApp(const SmileRoot());
 }
