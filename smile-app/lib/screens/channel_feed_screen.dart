@@ -1738,9 +1738,9 @@ class _ChatRow extends StatelessWidget {
   // unlike the earlier above-the-bubble version -- it never overflows into
   // the row above and needs no extra top clearance for that.
   static const _tailWidth = 10.0;
-  static const _tailHeight = 16.0;
+  static const _tailHeight = 13.0;
   static const _tailOverlap = 4.0;
-  static const _outlineWidth = 1.5;
+  static const _mineFrame = Color(0xFFC9574C);
 
   String _formatTime(DateTime time) {
     final local = time.toLocal();
@@ -1762,10 +1762,10 @@ class _ChatRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Own bubbles get a thin coral outline, others a neutral grey fill --
-    // the "mine vs. theirs" split WhatsApp uses (there green vs. grey);
-    // 2026-10-27, Ernst: the coral-tinted fill looked brown.
-    final frameColor = isMine ? Colors.transparent : theme.colorScheme.surfaceContainerHigh;
+    // Own bubbles get a muted coral frame, others a neutral one -- the
+    // "mine vs. theirs" split WhatsApp uses (there green vs. grey).
+    // 2026-10-27, Ernst: the dark coral tint read as brown; variant B.
+    final frameColor = isMine ? _mineFrame : theme.colorScheme.surfaceContainerHigh;
     final photoSize = _photoBoxSize();
 
     // The tail-side *top* corner is left sharp only when a tail is
@@ -1779,12 +1779,8 @@ class _ChatRow extends StatelessWidget {
     );
 
     final frame = Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: frameColor,
-        borderRadius: borderRadius,
-        border: isMine ? Border.all(color: theme.colorScheme.primary, width: _outlineWidth) : null,
-      ),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: frameColor, borderRadius: borderRadius),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1856,7 +1852,10 @@ class _ChatRow extends StatelessWidget {
               width: photoSize.width,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(4, 6, 4, 2),
-                child: Text(caption!, style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14.5, height: 1.35)),
+                child: Text(
+                  caption!,
+                  style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14.5, height: 1.35, color: isMine ? Colors.white : null),
+                ),
               ),
             ),
         ],
@@ -1885,14 +1884,7 @@ class _ChatRow extends StatelessWidget {
                   left: isMine ? null : -(_tailWidth - _tailOverlap),
                   child: CustomPaint(
                     size: const Size(_tailWidth, _tailHeight),
-                    painter: isMine
-                        ? _BubbleTailPainter.outline(
-                            color: theme.colorScheme.primary,
-                            background: theme.scaffoldBackgroundColor,
-                            overlap: _tailOverlap,
-                            strokeWidth: _outlineWidth,
-                          )
-                        : _BubbleTailPainter(color: frameColor, pointRight: false, overlap: _tailOverlap),
+                    painter: _BubbleTailPainter(color: frameColor, pointRight: isMine, overlap: _tailOverlap),
                   ),
                 ),
               ],
@@ -1961,71 +1953,28 @@ class _ChatRow extends StatelessWidget {
 /// not-quite-flush against the bubble. Only the two diagonals actually
 /// converging on the sideways tip are genuinely visible.
 class _BubbleTailPainter extends CustomPainter {
-  _BubbleTailPainter({required this.color, required this.pointRight, required this.overlap})
-      : background = null,
-        strokeWidth = 0;
-
-  /// The own bubble's tail (pointing right): an outline that runs on
-  /// from the bubble's border; the background covers that border where
-  /// the tail opens out of it.
-  _BubbleTailPainter.outline({
-    required this.color,
-    required Color this.background,
-    required this.overlap,
-    required this.strokeWidth,
-  }) : pointRight = true;
+  _BubbleTailPainter({required this.color, required this.pointRight, required this.overlap});
 
   final Color color;
   final bool pointRight;
   final double overlap;
-  final Color? background;
-  final double strokeWidth;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final ground = background;
-    if (ground != null) {
-      final tipY = size.height / 2;
-      final half = strokeWidth / 2;
-      canvas.drawPath(
-        Path()
-          ..moveTo(0, strokeWidth)
-          ..lineTo(overlap, strokeWidth)
-          ..lineTo(size.width - strokeWidth, tipY)
-          ..lineTo(overlap, size.height - half)
-          ..lineTo(0, size.height - half)
-          ..close(),
-        Paint()..color = ground,
-      );
-      canvas.drawPath(
-        Path()
-          ..moveTo(0, half)
-          ..lineTo(overlap - half, half)
-          ..lineTo(size.width - half, tipY)
-          ..lineTo(overlap - half, size.height),
-        Paint()
-          ..color = color
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = strokeWidth
-          ..strokeJoin = StrokeJoin.miter,
-      );
-      return;
-    }
     final paint = Paint()..color = color;
     final path = Path();
-    final tipY = size.height / 2;
+    // Like WhatsApp (Ernst 2026-10-27): the top edge runs straight on from
+    // the bubble's top edge out to the point, the slant goes back down to
+    // the bubble's side.
     if (pointRight) {
       path.moveTo(0, 0);
-      // Flat along the bubble's own top edge up to its real corner...
-      path.lineTo(overlap, 0);
-      // ...then the diagonal actually pointing right, starting exactly
-      // at that corner.
-      path.lineTo(size.width, tipY);
+      path.lineTo(size.width, 0);
+      path.lineTo(overlap, size.height);
       path.lineTo(0, size.height);
     } else {
       path.moveTo(size.width, 0);
-      path.lineTo(size.width - overlap, 0);
-      path.lineTo(0, tipY);
+      path.lineTo(0, 0);
+      path.lineTo(size.width - overlap, size.height);
       path.lineTo(size.width, size.height);
     }
     path.close();
@@ -2034,11 +1983,7 @@ class _BubbleTailPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _BubbleTailPainter oldDelegate) =>
-      oldDelegate.color != color ||
-      oldDelegate.pointRight != pointRight ||
-      oldDelegate.overlap != overlap ||
-      oldDelegate.background != background ||
-      oldDelegate.strokeWidth != strokeWidth;
+      oldDelegate.color != color || oldDelegate.pointRight != pointRight || oldDelegate.overlap != overlap;
 }
 
 /// A centered date pill between two days' worth of messages -- "Heute" /
