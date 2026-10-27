@@ -18,6 +18,9 @@ class AlbumSounds {
   /// For the switch in Einstellungen; on unless switched off.
   static final enabled = ValueNotifier<bool>(true);
 
+  /// Plops still to come: one per sent photo or video, a short gap apart
+  /// so each one is heard (Ernst 2026-10-27: "pro Medium einen Ton").
+  static int _pending = 0;
   static Timer? _sent;
 
   static Future<void> load() async {
@@ -33,10 +36,18 @@ class AlbumSounds {
     } catch (_) {}
   }
 
-  /// One item is sent; several in a row (a batch) make one plop.
+  /// One photo or video is sent: one plop, after any still waiting.
   static void sent() {
-    _sent?.cancel();
-    _sent = Timer(const Duration(milliseconds: 400), () => _play('send'));
+    _pending++;
+    _sent ??= Timer.periodic(const Duration(milliseconds: 260), (timer) {
+      if (_pending == 0) {
+        timer.cancel();
+        _sent = null;
+        return;
+      }
+      _pending--;
+      _play('send');
+    });
   }
 
   /// Someone else's photos or videos arrived in the open album.
