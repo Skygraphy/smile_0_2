@@ -4,6 +4,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../main.dart';
+import '../services/invite_service.dart';
+import '../widgets/email_dialog.dart';
+import '../widgets/invite_sheet.dart';
+import 'invite_code_screen.dart';
 import '../services/offline_http_client.dart';
 import '../services/perf.dart';
 
@@ -51,6 +56,13 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
   Map<String, ChannelWithActivity> _covers = const {};
   String? _errorMessage;
 
+  /// Who is Frame-Admin here, and what the caller is (migrations/0089).
+  FrameAdmins? _frameAdmins;
+
+  /// Manages the Frame's Space (Admin or Co-Admin) -- not only Frame-Admin.
+  /// Until known, as before: the server refuses what isn't allowed anyway.
+  bool get _managesSpace => _frameAdmins?.callerManagesSpace ?? true;
+
   @override
   void initState() {
     super.initState();
@@ -66,7 +78,9 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
       event.tables.contains('frames') ||
       event.tables.contains('frame_channels') ||
       event.tables.contains('channels') ||
-      event.tables.contains('frame_favorites');
+      event.tables.contains('frame_favorites') ||
+      event.tables.contains('frame_admins') ||
+      event.tables.contains('frame_admin_invites');
 
   @override
   Future<void> onSync() async {
@@ -89,6 +103,9 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     unawaited(loadAlbumCovers().then((c) {
       if (mounted) setState(() => _covers = c);
     }));
+    unawaited(_service.listFrameAdmins(widget.frameId).then((a) {
+      if (mounted) setState(() => _frameAdmins = a);
+    }).catchError((Object _) {}));
     // Best effort: without it the section just doesn't show yet.
     unawaited(_service.listFavorites(widget.frameId).then((f) {
       if (mounted) setState(() => _favorites = f);
@@ -326,7 +343,13 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     if (frame == null || spaceId == null) return;
     final deleted = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => FrameSettingsScreen(frame: frame, spaceId: spaceId, spaceName: _spaceName, frameService: _service),
+        builder: (_) => FrameSettingsScreen(
+          frame: frame,
+          spaceId: spaceId,
+          spaceName: _spaceName,
+          frameService: _service,
+          managesSpace: _managesSpace,
+        ),
       ),
     );
     if (!mounted) return;
@@ -337,6 +360,170 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     }
     await _load();
   }
+
+  // --- Frame-Admin (migrations/0089) ------------------------------------
+
+  Future<void> _inviteFrameAdmin() async {
+    final t = SmileTexts.of(context);
+    final already = {for (final a in _frameAdmins?.admins ?? const <FrameAdminPerson>[]) a.userId};
+    final title = t.frameAdminFor(_shownName);
+    await showInviteSheet(
+      context,
+      title: title,
+      people: InviteService().knownPeople(),
+      whyNot: (p) => already.contains(p.userId) ? t.alreadyFrameAdmin : null,
+      onPerson: (person) => _inviteFrameAdminDone(
+        person.name,
+        () => _service.inviteFrameAdmin(frameId: widget.frameId, userId: person.userId),
+      ),
+      // Only in person: a forwarded code must never make anyone Frame-Admin.
+      onShowQr: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => InviteCodeScreen(
+            kind: InviteKind.frameAdmin,
+            targetId: widget.frameId,
+            title: title,
+            hint: t.qrScanHintFrameAdmin,
+          ),
+        ),
+      ),
+      onEmail: _inviteFrameAdminByEmail,
+    );
+    if (mounted) await _load();
+  }
+
+  Future<void> _inviteFrameAdminDone(String name, Future<void> Function() invite) async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await invite();
+      messenger.showSnackBar(SnackBar(content: Text(t.inviteSentTo(name))));
+      await _load();
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
+    }
+  }
+
+  Future<void> _inviteFrameAdminByEmail() async {
+    final t = SmileTexts.of(context);
+    final email = await showDialog<String>(
+      context: context,
+      builder: (context) => EmailDialog(title: t.inviteFrameAdmin, explanation: t.frameAdminHint, confirmLabel: t.actionInvite),
+    );
+    if (email == null || email.trim().isEmpty) return;
+    await _inviteFrameAdminDone(email.trim(), () => _service.inviteFrameAdmin(frameId: widget.frameId, email: email.trim()));
+  }
+
+  /// A Frame-Admin (or an invite): who it is -- and, where allowed, end it.
+  Future<void> _frameAdminActions(FrameAdminPerson person) async {
+    final t = SmileTexts.of(context);
+    final isMe = person.userId == supabase.auth.currentUser?.id;
+    final pending = person.inviteId != null;
+    final name = isMe ? t.you : (person.name ?? '');
+    Future<void> act(BuildContext sheetContext, Future<void> Function() action) async {
+      Navigator.of(sheetContext).pop();
+      await action();
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SmileAvatar(name: person.name ?? '', avatarUrl: person.avatarUrl, size: 64),
+            const SizedBox(height: SmileSpacing.s),
+            Text(name, style: Theme.of(sheetContext).textTheme.titleMedium),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.s, SmileSpacing.l, SmileSpacing.m),
+              child: Text(
+                pending ? t.frameAdminInvited : t.frameAdminPersonHint(_shownName),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Theme.of(sheetContext).colorScheme.onSurfaceVariant),
+              ),
+            ),
+            if (pending && _managesSpace)
+              SmileActionRow(
+                icon: SmileIcons.close,
+                label: t.withdrawInvite,
+                destructive: true,
+                onTap: () => act(sheetContext, () => _runFrameAdmin(() => _service.withdrawFrameAdminInvite(person.inviteId!))),
+              ),
+            if (!pending && isMe)
+              SmileActionRow(
+                icon: SmileIcons.leave,
+                label: t.giveUpFrameAdmin,
+                destructive: true,
+                onTap: () => act(sheetContext, () => _endFrameAdmin(person, self: true)),
+              )
+            else if (!pending && _managesSpace)
+              SmileActionRow(
+                icon: SmileIcons.close,
+                label: t.endFrameAdmin,
+                destructive: true,
+                onTap: () => act(sheetContext, () => _endFrameAdmin(person, self: false)),
+              ),
+            const SizedBox(height: SmileSpacing.m),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _endFrameAdmin(FrameAdminPerson person, {required bool self}) async {
+    final t = SmileTexts.of(context);
+    final navigator = Navigator.of(context);
+    final name = person.name ?? '';
+    final confirmed = await showSmileConfirmDialog(
+      context,
+      title: self ? '${t.giveUpFrameAdmin}?' : t.endFrameAdminTitle(name),
+      message: self ? t.giveUpFrameAdminMessage(_shownName) : t.endFrameAdminMessage(name, _shownName),
+      names: [name, _shownName],
+      confirmLabel: self ? t.giveUpFrameAdmin : t.endFrameAdmin,
+      destructive: true,
+    );
+    if (!confirmed) return;
+    final done = await _runFrameAdmin(() => _service.removeFrameAdmin(frameId: widget.frameId, userId: person.userId));
+    // Given up: this Frame is no longer the caller's to see.
+    if (done && self && !_managesSpace) navigator.pop();
+  }
+
+  Future<bool> _runFrameAdmin(Future<void> Function() action) async {
+    try {
+      await action();
+      if (mounted) await _load();
+      return true;
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).actionFailed(errorReason(context, e)));
+      return false;
+    }
+  }
+
+  // --- Am Frame entsperren (Kindersperre, migrations/0089) ----------------
+
+  Future<void> _setUnlockCode() async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final first = await _askCode(t.unlockCodeTitle(_shownName), t.unlockCodeDialogHint);
+    if (first == null || !mounted) return;
+    final second = await _askCode(t.unlockCodeTitle(_shownName), t.unlockCodeRepeat);
+    if (second == null) return;
+    if (first != second) {
+      messenger.showSnackBar(SnackBar(content: Text(t.unlockCodeMismatch)));
+      return;
+    }
+    final saved = await LocalChanges.instance.run(
+      overrides: const {},
+      commit: () => _service.setUnlockCode(frameId: widget.frameId, code: first),
+      affects: tablesChanged({'frames'}, spaceIds: {?_spaceId}),
+    );
+    if (saved) messenger.showSnackBar(SnackBar(content: Text(t.unlockCodeSaved)));
+    if (mounted) await _load();
+  }
+
+  Future<String?> _askCode(String title, String hint) =>
+      showDialog<String>(context: context, builder: (_) => _CodeDialog(title: title, hint: hint));
 
   @override
   Widget build(BuildContext context) {
@@ -371,7 +558,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                 item(SmileIcons.controls, t.controlsTitle, () {
                   unawaited(_openPage((f, spaceId) => FrameControlsScreen(frame: f, spaceId: spaceId, frameService: _service)));
                 }),
-                item(SmileIcons.scan, t.connectOtherDevice, _connectOther),
+                if (_managesSpace) item(SmileIcons.scan, t.connectOtherDevice, _connectOther),
               ];
             },
           ),
@@ -646,9 +833,134 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                       SmileActionRow(icon: SmileIcons.settings, label: t.settingsAndDevice, onTap: _openSettings),
                     ],
                   ),
+
+                  // --- Frame-Admin (migrations/0089) ------------------------
+                  if (_frameAdmins != null && (_managesSpace || _frameAdmins!.callerIsFrameAdmin)) ...[
+                    const SizedBox(height: SmileSpacing.m),
+                    _Card(
+                      children: [
+                        _Label(t.roleFrameAdmin),
+                        if (_frameAdmins!.admins.isEmpty && _frameAdmins!.pending.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: SmileSpacing.s),
+                            child: Text(t.frameAdminHint, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
+                          ),
+                        for (final person in [..._frameAdmins!.admins, ..._frameAdmins!.pending])
+                          InkWell(
+                            borderRadius: BorderRadius.circular(SmileRadius.m),
+                            onTap: () => _frameAdminActions(person),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: SmileSpacing.s),
+                              child: Row(
+                                children: [
+                                  SmileAvatar(name: person.name ?? '', avatarUrl: person.avatarUrl, size: 40),
+                                  const SizedBox(width: SmileSpacing.m),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          person.userId == supabase.auth.currentUser?.id ? t.you : (person.name ?? ''),
+                                          style: const TextStyle(fontSize: 15),
+                                        ),
+                                        if (person.inviteId != null)
+                                          Text(t.frameAdminInvited, style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant)),
+                                      ],
+                                    ),
+                                  ),
+                                  if (person.inviteId == null) const SmileRoleBadge(role: SmileRole.frameAdmin),
+                                ],
+                              ),
+                            ),
+                          ),
+                        if (_managesSpace)
+                          SmileActionRow(
+                            icon: SmileIcons.add,
+                            label: _frameAdmins!.admins.isEmpty && _frameAdmins!.pending.isEmpty
+                                ? t.inviteFrameAdmin
+                                : t.inviteMoreFrameAdmin,
+                            onTap: _inviteFrameAdmin,
+                          ),
+                      ],
+                    ),
+                  ],
+
+                  // --- Am Frame entsperren (Kindersperre) -------------------
+                  const SizedBox(height: SmileSpacing.m),
+                  _Card(
+                    children: [
+                      _Label(t.unlockSection),
+                      Text(t.unlockHint, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
+                      const SizedBox(height: SmileSpacing.s),
+                      Text(
+                        frame.hasUnlockCode ? t.unlockCodeIsSet : t.unlockNoCode,
+                        style: TextStyle(fontSize: 13, color: frame.hasUnlockCode ? scheme.primary : scheme.onSurfaceVariant),
+                      ),
+                      SmileActionRow(
+                        icon: SmileIcons.lock,
+                        label: frame.hasUnlockCode ? t.unlockChangeCode : t.unlockSetCode,
+                        onTap: _setUnlockCode,
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
+    );
+  }
+}
+
+/// Four digits, hidden, for the Frame's unlock code.
+class _CodeDialog extends StatefulWidget {
+  const _CodeDialog({required this.title, required this.hint});
+
+  final String title;
+  final String hint;
+
+  @override
+  State<_CodeDialog> createState() => _CodeDialogState();
+}
+
+class _CodeDialogState extends State<_CodeDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = SmileTexts.of(context);
+    final ready = _controller.text.length == 4;
+    return AlertDialog(
+      title: Text(widget.title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.hint),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            obscureText: true,
+            keyboardType: TextInputType.number,
+            maxLength: 4,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 28, letterSpacing: 12),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (value) {
+              if (value.length == 4) Navigator.of(context).pop(value);
+            },
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.actionCancel)),
+        TextButton(onPressed: ready ? () => Navigator.of(context).pop(_controller.text) : null, child: Text(t.actionConfirm)),
+      ],
     );
   }
 }

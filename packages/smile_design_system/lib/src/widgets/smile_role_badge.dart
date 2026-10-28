@@ -12,7 +12,9 @@ enum SmileRole {
   admin(SmileIcons.admin),
   coAdmin(SmileIcons.coAdmin),
   member(SmileIcons.member),
-  viewer(SmileIcons.viewer);
+  viewer(SmileIcons.viewer),
+  // Decides how one Frame is used (migrations/0089).
+  frameAdmin(SmileIcons.frame);
 
   const SmileRole(this.icon);
 
@@ -23,6 +25,7 @@ enum SmileRole {
         SmileRole.coAdmin => t.roleCoAdmin,
         SmileRole.member => t.roleMember,
         SmileRole.viewer => t.roleViewer,
+        SmileRole.frameAdmin => t.roleFrameAdmin,
       };
 }
 
@@ -38,7 +41,7 @@ class SmileRoleBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final highlight = role == SmileRole.admin;
+    final highlight = role == SmileRole.admin || role == SmileRole.frameAdmin;
     final fg = highlight ? scheme.primary : scheme.onSurfaceVariant;
     final label = role.label(SmileTexts.of(context));
     final icon = Icon(role.icon, size: SmileIconSize.badge, color: fg);

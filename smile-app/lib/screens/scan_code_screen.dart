@@ -195,6 +195,9 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
             ? t.redeemJoinedShare(result.channelName ?? '', result.spaceName ?? '')
             : t.redeemAlready);
         navigator.pop();
+      case 'frame_admin':
+        say(result.status == 'joined' ? t.redeemJoinedFrameAdmin(result.frameName ?? '') : t.redeemAlready);
+        navigator.pop();
       default:
         say(result.status == 'joined' ? t.redeemJoinedCoAdmin(result.spaceName ?? '') : t.redeemAlready);
         navigator.pop();

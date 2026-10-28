@@ -90,6 +90,135 @@ class SmileTextsDe extends SmileTexts {
   String get roleCoAdmin => 'Co-Admin';
 
   @override
+  String get roleFrameAdmin => 'Frame-Admin';
+
+  @override
+  String get frameAdminHint =>
+      'Bestimmt bei diesem Frame alles: was am Frame bedient werden darf und welche Alben laufen.';
+
+  @override
+  String get inviteFrameAdmin => 'Frame-Admin einladen';
+
+  @override
+  String get inviteMoreFrameAdmin => 'Weitere Person einladen';
+
+  @override
+  String frameAdminFor(String frame) {
+    return 'Frame-Admin von $frame';
+  }
+
+  @override
+  String get qrScanHintFrameAdmin =>
+      'Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Frame-Admin wird man nur per QR-Code vor Ort.';
+
+  @override
+  String inviteFrameAdminFrom(String name) {
+    return '$name möchte dich zum Frame-Admin machen. Du bestimmst dann, was am Frame bedient werden darf und welche Alben dort laufen.';
+  }
+
+  @override
+  String acceptedFrameAdmin(String frame) {
+    return 'Du bist jetzt Frame-Admin von $frame.';
+  }
+
+  @override
+  String redeemJoinedFrameAdmin(String frame) {
+    return 'Du bist jetzt Frame-Admin von $frame.';
+  }
+
+  @override
+  String get frameAdminInvited => 'Eingeladen, noch nicht angenommen';
+
+  @override
+  String get withdrawInvite => 'Einladung zurückziehen';
+
+  @override
+  String get endFrameAdmin => 'Frame-Admin beenden';
+
+  @override
+  String endFrameAdminTitle(String name) {
+    return '$name als Frame-Admin beenden?';
+  }
+
+  @override
+  String endFrameAdminMessage(String name, String frame) {
+    return '$name bestimmt dann nicht mehr über $frame. Der Frame läuft weiter wie eingestellt.';
+  }
+
+  @override
+  String get giveUpFrameAdmin => 'Frame-Admin abgeben';
+
+  @override
+  String giveUpFrameAdminMessage(String frame) {
+    return 'Du bestimmst dann nicht mehr über $frame. Der Frame läuft weiter wie eingestellt.';
+  }
+
+  @override
+  String frameAdminPersonHint(String frame) {
+    return 'Frame-Admin von $frame. Bestimmt die Bedienung und welche Alben laufen. Fotos, Alben und Personen im Space verwaltet sie oder er nicht.';
+  }
+
+  @override
+  String get alreadyFrameAdmin => 'Schon Frame-Admin oder Admin';
+
+  @override
+  String get youAreFrameAdmin => 'du bist Frame-Admin';
+
+  @override
+  String get unlockSection => 'Am Frame entsperren';
+
+  @override
+  String get unlockHint =>
+      'Lange auf die Uhr drücken und den Code eingeben: Der Frame zeigt dann alle Knöpfe, bis er sich nach 2 Minuten ohne Berührung wieder sperrt.';
+
+  @override
+  String get unlockSetCode => 'Code festlegen';
+
+  @override
+  String get unlockChangeCode => 'Code ändern';
+
+  @override
+  String get unlockCodeIsSet => 'Ein Code ist festgelegt.';
+
+  @override
+  String get unlockNoCode =>
+      'Noch kein Code: Am Frame lässt sich dann nichts entsperren.';
+
+  @override
+  String unlockCodeTitle(String frame) {
+    return 'Code für $frame';
+  }
+
+  @override
+  String get unlockCodeDialogHint =>
+      '4 Ziffern. Wer Frame-Admin oder Admin ist, kann ihn jederzeit neu festlegen.';
+
+  @override
+  String get unlockCodeRepeat => 'Zur Bestätigung noch einmal';
+
+  @override
+  String get unlockCodeMismatch =>
+      'Die beiden Codes sind verschieden. Bitte noch einmal.';
+
+  @override
+  String get unlockCodeSaved => 'Code gespeichert';
+
+  @override
+  String get unlockEnterCode => 'Code eingeben';
+
+  @override
+  String get unlockWrongCode => 'Falscher Code';
+
+  @override
+  String get unlockWaitMinute => 'Bitte 1 Minute warten';
+
+  @override
+  String get unlockedBadge => 'Entsperrt';
+
+  @override
+  String get lockNow => 'Sperren';
+
+  @override
   String get roleMember => 'Member';
 
   @override

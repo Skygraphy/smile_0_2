@@ -44,12 +44,15 @@ interface RequestBody {
   // The round the Frame plays right now (0077): "newest", "favorites" or
   // null for none -- only sent when it changed.
   playing_round?: string | null;
+  // Unlocked on the Frame with its code (Kindersperre, migrations/0089):
+  // the code's hash -- then every control counts as allowed.
+  unlock_proof?: string;
 }
 
 const FRAME_COLUMNS =
   "id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, " +
   "max_local_cache_gb, current_channel_id, control_level, controls, content_mode, recent_count, play_order, " +
-  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, spaces(name, deleted_at)";
+  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, unlock_code_hash, spaces(name, deleted_at)";
 
 // What the Frame may change itself, by the control that allows it, and
 // what each value may be.
@@ -118,12 +121,13 @@ Deno.serve(async (req) => {
 
   // A change made on the Frame: only what its controls allow, the rest is
   // ignored. Saved before answering, so the answer already carries it.
+  const unlocked = !!frame.unlock_code_hash && body.unlock_proof === frame.unlock_code_hash;
+  const allowed = (control: string) => unlocked || ((frame.controls ?? {}) as Record<string, boolean>)[control] === true;
   if (body.set_settings && typeof body.set_settings === "object") {
-    const controls = (frame.controls ?? {}) as Record<string, boolean>;
     const update: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(body.set_settings)) {
       const rule = SETTABLE[key];
-      if (rule && controls[rule.control] === true && rule.ok(value)) update[key] = value;
+      if (rule && allowed(rule.control) && rule.ok(value)) update[key] = value;
     }
     if (Object.keys(update).length > 0) {
       await supabase.from("frames").update(update).eq("id", claims.frame_id);
@@ -212,7 +216,7 @@ Deno.serve(async (req) => {
   }
   // Picking an album on the Frame means: show this one (2026-10-14) -- also
   // when it played all albums in turn or the newest.
-  if (body.select_channel_id && frame.content_mode !== "album" && (frame.controls ?? {}).album === true) {
+  if (body.select_channel_id && frame.content_mode !== "album" && allowed("album")) {
     await supabase.from("frames").update({ content_mode: "album" }).eq("id", claims.frame_id);
     settings.content_mode = "album";
   }
@@ -231,7 +235,7 @@ Deno.serve(async (req) => {
   let favorites: string[] | undefined;
   if (firstPage && !body.fetch_channel_id) {
     const mark = body.favorite;
-    if (mark && typeof mark.media_item_id === "string" && (frame.controls ?? {}).favorite === true) {
+    if (mark && typeof mark.media_item_id === "string" && allowed("favorite")) {
       if (mark.on) {
         const { data: media } = await supabase
           .from("media_items")

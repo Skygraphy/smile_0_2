@@ -166,4 +166,11 @@ class SmileIcons {
 
   /// "Bild dreht sich mit dem Frame" (2026-10-17).
   static const IconData rotate = IconData(0xedf2, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
+  // --- Kindersperre (migrations/0089) ---------------------------------
+  /// Phosphor `lock`.
+  static const IconData lock = IconData(0xe2fa, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
+  /// Phosphor `lock-open`.
+  static const IconData lockOpen = IconData(0xe306, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 }

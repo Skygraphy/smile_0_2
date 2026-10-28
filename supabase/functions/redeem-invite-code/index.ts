@@ -54,6 +54,7 @@ Deno.serve(async (req) => {
   if (new Date(invite.expires_at) < new Date()) return jsonResponse({ error: "expired_code" }, 410);
 
   if (invite.kind === "space_co_owner") return await coOwner(admin, invite.target_id, userId, body.via);
+  if (invite.kind === "frame_admin") return await frameAdmin(admin, invite.target_id, userId, body.via);
   const { data: channel } = await admin
     .from("channels")
     .select("id, name, space_id, deleted_at")
@@ -206,6 +207,40 @@ async function albumShare(
     if (error) return jsonResponse({ error: "redeem_failed", detail: error.message }, 500);
   }
   return jsonResponse({ status: "requested", ...spaceResult });
+}
+
+// Frame-Admin (migrations/0089): like Co-Admin, only in person.
+async function frameAdmin(admin: Admin, frameId: string, userId: string, via: string): Promise<Response> {
+  if (via !== "qr") return jsonResponse({ error: "qr_only" }, 403);
+  const { data: frame } = await admin.from("frames").select("id, name, space_id, lifecycle_state").eq("id", frameId).maybeSingle();
+  if (!frame || frame.lifecycle_state === "revoked") return jsonResponse({ error: "invalid_code" }, 404);
+  const result = { kind: "frame_admin", frame_id: frame.id, frame_name: frame.name };
+  const [{ data: already }, { data: manages }] = await Promise.all([
+    admin.from("frame_admins").select("user_id").eq("frame_id", frame.id).eq("user_id", userId).maybeSingle(),
+    admin.rpc("access_manages_space", { p_user: userId, p_space: frame.space_id }),
+  ]);
+  if (already || manages === true) return jsonResponse({ status: "already_frame_admin", ...result });
+
+  const { data: pending } = await admin
+    .from("frame_admin_invites")
+    .select("id")
+    .eq("frame_id", frame.id)
+    .eq("invitee_user_id", userId)
+    .eq("status", "pending")
+    .maybeSingle();
+  let id = pending?.id;
+  if (!id) {
+    const { data: created, error } = await admin
+      .from("frame_admin_invites")
+      .insert({ frame_id: frame.id, invitee_user_id: userId })
+      .select("id")
+      .single();
+    if (error) return jsonResponse({ error: "redeem_failed", detail: error.message }, 500);
+    id = created.id;
+  }
+  const { error } = await admin.from("frame_admin_invites").update({ status: "accepted", decided_at: now() }).eq("id", id);
+  if (error) return jsonResponse({ error: "redeem_failed", detail: error.message }, 500);
+  return jsonResponse({ status: "joined", ...result });
 }
 
 async function coOwner(admin: Admin, spaceId: string, userId: string, via: string): Promise<Response> {

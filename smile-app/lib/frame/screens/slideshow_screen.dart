@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -243,6 +246,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   /// the sync that follows (2026-10-27).
   void _applySettings(FrameSettingsInfo settings) {
     if (!mounted || !_loadedOnce) return;
+    // The code changed or was taken away: locked again.
+    if (_unlocked && settings.unlockCodeHash != _settings?.unlockCodeHash) _lock();
     debugPrint('SmileFrameTiming: settings applied (push) captions=${settings.showCaptions} interval=${settings.slideshowIntervalSeconds}');
     setState(() {
       if (_choiceChanged(_settings, settings)) _startOver();
@@ -262,6 +267,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     // photo, and a running "Neueste" round ends (2026-10-14: the round kept
     // going and hid the switch).
     final albumChanged = _currentChannelId != null && result.channelId != null && result.channelId != _currentChannelId;
+    // The unlock code changed or was taken away: locked again.
+    if (_unlocked && result.settings?.unlockCodeHash != _settings?.unlockCodeHash) _lock();
     setState(() {
       if (albumChanged || _choiceChanged(_settings, result.settings)) _startOver();
       _deactivated = result.deactivated;
@@ -468,7 +475,76 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     _keepBar();
   }
 
-  FrameControls get _controls => _settings?.effectiveControls ?? const FrameControls();
+  FrameControls get _controls => _unlocked ? FrameControls.all : (_settings?.effectiveControls ?? const FrameControls());
+
+  // --- Kindersperre (migrations/0089) -----------------------------------
+  // A long press on the clock (or its corner) and the code: every button,
+  // until 2 minutes without a touch or "Sperren".
+
+  bool _unlocked = false;
+  Timer? _relock;
+  int _wrongCodes = 0;
+  DateTime? _codeBlockedUntil;
+  static const _relockAfter = Duration(minutes: 2);
+
+  Future<void> _askUnlock() async {
+    final hash = _settings?.unlockCodeHash;
+    if (hash == null || _unlocked) return;
+    final t = SmileTexts.of(context);
+    final blocked = _codeBlockedUntil;
+    if (blocked != null && DateTime.now().isBefore(blocked)) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          content: Text(t.unlockWaitMinute, style: const TextStyle(fontSize: 22)),
+          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.actionConfirm))],
+        ),
+      );
+      return;
+    }
+    final frameId = await widget.syncService.frameId;
+    if (frameId == null || !mounted) return;
+    String hashOf(String code) => sha256.convert(utf8.encode('$frameId:$code')).toString();
+    final ok = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => _UnlockPad(
+        check: (code) {
+          if (hashOf(code) == hash) return true;
+          _wrongCodes++;
+          return false;
+        },
+        tooMany: () => _wrongCodes >= 3,
+      ),
+    );
+    if (!mounted) return;
+    if (ok == true) {
+      _wrongCodes = 0;
+      widget.syncService.unlockProof = hash;
+      setState(() {
+        _unlocked = true;
+        _barVisible = true;
+      });
+      _touchedWhileUnlocked();
+      _keepBar();
+    } else if (_wrongCodes >= 3) {
+      _wrongCodes = 0;
+      _codeBlockedUntil = DateTime.now().add(const Duration(minutes: 1));
+    }
+  }
+
+  void _touchedWhileUnlocked() {
+    if (!_unlocked) return;
+    _relock?.cancel();
+    _relock = Timer(_relockAfter, _lock);
+  }
+
+  void _lock() {
+    _relock?.cancel();
+    widget.syncService.unlockProof = null;
+    if (!mounted || !_unlocked) return;
+    setState(() => _unlocked = false);
+  }
 
   /// What it last told the server it plays (a round or none).
   String? _reportedRound = 'unknown';
@@ -1078,7 +1154,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final aboveTitle = title == null ? 0.0 : 110.0;
     return Scaffold(
       backgroundColor: Colors.black,
-      body: GestureDetector(
+      body: Listener(
+        // Every touch while unlocked keeps it unlocked a while longer.
+        onPointerDown: (_) => _touchedWhileUnlocked(),
+        child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _showGrid ? null : _onTap,
         // Swiping like the big buttons (2026-10-17): left = Weiter (from
@@ -1102,6 +1181,23 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                 ),
               ),
             if (!_showGrid && (settings?.showClock ?? false)) Positioned(right: 20, top: 20, child: _clock()),
+            // Kindersperre: a long press on the clock -- or where it would
+            // be, when it is hidden -- asks for the code.
+            if (settings?.unlockCodeHash != null && !_unlocked)
+              Positioned(
+                right: 0,
+                top: 0,
+                width: 300,
+                height: 150,
+                child: GestureDetector(behavior: HitTestBehavior.translucent, onLongPress: _askUnlock),
+              ),
+            if (_unlocked)
+              Positioned(
+                top: 20,
+                left: 0,
+                right: 0,
+                child: Center(child: _unlockedPill(SmileTexts.of(context))),
+              ),
             // "Neu von …" at the bottom, out of the way of clock and caption.
             if (!_showGrid && _newFrom != null && !_barVisible)
               Positioned(
@@ -1138,6 +1234,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -1166,6 +1263,24 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   /// Big and plain: time, weekday, date -- for someone who may not know
   /// which day it is.
+  Widget _unlockedPill(SmileTexts t) => GestureDetector(
+        onTap: _lock,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(30)),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(SmileIcons.lockOpen, color: Colors.white, size: 22),
+              const SizedBox(width: 8),
+              Text(t.unlockedBadge, style: const TextStyle(color: Colors.white, fontSize: 18)),
+              const SizedBox(width: 16),
+              Text(t.lockNow, style: const TextStyle(color: SmileTheme.primary, fontSize: 18, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      );
+
   Widget _clock() {
     final now = _now;
     final time = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
@@ -1628,6 +1743,107 @@ class _BigChoice extends StatelessWidget {
             label,
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: selected ? const Color(0xFF1A0F0E) : Colors.white),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The code pad on the Frame (Kindersperre, migrations/0089): big keys,
+/// four dots, nothing that shows the digits.
+class _UnlockPad extends StatefulWidget {
+  const _UnlockPad({required this.check, required this.tooMany});
+
+  final bool Function(String code) check;
+  final bool Function() tooMany;
+
+  @override
+  State<_UnlockPad> createState() => _UnlockPadState();
+}
+
+class _UnlockPadState extends State<_UnlockPad> {
+  String _code = '';
+  bool _wrong = false;
+
+  void _press(String digit) {
+    if (_code.length >= 4) return;
+    setState(() {
+      _code += digit;
+      _wrong = false;
+    });
+    if (_code.length < 4) return;
+    if (widget.check(_code)) {
+      Navigator.of(context).pop(true);
+    } else if (widget.tooMany()) {
+      Navigator.of(context).pop(false);
+    } else {
+      setState(() {
+        _code = '';
+        _wrong = true;
+      });
+    }
+  }
+
+  Widget _key(Widget child, VoidCallback onTap) => Padding(
+        padding: const EdgeInsets.all(6),
+        child: Material(
+          color: const Color(0xFF303030),
+          borderRadius: BorderRadius.circular(18),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: onTap,
+            child: SizedBox(width: 92, height: 68, child: Center(child: child)),
+          ),
+        ),
+      );
+
+  Widget _digit(String d) => _key(Text(d, style: const TextStyle(color: Colors.white, fontSize: 30)), () => _press(d));
+
+  @override
+  Widget build(BuildContext context) {
+    final t = SmileTexts.of(context);
+    return Dialog(
+      backgroundColor: const Color(0xFF1C1C1C),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _wrong ? t.unlockWrongCode : t.unlockEnterCode,
+              style: TextStyle(color: _wrong ? SmileTheme.primary : Colors.white, fontSize: 24),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < 4; i++)
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: i < _code.length ? SmileTheme.primary : Colors.transparent,
+                      border: Border.all(color: SmileTheme.primary, width: 2),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            for (final row in const [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']])
+              Row(mainAxisSize: MainAxisSize.min, children: [for (final d in row) _digit(d)]),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _key(const Icon(SmileIcons.close, color: Colors.white, size: 28), () => Navigator.of(context).pop(false)),
+                _digit('0'),
+                _key(const Icon(SmileIcons.back, color: Colors.white, size: 28), () {
+                  if (_code.isNotEmpty) setState(() => _code = _code.substring(0, _code.length - 1));
+                }),
+              ],
+            ),
+          ],
         ),
       ),
     );

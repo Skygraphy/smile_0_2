@@ -6,6 +6,7 @@ import '../services/offline_http_client.dart';
 import '../widgets/friendly_error.dart';
 
 import '../main.dart';
+import '../services/frame_service.dart';
 import '../services/membership_service.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
@@ -43,6 +44,7 @@ class NewsScreen extends StatefulWidget {
 class _NewsScreenState extends State<NewsScreen> with SyncReload {
   MyInvitesInbox? _inbox;
   List<MyCoOwnerInvite> _coAdminInvites = const [];
+  List<MyFrameAdminInvite> _frameAdminInvites = const [];
   List<Map<String, dynamic>> _mySpaces = const [];
   List<TrashItem> _trash = const [];
   List<Map<String, dynamic>> _history = const [];
@@ -77,6 +79,8 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
         supabase.from('spaces').select('id, name').order('created_at'),
         widget.spaceService.listMyCoOwnerInvites(),
         widget.trashService.listTrash(),
+        // Frame-Admin (migrations/0089); best effort, never blocks the page.
+        FrameService().listMyFrameAdminInvites().catchError((Object _) => const <MyFrameAdminInvite>[]),
         // Every push of the last 30 days (migrations/0059), newest first.
         supabase
             .from('user_notifications')
@@ -90,7 +94,8 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
         _mySpaces = List<Map<String, dynamic>>.from(results[1] as List);
         _coAdminInvites = results[2] as List<MyCoOwnerInvite>;
         _trash = results[3] as List<TrashItem>;
-        _history = List<Map<String, dynamic>>.from(results[4] as List);
+        _frameAdminInvites = results[4] as List<MyFrameAdminInvite>;
+        _history = List<Map<String, dynamic>>.from(results[5] as List);
         _errorMessage = null;
       });
     } catch (e) {
@@ -230,10 +235,26 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
           ),
 
         // --- Einladungen (to me) -----------------------------------------
-        if (_coAdminInvites.isNotEmpty || albumInvites.isNotEmpty)
+        if (_coAdminInvites.isNotEmpty || albumInvites.isNotEmpty || _frameAdminInvites.isNotEmpty)
           SmileInfoSection(
             title: t.invitations,
             children: [
+              for (final invite in _frameAdminInvites)
+                SmileObjectTile(
+                  leading: SmileAvatar(name: invite.inviterName ?? invite.frameName, avatarUrl: invite.inviterAvatarUrl, size: 40),
+                  title: invite.frameName,
+                  subtitleIcon: SmileIcons.frame,
+                  subtitle: t.inviteFrameAdminFrom(invite.inviterName ?? ''),
+                  subtitleMaxLines: 4,
+                  trailing: _decide(
+                    onAccept: () => _run(
+                      () => FrameService().decideFrameAdminInvite(invite.id, accept: true),
+                      success: t.acceptedFrameAdmin(invite.frameName),
+                      names: [invite.frameName],
+                    ),
+                    onDecline: () => _run(() => FrameService().decideFrameAdminInvite(invite.id, accept: false)),
+                  ),
+                ),
               for (final invite in _coAdminInvites)
                 SmileObjectTile(
                   leading: SmileAvatar(name: invite.founderLabel, avatarUrl: invite.founderAvatarUrl, size: 40),
@@ -475,6 +496,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
     'channel_restored' || 'space_restored' => SmileIcons.restore,
     'space_ownership_transferred' => SmileIcons.admin,
     'space_co_owner_invite' ||
+    'frame_admin_invite' ||
     'space_co_owner_invite_decided' ||
     'co_admin_stepped_down' ||
     'co_admin_removed' => SmileIcons.coAdmin,

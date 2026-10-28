@@ -5,7 +5,7 @@
 export const FRAME_SETTING_COLUMNS =
   "display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, max_local_cache_gb, control_level, " +
   "controls, content_mode, recent_count, play_order, end_behavior, show_new_immediately, show_clock, show_sender, " +
-  "quiet_from, quiet_to, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions";
+  "quiet_from, quiet_to, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, unlock_code_hash";
 
 // deno-lint-ignore no-explicit-any
 export function frameSettings(frame: Record<string, any>) {
@@ -31,5 +31,7 @@ export function frameSettings(frame: Record<string, any>) {
     slow_zoom: frame.slow_zoom,
     rotate_with_device: frame.rotate_with_device,
     show_captions: frame.show_captions,
+    // Kindersperre (migrations/0089): unlocks every button on the Frame.
+    unlock_code_hash: frame.unlock_code_hash ?? null,
   };
 }

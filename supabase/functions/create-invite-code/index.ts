@@ -13,7 +13,7 @@ import { resolveSpaceAccess } from "../_shared/space-access.ts";
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-const KINDS = ["album_member", "album_share", "space_co_owner"] as const;
+const KINDS = ["album_member", "album_share", "space_co_owner", "frame_admin"] as const;
 type Kind = (typeof KINDS)[number];
 // No look-alikes: no 0/O, 1/I/L.
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -51,7 +51,14 @@ Deno.serve(async (req) => {
   const admin = createClient(supabaseUrl, serviceRoleKey);
 
   let targetName: string;
-  if (body.kind === "space_co_owner") {
+  if (body.kind === "frame_admin") {
+    // Frame-Admin (migrations/0089): the Space's Admin or a Co-Admin.
+    const { data: frame } = await admin.from("frames").select("id, name, space_id, lifecycle_state").eq("id", body.target_id).maybeSingle();
+    if (!frame || frame.lifecycle_state === "revoked") return jsonResponse({ error: "frame_not_found" }, 404);
+    const access = await resolveSpaceAccess(admin, frame.space_id, userId);
+    if (!access.manages && !access.isStaff) return jsonResponse({ error: "not_space_manager" }, 403);
+    targetName = frame.name;
+  } else if (body.kind === "space_co_owner") {
     const { data: space } = await admin.from("spaces").select("id, name, deleted_at").eq("id", body.target_id).maybeSingle();
     if (!space || space.deleted_at) return jsonResponse({ error: "space_not_found" }, 404);
     const access = await resolveSpaceAccess(admin, space.id, userId);

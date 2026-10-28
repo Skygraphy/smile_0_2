@@ -41,6 +41,21 @@ class FrameControls {
   /// The "Titel" button (migrations/0084, level 4).
   final bool captions;
 
+  /// Everything -- the Frame unlocked with its code (Kindersperre, 0089).
+  static const all = FrameControls(
+    next: true,
+    back: true,
+    pause: true,
+    newest: true,
+    favorite: true,
+    favorites: true,
+    overview: true,
+    album: true,
+    duration: true,
+    playback: true,
+    captions: true,
+  );
+
   /// Level 1 "Nur zuschauen": touches are ignored.
   bool get any =>
       next || back || pause || newest || favorite || favorites || overview || album || duration || playback || captions;
@@ -86,6 +101,7 @@ class FrameSettingsInfo {
     this.rotateWithDevice = false,
     this.controlLevel,
     this.showCaptions = true,
+    this.unlockCodeHash,
   });
 
   final String displayMode; // 'slideshow' | 'manual'
@@ -135,6 +151,10 @@ class FrameSettingsInfo {
   /// "Titel anzeigen" (migrations/0084).
   final bool showCaptions;
 
+  /// The code that unlocks every button here (Kindersperre, migrations/0089),
+  /// as sha256 of `<frame id>:<code>`; null = no code, nothing to unlock.
+  final String? unlockCodeHash;
+
   FrameControls get effectiveControls =>
       controls ?? FrameControls(next: true, back: true, pause: true, overview: true, album: channelSwitchEnabled);
 
@@ -160,6 +180,7 @@ class FrameSettingsInfo {
         rotateWithDevice: json['rotate_with_device'] as bool? ?? false,
         controlLevel: json['control_level'] as int?,
         showCaptions: json['show_captions'] as bool? ?? true,
+        unlockCodeHash: json['unlock_code_hash'] as String?,
       );
 }
 
@@ -292,6 +313,13 @@ class SyncService {
   /// sent with the next sync, which the caller triggers. The server only
   /// takes what the Frame's controls allow (get-media-batch).
   void changeSettings(Map<String, Object?> settings) => _pendingSettings.addAll(settings);
+
+  /// Unlocked with its code (Kindersperre): the code's hash goes along, so
+  /// the server takes every change made here meanwhile.
+  String? unlockProof;
+
+  /// This Frame's id -- for checking the unlock code.
+  Future<String?> get frameId => _credentialsStore.frameId;
   final Map<String, Object?> _pendingSettings = {};
 
   /// A Lieblingsbild marked (true) or taken back (false) on the Frame: sent
@@ -667,6 +695,7 @@ class SyncService {
             if (cursor == null) 'select_channel_id': ?selectChannelId,
             if (cursor == null) 'fetch_channel_id': ?fetchChannelId,
             if (cursor == null && setSettings.isNotEmpty) 'set_settings': setSettings,
+            if (cursor == null) 'unlock_proof': ?unlockProof,
             if (cursor == null && favorite != null) 'favorite': {'media_item_id': favorite.key, 'on': favorite.value},
             if (cursor == null && round != null) 'playing_round': round.value,
             if (cursor != null) 'channel_id': ?channelId,

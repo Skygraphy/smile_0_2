@@ -190,6 +190,216 @@ abstract class SmileTexts {
   /// **'Co-Admin'**
   String get roleCoAdmin;
 
+  /// No description provided for @roleFrameAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame-Admin'**
+  String get roleFrameAdmin;
+
+  /// No description provided for @frameAdminHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Bestimmt bei diesem Frame alles: was am Frame bedient werden darf und welche Alben laufen.'**
+  String get frameAdminHint;
+
+  /// No description provided for @inviteFrameAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame-Admin einladen'**
+  String get inviteFrameAdmin;
+
+  /// No description provided for @inviteMoreFrameAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Weitere Person einladen'**
+  String get inviteMoreFrameAdmin;
+
+  /// No description provided for @frameAdminFor.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame-Admin von {frame}'**
+  String frameAdminFor(String frame);
+
+  /// No description provided for @qrScanHintFrameAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Frame-Admin wird man nur per QR-Code vor Ort.'**
+  String get qrScanHintFrameAdmin;
+
+  /// No description provided for @inviteFrameAdminFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} möchte dich zum Frame-Admin machen. Du bestimmst dann, was am Frame bedient werden darf und welche Alben dort laufen.'**
+  String inviteFrameAdminFrom(String name);
+
+  /// No description provided for @acceptedFrameAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Du bist jetzt Frame-Admin von {frame}.'**
+  String acceptedFrameAdmin(String frame);
+
+  /// No description provided for @redeemJoinedFrameAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Du bist jetzt Frame-Admin von {frame}.'**
+  String redeemJoinedFrameAdmin(String frame);
+
+  /// No description provided for @frameAdminInvited.
+  ///
+  /// In de, this message translates to:
+  /// **'Eingeladen, noch nicht angenommen'**
+  String get frameAdminInvited;
+
+  /// No description provided for @withdrawInvite.
+  ///
+  /// In de, this message translates to:
+  /// **'Einladung zurückziehen'**
+  String get withdrawInvite;
+
+  /// No description provided for @endFrameAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame-Admin beenden'**
+  String get endFrameAdmin;
+
+  /// No description provided for @endFrameAdminTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} als Frame-Admin beenden?'**
+  String endFrameAdminTitle(String name);
+
+  /// No description provided for @endFrameAdminMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} bestimmt dann nicht mehr über {frame}. Der Frame läuft weiter wie eingestellt.'**
+  String endFrameAdminMessage(String name, String frame);
+
+  /// No description provided for @giveUpFrameAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame-Admin abgeben'**
+  String get giveUpFrameAdmin;
+
+  /// No description provided for @giveUpFrameAdminMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Du bestimmst dann nicht mehr über {frame}. Der Frame läuft weiter wie eingestellt.'**
+  String giveUpFrameAdminMessage(String frame);
+
+  /// No description provided for @frameAdminPersonHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame-Admin von {frame}. Bestimmt die Bedienung und welche Alben laufen. Fotos, Alben und Personen im Space verwaltet sie oder er nicht.'**
+  String frameAdminPersonHint(String frame);
+
+  /// No description provided for @alreadyFrameAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Schon Frame-Admin oder Admin'**
+  String get alreadyFrameAdmin;
+
+  /// No description provided for @youAreFrameAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'du bist Frame-Admin'**
+  String get youAreFrameAdmin;
+
+  /// No description provided for @unlockSection.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Frame entsperren'**
+  String get unlockSection;
+
+  /// No description provided for @unlockHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Lange auf die Uhr drücken und den Code eingeben: Der Frame zeigt dann alle Knöpfe, bis er sich nach 2 Minuten ohne Berührung wieder sperrt.'**
+  String get unlockHint;
+
+  /// No description provided for @unlockSetCode.
+  ///
+  /// In de, this message translates to:
+  /// **'Code festlegen'**
+  String get unlockSetCode;
+
+  /// No description provided for @unlockChangeCode.
+  ///
+  /// In de, this message translates to:
+  /// **'Code ändern'**
+  String get unlockChangeCode;
+
+  /// No description provided for @unlockCodeIsSet.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Code ist festgelegt.'**
+  String get unlockCodeIsSet;
+
+  /// No description provided for @unlockNoCode.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch kein Code: Am Frame lässt sich dann nichts entsperren.'**
+  String get unlockNoCode;
+
+  /// No description provided for @unlockCodeTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Code für {frame}'**
+  String unlockCodeTitle(String frame);
+
+  /// No description provided for @unlockCodeDialogHint.
+  ///
+  /// In de, this message translates to:
+  /// **'4 Ziffern. Wer Frame-Admin oder Admin ist, kann ihn jederzeit neu festlegen.'**
+  String get unlockCodeDialogHint;
+
+  /// No description provided for @unlockCodeRepeat.
+  ///
+  /// In de, this message translates to:
+  /// **'Zur Bestätigung noch einmal'**
+  String get unlockCodeRepeat;
+
+  /// No description provided for @unlockCodeMismatch.
+  ///
+  /// In de, this message translates to:
+  /// **'Die beiden Codes sind verschieden. Bitte noch einmal.'**
+  String get unlockCodeMismatch;
+
+  /// No description provided for @unlockCodeSaved.
+  ///
+  /// In de, this message translates to:
+  /// **'Code gespeichert'**
+  String get unlockCodeSaved;
+
+  /// No description provided for @unlockEnterCode.
+  ///
+  /// In de, this message translates to:
+  /// **'Code eingeben'**
+  String get unlockEnterCode;
+
+  /// No description provided for @unlockWrongCode.
+  ///
+  /// In de, this message translates to:
+  /// **'Falscher Code'**
+  String get unlockWrongCode;
+
+  /// No description provided for @unlockWaitMinute.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte 1 Minute warten'**
+  String get unlockWaitMinute;
+
+  /// No description provided for @unlockedBadge.
+  ///
+  /// In de, this message translates to:
+  /// **'Entsperrt'**
+  String get unlockedBadge;
+
+  /// No description provided for @lockNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Sperren'**
+  String get lockNow;
+
   /// No description provided for @roleMember.
   ///
   /// In de, this message translates to:

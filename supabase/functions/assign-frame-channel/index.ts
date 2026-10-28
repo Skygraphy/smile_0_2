@@ -7,6 +7,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { spaceCanViewChannel } from "../_shared/channel-access.ts";
 import { resolveSpaceAccess, spaceManagerIds } from "../_shared/space-access.ts";
+import { isFrameAdmin } from "../_shared/frame-admin.ts";
 import { fetchProfilesByUserId } from "../_shared/profiles.ts";
 import { pushNotificationToUsers } from "../_shared/push-users.ts";
 
@@ -48,7 +49,10 @@ Deno.serve(async (req) => {
 
   const space = await resolveSpaceAccess(supabaseAdmin, frame.space_id, userId);
   if (!space.exists) return jsonResponse({ error: "space_not_found" }, 404);
-  if (!space.isStaff && !space.manages) return jsonResponse({ error: "not_space_owner" }, 403);
+  // Or a Frame-Admin of this Frame (migrations/0089): picks its albums too.
+  if (!space.isStaff && !space.manages && !(await isFrameAdmin(supabaseAdmin, frame.id, userId))) {
+    return jsonResponse({ error: "not_space_owner" }, 403);
+  }
 
   // A Frame may show what its HOUSEHOLD can see -- the Space's own
   // channels or ones shared into it. Not what the person assigning it (or

@@ -29,7 +29,12 @@ class FrameSettingsScreen extends StatefulWidget {
     required this.spaceId,
     required this.frameService,
     this.spaceName,
+    this.managesSpace = true,
   });
+
+  /// False for a Frame-Admin (migrations/0089): albums and settings yes --
+  /// name, picture, device, revoking and deleting stay with the Space.
+  final bool managesSpace;
 
   final SmileFrame frame;
   final String spaceId;
@@ -288,6 +293,9 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                   _showNow(assignment);
                 },
               ),
+            // A Frame-Admin chooses albums, but sees their photos only as a
+            // member of them.
+            if (widget.managesSpace)
             SmileActionRow(
               icon: SmileIcons.album,
               label: t.openAlbum,
@@ -360,7 +368,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                     icon: SmileIcons.frame,
                     leading: SmileEditablePicture(
                       tooltip: t.changeObjectPicture,
-                      onEdit: () async {
+                      onEdit: !widget.managesSpace ? null : () async {
                         final changed = await changeObjectPicture(
                           context,
                           kind: ObjectKind.frame,
@@ -383,7 +391,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                     title: _shownName,
                     subtitleIcon: spaceName == null ? null : SmileIcons.space,
                     subtitle: [if (spaceName != null) t.frameInSpace(spaceName), status].join(' · '),
-                    onRename: _rename,
+                    onRename: widget.managesSpace ? _rename : null,
                     renameTooltip: t.renameFrame,
                   ),
                   if (_errorMessage != null)
@@ -446,6 +454,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                       SmileActionRow(icon: SmileIcons.add, label: t.addAlbumToFrame, onTap: _addAlbum),
                     ],
                   ),
+                  if (widget.managesSpace)
                   SmileInfoSection(
                     children: [
                       // A new tablet takes over this Frame (2026-10-11).

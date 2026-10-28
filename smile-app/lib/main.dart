@@ -222,6 +222,7 @@ void openNotificationTarget(Map<String, dynamic> data) {
     case 'channel_membership_invite':
     case 'channel_share_invite':
     case 'space_co_owner_invite':
+    case 'frame_admin_invite':
     // migrations/0057: someone asks to join / see an album -- decided there.
     case 'request_created':
       // The recipient isn't a channel member (or hasn't linked their Space,

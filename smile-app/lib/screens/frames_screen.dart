@@ -309,6 +309,11 @@ class _FrameCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  // Only Frame-Admin of it (migrations/0089).
+                  if (item.asFrameAdmin) ...[
+                    const SmileRoleBadge(role: SmileRole.frameAdmin),
+                    const SizedBox(width: SmileSpacing.s),
+                  ],
                   Icon(SmileIcons.chevron, color: scheme.onSurfaceVariant),
                 ],
               ),

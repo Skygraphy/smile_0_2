@@ -41,7 +41,8 @@ class InvitableAlbum {
 enum InviteKind {
   albumMember('album_member'),
   albumShare('album_share'),
-  spaceCoOwner('space_co_owner');
+  spaceCoOwner('space_co_owner'),
+  frameAdmin('frame_admin');
 
   const InviteKind(this.wire);
   final String wire;
@@ -75,6 +76,7 @@ class RedeemResult {
     this.channelName,
     this.spaceId,
     this.spaceName,
+    this.frameName,
     this.spaces = const [],
   });
 
@@ -86,6 +88,7 @@ class RedeemResult {
   final String? channelName;
   final String? spaceId;
   final String? spaceName;
+  final String? frameName;
   /// needs_space: the caller's Spaces to choose from.
   final List<({String id, String name})> spaces;
 }
@@ -175,6 +178,8 @@ class InviteService {
       channelName: data['channel_name'] as String?,
       spaceId: data['space_id'] as String?,
       spaceName: data['space_name'] as String?,
+      // A Frame (frame_admin, migrations/0089) -- in the album fields.
+      frameName: data['frame_name'] as String?,
       spaces: [
         for (final s in (data['spaces'] as List? ?? const []).cast<Map<String, dynamic>>())
           (id: s['id'] as String, name: s['name'] as String),
