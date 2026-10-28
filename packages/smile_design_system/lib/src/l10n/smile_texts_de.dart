@@ -103,6 +103,9 @@ class SmileTextsDe extends SmileTexts {
   String get easyStoppedHint => 'Nochmal tippen, dann geht es weiter';
 
   @override
+  String get easyResumedTitle => 'Läuft weiter';
+
+  @override
   String get newSoundTitle => 'Ton bei neuen Fotos';
 
   @override

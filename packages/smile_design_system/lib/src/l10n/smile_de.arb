@@ -49,6 +49,7 @@
   "easyStopHint": "Antippen hält das Bild an, nochmal tippen lässt es weiterlaufen. Auf jeder Stufe, auch bei „Nur zuschauen“.",
   "easyStoppedTitle": "Angehalten",
   "easyStoppedHint": "Nochmal tippen, dann geht es weiter",
+  "easyResumedTitle": "Läuft weiter",
   "newSoundTitle": "Ton bei neuen Fotos",
   "newSoundHint": "Einmal, wenn etwas Neues ankommt. Still in der Nachtruhe.",
   "newReminderTitle": "Erinnern, bis jemand schaut",

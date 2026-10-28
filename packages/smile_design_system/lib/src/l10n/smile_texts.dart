@@ -214,6 +214,12 @@ abstract class SmileTexts {
   /// **'Nochmal tippen, dann geht es weiter'**
   String get easyStoppedHint;
 
+  /// No description provided for @easyResumedTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Läuft weiter'**
+  String get easyResumedTitle;
+
   /// No description provided for @newSoundTitle.
   ///
   /// In de, this message translates to:

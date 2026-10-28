@@ -184,6 +184,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     _advanceTimer?.cancel();
     _remind?.cancel();
     _easyResume?.cancel();
+    _easyFlashTimer?.cancel();
     _offlineRetryTimer?.cancel();
     _hideBar?.cancel();
     _hideNewFrom?.cancel();
@@ -698,17 +699,53 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   bool _easyStopped = false;
   Timer? _easyResume;
 
-  Widget _easyStoppedHint(SmileTexts t) => Container(
+  /// The short note in the middle (Ernst 2026-10-28: only briefly, then a
+  /// small stop sign bottom right): true = stopped, false = goes on.
+  bool? _easyFlash;
+  Timer? _easyFlashTimer;
+
+  /// What the middle note said last -- kept while it fades out.
+  bool _lastFlash = true;
+
+  void _flashEasy({required bool stopped}) {
+    _easyFlashTimer?.cancel();
+    _lastFlash = stopped;
+    setState(() => _easyFlash = stopped);
+    _easyFlashTimer = Timer(const Duration(milliseconds: 1600), () {
+      if (mounted) setState(() => _easyFlash = null);
+    });
+  }
+
+  /// While stopped: a small sign bottom right.
+  Widget _easyStoppedSign(SmileTexts t) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(30)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(SmileIcons.pause, color: Colors.white, size: 26),
+            const SizedBox(width: 8),
+            Text(t.easyStoppedTitle, style: const TextStyle(color: Colors.white, fontSize: 18)),
+          ],
+        ),
+      );
+
+  Widget _easyStoppedHint(SmileTexts t, {required bool stopped}) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
         decoration: BoxDecoration(color: const Color(0xD20F0F0F), borderRadius: BorderRadius.circular(28)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(SmileIcons.pause, color: Colors.white, size: 48),
+            Icon(stopped ? SmileIcons.pause : SmileIcons.playFilled, color: Colors.white, size: 48),
             const SizedBox(height: 8),
-            Text(t.easyStoppedTitle, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(t.easyStoppedHint, style: const TextStyle(color: Colors.white70, fontSize: 18)),
+            Text(
+              stopped ? t.easyStoppedTitle : t.easyResumedTitle,
+              style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w600),
+            ),
+            if (stopped) ...[
+              const SizedBox(height: 4),
+              Text(t.easyStoppedHint, style: const TextStyle(color: Colors.white70, fontSize: 18)),
+            ],
           ],
         ),
       );
@@ -893,9 +930,11 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       if (_paused) {
         setState(() => _barVisible = false);
         _setPaused(false);
+        _flashEasy(stopped: false);
       } else {
         _easyStopped = true;
         _setPaused(true);
+        _flashEasy(stopped: true);
         if (_controls.any) {
           setState(() => _barVisible = true);
           _keepBar();
@@ -1250,7 +1289,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
     final current = _current;
     final channelName = _channelName(current?.channelId ?? _currentChannelId);
-    final Widget body;
+    Widget body;
     if (current == null || _cacheDirPath == null) {
       // Which album is empty, and where to change it (2026-10-12) -- but
       // before the first sync is through, it is only still loading.
@@ -1289,6 +1328,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
               : _stage(current),
         ),
       );
+      // Stopped: the photo keeps breathing softly, so it does not look hung
+      // (Ernst 2026-10-28).
+      body = _Breathe(active: _paused && !current.isVideo, child: body);
     }
 
     final settings = _settings;
@@ -1360,8 +1402,40 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                 child: Center(child: _newFromPill(t.frameNewFrom(_newFrom!))),
               ),
             if (_heartFlash != null) Positioned.fill(child: IgnorePointer(child: _heart(t, _heartFlash!))),
+            // Faded in and out, not switched (Ernst 2026-10-28).
+            if (!_showGrid)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Center(
+                    child: AnimatedOpacity(
+                      opacity: _easyFlash == null ? 0 : 1,
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeInOut,
+                      child: AnimatedScale(
+                        scale: _easyFlash == null ? 0.92 : 1,
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOut,
+                        child: _easyStoppedHint(t, stopped: _easyFlash ?? _lastFlash),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            // While stopped: the sign pulses softly -- a still sign would
+            // look as if the Frame had hung.
             if (!_showGrid && _paused && _easyStopped)
-              Positioned.fill(child: IgnorePointer(child: Center(child: _easyStoppedHint(t)))),
+              Positioned(
+                right: 24,
+                bottom: aboveTitle + 24,
+                child: IgnorePointer(
+                  child: AnimatedOpacity(
+                    opacity: _easyFlash == null && !_barVisible ? 1 : 0,
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeInOut,
+                    child: _easyStoppedSign(t),
+                  ),
+                ),
+              ),
             if (!_showGrid && _paused && !_easyStopped && !_barVisible)
               Positioned(bottom: aboveTitle + 24, left: 0, right: 0, child: Center(child: _pausedPill(t))),
             // A video: the big sound button in the middle, with the bar.
@@ -1378,10 +1452,26 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ?(title == null ? null : _titleBand(title)),
+                    // Fades and glides in and out (Ernst 2026-10-28: softer).
                     AnimatedSize(
-                      duration: const Duration(milliseconds: 200),
+                      duration: const Duration(milliseconds: 450),
+                      curve: Curves.easeInOut,
                       alignment: Alignment.bottomCenter,
-                      child: _barVisible ? _bar(t) : const SizedBox(width: double.infinity),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 450),
+                        switchInCurve: Curves.easeOut,
+                        switchOutCurve: Curves.easeIn,
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween(begin: const Offset(0, 0.15), end: Offset.zero).animate(animation),
+                            child: child,
+                          ),
+                        ),
+                        child: _barVisible
+                            ? KeyedSubtree(key: const ValueKey('bar'), child: _bar(t))
+                            : const SizedBox(key: ValueKey('nobar'), width: double.infinity),
+                      ),
                     ),
                   ],
                 ),
@@ -2044,6 +2134,49 @@ class _GlowingHintState extends State<_GlowingHint> with SingleTickerProviderSta
           ),
           child: child,
         ),
+        child: widget.child,
+      );
+}
+
+/// A slow, slight zoom in and out while [active]; back to rest otherwise.
+class _Breathe extends StatefulWidget {
+  const _Breathe({required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  State<_Breathe> createState() => _BreatheState();
+}
+
+class _BreatheState extends State<_Breathe> with SingleTickerProviderStateMixin {
+  late final _breath = AnimationController(vsync: this, duration: const Duration(milliseconds: 3200));
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.active) _breath.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(covariant _Breathe oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active && !_breath.isAnimating) {
+      _breath.repeat(reverse: true);
+    } else if (!widget.active && oldWidget.active) {
+      _breath.animateTo(0, duration: const Duration(milliseconds: 600), curve: Curves.easeOut);
+    }
+  }
+
+  @override
+  void dispose() {
+    _breath.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => ScaleTransition(
+        scale: Tween<double>(begin: 1, end: 1.04).animate(CurvedAnimation(parent: _breath, curve: Curves.easeInOut)),
         child: widget.child,
       );
 }
