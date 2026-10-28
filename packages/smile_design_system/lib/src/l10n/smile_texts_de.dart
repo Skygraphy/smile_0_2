@@ -90,6 +90,9 @@ class SmileTextsDe extends SmileTexts {
   String get roleCoAdmin => 'Co-Admin';
 
   @override
+  String get tipDidYouKnow => 'WUSSTEST DU?';
+
+  @override
   String get easyStopTitle => 'Easy Stopping';
 
   @override

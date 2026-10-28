@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+
+import 'tip_cards.dart';
 
 /// The tips (decided 2026-10-18): short hints about what is easy to miss.
 enum TipId {
@@ -25,8 +29,10 @@ enum TipId {
 }
 
 /// When and how a tip shows: passend zur Seite, only while the feature is
-/// still unused, at most one per day, in a quiet moment (a few seconds on a
-/// page, no keyboard), each only once. "Verstanden" retires it, "Keine
+/// still unused, at most three a day at least 30 minutes apart (Ernst
+/// 2026-10-29; before: one a day), in a quiet moment (a few seconds on a
+/// page, no keyboard), each only once. Besides these bubbles: about 200
+/// "Wusstest du?" cards, at random, fitting the page (tip_cards.dart). "Verstanden" retires it, "Keine
 /// Tipps mehr" switches all off (Einstellungen can switch them on again).
 /// Kept on this phone.
 class Tips {
@@ -36,6 +42,10 @@ class Tips {
   static const _seenKey = 'tips_seen';
   static const _usedKey = 'tips_used';
   static const _dayKey = 'tips_last_day';
+  static const _shownAtKey = 'tips_shown_at';
+  static const _cardsSeenKey = 'tip_cards_seen';
+  static const _perDay = 3;
+  static const _apart = Duration(minutes: 30);
   static const _quiet = Duration(seconds: 5);
 
   /// For the switch in Einstellungen.
@@ -67,6 +77,8 @@ class Tips {
     final prefs = await _prefs();
     await prefs?.remove(_seenKey);
     await prefs?.remove(_dayKey);
+    await prefs?.remove(_shownAtKey);
+    await prefs?.remove(_cardsSeenKey);
     await setEnabled(true);
   }
 
@@ -78,9 +90,61 @@ class Tips {
     if (!used.contains(id.name)) await prefs.setStringList(_usedKey, [...used, id.name]);
   }
 
-  static String _today() {
+  /// At most [_perDay] a day, [_apart] between two -- bubbles and cards
+  /// together.
+  static bool _mayShowNow(SharedPreferences prefs) {
     final now = DateTime.now();
-    return '${now.year}-${now.month}-${now.day}';
+    final shown = (prefs.getStringList(_shownAtKey) ?? const [])
+        .map((s) => DateTime.fromMillisecondsSinceEpoch(int.tryParse(s) ?? 0))
+        .toList();
+    final today = shown.where((d) => d.year == now.year && d.month == now.month && d.day == now.day).length;
+    final last = shown.isEmpty ? null : shown.reduce((a, b) => a.isAfter(b) ? a : b);
+    return today < _perDay && (last == null || now.difference(last) >= _apart);
+  }
+
+  static Future<void> _noteShown(SharedPreferences prefs) async {
+    final cutoff = DateTime.now().subtract(const Duration(days: 2)).millisecondsSinceEpoch;
+    final kept = (prefs.getStringList(_shownAtKey) ?? const []).where((s) => (int.tryParse(s) ?? 0) > cutoff);
+    await prefs.setStringList(_shownAtKey, [...kept, '${DateTime.now().millisecondsSinceEpoch}']);
+  }
+
+  /// A "Wusstest du?" card for this page (or a general one), at random,
+  /// each only once -- same rules and same waiting as the bubbles.
+  static void offerCard(BuildContext context, TipPage page) {
+    // Not in widget tests: no timer left waiting there.
+    if (Platform.environment.containsKey('FLUTTER_TEST')) return;
+    Future<void> check() async {
+      if (!context.mounted) return;
+      if (!enabled.value) {
+        Timer(_quiet, check);
+        return;
+      }
+      final prefs = await _prefs();
+      if (prefs == null || !context.mounted) return;
+      final seen = (prefs.getStringList(_cardsSeenKey) ?? const []).toSet();
+      final due = [
+        for (final p in {page, TipPage.general})
+          for (final (i, _) in (tipCards[p] ?? const <String>[]).indexed)
+            if (!seen.contains('${p.name}/$i')) (p, i),
+      ];
+      if (due.isEmpty) return;
+      final quiet = (ModalRoute.of(context)?.isCurrent ?? false) && MediaQuery.viewInsetsOf(context).bottom == 0;
+      if (!quiet || _shown != null || !_mayShowNow(prefs)) {
+        Timer(_quiet, check);
+        return;
+      }
+      final (p, i) = due[Random().nextInt(due.length)];
+      await _noteShown(prefs);
+      if (!context.mounted) return;
+      _showText(context, (_) => tipCards[p]![i], label: (t) => t.tipDidYouKnow, onUnderstood: () async {
+        final prefs = await _prefs();
+        final seen = prefs?.getStringList(_cardsSeenKey) ?? const [];
+        await prefs?.setStringList(_cardsSeenKey, [...seen, '${p.name}/$i']);
+      });
+      Timer(_quiet, check);
+    }
+
+    Timer(_quiet, check);
   }
 
   /// Offers a tip for the page [context] is on; [anchor] points the bubble
@@ -113,12 +177,12 @@ class Tips {
       // Not now (another page in front, keyboard, a tip already open, or
       // today's tip already given): look again in a moment.
       final quiet = (ModalRoute.of(context)?.isCurrent ?? false) && MediaQuery.viewInsetsOf(context).bottom == 0;
-      if (!quiet || _shown != null || prefs.getString(_dayKey) == _today()) {
+      if (!quiet || _shown != null || !_mayShowNow(prefs)) {
         Timer(_quiet, check);
         return;
       }
       final (id, anchor) = due;
-      await prefs.setString(_dayKey, _today());
+      await _noteShown(prefs);
       if (!context.mounted) return;
       _show(context, id, anchor);
       // The page's next tip on another day, even if the page stays open
@@ -159,7 +223,16 @@ class Tips {
         TipId.newsIcon => t.tipNewsIcon,
       };
 
-  static void _show(BuildContext context, TipId id, GlobalKey? anchor) {
+  static void _show(BuildContext context, TipId id, GlobalKey? anchor) =>
+      _showText(context, (t) => text(t, id), anchor: anchor, onUnderstood: () => _retire(id));
+
+  static void _showText(
+    BuildContext context,
+    String Function(SmileTexts t) text, {
+    GlobalKey? anchor,
+    String Function(SmileTexts t)? label,
+    required Future<void> Function() onUnderstood,
+  }) {
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
     if (overlay == null) return;
     Rect? target;
@@ -167,12 +240,13 @@ class Tips {
     if (box is RenderBox && box.hasSize && box.attached) target = box.localToGlobal(Offset.zero) & box.size;
     final entry = OverlayEntry(
       builder: (_) => _TipLayer(
-        id: id,
+        text: text,
+        label: label,
         target: target,
         onLater: _hide,
         onUnderstood: () {
           _hide();
-          unawaited(_retire(id));
+          unawaited(onUnderstood());
         },
         onNoMore: () {
           _hide();
@@ -189,21 +263,24 @@ class Tips {
 /// the bottom. A tap beside it closes it for today.
 class _TipLayer extends StatelessWidget {
   const _TipLayer({
-    required this.id,
+    required this.text,
+    this.label,
     required this.target,
     required this.onLater,
     required this.onUnderstood,
     required this.onNoMore,
   });
 
-  final TipId id;
+  final String Function(SmileTexts t) text;
+  final String Function(SmileTexts t)? label;
   final Rect? target;
   final VoidCallback onLater;
   final VoidCallback onUnderstood;
   final VoidCallback onNoMore;
 
-  static const _bubble = Color(0xFF2B2322);
-  static const _border = Color(0xFF4A3532);
+  // Neutral grey, not the old brownish tint (Ernst 2026-10-27: no brown).
+  static const _bubble = Color(0xFF262626);
+  static const _border = Color(0xFF3A3A3A);
 
   @override
   Widget build(BuildContext context) {
@@ -226,12 +303,12 @@ class _TipLayer extends StatelessWidget {
               children: [
                 Icon(SmileIcons.lightbulb, size: 16, color: scheme.primary),
                 const SizedBox(width: 6),
-                Text(t.tipLabel,
+                Text(label?.call(t) ?? t.tipLabel,
                     style: TextStyle(color: scheme.primary, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.6)),
               ],
             ),
             const SizedBox(height: 8),
-            Text(Tips.text(t, id), style: const TextStyle(color: Colors.white, fontSize: 14.5, height: 1.45)),
+            Text(text(t), style: const TextStyle(color: Colors.white, fontSize: 14.5, height: 1.45)),
             const SizedBox(height: 6),
             Row(
               children: [

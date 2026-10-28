@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../services/tips.dart';
+import '../services/tip_cards.dart';
 import '../widgets/friendly_error.dart';
 
 import '../main.dart';
@@ -42,6 +44,10 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
   @override
   void initState() {
     super.initState();
+    // "Wusstest du?" (2026-10-29).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offerCard(context, TipPage.spaces);
+    });
     _load();
   }
 

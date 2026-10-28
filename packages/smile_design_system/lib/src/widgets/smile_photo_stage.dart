@@ -45,9 +45,10 @@ class SmilePhotoStage extends StatefulWidget {
   /// never grows too big and never stands still.
   final Duration duration;
 
-  static const zoomPerSecond = 0.008;
-  static const maxZoom = 0.08;
-  static const breathAfter = Duration(seconds: 10); // maxZoom / zoomPerSecond
+  // Very slow (Ernst 2026-10-29: "ganz langsam"; was 0.008 and 0.08 in 10 s).
+  static const zoomPerSecond = 0.002;
+  static const maxZoom = 0.06;
+  static const breathAfter = Duration(seconds: 30); // maxZoom / zoomPerSecond
 
   /// At most this share of the photo may be cut off for "auto" to fill.
   static const autoFillTolerance = 0.15;

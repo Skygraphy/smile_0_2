@@ -16,6 +16,7 @@ import '../services/avatar_upload.dart';
 import '../services/channel_picker_service.dart';
 import '../services/frame_controls.dart';
 import '../services/tips.dart';
+import '../services/tip_cards.dart';
 import '../services/frame_service.dart';
 import '../services/local_changes.dart';
 import '../services/sync_bus.dart';
@@ -66,6 +67,10 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
   @override
   void initState() {
     super.initState();
+    // "Wusstest du?" (2026-10-29).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offerCard(context, TipPage.frame);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Tips.offerFirst(context, [(TipId.controlLevel, null), (TipId.playback, null), (TipId.favoritesRound, null)]);

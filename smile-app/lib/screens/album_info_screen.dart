@@ -11,6 +11,7 @@ import '../services/channel_service.dart';
 import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
 import '../services/tips.dart';
+import '../services/tip_cards.dart';
 import '../services/frame_service.dart';
 import 'frame_remote_screen.dart';
 import '../widgets/email_dialog.dart';
@@ -74,6 +75,10 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   @override
   void initState() {
     super.initState();
+    // "Wusstest du?" (2026-10-29).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offerCard(context, TipPage.albumInfo);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) Tips.offer(context, TipId.inviteWays);
     });

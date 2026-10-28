@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/perf.dart';
 import '../services/tips.dart';
+import '../services/tip_cards.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../widgets/friendly_error.dart';
 
@@ -64,6 +65,10 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   @override
   void initState() {
     super.initState();
+    // "Wusstest du?" (2026-10-29).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offerCard(context, TipPage.albums);
+    });
     // The list as last loaded shows at once (also offline), then refreshes.
     widget.channelPickerService.cachedMyChannels().then((cached) {
       if (cached != null && mounted && _channels == null) {

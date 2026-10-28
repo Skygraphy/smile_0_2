@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_contacts/flutter_contacts.dart' show PermissionStatus;
 import 'package:share_plus/share_plus.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../services/tips.dart';
+import '../services/tip_cards.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/contacts_match.dart';
@@ -61,6 +63,10 @@ class _ContactsInviteScreenState extends State<ContactsInviteScreen> {
   @override
   void initState() {
     super.initState();
+    // "Wusstest du?" (2026-10-29).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offerCard(context, TipPage.invite);
+    });
     _start();
   }
 

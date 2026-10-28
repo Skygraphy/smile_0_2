@@ -36,6 +36,7 @@ import 'media_pager_screen.dart';
 import 'photo_viewer_screen.dart';
 import 'frame_remote_screen.dart';
 import '../services/tips.dart';
+import '../services/tip_cards.dart';
 import '../services/test_media.dart';
 import 'album_slideshow_screen.dart';
 import 'video_player_screen.dart';
@@ -132,6 +133,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   @override
   void initState() {
     super.initState();
+    // "Wusstest du?" (2026-10-29).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offerCard(context, TipPage.album);
+    });
     // Photos arriving in this album need no notification while it is open.
     ForegroundNotifications.openAlbumId = widget.channelId;
     _loadFromCacheThenRefresh();

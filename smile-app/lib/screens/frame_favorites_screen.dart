@@ -4,6 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../services/tips.dart';
+import '../services/tip_cards.dart';
 
 import '../services/frame_service.dart';
 import '../services/local_changes.dart';
@@ -37,6 +39,10 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
   @override
   void initState() {
     super.initState();
+    // "Wusstest du?" (2026-10-29).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offerCard(context, TipPage.favorites);
+    });
     unawaited(_load());
   }
 

@@ -190,6 +190,12 @@ abstract class SmileTexts {
   /// **'Co-Admin'**
   String get roleCoAdmin;
 
+  /// No description provided for @tipDidYouKnow.
+  ///
+  /// In de, this message translates to:
+  /// **'WUSSTEST DU?'**
+  String get tipDidYouKnow;
+
   /// No description provided for @easyStopTitle.
   ///
   /// In de, this message translates to:

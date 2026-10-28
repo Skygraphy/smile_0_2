@@ -3,6 +3,7 @@ import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/media_service.dart';
 import '../services/tips.dart';
+import '../services/tip_cards.dart';
 import 'photo_viewer_screen.dart';
 import 'video_player_screen.dart';
 
@@ -44,6 +45,15 @@ class MediaPagerScreen extends StatefulWidget {
 }
 
 class _MediaPagerScreenState extends State<MediaPagerScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // "Wusstest du?" (2026-10-29).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offerCard(context, TipPage.viewer);
+    });
+  }
+
   late final _controller = PageController(initialPage: widget.initialIndex);
   late int _index = widget.initialIndex;
   bool _zoomed = false;

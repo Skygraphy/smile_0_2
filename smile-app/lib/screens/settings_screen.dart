@@ -20,6 +20,7 @@ import 'avatar_viewer_screen.dart';
 import 'handle_edit_screen.dart';
 import '../services/album_sounds.dart';
 import '../services/tips.dart';
+import '../services/tip_cards.dart';
 import 'my_card_screen.dart';
 import '../services/frame_service.dart';
 import '../services/preferred_frame.dart';
@@ -50,6 +51,10 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
   @override
   void initState() {
     super.initState();
+    // "Wusstest du?" (2026-10-29).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offerCard(context, TipPage.settings);
+    });
     _load();
     // The stored "Videos senden" choice.
     unawaited(VideoQuality.load());

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../services/tips.dart';
+import '../services/tip_cards.dart';
 
 import '../services/frame_controls.dart';
 import '../services/frame_service.dart';
@@ -21,6 +23,15 @@ class FrameControlsScreen extends StatefulWidget {
 }
 
 class _FrameControlsScreenState extends State<FrameControlsScreen> with SyncReload {
+  @override
+  void initState() {
+    super.initState();
+    // "Wusstest du?" (2026-10-29).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offerCard(context, TipPage.controls);
+    });
+  }
+
   late SmileFrame _frame = widget.frame;
 
   /// Saves under way: a reload meanwhile would undo what is shown.

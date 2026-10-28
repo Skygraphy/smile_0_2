@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:smile_design_system/smile_design_system.dart';
+import '../services/tips.dart';
+import '../services/tip_cards.dart';
 
 import '../services/invite_service.dart';
 import '../widgets/friendly_error.dart';
@@ -34,6 +36,10 @@ class _InviteCodeScreenState extends State<InviteCodeScreen> {
   @override
   void initState() {
     super.initState();
+    // "Wusstest du?" (2026-10-29).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Tips.offerCard(context, TipPage.invite);
+    });
     _load();
   }
 
