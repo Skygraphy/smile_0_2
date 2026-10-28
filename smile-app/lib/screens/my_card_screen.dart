@@ -116,7 +116,7 @@ class _MyCardScreenState extends State<MyCardScreen> {
     final muted = scheme.onSurfaceVariant;
     final handle = _handle;
     return Scaffold(
-      appBar: AppBar(title: Text(t.myCard)),
+      appBar: AppBar(title: SmileFitText(t.myCard)),
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(

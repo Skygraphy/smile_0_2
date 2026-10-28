@@ -115,7 +115,7 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
   Widget build(BuildContext context) {
     final channels = _channels;
     return Scaffold(
-      appBar: AppBar(title: Text(SmileTexts.of(context).sendTo)),
+      appBar: AppBar(title: SmileFitText(SmileTexts.of(context).sendTo)),
       // The preview gives way when the keyboard is open (typing a title), so
       // the title and the albums stay on screen (2026-10-21, test suite find 22).
       body: LayoutBuilder(builder: (context, box) {

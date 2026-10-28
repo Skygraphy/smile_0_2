@@ -138,7 +138,7 @@ class _TestMediaPageState extends State<_TestMediaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.profiles ? 'Testporträts' : 'Testbilder')),
+      appBar: AppBar(title: SmileFitText(widget.profiles ? 'Testporträts' : 'Testbilder')),
       body: FutureBuilder<List<_TestFile>>(
         future: _list,
         builder: (context, snapshot) {

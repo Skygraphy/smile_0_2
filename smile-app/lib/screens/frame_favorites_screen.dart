@@ -171,7 +171,7 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
       appBar: _selecting
           ? AppBar(
               leading: IconButton(icon: const Icon(SmileIcons.close), onPressed: () => setState(_selected.clear)),
-              title: Text(t.favoritesSelected(_selected.length)),
+              title: SmileFitText(t.favoritesSelected(_selected.length)),
               actions: [
                 IconButton(
                   icon: const Icon(SmileIcons.selectAll),
@@ -187,7 +187,7 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
             )
           : AppBar(
               // Smaller rather than cut off next to "Hinzufügen" (2026-10-27).
-              title: FittedBox(fit: BoxFit.scaleDown, alignment: AlignmentDirectional.centerStart, child: Text(t.favorites)),
+              title: SmileFitText(t.favorites),
               actions: [
                 TextButton.icon(onPressed: _add, icon: const Icon(SmileIcons.add), label: Text(t.addShort)),
                 if (shown.isNotEmpty)

@@ -108,7 +108,7 @@ class _FrameControlsScreenState extends State<FrameControlsScreen> with SyncRelo
         );
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.controlsTitle)),
+      appBar: AppBar(title: SmileFitText(t.controlsTitle)),
       body: ListView(
         padding: EdgeInsets.fromLTRB(SmileSpacing.m, SmileSpacing.m, SmileSpacing.m, SmileSpacing.m + MediaQuery.paddingOf(context).bottom),
         children: [

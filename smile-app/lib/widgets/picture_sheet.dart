@@ -178,7 +178,7 @@ class _AlbumPhotoPickerState extends State<_AlbumPhotoPicker> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(icon: const Icon(SmileIcons.close), onPressed: () => Navigator.of(context).pop()),
-        title: Text(t.choosePhoto),
+        title: SmileFitText(t.choosePhoto),
       ),
       body: items == null
           ? const Center(child: CircularProgressIndicator())

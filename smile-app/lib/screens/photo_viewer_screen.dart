@@ -19,6 +19,7 @@ class PhotoViewerScreen extends StatefulWidget {
     this.onFavorite,
     this.favorite = false,
     this.onEditCaption,
+    this.onZoom,
   })  : localBytes = null,
         localCaption = null;
 
@@ -29,6 +30,7 @@ class PhotoViewerScreen extends StatefulWidget {
         onShowOnFrame = null,
         onFavorite = null,
         onEditCaption = null,
+        onZoom = null,
         favorite = false;
 
   /// "Jetzt am Frame zeigen" (2026-10-14) -- only when the album runs on a
@@ -50,6 +52,9 @@ class PhotoViewerScreen extends StatefulWidget {
   final MediaItem? item;
   final Uint8List? localBytes;
 
+  /// Zoomed in or not -- the swiping pager stops turning pages meanwhile.
+  final ValueChanged<bool>? onZoom;
+
   /// The title of a photo still on its way (2026-10-17).
   final String? localCaption;
 
@@ -63,10 +68,19 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
   final _zoom = TransformationController();
   final _captionKey = GlobalKey();
   final _heartKey = GlobalKey();
+  bool _zoomed = false;
+
+  void _zoomChanged() {
+    final zoomed = _zoom.value.getMaxScaleOnAxis() > 1.01;
+    if (zoomed == _zoomed) return;
+    setState(() => _zoomed = zoomed);
+    widget.onZoom?.call(zoomed);
+  }
 
   @override
   void initState() {
     super.initState();
+    _zoom.addListener(_zoomChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Tips.offerFirst(context, [
@@ -182,6 +196,8 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
               transformationController: _zoom,
               minScale: 1,
               maxScale: 5,
+              // Unzoomed, a sideways swipe turns the page (MediaPagerScreen).
+              panEnabled: _zoomed || widget.onZoom == null,
               child: SizedBox.expand(child: image),
             ),
           ),

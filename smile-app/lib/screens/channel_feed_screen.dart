@@ -32,6 +32,7 @@ import '../services/offline.dart';
 import '../services/upload_queue.dart';
 import '../services/local_changes.dart';
 import '../services/channel_picker_service.dart';
+import 'media_pager_screen.dart';
 import 'photo_viewer_screen.dart';
 import 'frame_remote_screen.dart';
 import '../services/tips.dart';
@@ -1163,6 +1164,47 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     await _load();
   }
 
+  /// Shown full screen: a ready photo, or a ready video that can play.
+  bool _viewable(MediaItem item) => item.isReady && (!item.isVideo || item.displayUrl != null);
+
+  /// Full screen at [item], swiping through every photo and video of the
+  /// album like WhatsApp (2026-10-28, Ernst). [newestFirst] is the feed's
+  /// order; the pager goes oldest to newest, so left means newer.
+  Future<void> _openViewer(MediaItem item, List<MediaItem> newestFirst) async {
+    final items = newestFirst.reversed.where(_viewable).toList();
+    final index = items.indexWhere((e) => e.id == item.id);
+    if (index < 0) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MediaPagerScreen(
+          items: items,
+          initialIndex: index,
+          page: (item, active, onZoom) => item.isVideo
+              ? VideoPlayerScreen(
+                  key: ValueKey(item.id),
+                  mediaId: item.id,
+                  url: item.displayUrl,
+                  active: active,
+                  onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
+                  favorite: _favoriteFrames[item.id]?.isNotEmpty ?? false,
+                  onFavorite: _frames.isEmpty ? null : () => _toggleFavorite(item.id),
+                  caption: item.caption,
+                  onEditCaption: _canEditCaption(item) ? (current) => _editCaption(item, current) : null,
+                )
+              : PhotoViewerScreen(
+                  key: ValueKey(item.id),
+                  item: item,
+                  onZoom: onZoom,
+                  onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
+                  favorite: _favoriteFrames[item.id]?.isNotEmpty ?? false,
+                  onFavorite: _frames.isEmpty ? null : () => _toggleFavorite(item.id),
+                  onEditCaption: _canEditCaption(item) ? (current) => _editCaption(item, current) : null,
+                ),
+        ),
+      ),
+    );
+  }
+
   /// Builds the chat rows newest-first (for the `reverse: true` list),
   /// interleaving a centered date separator wherever the calendar day
   /// changes, and deciding per row whether to show the sender's
@@ -1299,34 +1341,10 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           onLongPress: () => _toggleSelected(item.id),
           onTap: _selectionMode
               ? () => _toggleSelected(item.id)
-              : (item.isVideo && item.isReady && item.displayUrl != null)
-                  ? () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => VideoPlayerScreen(
-                            mediaId: item.id,
-                            url: item.displayUrl,
-                            onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
-                            favorite: _favoriteFrames[item.id]?.isNotEmpty ?? false,
-                            onFavorite: _frames.isEmpty ? null : () => _toggleFavorite(item.id),
-                            caption: item.caption,
-                            onEditCaption: _canEditCaption(item) ? (current) => _editCaption(item, current) : null,
-                          ),
-                        ),
-                      )
-                  // A photo: the whole of it, full screen (the bubble crops).
-                  : (!item.isVideo && item.isReady)
-                      ? () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => PhotoViewerScreen(
-                                item: item,
-                                onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
-                                favorite: _favoriteFrames[item.id]?.isNotEmpty ?? false,
-                            onFavorite: _frames.isEmpty ? null : () => _toggleFavorite(item.id),
-                                onEditCaption: _canEditCaption(item) ? (current) => _editCaption(item, current) : null,
-                              ),
-                            ),
-                          )
-                      : null,
+              // Full screen, swiping through the album (2026-10-28).
+              : _viewable(item)
+                  ? () => _openViewer(item, visibleItems)
+                  : null,
           photo: item.isVideo
               ? _VideoBadge(playable: item.isReady && item.displayUrl != null, child: tile)
               : tile,
@@ -1367,7 +1385,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           ? AppBar(
               leading: IconButton(icon: const Icon(SmileIcons.close), onPressed: _clearSelection),
               // In words (2026-10-11) -- the actions are in the bar below.
-              title: Text(_allSelected ? t.allSelected(_selectedIds.length) : t.selectedCount(_selectedIds.length)),
+              title: SmileFitText(_allSelected ? t.allSelected(_selectedIds.length) : t.selectedCount(_selectedIds.length)),
             )
           : _showingHidden
               ? AppBar(
@@ -1377,7 +1395,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                   // hide/unhide action, which was confusing (same icon,
                   // opposite meaning in each context).
                   leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: _toggleHiddenView),
-                  title: Text(t.hiddenPhotos),
+                  title: SmileFitText(t.hiddenPhotos),
                 )
               : AppBar(
                   leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).maybePop()),

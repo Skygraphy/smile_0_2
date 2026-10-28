@@ -59,7 +59,7 @@ class _InviteCodeScreenState extends State<InviteCodeScreen> {
     final muted = theme.colorScheme.onSurfaceVariant;
     final code = _code;
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(title: SmileFitText(widget.title)),
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.l, SmileSpacing.l, SmileSpacing.l + MediaQuery.paddingOf(context).bottom),

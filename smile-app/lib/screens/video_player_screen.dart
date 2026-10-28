@@ -25,6 +25,7 @@ class VideoPlayerScreen extends StatefulWidget {
     this.favorite = false,
     this.caption,
     this.onEditCaption,
+    this.active = true,
   });
 
   /// "Jetzt am Frame zeigen" (2026-10-14) -- only when the album runs on a
@@ -42,6 +43,9 @@ class VideoPlayerScreen extends StatefulWidget {
   /// Its title (2026-10-17) and "Titel bearbeiten" -- see PhotoViewerScreen.
   final String? caption;
   final Future<String?> Function(String? current)? onEditCaption;
+
+  /// Shown right now (MediaPagerScreen): plays only then.
+  final bool active;
 
   final String mediaId;
   final String? url;
@@ -63,6 +67,19 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   void initState() {
     super.initState();
     _start();
+  }
+
+  @override
+  void didUpdateWidget(covariant VideoPlayerScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized || oldWidget.active == widget.active) return;
+    if (widget.active) {
+      unawaited(controller.play());
+    } else {
+      unawaited(controller.pause());
+    }
+    setState(() {});
   }
 
   Future<void> _start() async {
@@ -87,7 +104,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       await controller.initialize();
       if (!mounted) return;
       setState(() {});
-      await controller.play();
+      if (widget.active) await controller.play();
     } catch (e) {
       if (!mounted) return;
       final t = SmileTexts.of(context);

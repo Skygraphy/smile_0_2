@@ -167,7 +167,7 @@ class _HandleEditScreenState extends State<HandleEditScreen> {
           borderSide: color == null ? BorderSide.none : BorderSide(color: color, width: 2),
         );
     return Scaffold(
-      appBar: AppBar(title: Text(t.smileName)),
+      appBar: AppBar(title: SmileFitText(t.smileName)),
       body: ListView(
         padding: EdgeInsets.fromLTRB(
             SmileSpacing.l, SmileSpacing.l, SmileSpacing.l, SmileSpacing.l + MediaQuery.paddingOf(context).bottom),

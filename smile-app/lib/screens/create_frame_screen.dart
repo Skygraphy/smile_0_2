@@ -160,7 +160,7 @@ class _CreateFrameScreenState extends State<CreateFrameScreen> {
     final t = SmileTexts.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: SmileFitText(
           _created == null ? t.setUpFrame : t.connectNamedFrame(_created!.name),
         ),
       ),

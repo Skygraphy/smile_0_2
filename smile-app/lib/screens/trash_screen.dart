@@ -69,7 +69,7 @@ class _TrashScreenState extends State<TrashScreen> with SyncReload {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).maybePop()),
-        title: Text(t.trashTitle),
+        title: SmileFitText(t.trashTitle),
       ),
       body: items == null
           ? const Center(child: CircularProgressIndicator())

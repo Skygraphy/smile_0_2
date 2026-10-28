@@ -208,7 +208,7 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(t.scanCode)),
+      appBar: AppBar(title: SmileFitText(t.scanCode)),
       body: Column(
         children: [
           Expanded(

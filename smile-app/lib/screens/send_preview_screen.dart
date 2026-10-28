@@ -90,7 +90,7 @@ class _SendPreviewScreenState extends State<SendPreviewScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         leading: IconButton(icon: const Icon(SmileIcons.close), onPressed: () => Navigator.of(context).pop()),
-        title: Text(widget.albumName),
+        title: SmileFitText(widget.albumName),
       ),
       body: Column(
         children: [

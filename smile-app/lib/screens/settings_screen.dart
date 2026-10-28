@@ -269,7 +269,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
     final email = supabase.auth.currentUser?.email;
     return Scaffold(
       // A page of its own from the ⋮ menu (2026-10-13), with its back arrow.
-      appBar: AppBar(title: Text(t.settings)),
+      appBar: AppBar(title: SmileFitText(t.settings)),
       body: profile == null
           ? Center(
               child: _errorMessage != null

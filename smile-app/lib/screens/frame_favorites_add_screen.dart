@@ -99,7 +99,7 @@ class _FrameFavoritesAddScreenState extends State<FrameFavoritesAddScreen> {
     final albums = _albums;
     final items = _albumId == null ? null : _items[_albumId];
     return Scaffold(
-      appBar: AppBar(title: Text(t.favoritesAddTitle(widget.frameName))),
+      appBar: AppBar(title: SmileFitText(t.favoritesAddTitle(widget.frameName))),
       body: albums == null
           ? const Center(child: CircularProgressIndicator())
           : albums.isEmpty

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'smile_fit_text.dart';
+
 import '../icons/smile_icons.dart';
 import '../theme/smile_tokens.dart';
 import 'smile_object_tile.dart';
@@ -39,7 +41,8 @@ class SmileInfoHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     final sub = subtitle;
-    final name = Text(
+    // Smaller first, then "…" (Ernst 2026-10-28: every title).
+    final name = SmileFitText(
       title,
       textAlign: TextAlign.center,
       style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),

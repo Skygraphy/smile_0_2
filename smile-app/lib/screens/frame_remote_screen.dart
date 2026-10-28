@@ -537,7 +537,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_shownName),
+        title: SmileFitText(_shownName),
         // ⋮ instead of the gear (2026-10-16), like on every page.
         actions: [
           PopupMenuButton<VoidCallback>(

@@ -81,7 +81,7 @@ class _CapturePreviewScreenState extends State<CapturePreviewScreen> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         leading: IconButton(icon: const Icon(SmileIcons.close), onPressed: () => Navigator.of(context).pop()),
-        title: Text(widget.albumName),
+        title: SmileFitText(widget.albumName),
       ),
       body: Center(child: _media()),
       bottomNavigationBar: SafeArea(

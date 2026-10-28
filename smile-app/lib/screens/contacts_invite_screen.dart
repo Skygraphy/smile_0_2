@@ -125,7 +125,7 @@ class _ContactsInviteScreenState extends State<ContactsInviteScreen> {
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(t.fromContacts)),
+      appBar: AppBar(title: SmileFitText(t.fromContacts)),
       body: switch (_stage) {
         _Stage.checking || _Stage.loading => const Center(child: CircularProgressIndicator()),
         _Stage.explain => _explain(context),
