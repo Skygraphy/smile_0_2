@@ -2824,6 +2824,18 @@ abstract class SmileTexts {
   /// **'Lieblingsbild für den Frame'**
   String get favoriteFor;
 
+  /// No description provided for @showOnFrameSent.
+  ///
+  /// In de, this message translates to:
+  /// **'Wird jetzt auf {frame} gezeigt'**
+  String showOnFrameSent(String frame);
+
+  /// No description provided for @showOnFrameOffline.
+  ///
+  /// In de, this message translates to:
+  /// **'{frame} ist gerade nicht erreichbar. Das Foto erscheint dort nicht.'**
+  String showOnFrameOffline(String frame);
+
   /// No description provided for @favoriteAddedTo.
   ///
   /// In de, this message translates to:

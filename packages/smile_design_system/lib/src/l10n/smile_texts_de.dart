@@ -1660,6 +1660,16 @@ class SmileTextsDe extends SmileTexts {
   String get favoriteFor => 'Lieblingsbild für den Frame';
 
   @override
+  String showOnFrameSent(String frame) {
+    return 'Wird jetzt auf $frame gezeigt';
+  }
+
+  @override
+  String showOnFrameOffline(String frame) {
+    return '$frame ist gerade nicht erreichbar. Das Foto erscheint dort nicht.';
+  }
+
+  @override
   String favoriteAddedTo(String frame) {
     return 'Lieblingsbild von $frame';
   }

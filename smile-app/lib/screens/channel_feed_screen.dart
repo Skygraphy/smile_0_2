@@ -229,15 +229,30 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   }
 
   /// "Jetzt am Frame zeigen" (2026-10-14): the Frame shows this photo at
-  /// once (on several Frames, which one first). Fire and forget, with a
-  /// tick -- a Frame that is offline simply doesn't change.
+  /// once (on several Frames, which one first). A short note says so -- or
+  /// that the Frame is offline and nothing will change there (2026-10-28,
+  /// Ernst: a tap gave no answer at all).
   Future<void> _showOnFrame(String mediaItemId) async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     final frame = await _pickFrame();
     if (frame == null) return;
     unawaited(HapticFeedback.selectionClick());
+    final service = FrameService();
+    final online = service.getFrame(frame.frameId).then((f) => f.isOnline, onError: (_) => true);
+    var sent = true;
     try {
-      await FrameService().sendCommand(frameId: frame.frameId, command: 'show', mediaItemId: mediaItemId);
-    } catch (_) {}
+      await service.sendCommand(frameId: frame.frameId, command: 'show', mediaItemId: mediaItemId);
+    } catch (_) {
+      sent = false;
+    }
+    final reached = sent && await online;
+    final name = frameNameOf(frame.frameId, frame.frameName);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: SmileNamedText(reached ? t.showOnFrameSent(name) : t.showOnFrameOffline(name), names: [name]),
+      ));
   }
 
   /// "Lieblingsbild für den Frame" (2026-10-14): onto the Frame's
