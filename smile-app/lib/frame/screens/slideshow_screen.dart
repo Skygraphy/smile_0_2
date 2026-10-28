@@ -2138,7 +2138,8 @@ class _GlowingHintState extends State<_GlowingHint> with SingleTickerProviderSta
       );
 }
 
-/// A slow, slight zoom in and out while [active]; back to rest otherwise.
+/// A slow, slight zoom in and out while [active] -- as slow as the normal
+/// slow zoom (Ernst 2026-10-28) -- back to rest otherwise.
 class _Breathe extends StatefulWidget {
   const _Breathe({required this.active, required this.child});
 
@@ -2150,7 +2151,7 @@ class _Breathe extends StatefulWidget {
 }
 
 class _BreatheState extends State<_Breathe> with SingleTickerProviderStateMixin {
-  late final _breath = AnimationController(vsync: this, duration: const Duration(milliseconds: 3200));
+  late final _breath = AnimationController(vsync: this, duration: SmilePhotoStage.breathAfter);
 
   @override
   void initState() {
@@ -2176,7 +2177,7 @@ class _BreatheState extends State<_Breathe> with SingleTickerProviderStateMixin 
 
   @override
   Widget build(BuildContext context) => ScaleTransition(
-        scale: Tween<double>(begin: 1, end: 1.04).animate(CurvedAnimation(parent: _breath, curve: Curves.easeInOut)),
+        scale: Tween<double>(begin: 1, end: 1 + SmilePhotoStage.maxZoom).animate(CurvedAnimation(parent: _breath, curve: Curves.easeInOut)),
         child: widget.child,
       );
 }
