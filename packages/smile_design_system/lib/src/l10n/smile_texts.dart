@@ -190,6 +190,90 @@ abstract class SmileTexts {
   /// **'Co-Admin'**
   String get roleCoAdmin;
 
+  /// No description provided for @newSoundTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Ton bei neuen Fotos'**
+  String get newSoundTitle;
+
+  /// No description provided for @newSoundHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Einmal, wenn etwas Neues ankommt. Still in der Nachtruhe.'**
+  String get newSoundHint;
+
+  /// No description provided for @newReminderTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Erinnern, bis jemand schaut'**
+  String get newReminderTitle;
+
+  /// No description provided for @newReminderHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Ton kommt jede Stunde wieder, höchstens dreimal.'**
+  String get newReminderHint;
+
+  /// No description provided for @newHintTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Hinweis auf Neues'**
+  String get newHintTitle;
+
+  /// No description provided for @newHintHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Bleibt am Frame stehen, bis jemand tippt. Ein Tippen zeigt die neuen Fotos.'**
+  String get newHintHint;
+
+  /// No description provided for @newOnePhoto.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein neues Foto'**
+  String get newOnePhoto;
+
+  /// No description provided for @newOneVideo.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein neues Video'**
+  String get newOneVideo;
+
+  /// No description provided for @newManyPhotos.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} neue Fotos'**
+  String newManyPhotos(int count);
+
+  /// No description provided for @newManyVideos.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} neue Videos'**
+  String newManyVideos(int count);
+
+  /// No description provided for @newManyMixed.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} neue Fotos und Videos'**
+  String newManyMixed(int count);
+
+  /// No description provided for @newFromNames.
+  ///
+  /// In de, this message translates to:
+  /// **'von {names}'**
+  String newFromNames(String names);
+
+  /// No description provided for @namesAnd.
+  ///
+  /// In de, this message translates to:
+  /// **'{first} und {last}'**
+  String namesAnd(String first, String last);
+
+  /// No description provided for @newTapToSee.
+  ///
+  /// In de, this message translates to:
+  /// **'antippen'**
+  String get newTapToSee;
+
   /// No description provided for @roleFrameAdmin.
   ///
   /// In de, this message translates to:

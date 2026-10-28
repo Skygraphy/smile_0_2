@@ -90,6 +90,61 @@ class SmileTextsDe extends SmileTexts {
   String get roleCoAdmin => 'Co-Admin';
 
   @override
+  String get newSoundTitle => 'Ton bei neuen Fotos';
+
+  @override
+  String get newSoundHint =>
+      'Einmal, wenn etwas Neues ankommt. Still in der Nachtruhe.';
+
+  @override
+  String get newReminderTitle => 'Erinnern, bis jemand schaut';
+
+  @override
+  String get newReminderHint =>
+      'Der Ton kommt jede Stunde wieder, höchstens dreimal.';
+
+  @override
+  String get newHintTitle => 'Hinweis auf Neues';
+
+  @override
+  String get newHintHint =>
+      'Bleibt am Frame stehen, bis jemand tippt. Ein Tippen zeigt die neuen Fotos.';
+
+  @override
+  String get newOnePhoto => 'Ein neues Foto';
+
+  @override
+  String get newOneVideo => 'Ein neues Video';
+
+  @override
+  String newManyPhotos(int count) {
+    return '$count neue Fotos';
+  }
+
+  @override
+  String newManyVideos(int count) {
+    return '$count neue Videos';
+  }
+
+  @override
+  String newManyMixed(int count) {
+    return '$count neue Fotos und Videos';
+  }
+
+  @override
+  String newFromNames(String names) {
+    return 'von $names';
+  }
+
+  @override
+  String namesAnd(String first, String last) {
+    return '$first und $last';
+  }
+
+  @override
+  String get newTapToSee => 'antippen';
+
+  @override
   String get roleFrameAdmin => 'Frame-Admin';
 
   @override

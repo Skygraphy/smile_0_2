@@ -187,6 +187,29 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
               value: f.showNewImmediately,
               onChanged: (v) => _save({'show_new_immediately': v}),
             ),
+            // Noticing new photos (2026-10-28): a chime, its reminder, a hint.
+            SwitchListTile(
+              secondary: const Icon(SmileIcons.soundOn),
+              title: Text(t.newSoundTitle),
+              subtitle: Text(t.newSoundHint),
+              value: f.newSound,
+              onChanged: (v) => _save({'new_sound': v}),
+            ),
+            if (f.newSound)
+              SwitchListTile(
+                secondary: const Icon(SmileIcons.waiting),
+                title: Text(t.newReminderTitle),
+                subtitle: Text(t.newReminderHint),
+                value: f.newSoundReminder,
+                onChanged: (v) => _save({'new_sound_reminder': v}),
+              ),
+            SwitchListTile(
+              secondary: const Icon(SmileIcons.news),
+              title: Text(t.newHintTitle),
+              subtitle: Text(t.newHintHint),
+              value: f.newHint,
+              onChanged: (v) => _save({'new_hint': v}),
+            ),
             SwitchListTile(
               secondary: const Icon(SmileIcons.waiting),
               title: Text(t.bigClock),

@@ -13,6 +13,7 @@ import '../services/media_cache_store.dart';
 import '../services/media_cache_sync.dart';
 import '../services/push_service.dart';
 import '../services/push_sync_signal.dart';
+import '../services/frame_chime.dart';
 import '../services/sync_service.dart';
 import 'video_slide.dart';
 
@@ -118,6 +119,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   /// "Neu von Roman" over a photo that just arrived.
   String? _newFrom;
+
+  /// How many the next "Neueste" round plays -- null = 20 (the button).
+  int? _newestCount;
   Timer? _hideNewFrom;
   Set<String>? _knownIds;
 
@@ -178,6 +182,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     widget.syncService.onEarlyResult = null;
     _syncTimer?.cancel();
     _advanceTimer?.cancel();
+    _remind?.cancel();
     _offlineRetryTimer?.cancel();
     _hideBar?.cancel();
     _hideNewFrom?.cancel();
@@ -285,6 +290,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       _rebuildPlaylist();
     });
     _knownIds = {...?known, for (final e in all) e.mediaItemId};
+    _noticeArrived(arrived);
     _updateQuiet();
     _updateRotation();
     _showArrived(arrived);
@@ -339,7 +345,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final all = {for (final e in _allEntries) e.mediaItemId: e}.values.toList();
     switch (mode) {
       case 'recent':
-        final count = _newestRound ? 20 : settings?.recentCount ?? 20;
+        final count = _newestRound ? (_newestCount ?? 20) : settings?.recentCount ?? 20;
         final newest = ([...all]..sort((a, b) => b.sortOrder.compareTo(a.sortOrder))).take(count).toList();
         _playlist = ordered(newest);
       case 'favorites':
@@ -680,7 +686,97 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     _restartAdvanceTimer();
   }
 
-  void _playNewest() {
+  // --- Noticing new photos (migrations/0093) -----------------------------
+
+  /// Arrived and not looked at yet: the hint stays until someone taps.
+  List<CachedMediaEntry> _unseen = const [];
+  Timer? _remind;
+  int _reminded = 0;
+
+  void _noticeArrived(List<CachedMediaEntry> arrived) {
+    final s = _settings;
+    if (arrived.isEmpty || s == null) return;
+    if (s.newSound && !_quiet) FrameChime.play();
+    if (s.newHint) setState(() => _unseen = [..._unseen, ...arrived]);
+    _remind?.cancel();
+    _reminded = 0;
+    if (s.newSound && s.newSoundReminder) {
+      _remind = Timer.periodic(const Duration(hours: 1), (timer) {
+        final now = _settings;
+        if (_reminded >= 3 || now == null || !now.newSound || !now.newSoundReminder) {
+          timer.cancel();
+          return;
+        }
+        // Only while nobody has looked yet: the hint is still there.
+        if (_unseen.isEmpty) {
+          timer.cancel();
+          return;
+        }
+        if (_quiet) return;
+        _reminded++;
+        FrameChime.play();
+      });
+    }
+  }
+
+  /// A tap while something new waits: those, newest first, then as before.
+  void _showUnseen() {
+    final count = _unseen.length;
+    _remind?.cancel();
+    setState(() {
+      _unseen = const [];
+      _newFrom = null;
+    });
+    _playNewest(count: count);
+  }
+
+  String _unseenText(SmileTexts t) {
+    final items = _unseen;
+    final videos = items.where((e) => e.isVideo).length;
+    final what = items.length == 1
+        ? (videos == 1 ? t.newOneVideo : t.newOnePhoto)
+        : videos == 0
+            ? t.newManyPhotos(items.length)
+            : videos == items.length
+                ? t.newManyVideos(items.length)
+                : t.newManyMixed(items.length);
+    final names = <String>[];
+    for (final e in items) {
+      final n = e.senderName;
+      if (n != null && n.isNotEmpty && !names.contains(n)) names.add(n);
+    }
+    if (names.isEmpty) return what;
+    final who = names.length == 1
+        ? names.first
+        : t.namesAnd(names.sublist(0, names.length - 1).join(', '), names.last);
+    return '$what ${t.newFromNames(who)}';
+  }
+
+  Widget _unseenHint(SmileTexts t) {
+    final first = _unseen.firstWhere((e) => e.senderName != null, orElse: () => _unseen.first);
+    return _GlowingHint(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SmileAvatar(name: first.senderName ?? '', size: 44),
+          const SizedBox(width: 14),
+          Flexible(
+            child: Text(
+              _unseenText(t),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Text(t.newTapToSee, style: const TextStyle(color: SmileTheme.primary, fontSize: 22, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  void _playNewest({int? count}) {
+    _newestCount = count;
     setState(() {
       _newestRound = true;
       _favoritesRound = false;
@@ -758,6 +854,12 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   // --- Big buttons --------------------------------------------------------
 
   void _onTap() {
+    // Something new waits: a tap shows it -- on every level, also "Nur
+    // zuschauen" (2026-10-28).
+    if (_unseen.isNotEmpty && !_quiet) {
+      _showUnseen();
+      return;
+    }
     if (!_controls.any || _quiet) return;
     setState(() => _barVisible = !_barVisible);
     _keepBar();
@@ -1199,7 +1301,15 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                 child: Center(child: _unlockedPill(SmileTexts.of(context))),
               ),
             // "Neu von …" at the bottom, out of the way of clock and caption.
-            if (!_showGrid && _newFrom != null && !_barVisible)
+            // Something new waits for someone to look (migrations/0093).
+            if (!_showGrid && _unseen.isNotEmpty && !_barVisible)
+              Positioned(
+                bottom: aboveTitle + 28,
+                left: 24,
+                right: 24,
+                child: Center(child: _unseenHint(SmileTexts.of(context))),
+              ),
+            if (!_showGrid && _newFrom != null && _unseen.isEmpty && !_barVisible)
               Positioned(
                 bottom: aboveTitle + (_paused ? 92 : 28),
                 left: 0,
@@ -1848,4 +1958,47 @@ class _UnlockPadState extends State<_UnlockPad> {
       ),
     );
   }
+}
+
+/// The hint on new photos: a pill whose coral border glows softly, to be
+/// seen from across the room (2026-10-28).
+class _GlowingHint extends StatefulWidget {
+  const _GlowingHint({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_GlowingHint> createState() => _GlowingHintState();
+}
+
+class _GlowingHintState extends State<_GlowingHint> with SingleTickerProviderStateMixin {
+  late final _glow = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _glow.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _glow,
+        builder: (context, child) => Container(
+          padding: const EdgeInsets.fromLTRB(12, 12, 28, 12),
+          decoration: BoxDecoration(
+            color: const Color(0xE6141414),
+            borderRadius: BorderRadius.circular(40),
+            border: Border.all(color: SmileTheme.primary, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: SmileTheme.primary.withValues(alpha: 0.25 + 0.35 * _glow.value),
+                blurRadius: 12 + 20 * _glow.value,
+                spreadRadius: 2 + 4 * _glow.value,
+              ),
+            ],
+          ),
+          child: child,
+        ),
+        child: widget.child,
+      );
 }

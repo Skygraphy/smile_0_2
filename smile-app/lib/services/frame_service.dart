@@ -71,6 +71,11 @@ class SmileFrame {
   String get endBehavior => playback['end_behavior'] as String? ?? 'loop';
   int get intervalSeconds => playback['slideshow_interval_seconds'] as int? ?? 10;
   bool get showNewImmediately => playback['show_new_immediately'] as bool? ?? true;
+
+  /// Noticing new photos on the Frame (migrations/0093).
+  bool get newSound => playback['new_sound'] as bool? ?? true;
+  bool get newSoundReminder => playback['new_sound_reminder'] as bool? ?? true;
+  bool get newHint => playback['new_hint'] as bool? ?? true;
   bool get showClock => playback['show_clock'] as bool? ?? false;
   bool get showSender => playback['show_sender'] as bool? ?? true;
   String? get quietFrom => playback['quiet_from'] as String?;
@@ -276,6 +281,7 @@ class FrameService {
     'control_level', 'controls', 'content_mode', 'recent_count', 'play_order', 'end_behavior', 'slideshow_interval_seconds',
     'show_new_immediately', 'show_clock', 'show_sender', 'quiet_from', 'quiet_to', 'playing_round',
     'video_length', 'fill_mode', 'slow_zoom', 'rotate_with_device', 'show_captions',
+    'new_sound', 'new_sound_reminder', 'new_hint',
   ];
 
   static final _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, video_sound, avatar_path, current_channel_id, pairing_code, '

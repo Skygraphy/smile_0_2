@@ -102,6 +102,9 @@ class FrameSettingsInfo {
     this.controlLevel,
     this.showCaptions = true,
     this.unlockCodeHash,
+    this.newSound = true,
+    this.newSoundReminder = true,
+    this.newHint = true,
   });
 
   final String displayMode; // 'slideshow' | 'manual'
@@ -155,6 +158,12 @@ class FrameSettingsInfo {
   /// as sha256 of `<frame id>:<code>`; null = no code, nothing to unlock.
   final String? unlockCodeHash;
 
+  /// Noticing new photos (migrations/0093): a chime, repeated hourly up to
+  /// three times until someone taps, and a hint that stays until then.
+  final bool newSound;
+  final bool newSoundReminder;
+  final bool newHint;
+
   FrameControls get effectiveControls =>
       controls ?? FrameControls(next: true, back: true, pause: true, overview: true, album: channelSwitchEnabled);
 
@@ -181,6 +190,9 @@ class FrameSettingsInfo {
         controlLevel: json['control_level'] as int?,
         showCaptions: json['show_captions'] as bool? ?? true,
         unlockCodeHash: json['unlock_code_hash'] as String?,
+        newSound: json['new_sound'] as bool? ?? true,
+        newSoundReminder: json['new_sound_reminder'] as bool? ?? true,
+        newHint: json['new_hint'] as bool? ?? true,
       );
 }
 

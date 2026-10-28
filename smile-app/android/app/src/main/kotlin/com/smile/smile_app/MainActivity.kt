@@ -91,7 +91,16 @@ class MainActivity : FlutterActivity() {
             if (call.method == "play" && !isFrame(this)) sounds.play(call.arguments as? String)
             result.success(null)
         }
+        // The chime for new photos (FrameChime.kt): only on a Frame.
+        val chime = FrameChime(applicationContext)
+        frameChime = chime
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "smile/frame_chime").setMethodCallHandler { call, result ->
+            if (call.method == "play" && isFrame(this)) chime.play()
+            result.success(null)
+        }
     }
+
+    private var frameChime: FrameChime? = null
 
     private var albumSounds: AlbumSounds? = null
 
@@ -99,6 +108,8 @@ class MainActivity : FlutterActivity() {
         queueChannel = null
         albumSounds?.release()
         albumSounds = null
+        frameChime?.release()
+        frameChime = null
         super.cleanUpFlutterEngine(flutterEngine)
     }
 
