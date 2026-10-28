@@ -69,22 +69,17 @@ class _SmilePhotoStageState extends State<SmilePhotoStage> with SingleTickerProv
     if (widget.slowZoom) _startZoom();
   }
 
-  bool get _breathes => widget.duration > SmilePhotoStage.breathAfter;
+  /// How far it grows at most.
+  double get _amount => SmilePhotoStage.maxZoom;
 
-  /// How far it grows: the same speed for every display time.
-  double get _amount => _breathes
-      ? SmilePhotoStage.maxZoom
-      : (SmilePhotoStage.zoomPerSecond * widget.duration.inMilliseconds / 1000).clamp(0.0, SmilePhotoStage.maxZoom);
-
-  /// Starts (or continues from where it is) with the current duration.
+  /// One motion for every photo, whatever its display time (Ernst
+  /// 2026-10-29): it grows at the same slow speed for as long as it shows,
+  /// up to [SmilePhotoStage.maxZoom], then breathes back and in again. A
+  /// short photo just gets less far; a stopped one simply carries on --
+  /// before, a photo stopped after its time stood still or jumped.
   void _startZoom() {
-    if (_breathes) {
-      _zoom.duration = SmilePhotoStage.breathAfter;
-      _zoom.repeat(reverse: true);
-    } else {
-      _zoom.duration = widget.duration;
-      _zoom.forward();
-    }
+    _zoom.duration = SmilePhotoStage.breathAfter;
+    _zoom.repeat(reverse: true);
   }
 
   @override
@@ -104,11 +99,6 @@ class _SmilePhotoStageState extends State<SmilePhotoStage> with SingleTickerProv
         _zoom.stop();
         _zoom.value = 0;
       }
-    } else if (old.duration != widget.duration && widget.slowZoom) {
-      // A new display time while the photo shows (it used to keep the old
-      // one, finish early and stand still): carry on from here.
-      _zoom.stop();
-      _startZoom();
     }
   }
 

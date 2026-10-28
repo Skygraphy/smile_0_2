@@ -1783,11 +1783,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         return SmilePhotoStage(
           image: MemoryImage(bytes),
           fillMode: SmileFillMode.parse(settings?.fillMode),
-          // Stopped (Easy Stopping, the Pause button): the photo keeps
-          // zooming slowly in and out -- the normal slow zoom, endless --
-          // so it never looks hung (Ernst 2026-10-28).
-          slowZoom: _paused || (settings?.slowZoom ?? true),
-          duration: _paused ? const Duration(hours: 1) : Duration(seconds: settings?.slideshowIntervalSeconds ?? 10),
+          // Stopped or not, the slow zoom just carries on (SmilePhotoStage).
+          slowZoom: settings?.slowZoom ?? true,
+          duration: Duration(seconds: settings?.slideshowIntervalSeconds ?? 10),
         );
       },
     );
