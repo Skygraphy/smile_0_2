@@ -20,6 +20,8 @@ class PhotoViewerScreen extends StatefulWidget {
     this.favorite = false,
     this.onEditCaption,
     this.onZoom,
+    this.bare = false,
+    this.caption,
   })  : localBytes = null,
         localCaption = null;
 
@@ -31,6 +33,8 @@ class PhotoViewerScreen extends StatefulWidget {
         onFavorite = null,
         onEditCaption = null,
         onZoom = null,
+        bare = false,
+        caption = null,
         favorite = false;
 
   /// "Jetzt am Frame zeigen" (2026-10-14) -- only when the album runs on a
@@ -54,6 +58,12 @@ class PhotoViewerScreen extends StatefulWidget {
 
   /// Zoomed in or not -- the swiping pager stops turning pages meanwhile.
   final ValueChanged<bool>? onZoom;
+
+  /// Only the picture (and its title): the pager has the bar and buttons.
+  final bool bare;
+
+  /// The title to show when [bare] -- the pager keeps it up to date.
+  final String? caption;
 
   /// The title of a photo still on its way (2026-10-17).
   final String? localCaption;
@@ -143,6 +153,7 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
   TapDownDetails? _lastTap;
 
   Widget _viewer(BuildContext context, Widget image) {
+    if (widget.bare) return ColoredBox(color: Colors.black, child: _picture(image, widget.caption));
     return Scaffold(
       backgroundColor: Colors.black,
       extendBodyBehindAppBar: true,
@@ -184,7 +195,11 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
             ),
         ],
       ),
-      body: Stack(
+      body: _picture(image, _caption),
+    );
+  }
+
+  Widget _picture(Widget image, String? caption) => Stack(
         fit: StackFit.expand,
         children: [
           GestureDetector(
@@ -201,11 +216,9 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
               child: SizedBox.expand(child: image),
             ),
           ),
-          if (_caption != null) Positioned(left: 0, right: 0, bottom: 0, child: SmileViewerCaption(_caption!)),
+          if (caption != null) Positioned(left: 0, right: 0, bottom: 0, child: SmileViewerCaption(caption)),
         ],
-      ),
-    );
-  }
+      );
 }
 
 /// A photo's or video's title in full screen and in the phone's slideshow

@@ -26,6 +26,7 @@ class VideoPlayerScreen extends StatefulWidget {
     this.caption,
     this.onEditCaption,
     this.active = true,
+    this.bare = false,
   });
 
   /// "Jetzt am Frame zeigen" (2026-10-14) -- only when the album runs on a
@@ -46,6 +47,9 @@ class VideoPlayerScreen extends StatefulWidget {
 
   /// Shown right now (MediaPagerScreen): plays only then.
   final bool active;
+
+  /// Only the video (and its title): the pager has the bar and buttons.
+  final bool bare;
 
   final String mediaId;
   final String? url;
@@ -135,6 +139,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   Widget build(BuildContext context) {
     final controller = _controller;
     final value = controller?.value;
+    if (widget.bare) return ColoredBox(color: Colors.black, child: _video(controller, value, widget.caption));
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -170,7 +175,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             ),
         ],
       ),
-      body: Stack(
+      body: _video(controller, value, _caption),
+    );
+  }
+
+  Widget _video(VideoPlayerController? controller, VideoPlayerValue? value, String? caption) => Stack(
         fit: StackFit.expand,
         children: [
           Center(
@@ -196,10 +205,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                     ),
                   ),
       ),
-          if (_caption != null)
-            Positioned(left: 0, right: 0, bottom: 56, child: SmileViewerCaption(_caption!, maxLines: 3)),
+          if (caption != null)
+            Positioned(left: 0, right: 0, bottom: 56, child: SmileViewerCaption(caption, maxLines: 3)),
         ],
-      ),
-    );
-  }
+      );
 }

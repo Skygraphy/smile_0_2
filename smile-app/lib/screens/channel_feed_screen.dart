@@ -1179,27 +1179,11 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
         builder: (_) => MediaPagerScreen(
           items: items,
           initialIndex: index,
-          page: (item, active, onZoom) => item.isVideo
-              ? VideoPlayerScreen(
-                  key: ValueKey(item.id),
-                  mediaId: item.id,
-                  url: item.displayUrl,
-                  active: active,
-                  onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
-                  favorite: _favoriteFrames[item.id]?.isNotEmpty ?? false,
-                  onFavorite: _frames.isEmpty ? null : () => _toggleFavorite(item.id),
-                  caption: item.caption,
-                  onEditCaption: _canEditCaption(item) ? (current) => _editCaption(item, current) : null,
-                )
-              : PhotoViewerScreen(
-                  key: ValueKey(item.id),
-                  item: item,
-                  onZoom: onZoom,
-                  onShowOnFrame: _frames.isEmpty ? null : () => _showOnFrame(item.id),
-                  favorite: _favoriteFrames[item.id]?.isNotEmpty ?? false,
-                  onFavorite: _frames.isEmpty ? null : () => _toggleFavorite(item.id),
-                  onEditCaption: _canEditCaption(item) ? (current) => _editCaption(item, current) : null,
-                ),
+          isFavorite: (item) => _favoriteFrames[item.id]?.isNotEmpty ?? false,
+          onFavorite: _frames.isEmpty ? null : (item) => _toggleFavorite(item.id),
+          onShowOnFrame: _frames.isEmpty ? null : (item) => _showOnFrame(item.id),
+          canEditCaption: _canEditCaption,
+          onEditCaption: _editCaption,
         ),
       ),
     );
