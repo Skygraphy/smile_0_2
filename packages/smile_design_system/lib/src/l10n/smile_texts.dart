@@ -190,6 +190,30 @@ abstract class SmileTexts {
   /// **'Co-Admin'**
   String get roleCoAdmin;
 
+  /// No description provided for @easyStopTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Easy Stopping'**
+  String get easyStopTitle;
+
+  /// No description provided for @easyStopHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Antippen hält das Bild an, nochmal tippen lässt es weiterlaufen. Auf jeder Stufe, auch bei „Nur zuschauen“.'**
+  String get easyStopHint;
+
+  /// No description provided for @easyStoppedTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Angehalten'**
+  String get easyStoppedTitle;
+
+  /// No description provided for @easyStoppedHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Nochmal tippen, dann geht es weiter'**
+  String get easyStoppedHint;
+
   /// No description provided for @newSoundTitle.
   ///
   /// In de, this message translates to:

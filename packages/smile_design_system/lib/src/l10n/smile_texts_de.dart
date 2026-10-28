@@ -90,6 +90,19 @@ class SmileTextsDe extends SmileTexts {
   String get roleCoAdmin => 'Co-Admin';
 
   @override
+  String get easyStopTitle => 'Easy Stopping';
+
+  @override
+  String get easyStopHint =>
+      'Antippen hält das Bild an, nochmal tippen lässt es weiterlaufen. Auf jeder Stufe, auch bei „Nur zuschauen“.';
+
+  @override
+  String get easyStoppedTitle => 'Angehalten';
+
+  @override
+  String get easyStoppedHint => 'Nochmal tippen, dann geht es weiter';
+
+  @override
   String get newSoundTitle => 'Ton bei neuen Fotos';
 
   @override

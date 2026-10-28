@@ -183,6 +183,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     _syncTimer?.cancel();
     _advanceTimer?.cancel();
     _remind?.cancel();
+    _easyResume?.cancel();
     _offlineRetryTimer?.cancel();
     _hideBar?.cancel();
     _hideNewFrom?.cancel();
@@ -682,9 +683,35 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   }
 
   void _setPaused(bool paused) {
-    setState(() => _paused = paused);
+    _easyResume?.cancel();
+    setState(() {
+      _paused = paused;
+      if (!paused) _easyStopped = false;
+    });
+    // Stopped by a tap: on by itself after 10 minutes, so the Frame never
+    // stays on one picture for days.
+    if (paused && _easyStopped) _easyResume = Timer(const Duration(minutes: 10), () => _setPaused(false));
     _restartAdvanceTimer();
   }
+
+  /// Stopped with Easy Stopping (not with the Pause button or the remote).
+  bool _easyStopped = false;
+  Timer? _easyResume;
+
+  Widget _easyStoppedHint(SmileTexts t) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+        decoration: BoxDecoration(color: const Color(0xD20F0F0F), borderRadius: BorderRadius.circular(28)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(SmileIcons.pause, color: Colors.white, size: 48),
+            const SizedBox(height: 8),
+            Text(t.easyStoppedTitle, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(t.easyStoppedHint, style: const TextStyle(color: Colors.white70, fontSize: 18)),
+          ],
+        ),
+      );
 
   // --- Noticing new photos (migrations/0093) -----------------------------
 
@@ -858,6 +885,22 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     // zuschauen" (2026-10-28).
     if (_unseen.isNotEmpty && !_quiet) {
       _showUnseen();
+      return;
+    }
+    // Easy Stopping (2026-10-28): a tap stops, the next goes on -- on every
+    // level; with buttons they show along with it.
+    if ((_settings?.easyStop ?? true) && !_quiet && !_showGrid) {
+      if (_paused) {
+        setState(() => _barVisible = false);
+        _setPaused(false);
+      } else {
+        _easyStopped = true;
+        _setPaused(true);
+        if (_controls.any) {
+          setState(() => _barVisible = true);
+          _keepBar();
+        }
+      }
       return;
     }
     if (!_controls.any || _quiet) return;
@@ -1317,7 +1360,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                 child: Center(child: _newFromPill(t.frameNewFrom(_newFrom!))),
               ),
             if (_heartFlash != null) Positioned.fill(child: IgnorePointer(child: _heart(t, _heartFlash!))),
-            if (!_showGrid && _paused && !_barVisible)
+            if (!_showGrid && _paused && _easyStopped)
+              Positioned.fill(child: IgnorePointer(child: Center(child: _easyStoppedHint(t)))),
+            if (!_showGrid && _paused && !_easyStopped && !_barVisible)
               Positioned(bottom: aboveTitle + 24, left: 0, right: 0, child: Center(child: _pausedPill(t))),
             // A video: the big sound button in the middle, with the bar.
             if (!_showGrid && _showingVideo && _barVisible)

@@ -105,6 +105,7 @@ class FrameSettingsInfo {
     this.newSound = true,
     this.newSoundReminder = true,
     this.newHint = true,
+    this.easyStop = true,
   });
 
   final String displayMode; // 'slideshow' | 'manual'
@@ -164,6 +165,10 @@ class FrameSettingsInfo {
   final bool newSoundReminder;
   final bool newHint;
 
+  /// Easy Stopping (migrations/0094): a tap stops the picture, the next one
+  /// goes on -- on every level.
+  final bool easyStop;
+
   FrameControls get effectiveControls =>
       controls ?? FrameControls(next: true, back: true, pause: true, overview: true, album: channelSwitchEnabled);
 
@@ -193,6 +198,7 @@ class FrameSettingsInfo {
         newSound: json['new_sound'] as bool? ?? true,
         newSoundReminder: json['new_sound_reminder'] as bool? ?? true,
         newHint: json['new_hint'] as bool? ?? true,
+        easyStop: json['easy_stop'] as bool? ?? true,
       );
 }
 
