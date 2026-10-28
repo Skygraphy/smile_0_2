@@ -1729,7 +1729,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get level1Hint =>
-      'Berührungen werden ignoriert. Alles kommt aus der App.';
+      'Nur Antippen: hält das Bild an und lässt es weiterlaufen. Alles andere kommt aus der App.';
 
   @override
   String get level2 => 'Blättern';

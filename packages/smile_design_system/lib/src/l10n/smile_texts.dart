@@ -2911,7 +2911,7 @@ abstract class SmileTexts {
   /// No description provided for @level1Hint.
   ///
   /// In de, this message translates to:
-  /// **'Berührungen werden ignoriert. Alles kommt aus der App.'**
+  /// **'Nur Antippen: hält das Bild an und lässt es weiterlaufen. Alles andere kommt aus der App.'**
   String get level1Hint;
 
   /// No description provided for @level2.

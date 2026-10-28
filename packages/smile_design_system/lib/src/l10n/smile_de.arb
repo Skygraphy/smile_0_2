@@ -957,7 +957,7 @@
   "controlsHint": "Die App steuert den Frame immer vollständig. Die Bedienstufe legt fest, was die Person vor dem Frame zusätzlich selbst tun darf.",
   "controlLevel": "Bedienstufe",
   "level1": "Nur zuschauen",
-  "level1Hint": "Berührungen werden ignoriert. Alles kommt aus der App.",
+  "level1Hint": "Nur Antippen: hält das Bild an und lässt es weiterlaufen. Alles andere kommt aus der App.",
   "level2": "Blättern",
   "level2Hint": "Pause und ein großer Weiter-Knopf.",
   "level3": "Einfach",

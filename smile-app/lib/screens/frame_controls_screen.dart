@@ -61,23 +61,6 @@ class _FrameControlsScreenState extends State<FrameControlsScreen> with SyncRelo
     if (!saved && mounted) setState(() => _frame = before);
   }
 
-  /// Easy Stopping (migrations/0094) -- its own column, not one of the
-  /// level's buttons.
-  Future<void> _saveEasyStop(bool on) async {
-    final changes = {'easy_stop': on};
-    final before = _frame;
-    setState(() => _frame = _frame.withSettings(changes));
-    _saving++;
-    _saves++;
-    final saved = await LocalChanges.instance.run(
-      overrides: const {},
-      commit: () => widget.frameService.updateSettings(frameId: _frame.id, changes: changes),
-      affects: tablesChanged({'frames'}, spaceIds: {?widget.spaceId}),
-    );
-    _saving--;
-    if (!saved && mounted) setState(() => _frame = before);
-  }
-
   @override
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
@@ -133,14 +116,15 @@ class _FrameControlsScreenState extends State<FrameControlsScreen> with SyncRelo
             padding: const EdgeInsets.only(bottom: SmileSpacing.m),
             child: Text(t.controlsHint, style: TextStyle(color: scheme.onSurfaceVariant)),
           ),
-          // Easy Stopping (2026-10-28): first, above the levels.
+          // Easy Stopping (2026-10-28): part of every level, and still its
+          // own switch first, above the levels -- off makes "Eigene Auswahl".
           card([
             SwitchListTile(
               secondary: const Icon(SmileIcons.pause),
               title: Text(t.easyStopTitle),
               subtitle: Text(t.easyStopHint),
-              value: _frame.easyStop,
-              onChanged: _saveEasyStop,
+              value: controls['easy_stop'] ?? _frame.easyStop,
+              onChanged: (v) => _save({...controls, 'easy_stop': v}),
             ),
           ]),
           card([

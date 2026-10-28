@@ -6,10 +6,12 @@ class FrameControlLevels {
 
   /// In the order the app lists them.
   static const keys = [
-    'next', 'back', 'pause', 'newest', 'favorite', 'favorites', 'overview', 'album', 'duration', 'captions', 'playback', //
+    'easy_stop', 'next', 'back', 'pause', 'newest', 'favorite', 'favorites', 'overview', 'album', 'duration', 'captions', 'playback', //
   ];
 
   static const _onFrom = {
+    // Easy Stopping (migrations/0095): on every level, even Oma manages it.
+    'easy_stop': 1,
     'next': 2,
     'pause': 2,
     'back': 3,
@@ -42,5 +44,7 @@ class FrameControlLevels {
         'controls': controls,
         'control_level': levelOf(controls),
         'channel_switch_enabled': controls['album'] ?? false,
+        // The Frame reads its own column (migrations/0094).
+        'easy_stop': controls['easy_stop'] ?? true,
       };
 }
