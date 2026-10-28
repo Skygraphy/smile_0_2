@@ -88,11 +88,7 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
               },
             ),
           if (widget.onShowOnFrame != null)
-            IconButton(
-              icon: const Icon(SmileIcons.frame),
-              tooltip: t.showOnFrameNow,
-              onPressed: () => widget.onShowOnFrame!(item),
-            ),
+            IconButton(icon: const Icon(SmileIcons.frame), tooltip: t.showOnFrameNow, onPressed: () => widget.onShowOnFrame!(item)),
           if (widget.canEditCaption(item))
             IconButton(
               icon: const Icon(SmileIcons.caption),
@@ -105,36 +101,68 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
             ),
         ],
       ),
-      body: PageView.builder(
-        controller: _controller,
-        physics: _zoomed ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
-        itemCount: widget.items.length,
-        onPageChanged: (i) => setState(() {
-          _index = i;
-          _zoomed = false;
-        }),
-        itemBuilder: (context, i) {
-          final page = widget.items[i];
-          return page.isVideo
-              ? VideoPlayerScreen(
-                  key: ValueKey(page.id),
-                  mediaId: page.id,
-                  url: page.displayUrl,
-                  caption: _captionOf(page),
-                  active: i == _index,
-                  bare: true,
-                )
-              : PhotoViewerScreen(
-                  key: ValueKey(page.id),
-                  item: page,
-                  caption: _captionOf(page),
-                  bare: true,
-                  onZoom: (zoomed) {
-                    if (i == _index && zoomed != _zoomed) setState(() => _zoomed = zoomed);
+      // Variant C (Ernst 2026-10-28): a black gap between the pictures, and
+      // the leaving one shrinks a little and fades, the coming one grows in
+      // -- soft between upright and landscape photos.
+      body: LayoutBuilder(
+        builder: (context, box) => ClipRect(
+          child: OverflowBox(
+            alignment: Alignment.centerLeft,
+            minWidth: box.maxWidth + _gap,
+            maxWidth: box.maxWidth + _gap,
+            child: PageView.builder(
+              controller: _controller,
+              physics: _zoomed ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
+              itemCount: widget.items.length,
+              onPageChanged: (i) => setState(() {
+                _index = i;
+                _zoomed = false;
+              }),
+              itemBuilder: (context, i) => Padding(
+                padding: const EdgeInsets.only(right: _gap),
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    final position = _controller.hasClients && _controller.position.haveDimensions
+                        ? _controller.page ?? _index.toDouble()
+                        : _index.toDouble();
+                    final away = (i - position).abs().clamp(0.0, 1.0);
+                    return Opacity(
+                      opacity: 1 - 0.8 * away,
+                      child: Transform.scale(scale: 1 - 0.1 * away, child: child),
+                    );
                   },
-                );
-        },
+                  child: _page(i),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
+  }
+
+  static const _gap = 24.0;
+
+  Widget _page(int i) {
+    final page = widget.items[i];
+    return page.isVideo
+        ? VideoPlayerScreen(
+            key: ValueKey(page.id),
+            mediaId: page.id,
+            url: page.displayUrl,
+            caption: _captionOf(page),
+            active: i == _index,
+            bare: true,
+          )
+        : PhotoViewerScreen(
+            key: ValueKey(page.id),
+            item: page,
+            caption: _captionOf(page),
+            bare: true,
+            onZoom: (zoomed) {
+              if (i == _index && zoomed != _zoomed) setState(() => _zoomed = zoomed);
+            },
+          );
   }
 }
