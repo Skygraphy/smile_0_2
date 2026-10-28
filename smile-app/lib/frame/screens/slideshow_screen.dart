@@ -1328,9 +1328,6 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
               : _stage(current),
         ),
       );
-      // Stopped: the photo keeps breathing softly, so it does not look hung
-      // (Ernst 2026-10-28).
-      body = _Breathe(active: _paused && !current.isVideo, child: body);
     }
 
     final settings = _settings;
@@ -1786,8 +1783,11 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         return SmilePhotoStage(
           image: MemoryImage(bytes),
           fillMode: SmileFillMode.parse(settings?.fillMode),
-          slowZoom: settings?.slowZoom ?? true,
-          duration: Duration(seconds: settings?.slideshowIntervalSeconds ?? 10),
+          // Stopped (Easy Stopping, the Pause button): the photo keeps
+          // zooming slowly in and out -- the normal slow zoom, endless --
+          // so it never looks hung (Ernst 2026-10-28).
+          slowZoom: _paused || (settings?.slowZoom ?? true),
+          duration: _paused ? const Duration(hours: 1) : Duration(seconds: settings?.slideshowIntervalSeconds ?? 10),
         );
       },
     );
@@ -2134,50 +2134,6 @@ class _GlowingHintState extends State<_GlowingHint> with SingleTickerProviderSta
           ),
           child: child,
         ),
-        child: widget.child,
-      );
-}
-
-/// A slow, slight zoom in and out while [active] -- as slow as the normal
-/// slow zoom (Ernst 2026-10-28) -- back to rest otherwise.
-class _Breathe extends StatefulWidget {
-  const _Breathe({required this.active, required this.child});
-
-  final bool active;
-  final Widget child;
-
-  @override
-  State<_Breathe> createState() => _BreatheState();
-}
-
-class _BreatheState extends State<_Breathe> with SingleTickerProviderStateMixin {
-  late final _breath = AnimationController(vsync: this, duration: SmilePhotoStage.breathAfter);
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.active) _breath.repeat(reverse: true);
-  }
-
-  @override
-  void didUpdateWidget(covariant _Breathe oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.active && !_breath.isAnimating) {
-      _breath.repeat(reverse: true);
-    } else if (!widget.active && oldWidget.active) {
-      _breath.animateTo(0, duration: const Duration(milliseconds: 600), curve: Curves.easeOut);
-    }
-  }
-
-  @override
-  void dispose() {
-    _breath.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => ScaleTransition(
-        scale: Tween<double>(begin: 1, end: 1 + SmilePhotoStage.maxZoom).animate(CurvedAnimation(parent: _breath, curve: Curves.easeInOut)),
         child: widget.child,
       );
 }
