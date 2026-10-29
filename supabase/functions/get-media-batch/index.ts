@@ -52,7 +52,7 @@ interface RequestBody {
 const FRAME_COLUMNS =
   "id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, " +
   "max_local_cache_gb, current_channel_id, control_level, controls, content_mode, recent_count, play_order, " +
-  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, unlock_code_hash, new_sound, new_sound_reminder, new_hint, easy_stop, spaces(name, deleted_at)";
+  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, unlock_code_hash, new_sound, new_sound_reminder, new_hint, easy_stop, pause_zoom, spaces(name, deleted_at)";
 
 // What the Frame may change itself, by the control that allows it, and
 // what each value may be.
@@ -79,6 +79,7 @@ const SETTABLE: Record<string, { control: string; ok: (v: unknown) => boolean }>
   new_sound: { control: "playback", ok: (v) => typeof v === "boolean" },
   new_sound_reminder: { control: "playback", ok: (v) => typeof v === "boolean" },
   new_hint: { control: "playback", ok: (v) => typeof v === "boolean" },
+  pause_zoom: { control: "playback", ok: (v) => typeof v === "boolean" },
 };
 
 Deno.serve(async (req) => {

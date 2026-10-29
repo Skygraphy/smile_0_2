@@ -106,6 +106,7 @@ class FrameSettingsInfo {
     this.newSoundReminder = true,
     this.newHint = true,
     this.easyStop = true,
+    this.pauseZoom = true,
   });
 
   final String displayMode; // 'slideshow' | 'manual'
@@ -169,6 +170,9 @@ class FrameSettingsInfo {
   /// goes on -- on every level.
   final bool easyStop;
 
+  /// A stopped photo keeps its slow zoom (migrations/0096).
+  final bool pauseZoom;
+
   FrameControls get effectiveControls =>
       controls ?? FrameControls(next: true, back: true, pause: true, overview: true, album: channelSwitchEnabled);
 
@@ -199,6 +203,7 @@ class FrameSettingsInfo {
         newSoundReminder: json['new_sound_reminder'] as bool? ?? true,
         newHint: json['new_hint'] as bool? ?? true,
         easyStop: json['easy_stop'] as bool? ?? true,
+        pauseZoom: json['pause_zoom'] as bool? ?? true,
       );
 }
 

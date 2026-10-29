@@ -1793,8 +1793,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         return SmilePhotoStage(
           image: MemoryImage(bytes),
           fillMode: SmileFillMode.parse(settings?.fillMode),
-          // Stopped or not, the slow zoom just carries on (SmilePhotoStage).
+          // Stopped, the slow zoom carries on at the same speed -- or holds,
+          // as set (migrations/0096).
           slowZoom: settings?.slowZoom ?? true,
+          held: _paused && !(settings?.pauseZoom ?? true),
           duration: Duration(seconds: settings?.slideshowIntervalSeconds ?? 10),
         );
       },

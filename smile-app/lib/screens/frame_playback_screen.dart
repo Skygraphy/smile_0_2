@@ -182,6 +182,15 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
               value: f.slowZoom,
               onChanged: (v) => _save({'slow_zoom': v}),
             ),
+            // Stopped photos (2026-10-30): zoom on at the same speed, or hold.
+            if (f.slowZoom)
+              SwitchListTile(
+                secondary: const Icon(SmileIcons.pause),
+                title: Text(t.pauseZoomTitle),
+                subtitle: Text(t.pauseZoomHint),
+                value: f.pauseZoom,
+                onChanged: (v) => _save({'pause_zoom': v}),
+              ),
             SwitchListTile(
               secondary: const Icon(SmileIcons.rotate),
               title: Text(t.rotateWithDevice),

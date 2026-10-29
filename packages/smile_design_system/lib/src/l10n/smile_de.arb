@@ -45,6 +45,8 @@
   "you": "Du",
   "roleAdmin": "Admin",
   "roleCoAdmin": "Co-Admin",
+  "pauseZoomTitle": "Beim Anhalten weiter zoomen",
+  "pauseZoomHint": "Ein angehaltenes Foto zoomt im selben Tempo weiter. Aus: Es bleibt stehen, wie es gerade ist.",
   "tipDidYouKnow": "WUSSTEST DU?",
   "easyStopTitle": "Easy Stopping",
   "easyStopHint": "Antippen hält das Bild an, nochmal tippen lässt es weiterlaufen. Auf jeder Stufe, auch bei „Nur zuschauen“.",

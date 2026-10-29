@@ -32,11 +32,16 @@ class SmilePhotoStage extends StatefulWidget {
     this.fillMode = SmileFillMode.auto,
     this.slowZoom = true,
     this.duration = const Duration(seconds: 10),
+    this.held = false,
   });
 
   final ImageProvider image;
   final SmileFillMode fillMode;
   final bool slowZoom;
+
+  /// Holds the zoom where it is (a stopped Frame that should not zoom on);
+  /// back to false, it goes on from there.
+  final bool held;
 
   /// How long the photo is shown. The zoom always moves at the same speed
   /// (2026-10-17, like the photo memories of Google/Apple Photos): [zoomPerSecond]
@@ -67,7 +72,7 @@ class _SmilePhotoStageState extends State<SmilePhotoStage> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    if (widget.slowZoom) _startZoom();
+    if (widget.slowZoom && !widget.held) _startZoom();
   }
 
   /// How far it grows at most.
@@ -95,10 +100,16 @@ class _SmilePhotoStageState extends State<SmilePhotoStage> with SingleTickerProv
     if (old.image != widget.image) _resolve();
     if (old.slowZoom != widget.slowZoom) {
       if (widget.slowZoom) {
-        _startZoom();
+        if (!widget.held) _startZoom();
       } else {
         _zoom.stop();
         _zoom.value = 0;
+      }
+    } else if (old.held != widget.held && widget.slowZoom) {
+      if (widget.held) {
+        _zoom.stop();
+      } else {
+        _startZoom();
       }
     }
   }

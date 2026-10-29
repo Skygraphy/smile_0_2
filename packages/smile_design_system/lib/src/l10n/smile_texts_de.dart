@@ -90,6 +90,13 @@ class SmileTextsDe extends SmileTexts {
   String get roleCoAdmin => 'Co-Admin';
 
   @override
+  String get pauseZoomTitle => 'Beim Anhalten weiter zoomen';
+
+  @override
+  String get pauseZoomHint =>
+      'Ein angehaltenes Foto zoomt im selben Tempo weiter. Aus: Es bleibt stehen, wie es gerade ist.';
+
+  @override
   String get tipDidYouKnow => 'WUSSTEST DU?';
 
   @override

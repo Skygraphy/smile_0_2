@@ -190,6 +190,18 @@ abstract class SmileTexts {
   /// **'Co-Admin'**
   String get roleCoAdmin;
 
+  /// No description provided for @pauseZoomTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Beim Anhalten weiter zoomen'**
+  String get pauseZoomTitle;
+
+  /// No description provided for @pauseZoomHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein angehaltenes Foto zoomt im selben Tempo weiter. Aus: Es bleibt stehen, wie es gerade ist.'**
+  String get pauseZoomHint;
+
   /// No description provided for @tipDidYouKnow.
   ///
   /// In de, this message translates to:

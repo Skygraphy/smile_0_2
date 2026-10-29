@@ -5,7 +5,7 @@
 export const FRAME_SETTING_COLUMNS =
   "display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, max_local_cache_gb, control_level, " +
   "controls, content_mode, recent_count, play_order, end_behavior, show_new_immediately, show_clock, show_sender, " +
-  "quiet_from, quiet_to, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, unlock_code_hash, new_sound, new_sound_reminder, new_hint, easy_stop";
+  "quiet_from, quiet_to, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, unlock_code_hash, new_sound, new_sound_reminder, new_hint, easy_stop, pause_zoom";
 
 // deno-lint-ignore no-explicit-any
 export function frameSettings(frame: Record<string, any>) {
@@ -39,5 +39,7 @@ export function frameSettings(frame: Record<string, any>) {
     new_hint: frame.new_hint ?? true,
     // Easy Stopping (migrations/0094).
     easy_stop: frame.easy_stop ?? true,
+    // Slow zoom while stopped (migrations/0096).
+    pause_zoom: frame.pause_zoom ?? true,
   };
 }
