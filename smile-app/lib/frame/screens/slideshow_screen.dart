@@ -745,6 +745,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
             if (stopped) ...[
               const SizedBox(height: 4),
               Text(t.easyStoppedHint, style: const TextStyle(color: Colors.white70, fontSize: 18)),
+              if (_controls.any) ...[
+                const SizedBox(height: 2),
+                Text(t.easyLongPressHint, style: const TextStyle(color: Colors.white54, fontSize: 16)),
+              ],
             ],
           ],
         ),
@@ -932,18 +936,22 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         _setPaused(false);
         _flashEasy(stopped: false);
       } else {
+        // Only stopping -- the buttons come with a long press (Ernst
+        // 2026-10-30: both at once was confusing).
         _easyStopped = true;
         _setPaused(true);
         _flashEasy(stopped: true);
-        if (_controls.any) {
-          setState(() => _barVisible = true);
-          _keepBar();
-        }
       }
       return;
     }
     if (!_controls.any || _quiet) return;
     setState(() => _barVisible = !_barVisible);
+    _keepBar();
+  }
+
+  void _onLongPress() {
+    if (!_controls.any || _quiet) return;
+    setState(() => _barVisible = true);
     _keepBar();
   }
 
@@ -1344,6 +1352,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _showGrid ? null : _onTap,
+        // The buttons: a long press (with Easy Stopping a tap only stops).
+        onLongPress: _showGrid ? null : _onLongPress,
         // Swiping like the big buttons (2026-10-17): left = Weiter (from
         // level 2), right = Zurück (from level 3) -- the same switches.
         onHorizontalDragEnd: _showGrid ? null : _onSwipe,

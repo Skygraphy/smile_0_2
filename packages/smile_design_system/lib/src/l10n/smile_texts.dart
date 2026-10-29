@@ -226,6 +226,12 @@ abstract class SmileTexts {
   /// **'Läuft weiter'**
   String get easyResumedTitle;
 
+  /// No description provided for @easyLongPressHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Lange drücken zeigt die Knöpfe'**
+  String get easyLongPressHint;
+
   /// No description provided for @newSoundTitle.
   ///
   /// In de, this message translates to:

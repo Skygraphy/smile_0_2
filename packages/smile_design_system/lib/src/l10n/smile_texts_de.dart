@@ -109,6 +109,9 @@ class SmileTextsDe extends SmileTexts {
   String get easyResumedTitle => 'Läuft weiter';
 
   @override
+  String get easyLongPressHint => 'Lange drücken zeigt die Knöpfe';
+
+  @override
   String get newSoundTitle => 'Ton bei neuen Fotos';
 
   @override

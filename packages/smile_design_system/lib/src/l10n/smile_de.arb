@@ -51,6 +51,7 @@
   "easyStoppedTitle": "Angehalten",
   "easyStoppedHint": "Nochmal tippen, dann geht es weiter",
   "easyResumedTitle": "Läuft weiter",
+  "easyLongPressHint": "Lange drücken zeigt die Knöpfe",
   "newSoundTitle": "Ton bei neuen Fotos",
   "newSoundHint": "Einmal, wenn etwas Neues ankommt. Still in der Nachtruhe.",
   "newReminderTitle": "Erinnern, bis jemand schaut",
