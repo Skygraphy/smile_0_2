@@ -491,6 +491,12 @@ class FrameService {
     LocalChanges.saved(tablesChanged({'frames'}));
   }
 
+  /// No code any more: nothing to unlock on the Frame, as before the first.
+  Future<void> removeUnlockCode(String frameId) async {
+    await supabase.from('frames').update({'unlock_code_hash': null}).eq('id', frameId);
+    LocalChanges.saved(tablesChanged({'frames'}));
+  }
+
   /// sha256 of `<frame id>:<code>`, hex -- the same on the Frame
   /// (frame/services/unlock_code.dart).
   static String unlockCodeHash(String frameId, String code) => sha256.convert(utf8.encode('$frameId:$code')).toString();

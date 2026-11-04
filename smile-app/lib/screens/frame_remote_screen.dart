@@ -527,6 +527,26 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     if (mounted) await _load();
   }
 
+  Future<void> _removeUnlockCode() async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final confirmed = await showSmileConfirmDialog(
+      context,
+      title: '${t.unlockRemoveCode}?',
+      message: t.unlockRemoveMessage,
+      confirmLabel: t.unlockRemoveCode,
+      destructive: true,
+    );
+    if (!confirmed) return;
+    final saved = await LocalChanges.instance.run(
+      overrides: const {},
+      commit: () => _service.removeUnlockCode(widget.frameId),
+      affects: tablesChanged({'frames'}, spaceIds: {?_spaceId}),
+    );
+    if (saved) messenger.showSnackBar(SnackBar(content: Text(t.unlockCodeRemoved)));
+    if (mounted) await _load();
+  }
+
   Future<String?> _askCode(String title, String hint) =>
       showDialog<String>(context: context, builder: (_) => _CodeDialog(title: title, hint: hint));
 
@@ -906,6 +926,13 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                         label: frame.hasUnlockCode ? t.unlockChangeCode : t.unlockSetCode,
                         onTap: _setUnlockCode,
                       ),
+                      if (frame.hasUnlockCode)
+                        SmileActionRow(
+                          icon: SmileIcons.lockOpen,
+                          label: t.unlockRemoveCode,
+                          destructive: true,
+                          onTap: _removeUnlockCode,
+                        ),
                     ],
                   ),
                 ],

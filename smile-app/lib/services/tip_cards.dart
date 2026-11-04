@@ -137,7 +137,7 @@ const tipCards = <TipPage, List<String>>{
     'Ein Frame-Admin bestimmt Bedienung und Alben – aber nicht Name, Gerät oder Löschen.',
     'Unter „Am Frame entsperren“ legst du einen Code für den Frame fest.',
     'Mit dem Code zeigt der Frame nach langem Druck auf die Uhr alle Knöpfe.',
-    'Der entsperrte Frame sperrt sich nach 2 Minuten ohne Berührung von selbst.',
+    'Der entsperrte Frame sperrt sich nach 1 Minute ohne Berührung von selbst.',
     'Ohne Code lässt sich am Frame nichts entsperren.',
     'Das Abzeichen „Frame-Admin“ zeigt Frames, die du für jemand anderen bedienst.',
   ],

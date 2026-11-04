@@ -451,7 +451,7 @@ abstract class SmileTexts {
   /// No description provided for @unlockHint.
   ///
   /// In de, this message translates to:
-  /// **'Lange auf die Uhr drücken und den Code eingeben: Der Frame zeigt dann alle Knöpfe, bis er sich nach 2 Minuten ohne Berührung wieder sperrt.'**
+  /// **'Lange auf die Uhr drücken und den Code eingeben: Der Frame zeigt dann alle Knöpfe, bis er sich nach 1 Minute ohne Berührung wieder sperrt.'**
   String get unlockHint;
 
   /// No description provided for @unlockSetCode.
@@ -507,6 +507,24 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Code gespeichert'**
   String get unlockCodeSaved;
+
+  /// No description provided for @unlockRemoveCode.
+  ///
+  /// In de, this message translates to:
+  /// **'Code entfernen'**
+  String get unlockRemoveCode;
+
+  /// No description provided for @unlockRemoveMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Frame lässt sich dann nichts mehr entsperren – wie vor dem ersten Code.'**
+  String get unlockRemoveMessage;
+
+  /// No description provided for @unlockCodeRemoved.
+  ///
+  /// In de, this message translates to:
+  /// **'Code entfernt'**
+  String get unlockCodeRemoved;
 
   /// No description provided for @unlockEnterCode.
   ///

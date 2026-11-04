@@ -185,6 +185,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     _remind?.cancel();
     _easyResume?.cancel();
     _easyFlashTimer?.cancel();
+    _countdown?.cancel();
     _offlineRetryTimer?.cancel();
     _hideBar?.cancel();
     _hideNewFrom?.cancel();
@@ -493,7 +494,11 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   Timer? _relock;
   int _wrongCodes = 0;
   DateTime? _codeBlockedUntil;
-  static const _relockAfter = Duration(minutes: 2);
+  // 60 s after the last touch, counting down visibly (Ernst 2026-11-04:
+  // a mother who forgets "Sperren" must not leave it open).
+  static const _relockAfter = Duration(seconds: 60);
+  DateTime? _relockAt;
+  Timer? _countdown;
 
   Future<void> _askUnlock() async {
     final hash = _settings?.unlockCodeHash;
@@ -545,10 +550,18 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     if (!_unlocked) return;
     _relock?.cancel();
     _relock = Timer(_relockAfter, _lock);
+    _relockAt = DateTime.now().add(_relockAfter);
+    _countdown ??= Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted && _unlocked) setState(() {});
+    });
+    if (mounted) setState(() {});
   }
 
   void _lock() {
     _relock?.cancel();
+    _countdown?.cancel();
+    _countdown = null;
+    _relockAt = null;
     widget.syncService.unlockProof = null;
     if (!mounted || !_unlocked) return;
     setState(() => _unlocked = false);
@@ -1515,6 +1528,21 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   /// Big and plain: time, weekday, date -- for someone who may not know
   /// which day it is.
+  /// "0:47" until it locks again -- coral in the last 10 seconds.
+  Widget _relockLeft() {
+    final at = _relockAt;
+    final left = at == null ? _relockAfter.inSeconds : at.difference(DateTime.now()).inSeconds.clamp(0, _relockAfter.inSeconds);
+    final text = '0:${left.toString().padLeft(2, '0')}';
+    return Text(
+      text,
+      style: TextStyle(
+        color: left <= 10 ? SmileTheme.primary : Colors.white70,
+        fontSize: 18,
+        fontFeatures: const [FontFeature.tabularFigures()],
+      ),
+    );
+  }
+
   Widget _unlockedPill(SmileTexts t) => GestureDetector(
         onTap: _lock,
         child: Container(
@@ -1526,6 +1554,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
               const Icon(SmileIcons.lockOpen, color: Colors.white, size: 22),
               const SizedBox(width: 8),
               Text(t.unlockedBadge, style: const TextStyle(color: Colors.white, fontSize: 18)),
+              const SizedBox(width: 12),
+              _relockLeft(),
               const SizedBox(width: 16),
               Text(t.lockNow, style: const TextStyle(color: SmileTheme.primary, fontSize: 18, fontWeight: FontWeight.w600)),
             ],
