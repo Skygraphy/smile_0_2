@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import 'photo_viewer_screen.dart' show SmileViewerCaption;
+
 import 'package:video_player/video_player.dart';
 
 import '../services/media_service.dart';
@@ -97,25 +98,24 @@ class SlideshowPrefs {
     bool? slowZoom,
     bool? sound,
     bool? captions,
-  }) =>
-      SlideshowPrefs(
-        seconds: seconds ?? this.seconds,
-        order: order ?? this.order,
-        orientation: orientation ?? this.orientation,
-        videoLength: videoLength ?? this.videoLength,
-        fillMode: fillMode ?? this.fillMode,
-        slowZoom: slowZoom ?? this.slowZoom,
-        sound: sound ?? this.sound,
-        captions: captions ?? this.captions,
-      );
+  }) => SlideshowPrefs(
+    seconds: seconds ?? this.seconds,
+    order: order ?? this.order,
+    orientation: orientation ?? this.orientation,
+    videoLength: videoLength ?? this.videoLength,
+    fillMode: fillMode ?? this.fillMode,
+    slowZoom: slowZoom ?? this.slowZoom,
+    sound: sound ?? this.sound,
+    captions: captions ?? this.captions,
+  );
 
   /// For Android (MainActivity.setOrientation): "Automatisch" turns with
   /// the phone even when its auto-rotate is off (2026-10-17).
   String get androidOrientation => switch (orientation) {
-        'portrait' => 'portrait',
-        'landscape' => 'landscape',
-        _ => 'sensor',
-      };
+    'portrait' => 'portrait',
+    'landscape' => 'landscape',
+    _ => 'sensor',
+  };
 }
 
 /// Any album as a slideshow on the phone, like on a Frame (decided
@@ -172,10 +172,12 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
     _items = _ordered(widget.items);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     unawaited(_screen.invokeMethod<void>('keepOn', true).catchError((Object _) {}));
-    unawaited(SlideshowPrefs.load().then((prefs) {
-      if (!mounted) return;
-      _applyPrefs(prefs);
-    }));
+    unawaited(
+      SlideshowPrefs.load().then((prefs) {
+        if (!mounted) return;
+        _applyPrefs(prefs);
+      }),
+    );
     _schedule();
   }
 
@@ -203,7 +205,10 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
 
   List<MediaItem> _ordered(List<MediaItem> items) {
     // "Keine Videos" (2026-10-18): photos only.
-    final list = [for (final i in items) if (_prefs.videoLength != 'none' || !i.isVideo) i];
+    final list = [
+      for (final i in items)
+        if (_prefs.videoLength != 'none' || !i.isVideo) i,
+    ];
     switch (_prefs.order) {
       case 'newest':
         list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -265,88 +270,132 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
       showDragHandle: true,
       isScrollControlled: true,
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
-      builder: (context) => StatefulBuilder(builder: (context, setSheet) {
-        final scheme = Theme.of(context).colorScheme;
-        void set(SlideshowPrefs prefs) {
-          setSheet(() {});
-          _applyPrefs(prefs);
-          unawaited(prefs.save());
-        }
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheet) {
+          final scheme = Theme.of(context).colorScheme;
+          void set(SlideshowPrefs prefs) {
+            setSheet(() {});
+            _applyPrefs(prefs);
+            unawaited(prefs.save());
+          }
 
-        Widget label(String text) => Padding(
-              padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.m, SmileSpacing.l, SmileSpacing.s),
-              child: Text(text.toUpperCase(), style: TextStyle(fontSize: 11.5, letterSpacing: 0.8, color: scheme.onSurfaceVariant)),
-            );
-        Widget chips<T>(List<(T, String)> options, T selected, SlideshowPrefs Function(T) change) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.l),
-              child: Wrap(
-                spacing: SmileSpacing.s,
-                runSpacing: SmileSpacing.s,
-                children: [
-                  for (final (value, name) in options)
-                    ChoiceChip(
-                      label: Text(name),
-                      selected: value == selected,
-                      onSelected: (_) { if (value != selected) set(change(value)); },
-                    ),
-                ],
-              ),
-            );
-        final p = _prefs;
-        return SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: SmileSpacing.l),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Widget label(String text) => Padding(
+            padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.m, SmileSpacing.l, SmileSpacing.s),
+            child: Text(text.toUpperCase(), style: TextStyle(fontSize: 11.5, letterSpacing: 0.8, color: scheme.onSurfaceVariant)),
+          );
+          Widget chips<T>(List<(T, String)> options, T selected, SlideshowPrefs Function(T) change) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.l),
+            child: Wrap(
+              spacing: SmileSpacing.s,
+              runSpacing: SmileSpacing.s,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.l),
-                  child: Text(t.slideshowSettings, style: Theme.of(context).textTheme.titleMedium),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(SmileSpacing.l, 4, SmileSpacing.l, 0),
-                  child: Text(t.slideshowSettingsHint, style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant)),
-                ),
-                label(t.displayTime),
-                chips([for (final s in const [5, 10, 20, 60]) (s, s == 60 ? t.oneMinute : t.secondsValue(s))], p.seconds,
-                    (v) => p.copyWith(seconds: v)),
-                label(t.playOrder),
-                chips([('newest', t.orderNewest), ('oldest', t.orderOldest), ('shuffle', t.orderShuffle)], p.order,
-                    (v) => p.copyWith(order: v)),
-                label(t.orientationLabel),
-                chips([('auto', t.orientAuto), ('portrait', t.orientPortrait), ('landscape', t.orientLandscape)],
-                    p.orientation, (v) => p.copyWith(orientation: v)),
-                label(t.videoLengthLabel),
-                chips([('full', t.videoFull), ('photo', t.videoAsPhoto(p.seconds)), ('none', t.videoNone)], p.videoLength,
-                    (v) => p.copyWith(videoLength: v)),
-                label(t.fillLabel),
-                chips([('fit', t.fillNever), ('auto', t.fillAuto), ('fill', t.fillAlways)], p.fillMode,
-                    (v) => p.copyWith(fillMode: v)),
-                const SizedBox(height: SmileSpacing.s),
-                SwitchListTile(
-                  title: Text(t.slowZoom),
-                  subtitle: Text(t.slowZoomHint),
-                  value: p.slowZoom,
-                  onChanged: (v) => set(p.copyWith(slowZoom: v)),
-                ),
-                SwitchListTile(
-                  title: Text(t.videoSound),
-                  value: p.sound,
-                  onChanged: (v) => set(p.copyWith(sound: v)),
-                ),
-                SwitchListTile(
-                  title: Text(t.showCaptions),
-                  subtitle: Text(t.showCaptionsHint),
-                  value: p.captions,
-                  onChanged: (v) => set(p.copyWith(captions: v)),
-                ),
+                for (final (value, name) in options)
+                  ChoiceChip(
+                    label: Text(name),
+                    selected: value == selected,
+                    onSelected: (_) {
+                      if (value != selected) set(change(value));
+                    },
+                  ),
               ],
             ),
-          ),
-        );
-      }),
+          );
+          final p = _prefs;
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: SmileSpacing.l),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.l),
+                    child: Text(t.slideshowSettings, style: Theme.of(context).textTheme.titleMedium),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(SmileSpacing.l, 4, SmileSpacing.l, 0),
+                    child: Text(t.slideshowSettingsHint, style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant)),
+                  ),
+                  label(t.displayTime),
+                  chips(
+                    [
+                      for (final s in const [5, 10, 20, 60]) (s, s == 60 ? t.oneMinute : t.secondsValue(s)),
+                    ],
+                    p.seconds,
+                    (v) => p.copyWith(seconds: v),
+                  ),
+                  label(t.playOrder),
+                  chips(
+                    [('newest', t.orderNewest), ('oldest', t.orderOldest), ('shuffle', t.orderShuffle)],
+                    p.order,
+                    (v) => p.copyWith(order: v),
+                  ),
+                  label(t.orientationLabel),
+                  chips(
+                    [('auto', t.orientAuto), ('portrait', t.orientPortrait), ('landscape', t.orientLandscape)],
+                    p.orientation,
+                    (v) => p.copyWith(orientation: v),
+                  ),
+                  label(t.videoLengthLabel),
+                  chips(
+                    [('full', t.videoFull), ('photo', t.videoAsPhoto(p.seconds)), ('none', t.videoNone)],
+                    p.videoLength,
+                    (v) => p.copyWith(videoLength: v),
+                  ),
+                  label(t.fillLabel),
+                  chips([('fit', t.fillNever), ('auto', t.fillAuto), ('fill', t.fillAlways)], p.fillMode, (v) => p.copyWith(fillMode: v)),
+                  const SizedBox(height: SmileSpacing.s),
+                  SwitchListTile(
+                    title: Text(t.slowZoom),
+                    subtitle: Text(t.slowZoomHint),
+                    value: p.slowZoom,
+                    onChanged: (v) => set(p.copyWith(slowZoom: v)),
+                  ),
+                  SwitchListTile(
+                    title: Text(t.videoSound),
+                    value: p.sound,
+                    onChanged: (v) => set(p.copyWith(sound: v)),
+                  ),
+                  SwitchListTile(
+                    title: Text(t.showCaptions),
+                    subtitle: Text(t.showCaptionsHint),
+                    value: p.captions,
+                    onChanged: (v) => set(p.copyWith(captions: v)),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
     _keepChrome();
+  }
+
+  static const _gap = 24.0;
+
+  Widget _slide(BuildContext context, List<MediaItem> items, int i) {
+    if (items.isEmpty) return const SizedBox.shrink();
+    final item = items[i % items.length];
+    if (item.isVideo) {
+      return _VideoSlide(
+        key: ValueKey('${item.id}#$i'),
+        item: item,
+        active: i == _index,
+        withSound: _prefs.sound,
+        onEnded: () {
+          if (i == _index) _advance();
+        },
+      );
+    }
+    final url = item.displayUrl ?? item.thumbnailUrl;
+    if (url == null) return const SizedBox.shrink();
+    return SmilePhotoStage(
+      key: ValueKey('${item.id}#$i'),
+      image: CachedNetworkImageProvider(url, cacheKey: item.displayUrl != null ? '${item.id}_display' : '${item.id}_grid'),
+      fillMode: SmileFillMode.parse(_prefs.fillMode),
+      slowZoom: _prefs.slowZoom && i == _index,
+      duration: Duration(seconds: _prefs.seconds),
+    );
   }
 
   @override
@@ -360,46 +409,49 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            PageView.builder(
-              controller: _pages,
-              // No itemCount: endless (see _current).
-              onPageChanged: (i) {
-                setState(() => _index = i);
-                if (i > 0 && i % max(items.length, 1) == 0 && _prefs.order == 'shuffle') {
-                  // A new round, a new shuffle.
-                  _shuffleSeed++;
-                  _items = _ordered(widget.items);
-                }
-                _schedule();
-              },
-              itemBuilder: (context, i) {
-                if (items.isEmpty) return const SizedBox.shrink();
-                final item = items[i % items.length];
-                if (item.isVideo) {
-                  return _VideoSlide(
-                    key: ValueKey('${item.id}#$i'),
-                    item: item,
-                    active: i == _index,
-                    withSound: _prefs.sound,
-                    onEnded: () {
-                      if (i == _index) _advance();
+            // Soft like the full-screen viewer (Ernst 2026-11-04: the change was
+            // hard): a gap between the pictures, the leaving one shrinks a
+            // little and fades.
+            LayoutBuilder(
+              builder: (context, box) => ClipRect(
+                child: OverflowBox(
+                  alignment: Alignment.centerLeft,
+                  minWidth: box.maxWidth + _gap,
+                  maxWidth: box.maxWidth + _gap,
+                  child: PageView.builder(
+                    controller: _pages,
+                    // No itemCount: endless (see _current).
+                    onPageChanged: (i) {
+                      setState(() => _index = i);
+                      if (i > 0 && i % max(items.length, 1) == 0 && _prefs.order == 'shuffle') {
+                        // A new round, a new shuffle.
+                        _shuffleSeed++;
+                        _items = _ordered(widget.items);
+                      }
+                      _schedule();
                     },
-                  );
-                }
-                final url = item.displayUrl ?? item.thumbnailUrl;
-                if (url == null) return const SizedBox.shrink();
-                return SmilePhotoStage(
-                  key: ValueKey('${item.id}#$i'),
-                  image: CachedNetworkImageProvider(
-                    url,
-                    cacheKey: item.displayUrl != null ? '${item.id}_display' : '${item.id}_grid',
+                    itemBuilder: (context, i) => Padding(
+                      padding: const EdgeInsets.only(right: _gap),
+                      child: AnimatedBuilder(
+                        animation: _pages,
+                        builder: (context, child) {
+                          final position = _pages.hasClients && _pages.position.haveDimensions
+                              ? _pages.page ?? _index.toDouble()
+                              : _index.toDouble();
+                          final away = (i - position).abs().clamp(0.0, 1.0);
+                          return Opacity(
+                            opacity: 1 - 0.8 * away,
+                            child: Transform.scale(scale: 1 - 0.1 * away, child: child),
+                          );
+                        },
+                        child: _slide(context, items, i),
+                      ),
+                    ),
                   ),
-                  fillMode: SmileFillMode.parse(_prefs.fillMode),
-                  slowZoom: _prefs.slowZoom && i == _index,
-                  duration: Duration(seconds: _prefs.seconds),
-                );
-              },
+                ),
+              ),
             ),
+
             // The photo's title (2026-10-17), while the controls are hidden.
             if (_prefs.captions && !_chrome && items.isNotEmpty && (_current.caption?.trim().isNotEmpty ?? false))
               Positioned(
@@ -419,39 +471,35 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                     padding: const EdgeInsets.all(SmileSpacing.m),
                     child: Stack(
                       children: [
+                        // The full-screen viewer's bar (Ernst 2026-11-04: the round
+                        // gear and X did not fit the app): back, where, settings.
                         Align(
-                          alignment: Alignment.topRight,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton.filledTonal(
-                                icon: const Icon(SmileIcons.settings),
-                                tooltip: t.slideshowSettings,
-                                onPressed: _openSettings,
-                              ),
-                              const SizedBox(width: SmileSpacing.s),
-                              IconButton.filledTonal(
-                                icon: const Icon(SmileIcons.close),
-                                onPressed: () => Navigator.of(context).pop(),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (items.isNotEmpty && widget.headline != null)
-                          Align(
-                            alignment: Alignment.topLeft,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.55),
-                                borderRadius: BorderRadius.circular(SmileRadius.m),
-                              ),
-                              child: Text(
-                                '${widget.headline} · ${t.slideshowPosition(_index % items.length + 1, items.length)}',
-                                style: const TextStyle(color: Colors.white),
-                              ),
+                          alignment: Alignment.topCenter,
+                          child: Container(
+                            decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(SmileRadius.m)),
+                            child: Row(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(SmileIcons.back, color: Colors.white),
+                                  onPressed: () => Navigator.of(context).pop(),
+                                ),
+                                Expanded(
+                                  child: items.isNotEmpty && widget.headline != null
+                                      ? SmileFitText(
+                                          '${widget.headline} · ${t.slideshowPosition(_index % items.length + 1, items.length)}',
+                                          style: const TextStyle(color: Colors.white, fontSize: 16),
+                                        )
+                                      : const SizedBox.shrink(),
+                                ),
+                                IconButton(
+                                  icon: const Icon(SmileIcons.settings, color: Colors.white),
+                                  tooltip: t.slideshowSettings,
+                                  onPressed: _openSettings,
+                                ),
+                              ],
                             ),
                           ),
+                        ),
                         if (items.isNotEmpty)
                           Align(
                             alignment: Alignment.bottomLeft,
@@ -462,7 +510,10 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                                 borderRadius: BorderRadius.circular(SmileRadius.m),
                               ),
                               child: Text(
-                                [widget.albumOf[_current.id] ?? widget.albumName, if (_current.senderDisplayName != null) _current.senderDisplayName!].join(' · '),
+                                [
+                                  widget.albumOf[_current.id] ?? widget.albumName,
+                                  if (_current.senderDisplayName != null) _current.senderDisplayName!,
+                                ].join(' · '),
                                 style: const TextStyle(color: Colors.white),
                               ),
                             ),
@@ -511,8 +562,7 @@ class _VideoSlideState extends State<_VideoSlide> {
       widget.onEnded();
       return;
     }
-    final controller =
-        local != null ? VideoPlayerController.file(File(local.path)) : VideoPlayerController.networkUrl(Uri.parse(url!));
+    final controller = local != null ? VideoPlayerController.file(File(local.path)) : VideoPlayerController.networkUrl(Uri.parse(url!));
     if (local == null) unawaited(VideoCache.download(widget.item.id, url!));
     try {
       await controller.initialize();
