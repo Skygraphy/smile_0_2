@@ -135,7 +135,7 @@
   "alreadyFrameAdmin": "Schon Frame-Admin oder Admin",
   "youAreFrameAdmin": "du bist Frame-Admin",
   "unlockSection": "Am Frame entsperren",
-  "unlockHint": "Lange auf die Uhr drücken und den Code eingeben: Der Frame zeigt dann alle Knöpfe, bis er sich nach 1 Minute ohne Berührung wieder sperrt.",
+  "unlockHint": "Lange auf die Uhr drücken und den Code eingeben: Der Frame zeigt dann alle Knöpfe, bis er sich nach 2 Minuten ohne Berührung wieder sperrt.",
   "unlockSetCode": "Code festlegen",
   "unlockChangeCode": "Code ändern",
   "unlockCodeIsSet": "Ein Code ist festgelegt.",

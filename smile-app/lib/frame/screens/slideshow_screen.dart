@@ -501,7 +501,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   DateTime? _codeBlockedUntil;
   // 60 s after the last touch, counting down visibly (Ernst 2026-11-04:
   // a mother who forgets "Sperren" must not leave it open).
-  static const _relockAfter = Duration(seconds: 60);
+  static const _relockAfter = Duration(minutes: 2); // Ernst 2026-11-05: 2 instead of 1
   DateTime? _relockAt;
   Timer? _countdown;
 
@@ -1533,11 +1533,11 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   /// Big and plain: time, weekday, date -- for someone who may not know
   /// which day it is.
-  /// "0:47" until it locks again -- coral in the last 10 seconds.
+  /// "1:47" until it locks again -- coral in the last 10 seconds.
   Widget _relockLeft() {
     final at = _relockAt;
     final left = at == null ? _relockAfter.inSeconds : at.difference(DateTime.now()).inSeconds.clamp(0, _relockAfter.inSeconds);
-    final text = '0:${left.toString().padLeft(2, '0')}';
+    final text = '${left ~/ 60}:${(left % 60).toString().padLeft(2, '0')}';
     return Text(
       text,
       style: TextStyle(

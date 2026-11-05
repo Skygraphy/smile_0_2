@@ -355,7 +355,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get unlockHint =>
-      'Lange auf die Uhr drücken und den Code eingeben: Der Frame zeigt dann alle Knöpfe, bis er sich nach 1 Minute ohne Berührung wieder sperrt.';
+      'Lange auf die Uhr drücken und den Code eingeben: Der Frame zeigt dann alle Knöpfe, bis er sich nach 2 Minuten ohne Berührung wieder sperrt.';
 
   @override
   String get unlockSetCode => 'Code festlegen';
