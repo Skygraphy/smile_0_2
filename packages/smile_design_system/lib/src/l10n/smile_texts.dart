@@ -190,6 +190,102 @@ abstract class SmileTexts {
   /// **'Co-Admin'**
   String get roleCoAdmin;
 
+  /// No description provided for @introAlbumsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Alben'**
+  String get introAlbumsTitle;
+
+  /// No description provided for @introAlbumsText.
+  ///
+  /// In de, this message translates to:
+  /// **'Teilt Fotos und Videos wie bei WhatsApp – nur ohne Chat. Jeder im Album sieht sie sofort.'**
+  String get introAlbumsText;
+
+  /// No description provided for @introSpacesTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Spaces'**
+  String get introSpacesTitle;
+
+  /// No description provided for @introSpacesText.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Space ist eure Familie oder euer Haushalt – mit euren Alben und Frames.'**
+  String get introSpacesText;
+
+  /// No description provided for @introFramesTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Frames'**
+  String get introFramesTitle;
+
+  /// No description provided for @introFramesText.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Tablet wird zum Bilderrahmen – zum Beispiel für Oma. Sie muss nichts bedienen.'**
+  String get introFramesText;
+
+  /// No description provided for @introSkip.
+  ///
+  /// In de, this message translates to:
+  /// **'Überspringen'**
+  String get introSkip;
+
+  /// No description provided for @introNext.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiter'**
+  String get introNext;
+
+  /// No description provided for @introStart.
+  ///
+  /// In de, this message translates to:
+  /// **'Los geht\'s'**
+  String get introStart;
+
+  /// No description provided for @introAgain.
+  ///
+  /// In de, this message translates to:
+  /// **'Einführung ansehen'**
+  String get introAgain;
+
+  /// No description provided for @introAgainHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Die drei Seiten vom ersten Start noch einmal.'**
+  String get introAgainHint;
+
+  /// No description provided for @videoTooLongTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Video zu lang'**
+  String get videoTooLongTitle;
+
+  /// No description provided for @videoTooLongText.
+  ///
+  /// In de, this message translates to:
+  /// **'Videos dürfen höchstens 2 Minuten lang sein. Kürze es in der Galerie und schick es dann noch einmal.'**
+  String get videoTooLongText;
+
+  /// No description provided for @storageUsed.
+  ///
+  /// In de, this message translates to:
+  /// **'Belegt'**
+  String get storageUsed;
+
+  /// No description provided for @storageOf.
+  ///
+  /// In de, this message translates to:
+  /// **'{used} von {limit}'**
+  String storageOf(String used, String limit);
+
+  /// No description provided for @storageCounts.
+  ///
+  /// In de, this message translates to:
+  /// **'{photos} Fotos · {videos} Videos'**
+  String storageCounts(String photos, String videos);
+
   /// No description provided for @shareOutMenu.
   ///
   /// In de, this message translates to:

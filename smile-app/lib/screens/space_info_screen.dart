@@ -76,9 +76,63 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
   Map<String, ChannelWithActivity> _covers = const {};
   String? _errorMessage;
 
+  /// bytes, photos, videos (space_storage, migrations/0098); null for
+  /// anyone who doesn't manage the Space.
+  Map<String, dynamic>? _storage;
+  static const _softLimitBytes = 10 * 1024 * 1024 * 1024;
+
+  Future<void> _loadStorage() async {
+    try {
+      final data = await supabase.rpc('space_storage', params: {'p_space': widget.spaceId});
+      if (mounted && data is Map) setState(() => _storage = data.cast<String, dynamic>());
+    } catch (_) {}
+  }
+
+  static String _gb(num bytes) {
+    final gb = bytes / (1024 * 1024 * 1024);
+    return gb < 0.1 ? '${(bytes / (1024 * 1024)).toStringAsFixed(0)} MB' : '${gb.toStringAsFixed(1).replaceAll('.', ',')} GB';
+  }
+
+  static String _count(num n) => n.toInt().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
+
+  Widget _storageCard(SmileTexts t, Map<String, dynamic> s) {
+    final scheme = Theme.of(context).colorScheme;
+    final bytes = (s['bytes'] as num?) ?? 0;
+    final share = (bytes / _softLimitBytes).clamp(0.0, 1.0).toDouble();
+    return SmileInfoSection(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.s, SmileSpacing.l, SmileSpacing.m),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: Text(t.storageUsed)),
+                  Text(t.storageOf(_gb(bytes), _gb(_softLimitBytes)), style: TextStyle(color: scheme.onSurfaceVariant)),
+                ],
+              ),
+              const SizedBox(height: SmileSpacing.s),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(value: share, minHeight: 8, backgroundColor: scheme.surfaceContainerHighest),
+              ),
+              const SizedBox(height: SmileSpacing.s),
+              Text(
+                t.storageCounts(_count((s['photos'] as num?) ?? 0), _count((s['videos'] as num?) ?? 0)),
+                style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   void initState() {
     super.initState();
+    unawaited(_loadStorage());
     // "Wusstest du?" (2026-10-29).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) Tips.offerCard(context, TipPage.spaces);
@@ -443,6 +497,8 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
           SmileQuickAction(icon: SmileIcons.frame, label: t.frame, onTap: _connectFrame),
           if (isAdmin) SmileQuickAction(icon: SmileIcons.coAdmin, label: t.roleCoAdmin, onTap: _inviteCoAdmin),
         ]),
+        // What the Space holds (2026-11-05): only for who manages it.
+        if (_storage != null) _storageCard(t, _storage!),
         if (_errorMessage != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),

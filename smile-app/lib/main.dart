@@ -17,6 +17,7 @@ import 'screens/album_info_screen.dart';
 import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
 import 'screens/news_screen.dart';
+import 'screens/intro_screen.dart';
 import 'screens/profile_setup_screen.dart';
 import 'screens/space_info_screen.dart';
 import 'services/profile_service.dart';
@@ -345,6 +346,10 @@ class _ProfileGateState extends State<_ProfileGate> {
   bool _hasProfile = false;
   String? _errorMessage;
 
+  /// Just set up the profile: the short introduction comes next, once
+  /// (2026-11-05).
+  bool _showIntro = false;
+
   @override
   void initState() {
     super.initState();
@@ -424,9 +429,13 @@ class _ProfileGateState extends State<_ProfileGate> {
     if (!_hasProfile) {
       return ProfileSetupScreen(
         profileService: _profileService,
-        onDone: () => setState(() => _hasProfile = true),
+        onDone: () => setState(() {
+          _hasProfile = true;
+          _showIntro = true;
+        }),
       );
     }
+    if (_showIntro) return IntroScreen(onDone: () => setState(() => _showIntro = false));
     return const HomeShell();
   }
 }

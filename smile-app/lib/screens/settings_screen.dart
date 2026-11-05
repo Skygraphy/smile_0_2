@@ -16,6 +16,7 @@ import 'package:smile_design_system/smile_design_system.dart';
 import '../widgets/friendly_error.dart';
 import '../services/video_quality.dart';
 import '../services/upload_queue.dart';
+import 'intro_screen.dart';
 import 'avatar_viewer_screen.dart';
 import 'handle_edit_screen.dart';
 import '../services/album_sounds.dart';
@@ -456,6 +457,14 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                         subtitle: Text(t.tipsShowHint),
                         value: on,
                         onChanged: (v) => Tips.setEnabled(v),
+                      ),
+                    ),
+                    SmileObjectTile(
+                      leading: Icon(SmileIcons.lightbulb, color: scheme.onSurfaceVariant),
+                      title: t.introAgain,
+                      subtitle: t.introAgainHint,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => IntroScreen(onDone: () => Navigator.of(context).pop())),
                       ),
                     ),
                     SmileObjectTile(

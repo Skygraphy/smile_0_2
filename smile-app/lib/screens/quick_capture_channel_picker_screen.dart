@@ -12,6 +12,7 @@ import '../widgets/album_covers.dart';
 import '../widgets/local_display.dart';
 
 import '../services/channel_picker_service.dart';
+import '../services/video_limit.dart';
 import '../services/media_service.dart';
 import '../services/upload_queue.dart';
 import '../services/sync_bus.dart';
@@ -95,6 +96,20 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
   /// queue sends it -- right away, or with a clock once there is a
   /// connection again, even with Smile closed.
   Future<void> _sendTo(UploadableChannel channel) async {
+    // Videos at most 2 minutes (2026-11-05).
+    if (await VideoLimit.tooLong(widget.file)) {
+      if (!mounted) return;
+      final t = SmileTexts.of(context);
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(t.videoTooLongTitle),
+          content: Text(t.videoTooLongText),
+          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.ok))],
+        ),
+      );
+      return;
+    }
     unawaited(Tips.markUsed(TipId.quickCapture));
     // A short tick when it's sent, like WhatsApp (2026-10-10).
     unawaited(HapticFeedback.lightImpact());

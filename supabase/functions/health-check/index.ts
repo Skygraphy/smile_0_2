@@ -143,6 +143,37 @@ Deno.serve(async (req) => {
     });
   }
 
+  // 5b. A Space past 8 GB (2026-11-05): its managers hear so -- nothing is
+  // blocked, the soft limit is 10 GB.
+  {
+    const { data: rows } = await supabaseAdmin
+      .from("media_items")
+      .select("file_size_bytes, channels!inner(space_id, spaces!inner(name, deleted_at))")
+      .eq("processing_status", "ready")
+      .limit(200000);
+    const bySpace = new Map<string, { name: string; bytes: number }>();
+    // deno-lint-ignore no-explicit-any
+    for (const r of (rows ?? []) as any[]) {
+      const space = r.channels?.spaces;
+      if (!space || space.deleted_at) continue;
+      const entry = bySpace.get(r.channels.space_id) ?? { name: space.name, bytes: 0 };
+      entry.bytes += Number(r.file_size_bytes ?? 0);
+      bySpace.set(r.channels.space_id, entry);
+    }
+    for (const [spaceId, s] of bySpace) {
+      if (s.bytes < 8 * 1024 ** 3) continue;
+      const managers = await spaceManagerIds(supabaseAdmin, spaceId);
+      problems.set(`space_storage:${spaceId}`, {
+        title: `${s.name}: ${(s.bytes / 1024 ** 3).toFixed(0)} GB belegt`,
+        body: "Euer Space nähert sich 10 GB. Es geht alles weiter – nur zur Info.",
+        recipients: managers,
+        data: { type: "space_renamed", space_id: spaceId, space_name: s.name },
+        solvedTitle: `${s.name}: wieder unter 8 GB`,
+        solvedBody: "Der Speicher eures Spaces liegt wieder unter 8 GB.",
+      });
+    }
+  }
+
   // 6. Stored media size
   const { data: sizes } = await supabaseAdmin.from("media_items").select("file_size_bytes").limit(100000);
   const totalGb = (sizes ?? []).reduce((sum, r) => sum + Number(r.file_size_bytes ?? 0), 0) / 1024 ** 3;

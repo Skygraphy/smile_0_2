@@ -90,6 +90,62 @@ class SmileTextsDe extends SmileTexts {
   String get roleCoAdmin => 'Co-Admin';
 
   @override
+  String get introAlbumsTitle => 'Alben';
+
+  @override
+  String get introAlbumsText =>
+      'Teilt Fotos und Videos wie bei WhatsApp – nur ohne Chat. Jeder im Album sieht sie sofort.';
+
+  @override
+  String get introSpacesTitle => 'Spaces';
+
+  @override
+  String get introSpacesText =>
+      'Ein Space ist eure Familie oder euer Haushalt – mit euren Alben und Frames.';
+
+  @override
+  String get introFramesTitle => 'Frames';
+
+  @override
+  String get introFramesText =>
+      'Ein Tablet wird zum Bilderrahmen – zum Beispiel für Oma. Sie muss nichts bedienen.';
+
+  @override
+  String get introSkip => 'Überspringen';
+
+  @override
+  String get introNext => 'Weiter';
+
+  @override
+  String get introStart => 'Los geht\'s';
+
+  @override
+  String get introAgain => 'Einführung ansehen';
+
+  @override
+  String get introAgainHint => 'Die drei Seiten vom ersten Start noch einmal.';
+
+  @override
+  String get videoTooLongTitle => 'Video zu lang';
+
+  @override
+  String get videoTooLongText =>
+      'Videos dürfen höchstens 2 Minuten lang sein. Kürze es in der Galerie und schick es dann noch einmal.';
+
+  @override
+  String get storageUsed => 'Belegt';
+
+  @override
+  String storageOf(String used, String limit) {
+    return '$used von $limit';
+  }
+
+  @override
+  String storageCounts(String photos, String videos) {
+    return '$photos Fotos · $videos Videos';
+  }
+
+  @override
   String get shareOutMenu => 'Teilen …';
 
   @override

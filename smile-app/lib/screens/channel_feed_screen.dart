@@ -12,6 +12,7 @@ import '../main.dart';
 import '../services/album_sounds.dart';
 import '../services/media_cache_service.dart';
 import '../services/media_export.dart';
+import '../services/video_limit.dart';
 import '../services/media_service.dart';
 import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
@@ -891,6 +892,26 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// once; without a connection they wait there with a clock and go out by
   /// themselves later, even with Smile closed (UploadQueue).
   Future<void> _uploadFiles(List<XFile> picked, {List<String?>? captions}) async {
+    // Videos at most 2 minutes (2026-11-05): the longer ones stay here.
+    final keep = <int>[];
+    for (final (i, file) in picked.indexed) {
+      if (!await VideoLimit.tooLong(file)) keep.add(i);
+    }
+    if (keep.length < picked.length) {
+      if (!mounted) return;
+      final t = SmileTexts.of(context);
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(t.videoTooLongTitle),
+          content: Text(t.videoTooLongText),
+          actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.ok))],
+        ),
+      );
+      picked = [for (final i in keep) picked[i]];
+      if (captions != null) captions = [for (final i in keep) i < captions.length ? captions[i] : null];
+      if (picked.isEmpty || !mounted) return;
+    }
     setState(() {
       _errorMessage = null;
       _statusMessage = null;
