@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/channel_picker_service.dart';
+import '../services/edge_functions.dart';
 import '../services/local_changes.dart';
 
 /// Every album the caller can see, by id -- for showing its cover (newest
@@ -14,6 +15,20 @@ Future<Map<String, ChannelWithActivity>> loadAlbumCovers([ChannelPickerService? 
     return {for (final a in albums) a.channelId: a};
   } catch (_) {
     return const {};
+  }
+}
+
+/// Every album a Frame may show, with its cover -- also those the caller
+/// is not a member of (a Frame-Admin, migrations/0089); the caller's own
+/// view wins where both have one. Best-effort like [loadAlbumCovers].
+Future<Map<String, ChannelWithActivity>> loadFrameAlbumCovers(String frameId) async {
+  final own = await loadAlbumCovers();
+  try {
+    final response = await invokeEdge('list-frame-album-covers', body: {'frame_id': frameId});
+    final rows = ((response.data as Map<String, dynamic>)['channels'] as List).cast<Map<String, dynamic>>();
+    return {for (final r in rows.map(ChannelWithActivity.fromJson)) r.channelId: r, ...own};
+  } catch (_) {
+    return own;
   }
 }
 

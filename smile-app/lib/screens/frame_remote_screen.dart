@@ -105,7 +105,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
   }
 
   Future<void> _load() async {
-    unawaited(loadAlbumCovers().then((c) {
+    unawaited(loadFrameAlbumCovers(widget.frameId).then((c) {
       if (mounted) setState(() => _covers = c);
     }));
     unawaited(_service.listFrameAdmins(widget.frameId).then((a) {

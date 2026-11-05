@@ -81,7 +81,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
   }
 
   Future<void> _load() async {
-    unawaited(loadAlbumCovers().then((c) {
+    unawaited(loadFrameAlbumCovers(widget.frame.id).then((c) {
       if (mounted) setState(() => _covers = c);
     }));
     final saves = _saves;

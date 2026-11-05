@@ -70,6 +70,12 @@ class _FramesScreenState extends State<FramesScreen> with SyncReload {
         _sound.clear();
         _errorMessage = null;
       });
+      // A Frame-Admin's Frames: their albums' covers too (migrations/0089).
+      for (final f in frames.where((f) => f.asFrameAdmin)) {
+        unawaited(loadFrameAlbumCovers(f.frame.id).then((c) {
+          if (mounted) setState(() => _covers = {...c, ..._covers});
+        }));
+      }
     } catch (e) {
       if (CacheMissException.isIn(e)) return;
       if (!mounted) return;
