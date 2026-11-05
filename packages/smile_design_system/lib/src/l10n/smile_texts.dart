@@ -3568,6 +3568,24 @@ abstract class SmileTexts {
   /// **'Diashow-Einstellungen'**
   String get slideshowSettings;
 
+  /// No description provided for @slideshowSettingsMore.
+  ///
+  /// In de, this message translates to:
+  /// **'Einstellungen …'**
+  String get slideshowSettingsMore;
+
+  /// No description provided for @slideshowPause.
+  ///
+  /// In de, this message translates to:
+  /// **'Anhalten'**
+  String get slideshowPause;
+
+  /// No description provided for @slideshowResume.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiter abspielen'**
+  String get slideshowResume;
+
   /// No description provided for @slideshowSettingsHint.
   ///
   /// In de, this message translates to:

@@ -242,9 +242,22 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
   /// when videos may only last as long as a photo.
   void _schedule() {
     _next?.cancel();
-    if (_items.isEmpty) return;
+    if (_items.isEmpty || _paused) return;
     if (_current.isVideo && _prefs.videoLength != 'photo') return;
     _next = Timer(Duration(seconds: _prefs.seconds), _advance);
+  }
+
+  /// Stopped from the ⋮ (2026-11-05): no next photo, a video holds.
+  bool _paused = false;
+
+  void _setPaused(bool paused) {
+    setState(() => _paused = paused);
+    _schedule();
+  }
+
+  void _setPrefs(SlideshowPrefs prefs) {
+    _applyPrefs(prefs);
+    unawaited(prefs.save());
   }
 
   void _advance() {
@@ -380,7 +393,7 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
       return _VideoSlide(
         key: ValueKey('${item.id}#$i'),
         item: item,
-        active: i == _index,
+        active: i == _index && !_paused,
         withSound: _prefs.sound,
         onEnded: () {
           if (i == _index) _advance();
@@ -491,10 +504,43 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                                         )
                                       : const SizedBox.shrink(),
                                 ),
-                                IconButton(
-                                  icon: const Icon(SmileIcons.settings, color: Colors.white),
-                                  tooltip: t.slideshowSettings,
-                                  onPressed: _openSettings,
+                                // ⋮ instead of the gear (Ernst 2026-11-05): the
+                                // frequent things at once, the rest behind
+                                // "Einstellungen …".
+                                PopupMenuButton<VoidCallback>(
+                                  icon: const Icon(SmileIcons.more, color: Colors.white),
+                                  tooltip: t.moreOptions,
+                                  onOpened: () => _hideChrome?.cancel(),
+                                  onCanceled: _keepChrome,
+                                  onSelected: (action) {
+                                    action();
+                                    _keepChrome();
+                                  },
+                                  itemBuilder: (context) {
+                                    PopupMenuItem<VoidCallback> item(IconData icon, String label, VoidCallback onTap, {bool? checked}) =>
+                                        PopupMenuItem(
+                                          value: onTap,
+                                          child: Row(
+                                            children: [
+                                              Icon(icon, size: 20),
+                                              const SizedBox(width: SmileSpacing.m),
+                                              Expanded(child: Text(label)),
+                                              if (checked == true) const Icon(SmileIcons.check, size: 20, color: SmileTheme.primary),
+                                            ],
+                                          ),
+                                        );
+                                    return [
+                                      _paused
+                                          ? item(SmileIcons.play, t.slideshowResume, () => _setPaused(false))
+                                          : item(SmileIcons.pause, t.slideshowPause, () => _setPaused(true)),
+                                      item(SmileIcons.soundOn, t.videoSound, () => _setPrefs(_prefs.copyWith(sound: !_prefs.sound)),
+                                          checked: _prefs.sound),
+                                      item(SmileIcons.caption, t.showCaptions, () => _setPrefs(_prefs.copyWith(captions: !_prefs.captions)),
+                                          checked: _prefs.captions),
+                                      const PopupMenuDivider(),
+                                      item(SmileIcons.settings, t.slideshowSettingsMore, () => unawaited(_openSettings())),
+                                    ];
+                                  },
                                 ),
                               ],
                             ),

@@ -2113,6 +2113,15 @@ class SmileTextsDe extends SmileTexts {
   String get slideshowSettings => 'Diashow-Einstellungen';
 
   @override
+  String get slideshowSettingsMore => 'Einstellungen …';
+
+  @override
+  String get slideshowPause => 'Anhalten';
+
+  @override
+  String get slideshowResume => 'Weiter abspielen';
+
+  @override
   String get slideshowSettingsHint => 'Gilt für die Diashow auf diesem Handy.';
 
   @override
