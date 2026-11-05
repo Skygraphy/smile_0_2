@@ -493,6 +493,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
   IconData _historyIcon(String? type) => switch (type) {
     'new_photo' || 'album_created' || 'album_renamed' => SmileIcons.album,
     'photo_deleted' => SmileIcons.delete,
+    'frame_favorite' => SmileIcons.heart,
     'frame_changed' || 'frame_deleted' => SmileIcons.frame,
     'space_renamed' => SmileIcons.space,
     'media_failed' => SmileIcons.close,

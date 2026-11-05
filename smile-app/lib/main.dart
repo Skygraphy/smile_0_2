@@ -231,6 +231,8 @@ void openNotificationTarget(Map<String, dynamic> data) {
       // itself before accepting, so this opens their invite inbox instead.
       navigator.push(MaterialPageRoute(builder: (_) => NewsScreen()));
     case 'new_photo':
+    // Marked as a Lieblingsbild on a Frame (2026-11-05): into the album.
+    case 'frame_favorite':
     case 'photo_deleted':
     case 'media_failed':
       if (channelId == null) return;

@@ -278,16 +278,39 @@ Deno.serve(async (req) => {
       if (mark.on) {
         const { data: media } = await supabase
           .from("media_items")
-          .select("channel_id")
+          // No channels(...) embed here: media_items reaches channels twice
+          // (channel_id and channels.cover_media_id), so it is ambiguous and
+          // the whole read fails -- the mark was lost (2026-11-05).
+          .select("channel_id, sender_id, media_type")
           .eq("id", mark.media_item_id)
           .maybeSingle();
         if (media && isAssigned(media.channel_id)) {
-          await supabase
+          const { data: added } = await supabase
             .from("frame_favorites")
             .upsert({ frame_id: claims.frame_id, media_item_id: mark.media_item_id, added_by: null }, {
               onConflict: "frame_id,media_item_id",
               ignoreDuplicates: true,
-            });
+            })
+            .select("frame_id");
+          // Marked on the Frame for the first time: whoever sent it hears so
+          // (2026-11-05) -- the Frame's way to say "I like this one".
+          if ((added ?? []).length > 0 && media.sender_id) {
+            const [{ data: frameRow }, { data: channelRow }] = await Promise.all([
+              supabase.from("frames").select("name").eq("id", claims.frame_id).maybeSingle(),
+              supabase.from("channels").select("name").eq("id", media.channel_id).maybeSingle(),
+            ]);
+            const channelName = (channelRow?.name as string | undefined) ?? "";
+            const what = media.media_type === "video" ? "dein Video" : "dein Foto";
+            await pushNotificationToUsers(
+              supabase,
+              [media.sender_id as string],
+              {
+                title: `${frameRow?.name ?? "Ein Frame"} hat ${what} gemerkt ♥`,
+                body: `Aus dem Album ${channelName} – jetzt ein Lieblingsbild am Frame.`,
+              },
+              { type: "frame_favorite", channel_id: media.channel_id as string, channel_name: channelName },
+            );
+          }
         }
       } else {
         await supabase.from("frame_favorites").delete().eq("frame_id", claims.frame_id).eq(
