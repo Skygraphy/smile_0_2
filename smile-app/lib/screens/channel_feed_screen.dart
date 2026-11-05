@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import '../main.dart';
 import '../services/album_sounds.dart';
 import '../services/media_cache_service.dart';
+import '../services/media_export.dart';
 import '../services/media_service.dart';
 import '../services/membership_service.dart';
 import '../services/sync_bus.dart';
@@ -1131,11 +1132,43 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
             action(SmileIcons.selectAll, _allSelected ? t.selectNone : t.selectAll, _toggleSelectAll),
             if (_showingHidden) action(SmileIcons.unhide, t.actionUnhide, _applyHideToggleToSelection),
             if (_canSetCover) action(SmileIcons.picture, t.coverShort, _setSelectedAsCover),
+            // Out of Smile (2026-11-05).
+            action(SmileIcons.forward, t.shareOutShort, _shareSelection),
+            action(SmileIcons.saveToPhone, t.saveToPhoneShort, _saveSelection),
             action(SmileIcons.delete, t.actionDelete, _deleteSelection, danger: true),
           ],
         ),
       ),
     );
+  }
+
+  List<MediaItem> get _selectedExportable =>
+      (_items ?? const <MediaItem>[]).where((i) => _selectedIds.contains(i.id) && MediaExport.canExport(i)).toList();
+
+  Future<void> _shareSelection() async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final items = _selectedExportable;
+    _clearSelection();
+    if (items.isEmpty) return;
+    messenger.showSnackBar(SnackBar(content: Text(t.preparing), duration: const Duration(seconds: 3)));
+    final ok = await MediaExport.share(items);
+    messenger.hideCurrentSnackBar();
+    if (!ok) messenger.showSnackBar(SnackBar(content: Text(t.shareFailed)));
+  }
+
+  Future<void> _saveSelection() async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final items = _selectedExportable;
+    _clearSelection();
+    if (items.isEmpty) return;
+    messenger.showSnackBar(SnackBar(content: Text(t.preparing), duration: const Duration(seconds: 3)));
+    final saved = await MediaExport.saveToGallery(items);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(
+      content: Text(saved == 0 ? t.saveFailed : saved == 1 ? t.savedOne : t.savedMany(saved)),
+    ));
   }
 
   /// Which list a just-removed photo disappears from (normal or hidden).

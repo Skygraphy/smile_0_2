@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
+import '../services/media_export.dart';
 import '../services/media_service.dart';
 import '../services/tips.dart';
 import '../services/tip_cards.dart';
@@ -74,6 +75,22 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
     super.dispose();
   }
 
+  Future<void> _shareOut(MediaItem item) async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(SnackBar(content: Text(t.preparing), duration: const Duration(seconds: 2)));
+    final ok = await MediaExport.share([item]);
+    messenger.hideCurrentSnackBar();
+    if (!ok) messenger.showSnackBar(SnackBar(content: Text(t.shareFailed)));
+  }
+
+  Future<void> _save(MediaItem item) async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final saved = await MediaExport.saveToGallery([item]);
+    messenger.showSnackBar(SnackBar(content: Text(saved == 1 ? t.savedOne : t.saveFailed)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
@@ -99,6 +116,23 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
             ),
           if (widget.onShowOnFrame != null)
             IconButton(icon: const Icon(SmileIcons.frame), tooltip: t.showOnFrameNow, onPressed: () => widget.onShowOnFrame!(item)),
+          // Out of Smile (2026-11-05): share on, or into the gallery.
+          if (MediaExport.canExport(item))
+            PopupMenuButton<VoidCallback>(
+              icon: const Icon(SmileIcons.more),
+              tooltip: t.moreOptions,
+              onSelected: (action) => action(),
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: () => _shareOut(item),
+                  child: Row(children: [const Icon(SmileIcons.forward, size: 20), const SizedBox(width: SmileSpacing.m), Text(t.shareOutMenu)]),
+                ),
+                PopupMenuItem(
+                  value: () => _save(item),
+                  child: Row(children: [const Icon(SmileIcons.saveToPhone, size: 20), const SizedBox(width: SmileSpacing.m), Text(t.saveToPhone)]),
+                ),
+              ],
+            ),
           if (widget.canEditCaption(item))
             IconButton(
               icon: const Icon(SmileIcons.caption),

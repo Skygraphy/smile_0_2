@@ -90,6 +90,35 @@ class SmileTextsDe extends SmileTexts {
   String get roleCoAdmin => 'Co-Admin';
 
   @override
+  String get shareOutMenu => 'Teilen …';
+
+  @override
+  String get shareOutShort => 'Teilen';
+
+  @override
+  String get saveToPhone => 'Aufs Handy speichern';
+
+  @override
+  String get saveToPhoneShort => 'Speichern';
+
+  @override
+  String get savedOne => 'Gespeichert – in deiner Galerie im Album „Smile“.';
+
+  @override
+  String savedMany(int count) {
+    return '$count gespeichert – in deiner Galerie im Album „Smile“.';
+  }
+
+  @override
+  String get saveFailed => 'Das Speichern hat leider nicht geklappt.';
+
+  @override
+  String get shareFailed => 'Das Teilen hat leider nicht geklappt.';
+
+  @override
+  String get preparing => 'Wird vorbereitet …';
+
+  @override
   String get pauseZoomTitle => 'Beim Anhalten weiter zoomen';
 
   @override

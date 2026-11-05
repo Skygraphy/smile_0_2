@@ -14,6 +14,8 @@
          after Smile's own explanation; only hashed email addresses leave
          the phone. -->
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
+    <!-- Saving photos into the gallery on Android 9 and older (gal). -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"/>
     <application
         android:label="${appLabel}"
         android:name="${applicationName}"

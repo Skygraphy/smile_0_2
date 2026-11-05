@@ -190,6 +190,60 @@ abstract class SmileTexts {
   /// **'Co-Admin'**
   String get roleCoAdmin;
 
+  /// No description provided for @shareOutMenu.
+  ///
+  /// In de, this message translates to:
+  /// **'Teilen …'**
+  String get shareOutMenu;
+
+  /// No description provided for @shareOutShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Teilen'**
+  String get shareOutShort;
+
+  /// No description provided for @saveToPhone.
+  ///
+  /// In de, this message translates to:
+  /// **'Aufs Handy speichern'**
+  String get saveToPhone;
+
+  /// No description provided for @saveToPhoneShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Speichern'**
+  String get saveToPhoneShort;
+
+  /// No description provided for @savedOne.
+  ///
+  /// In de, this message translates to:
+  /// **'Gespeichert – in deiner Galerie im Album „Smile“.'**
+  String get savedOne;
+
+  /// No description provided for @savedMany.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} gespeichert – in deiner Galerie im Album „Smile“.'**
+  String savedMany(int count);
+
+  /// No description provided for @saveFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Speichern hat leider nicht geklappt.'**
+  String get saveFailed;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Teilen hat leider nicht geklappt.'**
+  String get shareFailed;
+
+  /// No description provided for @preparing.
+  ///
+  /// In de, this message translates to:
+  /// **'Wird vorbereitet …'**
+  String get preparing;
+
   /// No description provided for @pauseZoomTitle.
   ///
   /// In de, this message translates to:

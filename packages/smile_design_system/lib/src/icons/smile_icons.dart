@@ -173,4 +173,11 @@ class SmileIcons {
 
   /// Phosphor `lock-open`.
   static const IconData lockOpen = IconData(0xe306, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
+  // --- Out of Smile (2026-11-05, Ernst chose both A) ----------------------
+  /// Phosphor `arrow-bend-up-right` -- like WhatsApp's "forward".
+  static const IconData forward = IconData(0xe026, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
+  /// Phosphor `download-simple`.
+  static const IconData saveToPhone = IconData(0xe20c, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 }
