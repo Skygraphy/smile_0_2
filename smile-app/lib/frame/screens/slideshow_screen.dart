@@ -1359,7 +1359,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final settings = _settings;
     final caption = current?.caption?.trim();
     final String? title =
-        !_showGrid && (settings?.showCaptions ?? true) && caption != null && caption.isNotEmpty ? caption : null;
+        // Hidden while the buttons show (Ernst 2026-11-05: it lay over them).
+        !_showGrid && !_barVisible && (settings?.showCaptions ?? true) && caption != null && caption.isNotEmpty ? caption : null;
     // Pills at the bottom move up while a title is shown.
     final aboveTitle = title == null ? 0.0 : 110.0;
     return Scaffold(
