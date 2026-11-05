@@ -116,6 +116,17 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
             ),
           if (widget.onShowOnFrame != null)
             IconButton(icon: const Icon(SmileIcons.frame), tooltip: t.showOnFrameNow, onPressed: () => widget.onShowOnFrame!(item)),
+          if (widget.canEditCaption(item))
+            IconButton(
+              icon: const Icon(SmileIcons.caption),
+              tooltip: t.captionEdit,
+              onPressed: () async {
+                Tips.markUsed(TipId.captionLater);
+                final now = await widget.onEditCaption(item, _captionOf(item));
+                if (now != null && mounted) setState(() => _captions[item.id] = now.isEmpty ? null : now);
+              },
+            ),
+          // The ⋮ always rightmost (Ernst 2026-11-05).
           // Out of Smile (2026-11-05): share on, or into the gallery.
           if (MediaExport.canExport(item))
             PopupMenuButton<VoidCallback>(
@@ -132,16 +143,6 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
                   child: Row(children: [const Icon(SmileIcons.saveToPhone, size: 20), const SizedBox(width: SmileSpacing.m), Text(t.saveToPhone)]),
                 ),
               ],
-            ),
-          if (widget.canEditCaption(item))
-            IconButton(
-              icon: const Icon(SmileIcons.caption),
-              tooltip: t.captionEdit,
-              onPressed: () async {
-                Tips.markUsed(TipId.captionLater);
-                final now = await widget.onEditCaption(item, _captionOf(item));
-                if (now != null && mounted) setState(() => _captions[item.id] = now.isEmpty ? null : now);
-              },
             ),
         ],
       ),
