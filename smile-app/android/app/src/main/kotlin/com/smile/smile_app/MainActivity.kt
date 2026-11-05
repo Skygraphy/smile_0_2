@@ -53,6 +53,12 @@ class MainActivity : FlutterActivity() {
             }
             // "Bild dreht sich mit dem Frame" (2026-10-17).
             if (call.method == "setOrientation") setOrientation(call.arguments as? String)
+            // Time since the tablet was switched on: a fresh start means the
+            // Frame tells its managers it runs again (2026-11-05).
+            if (call.method == "uptimeMs") {
+                result.success(android.os.SystemClock.elapsedRealtime())
+                return@setMethodCallHandler
+            }
             result.success(null)
         }
         // The app's own slideshow keeps the screen on while it plays

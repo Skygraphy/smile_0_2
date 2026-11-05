@@ -10,6 +10,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { verifyFrameAccessToken } from "../_shared/frame-jwt.ts";
 import { frameSettings } from "../_shared/frame-settings.ts";
+import { spaceManagerIds } from "../_shared/space-access.ts";
+import { frameAdminIds } from "../_shared/frame-admin.ts";
+import { pushNotificationToUsers } from "../_shared/push-users.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
@@ -47,6 +50,8 @@ interface RequestBody {
   // Unlocked on the Frame with its code (Kindersperre, migrations/0089):
   // the code's hash -- then every control counts as allowed.
   unlock_proof?: string;
+  // The tablet was just switched on (Frame app start soon after boot).
+  just_booted?: boolean;
 }
 
 const FRAME_COLUMNS =
@@ -174,6 +179,35 @@ Deno.serve(async (req) => {
   // (set from the app or by an earlier switch), else an old Frame build's
   // local pick, else the first album.
   const firstPage = body.cursor === undefined || body.cursor === null;
+
+  // "Frame läuft wieder" (2026-11-05): just switched on again -> its
+  // managers and Frame-Admins hear so, with the hint to pin it again.
+  if (firstPage && body.just_booted === true) {
+    const { data: row } = await supabase
+      .from("frames")
+      .select("name, space_id, boot_notice_at, spaces(name)")
+      .eq("id", claims.frame_id)
+      .maybeSingle();
+    const last = row?.boot_notice_at ? new Date(row.boot_notice_at as string).getTime() : 0;
+    if (row && Date.now() - last > 30 * 60 * 1000) {
+      await supabase.from("frames").update({ boot_notice_at: new Date().toISOString() }).eq("id", claims.frame_id);
+      const [managers, admins] = await Promise.all([
+        spaceManagerIds(supabase, row.space_id as string),
+        frameAdminIds(supabase, claims.frame_id),
+      ]);
+      // deno-lint-ignore no-explicit-any
+      const spaceName = (row.spaces as any)?.name ?? "";
+      await pushNotificationToUsers(
+        supabase,
+        [...new Set([...managers, ...admins])],
+        {
+          title: `${row.name} läuft wieder`,
+          body: "Das Tablet wurde neu gestartet, z. B. nach einem Stromausfall. War der Frame angeheftet, bitte neu anheften.",
+        },
+        { type: "frame_changed", space_id: row.space_id as string, space_name: spaceName, frame_name: row.name as string },
+      );
+    }
+  }
   let channelId: string | undefined;
   if (body.fetch_channel_id) {
     if (!isAssigned(body.fetch_channel_id)) return jsonResponse({ error: "frame_not_assigned_to_channel" }, 403);

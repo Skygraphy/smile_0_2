@@ -1157,6 +1157,36 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     if (!ok) messenger.showSnackBar(SnackBar(content: Text(t.shareFailed)));
   }
 
+  /// Every photo and video shown here into the gallery, with progress.
+  Future<void> _saveAlbum() async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final items = (_items ?? const <MediaItem>[]).where((i) => !_isGoneHere(i.id) && MediaExport.canExport(i)).toList()
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    if (items.isEmpty) return;
+    final confirmed = await showSmileConfirmDialog(
+      context,
+      title: t.saveAlbumTitle(items.length),
+      message: t.saveAlbumMessage,
+      confirmLabel: t.saveToPhoneShort,
+    );
+    if (!confirmed) return;
+    final progress = ValueNotifier<int>(0);
+    messenger.showSnackBar(SnackBar(
+      duration: const Duration(days: 1),
+      content: ValueListenableBuilder<int>(
+        valueListenable: progress,
+        builder: (_, done, _) => Text(t.saveProgress(done, items.length)),
+      ),
+    ));
+    final saved = await MediaExport.saveToGallery(items, progress: (done, _) => progress.value = done);
+    messenger.hideCurrentSnackBar();
+    progress.dispose();
+    messenger.showSnackBar(SnackBar(
+      content: Text(saved == 0 ? t.saveFailed : saved == 1 ? t.savedOne : t.savedMany(saved)),
+    ));
+  }
+
   Future<void> _saveSelection() async {
     final t = SmileTexts.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -1467,6 +1497,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                           _menuItem(SmileIcons.slideshow, t.playSlideshow, _playSlideshow),
                         if (_frames.isNotEmpty) _menuItem(SmileIcons.frame, t.openRemote, _openFrame),
                         _menuItem(SmileIcons.hide, t.showHiddenMenu, _toggleHiddenView),
+                        // The whole album into the gallery (2026-11-05).
+                        _menuItem(SmileIcons.saveToPhone, t.saveAlbum, _saveAlbum),
                       ],
                     ),
                   ],

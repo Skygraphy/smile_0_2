@@ -341,6 +341,10 @@ class SyncService {
   /// the server takes every change made here meanwhile.
   String? unlockProof;
 
+  /// The tablet was just switched on: told to the server once (managers
+  /// hear "läuft wieder", 2026-11-05).
+  bool justBooted = false;
+
   /// This Frame's id -- for checking the unlock code.
   Future<String?> get frameId => _credentialsStore.frameId;
   final Map<String, Object?> _pendingSettings = {};
@@ -719,6 +723,7 @@ class SyncService {
             if (cursor == null) 'fetch_channel_id': ?fetchChannelId,
             if (cursor == null && setSettings.isNotEmpty) 'set_settings': setSettings,
             if (cursor == null) 'unlock_proof': ?unlockProof,
+            if (cursor == null && justBooted) 'just_booted': true,
             if (cursor == null && favorite != null) 'favorite': {'media_item_id': favorite.key, 'on': favorite.value},
             if (cursor == null && round != null) 'playing_round': round.value,
             if (cursor != null) 'channel_id': ?channelId,
@@ -729,6 +734,7 @@ class SyncService {
         return _PageFetchResult.failed();
       }
 
+      if (response.statusCode == 200 && cursor == null) justBooted = false;
       if (response.statusCode == 403) {
         Map<String, dynamic>? data;
         try {

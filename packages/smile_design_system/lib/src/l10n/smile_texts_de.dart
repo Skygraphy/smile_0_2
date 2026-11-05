@@ -113,6 +113,23 @@ class SmileTextsDe extends SmileTexts {
   String get saveFailed => 'Das Speichern hat leider nicht geklappt.';
 
   @override
+  String get saveAlbum => 'Ganzes Album speichern';
+
+  @override
+  String saveAlbumTitle(int count) {
+    return '$count Fotos und Videos aufs Handy speichern?';
+  }
+
+  @override
+  String get saveAlbumMessage =>
+      'Sie kommen in deine Galerie ins Album „Smile“. Videos, die noch nicht auf dem Handy sind, werden heruntergeladen – am besten im WLAN.';
+
+  @override
+  String saveProgress(int done, int count) {
+    return '$done von $count gespeichert …';
+  }
+
+  @override
   String get shareFailed => 'Das Teilen hat leider nicht geklappt.';
 
   @override

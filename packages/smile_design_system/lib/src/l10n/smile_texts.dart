@@ -232,6 +232,30 @@ abstract class SmileTexts {
   /// **'Das Speichern hat leider nicht geklappt.'**
   String get saveFailed;
 
+  /// No description provided for @saveAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'Ganzes Album speichern'**
+  String get saveAlbum;
+
+  /// No description provided for @saveAlbumTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} Fotos und Videos aufs Handy speichern?'**
+  String saveAlbumTitle(int count);
+
+  /// No description provided for @saveAlbumMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Sie kommen in deine Galerie ins Album „Smile“. Videos, die noch nicht auf dem Handy sind, werden heruntergeladen – am besten im WLAN.'**
+  String get saveAlbumMessage;
+
+  /// No description provided for @saveProgress.
+  ///
+  /// In de, this message translates to:
+  /// **'{done} von {count} gespeichert …'**
+  String saveProgress(int done, int count);
+
   /// No description provided for @shareFailed.
   ///
   /// In de, this message translates to:

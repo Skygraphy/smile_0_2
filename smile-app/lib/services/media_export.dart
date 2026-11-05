@@ -20,8 +20,9 @@ class MediaExport {
   /// Only what is there to take: ready, with a file to fetch.
   static bool canExport(MediaItem item) => item.isReady && (item.displayUrl != null || item.thumbnailUrl != null);
 
-  /// Saves [items] in the gallery; how many made it.
-  static Future<int> saveToGallery(List<MediaItem> items) async {
+  /// Saves [items] in the gallery; how many made it. [progress] hears
+  /// after each one (done, of all).
+  static Future<int> saveToGallery(List<MediaItem> items, {void Function(int done, int all)? progress}) async {
     if (!await Gal.hasAccess(toAlbum: true) && !await Gal.requestAccess(toAlbum: true)) return 0;
     var saved = 0;
     for (final item in items) {
@@ -36,6 +37,7 @@ class MediaExport {
       } catch (_) {
         // Next one; the count says how many arrived.
       }
+      progress?.call(items.indexOf(item) + 1, items.length);
     }
     return saved;
   }

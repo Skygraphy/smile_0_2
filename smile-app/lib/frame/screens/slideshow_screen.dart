@@ -142,6 +142,11 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     // A data push nudges the already-running sync loop immediately,
     // bypassing the 2-minute foreground poll interval.
     PushSyncSignal.onSyncRequested = () => unawaited(_sync());
+    // Just switched on (within 10 minutes of the tablet's start): the
+    // managers hear the Frame runs again (2026-11-05).
+    unawaited(_window.invokeMethod<int>('uptimeMs').then((ms) {
+      if (ms != null && ms < const Duration(minutes: 10).inMilliseconds) widget.syncService.justBooted = true;
+    }).catchError((Object _) {}));
     PushSyncSignal.onCommand = _onCommand;
     PushSyncSignal.onSettings = (json) => _applySettings(FrameSettingsInfo.fromJson(json));
     widget.syncService.onEarlyResult = _applyEarly;
