@@ -1427,6 +1427,28 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                 child: Center(child: _newFromPill(t.frameNewFrom(_newFrom!))),
               ),
             if (_heartFlash != null) Positioned.fill(child: IgnorePointer(child: _heart(t, _heartFlash!))),
+            // The rest of the buttons on the right edge (variant C, 2026-11-05),
+            // fading and gliding in with the bottom ones.
+            if (!_showGrid)
+              Positioned(
+                right: 20,
+                top: 140,
+                bottom: aboveTitle + 40,
+                child: IgnorePointer(
+                  ignoring: !_barVisible,
+                  child: AnimatedOpacity(
+                    opacity: _barVisible ? 1 : 0,
+                    duration: const Duration(milliseconds: 450),
+                    curve: Curves.easeInOut,
+                    child: AnimatedSlide(
+                      offset: _barVisible ? Offset.zero : const Offset(0.15, 0),
+                      duration: const Duration(milliseconds: 450),
+                      curve: Curves.easeOut,
+                      child: Center(child: SizedBox(width: 250, child: SingleChildScrollView(child: _rail(t)))),
+                    ),
+                  ),
+                ),
+              ),
             // Faded in and out, not switched (Ernst 2026-10-28).
             if (!_showGrid)
               Positioned.fill(
@@ -1674,8 +1696,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         ),
       );
 
-  /// The big buttons this Frame's controls allow, in a fixed order.
-  Widget _bar(SmileTexts t) {
+  /// The buttons this Frame's controls allow, in a fixed order (variant C,
+  /// Ernst 2026-11-05): browsing big at the bottom in the middle, all the
+  /// rest one below the other on the right edge -- the picture stays free.
+  ({List<Widget> browse, List<Widget> rest}) _buttons(SmileTexts t) {
     final c = _controls;
     void act(VoidCallback action) {
       action();
@@ -1684,14 +1708,15 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
     // Three groups (2026-10-16): browse -- what plays -- mark and settings.
     final browse = <Widget>[
-      if (c.back) _BigButton(icon: SmileIcons.previous, label: t.ctrlBack, onTap: () => act(() => _advance(-1))),
+      if (c.back) _BigButton(big: true, icon: SmileIcons.previous, label: t.ctrlBack, onTap: () => act(() => _advance(-1))),
       if (c.pause)
         _BigButton(
+          big: true,
           icon: _paused ? SmileIcons.playFilled : SmileIcons.pause,
           label: _paused ? t.ctrlPlay : t.ctrlPause,
           onTap: () => act(() => _setPaused(!_paused)),
         ),
-      if (c.next) _BigButton(icon: SmileIcons.nextItem, label: t.ctrlNext, main: true, onTap: () => act(() => _advance(1))),
+      if (c.next) _BigButton(big: true, icon: SmileIcons.nextItem, label: t.ctrlNext, main: true, onTap: () => act(() => _advance(1))),
     ];
     // Also framed when the app chose it under "Was läuft" (Ernst 2026-10-27:
     // Lieblingsbilder played, the button looked off).
@@ -1701,40 +1726,46 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final playing = <Widget>[
       // On while its round runs: a tap ends it (2026-10-14).
       if (c.newest)
-        _BigButton(
+        _BigButton(rail: true, 
           icon: SmileIcons.newest,
           label: t.ctrlNewest,
           active: newestOn,
           onTap: () => act(_newestRound ? _endRound : _playNewest),
         ),
       if (c.favorites && (_hasFavorites || _favoritesRound))
-        _BigButton(
+        _BigButton(rail: true, 
           icon: favoritesOn ? SmileIcons.heartFilled : SmileIcons.heart,
           label: t.favorites,
           active: favoritesOn,
           onTap: () => act(_favoritesRound ? _endRound : _playFavorites),
         ),
-      if (_canSwitchAlbum) _BigButton(icon: SmileIcons.switchAlbum, label: t.ctrlAlbum, onTap: _pickChannel),
-      if (c.overview) _BigButton(icon: SmileIcons.overview, label: t.ctrlOverview, onTap: () => setState(_openGrid)),
+      if (_canSwitchAlbum) _BigButton(rail: true, icon: SmileIcons.switchAlbum, label: t.ctrlAlbum, onTap: _pickChannel),
+      if (c.overview) _BigButton(rail: true, icon: SmileIcons.overview, label: t.ctrlOverview, onTap: () => setState(_openGrid)),
     ];
     final own = <Widget>[
       if (c.favorite && _current != null)
-        _BigButton(
+        _BigButton(rail: true, 
           icon: _favoriteIds.contains(_current!.mediaItemId) ? SmileIcons.heartFilled : SmileIcons.heart,
           label: _favoriteIds.contains(_current!.mediaItemId) ? t.favoriteMarked : t.ctrlFavorite,
           heart: true,
           onTap: () => act(() => _toggleFavorite()),
         ),
-      if (c.duration) _BigButton(icon: SmileIcons.timer, label: t.ctrlDuration, onTap: _pickDuration),
+      if (c.duration) _BigButton(rail: true, icon: SmileIcons.timer, label: t.ctrlDuration, onTap: _pickDuration),
       if (c.captions)
-        _BigButton(
+        _BigButton(rail: true, 
           icon: SmileIcons.caption,
           label: t.captionShort,
           active: _settings?.showCaptions ?? true,
           onTap: () => act(() => _changeSettings({'show_captions': !(_settings?.showCaptions ?? true)})),
         ),
-      if (c.playback) _BigButton(icon: SmileIcons.playback, label: t.settings, onTap: _openPlayback),
+      if (c.playback) _BigButton(rail: true, icon: SmileIcons.playback, label: t.settings, onTap: _openPlayback),
     ];
+    return (browse: browse, rest: [...playing, ...own]);
+  }
+
+  /// Bottom middle: which level, and Zurück -- Pause -- Weiter, big.
+  Widget _bar(SmileTexts t) {
+    final browse = _buttons(t).browse;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 48, 16, 24),
       decoration: const BoxDecoration(
@@ -1751,21 +1782,26 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           children: [
             // Which level this is (2026-10-17), right above the buttons.
             _levelLabel(t),
-            const SizedBox(height: 14),
-            Wrap(
-              alignment: WrapAlignment.center,
-              crossAxisAlignment: WrapCrossAlignment.end,
-              spacing: 48,
-              runSpacing: 16,
-              children: [
-                if (browse.isNotEmpty) _group(browse),
-                if (playing.isNotEmpty) _group(playing),
-                if (own.isNotEmpty) _group(own),
-              ],
-            ),
+            if (browse.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              _group(browse),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  /// Right edge: everything else, one below the other.
+  Widget _rail(SmileTexts t) {
+    final rest = _buttons(t).rest;
+    if (rest.isEmpty) return const SizedBox.shrink();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (i, b) in rest.indexed) ...[if (i > 0) const SizedBox(height: 10), b],
+      ],
     );
   }
 
@@ -1958,6 +1994,8 @@ class _BigButton extends StatelessWidget {
     this.wide = false,
     this.heart = false,
     this.active = false,
+    this.big = false,
+    this.rail = false,
   });
 
   final IconData icon;
@@ -1973,9 +2011,16 @@ class _BigButton extends StatelessWidget {
   /// coral, a tap ends it.
   final bool active;
 
+  /// Zurück -- Pause -- Weiter at the bottom: bigger (variant C).
+  final bool big;
+
+  /// On the right edge: icon and label side by side (variant C).
+  final bool rail;
+
   @override
   Widget build(BuildContext context) {
     final fg = main ? const Color(0xFF1A0F0E) : (active ? SmileTheme.primary : Colors.white);
+    final iconColor = heart ? SmileTheme.primary : fg;
     return Material(
       color: main ? SmileTheme.primary : const Color(0xEB1C1A1A),
       shape: RoundedRectangleBorder(
@@ -1986,23 +2031,30 @@ class _BigButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Container(
-          constraints: const BoxConstraints(minWidth: 112, minHeight: 104),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-          child: wide
+          constraints: BoxConstraints(minWidth: big ? 150 : (rail ? 0 : 112), minHeight: big ? 124 : (rail ? 64 : 104)),
+          padding: rail ? const EdgeInsets.symmetric(horizontal: 18, vertical: 12) : const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          child: rail || wide
               ? Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: rail ? MainAxisSize.max : MainAxisSize.min,
                   children: [
-                    Icon(icon, size: 36, color: fg),
-                    const SizedBox(width: 14),
-                    Text(label, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: fg)),
+                    Icon(icon, size: rail ? 30 : 36, color: iconColor),
+                    SizedBox(width: rail ? 16 : 14),
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: rail ? 19 : 22, fontWeight: rail ? FontWeight.w500 : FontWeight.w600, color: fg),
+                      ),
+                    ),
                   ],
                 )
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(icon, size: 40, color: heart ? SmileTheme.primary : fg),
+                    Icon(icon, size: big ? 48 : 40, color: iconColor),
                     const SizedBox(height: 8),
-                    Text(label, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: fg)),
+                    Text(label, style: TextStyle(fontSize: big ? 20 : 18, fontWeight: FontWeight.w500, color: fg)),
                   ],
                 ),
         ),
