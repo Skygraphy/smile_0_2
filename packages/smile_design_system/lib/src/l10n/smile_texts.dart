@@ -1333,8 +1333,20 @@ abstract class SmileTexts {
   /// No description provided for @sharedIntoSpace.
   ///
   /// In de, this message translates to:
-  /// **'Mit diesem Space geteilt'**
-  String get sharedIntoSpace;
+  /// **'Mit dem Space {space} geteilt'**
+  String sharedIntoSpace(String space);
+
+  /// No description provided for @sharedFromSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'aus dem Space {space} · nur ansehen'**
+  String sharedFromSpace(String space);
+
+  /// No description provided for @viewOnly.
+  ///
+  /// In de, this message translates to:
+  /// **'nur ansehen'**
+  String get viewOnly;
 
   /// No description provided for @sharedIntoSpaceHint.
   ///

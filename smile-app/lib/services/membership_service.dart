@@ -339,6 +339,16 @@ class MembershipService {
     }).toList();
   }
 
+  /// Which Space each album shared into [spaceId] comes from (2026-11-06):
+  /// "aus dem Space Davidopa". Not readable via RLS, hence the RPC (0099).
+  Future<Map<String, String>> sharedInHomeSpaces(String spaceId) async {
+    final rows = await supabase.rpc('shared_in_home_spaces', params: {'p_space': spaceId});
+    return {
+      for (final row in (rows as List).cast<Map<String, dynamic>>())
+        row['channel_id'] as String: row['space_name'] as String? ?? '',
+    };
+  }
+
   /// The caller's own personal inbox (no [channelId]), or -- for a
   /// channel's SCO -- every pending request/invite for that one channel
   /// (the admin view). See list-my-invites/index.ts for why this has to be

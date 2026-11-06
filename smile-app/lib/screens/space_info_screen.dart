@@ -71,6 +71,9 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
   String? _avatarPath;
   List<Map<String, dynamic>>? _albums;
   List<SharedChannelSummary> _sharedIn = const [];
+
+  /// Which Space each shared-in album comes from (0099), by channel id.
+  Map<String, String> _homes = const {};
   List<SmileFrame> _frames = const [];
   SpaceCoOwnership? _admins;
   Map<String, ChannelWithActivity> _covers = const {};
@@ -157,6 +160,9 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     unawaited(loadAlbumCovers().then((c) {
       if (mounted) setState(() => _covers = c);
     }));
+    unawaited(widget.membershipService.sharedInHomeSpaces(widget.spaceId).then((h) {
+      if (mounted) setState(() => _homes = h);
+    }, onError: (_) {}));
     try {
       final results = await Future.wait<dynamic>([
         supabase.from('spaces').select('name, avatar_path').eq('id', widget.spaceId).maybeSingle(),
@@ -534,14 +540,14 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
         // --- Albums of other Spaces shared into this one (view only) -----
         if (_sharedIn.isNotEmpty)
           SmileInfoSection(
-            title: t.sharedIntoSpace,
+            title: t.sharedIntoSpace(_name),
             children: [
               for (final album in _sharedIn)
                 SmileObjectTile(
                   leading: albumCover(album.channelId, album.channelName, _covers, size: 40),
                   title: album.channelName,
-                  subtitleIcon: SmileIcons.viewer,
-                  subtitle: t.roleViewer,
+                  // "aus dem Space Davidopa · nur ansehen" (Ernst 2026-11-06).
+                  subtitle: (_homes[album.channelId] ?? '').isEmpty ? t.viewOnly : t.sharedFromSpace(_homes[album.channelId]!),
                   onTap: () => _sheet(
                     header: ListTile(
                       leading: albumCover(album.channelId, album.channelName, _covers, size: 36),

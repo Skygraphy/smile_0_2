@@ -351,7 +351,23 @@
   },
   "createAlbumHint": "z. B. Enkelkinder",
   "noAlbumYet": "Noch kein Album",
-  "sharedIntoSpace": "Mit diesem Space geteilt",
+  "sharedIntoSpace": "Mit dem Space {space} geteilt",
+  "@sharedIntoSpace": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
+  "sharedFromSpace": "aus dem Space {space} · nur ansehen",
+  "@sharedFromSpace": {
+    "placeholders": {
+      "space": {
+        "type": "String"
+      }
+    }
+  },
+  "viewOnly": "nur ansehen",
   "sharedIntoSpaceHint": "Alben anderer Spaces, die hier nur angesehen werden",
   "stopShowing": "Nicht mehr anzeigen",
   "stopShowingTitle": "{album} nicht mehr anzeigen?",

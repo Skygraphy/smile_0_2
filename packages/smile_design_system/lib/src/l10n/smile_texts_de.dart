@@ -762,7 +762,17 @@ class SmileTextsDe extends SmileTexts {
   String get noAlbumYet => 'Noch kein Album';
 
   @override
-  String get sharedIntoSpace => 'Mit diesem Space geteilt';
+  String sharedIntoSpace(String space) {
+    return 'Mit dem Space $space geteilt';
+  }
+
+  @override
+  String sharedFromSpace(String space) {
+    return 'aus dem Space $space · nur ansehen';
+  }
+
+  @override
+  String get viewOnly => 'nur ansehen';
 
   @override
   String get sharedIntoSpaceHint =>
