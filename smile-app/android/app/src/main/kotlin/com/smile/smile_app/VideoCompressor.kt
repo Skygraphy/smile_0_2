@@ -73,6 +73,24 @@ class VideoCompressor(private val context: Context, private val channel: MethodC
     private val main = Handler(Looper.getMainLooper())
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        // When it was recorded ("Heute vor einem Jahr", 2026-11-09), e.g.
+        // "20251109T143000.000Z"; null when the file doesn't say.
+        if (call.method == "takenAt") {
+            val path = call.argument<String>("input")
+            var date: String? = null
+            if (path != null) {
+                val retriever = android.media.MediaMetadataRetriever()
+                try {
+                    retriever.setDataSource(path)
+                    date = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DATE)
+                } catch (_: Exception) {
+                } finally {
+                    try { retriever.release() } catch (_: Exception) {}
+                }
+            }
+            result.success(date)
+            return
+        }
         if (call.method != "compress") {
             result.notImplemented()
             return

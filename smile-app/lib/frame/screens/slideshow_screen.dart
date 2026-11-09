@@ -386,10 +386,23 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       default:
         _playlist = ordered(_albumEntries);
     }
+    // "Heute vor einem Jahr" (2026-11-09, migrations/0100): what was taken
+    // on this day in earlier years plays first -- not in the rounds.
+    if ((settings?.onThisDay ?? true) && !_newestRound && !_favoritesRound) {
+      final today = _playlist.where(_isOnThisDay).toList();
+      if (today.isNotEmpty) _playlist = [...today, ..._playlist.where((e) => !_isOnThisDay(e))];
+    }
     // "Keine Videos" (2026-10-18, migrations/0085): photos only.
     if (settings?.videoLength == 'none') _playlist = _playlist.where((e) => !e.isVideo).toList();
     final keep = keepId == null ? -1 : _playlist.indexWhere((e) => e.mediaItemId == keepId);
     _currentIndex = keep >= 0 ? keep : (_currentIndex < _playlist.length ? _currentIndex : 0);
+  }
+
+  /// Taken on this day (month and day) in an earlier year.
+  static bool _isOnThisDay(CachedMediaEntry e) {
+    final taken = e.takenOrSent;
+    final now = DateTime.now();
+    return taken.month == now.month && taken.day == now.day && taken.year < now.year;
   }
 
   /// Lieblingsbilder as shown: the server's, with marks not yet sent.
@@ -1427,6 +1440,15 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                 right: 0,
                 child: Center(child: _newFromPill(t.frameNewFrom(_newFrom!))),
               ),
+            // "Heute vor einem Jahr · 2025" bottom left (2026-11-09).
+            if (!_showGrid &&
+                !_barVisible &&
+                current != null &&
+                (settings?.onThisDay ?? true) &&
+                _isOnThisDay(current) &&
+                _unseen.isEmpty &&
+                _newFrom == null)
+              Positioned(left: 24, bottom: aboveTitle + 24, child: IgnorePointer(child: _onThisDayPill(t, current))),
             if (_heartFlash != null) Positioned.fill(child: IgnorePointer(child: _heart(t, _heartFlash!))),
             // The rest of the buttons on the right edge (variant C, 2026-11-05),
             // fading and gliding in with the bottom ones.
@@ -1683,6 +1705,21 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
           ),
         ),
       );
+
+  Widget _onThisDayPill(SmileTexts t, CachedMediaEntry entry) {
+    final year = entry.takenOrSent.year;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+      decoration: BoxDecoration(color: SmileTheme.primary, borderRadius: BorderRadius.circular(22)),
+      child: Text.rich(
+        TextSpan(children: [
+          TextSpan(text: t.onThisDayYears(DateTime.now().year - year), style: const TextStyle(fontWeight: FontWeight.w700)),
+          TextSpan(text: ' · $year'),
+        ]),
+        style: const TextStyle(color: Color(0xFF2A0F0B), fontSize: 20),
+      ),
+    );
+  }
 
   Widget _pausedPill(SmileTexts t) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

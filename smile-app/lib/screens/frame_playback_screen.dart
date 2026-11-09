@@ -230,6 +230,14 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
               value: f.newHint,
               onChanged: (v) => _save({'new_hint': v}),
             ),
+            // "Heute vor einem Jahr" (2026-11-09, migrations/0100).
+            SwitchListTile(
+              secondary: const Icon(SmileIcons.waiting),
+              title: Text(t.onThisDayTitle),
+              subtitle: Text(t.onThisDayHint),
+              value: f.onThisDay,
+              onChanged: (v) => _save({'on_this_day': v}),
+            ),
             SwitchListTile(
               secondary: const Icon(SmileIcons.waiting),
               title: Text(t.bigClock),

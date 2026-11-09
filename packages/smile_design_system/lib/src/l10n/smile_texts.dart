@@ -370,6 +370,36 @@ abstract class SmileTexts {
   /// **'Beim Anhalten weiter zoomen'**
   String get pauseZoomTitle;
 
+  /// No description provided for @onThisDayTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Heute vor einem Jahr'**
+  String get onThisDayTitle;
+
+  /// No description provided for @onThisDayHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Fotos, die an diesem Tag in früheren Jahren aufgenommen wurden, laufen heute zuerst.'**
+  String get onThisDayHint;
+
+  /// No description provided for @onThisDayYears.
+  ///
+  /// In de, this message translates to:
+  /// **'{years, plural, =1{Heute vor einem Jahr} other{Heute vor {years} Jahren}}'**
+  String onThisDayYears(int years);
+
+  /// No description provided for @fullHdTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Full HD'**
+  String get fullHdTitle;
+
+  /// No description provided for @fullHdHint.
+  ///
+  /// In de, this message translates to:
+  /// **'1080p, am Tablet am schärfsten. Rund 45 MB pro Minute Video, braucht länger zum Senden. Aus: es gilt die Stufe darunter.'**
+  String get fullHdHint;
+
   /// No description provided for @pauseZoomHint.
   ///
   /// In de, this message translates to:

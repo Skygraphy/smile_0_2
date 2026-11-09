@@ -36,6 +36,8 @@ interface CreateUploadRequest {
   client_encoded?: boolean;
   // Optional title (2026-10-17, migrations/0084): at most 200 characters.
   caption?: string;
+  // When it was taken (EXIF / video metadata, migrations/0100), ISO 8601.
+  taken_at?: string;
   // Several at once (2026-10-10): one request for a whole selection of
   // photos instead of one each -- every Edge Function call costs ~1 s.
   // channel_id is shared; each item has the per-file fields above.
@@ -49,6 +51,15 @@ function cleanCaption(caption: unknown): string | null {
   if (typeof caption !== "string") return null;
   const text = caption.trim();
   return text ? text.slice(0, 200) : null;
+}
+
+/** A sensible capture date, else null (never later than now). */
+function cleanTakenAt(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const date = new Date(value);
+  const time = date.getTime();
+  if (Number.isNaN(time) || date.getUTCFullYear() < 1900 || time > Date.now() + 24 * 3600 * 1000) return null;
+  return date.toISOString();
 }
 
 function invalid(item: ItemRequest): string | null {
@@ -142,6 +153,7 @@ Deno.serve(async (req) => {
       file_size_bytes: item.file_size_bytes ?? null,
       preview_data_url: item.preview_data_url ?? null,
       caption: cleanCaption(item.caption),
+      taken_at: cleanTakenAt(item.taken_at),
       processing_status: "uploaded",
       created_at: new Date(base + index).toISOString(),
     };

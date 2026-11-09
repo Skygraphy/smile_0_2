@@ -94,7 +94,7 @@ class MediaItem {
 /// it can; [deniedIds] reports the rest instead of failing the whole call.
 /// A photo made ready on the phone (MediaService.preparePhoto).
 class PreparedPhoto {
-  const PreparedPhoto({required this.display, required this.thumbnail, this.size, this.preview, this.caption});
+  const PreparedPhoto({required this.display, required this.thumbnail, this.size, this.preview, this.caption, this.takenAt});
 
   final Uint8List display;
   final Uint8List thumbnail;
@@ -103,6 +103,9 @@ class PreparedPhoto {
 
   /// Optional title (2026-10-17, migrations/0084).
   final String? caption;
+
+  /// When it was taken, ISO 8601 (migrations/0100).
+  final String? takenAt;
 }
 
 /// A video made ready on the phone (MediaService.prepareVideo): [file] is
@@ -278,6 +281,7 @@ class MediaService {
                     'height': ?photos[i].photo.size?.$2,
                     'preview_data_url': ?photos[i].photo.preview,
                     'caption': ?photos[i].photo.caption,
+                    'taken_at': ?photos[i].photo.takenAt,
                   },
               ]);
             } on PostgrestException catch (e) {
@@ -351,7 +355,7 @@ class MediaService {
   /// photo is removed again and doesn't hold up the others.
   Future<List<Object?>> uploadPhotosViaServer({
     required String channelId,
-    required List<({Uint8List bytes, String fileExtension, String mimeType, String? caption})> photos,
+    required List<({Uint8List bytes, String fileExtension, String mimeType, String? caption, String? takenAt})> photos,
     void Function(int index, String mediaItemId)? onMediaItemCreated,
     void Function(int index)? onReady,
     void Function(int attempt, int maxAttempts)? onRetrying,
@@ -371,6 +375,7 @@ class MediaService {
             'file_size_bytes': photos[i].bytes.length,
             'preview_data_url': ?previews[i],
             'caption': ?photos[i].caption,
+            'taken_at': ?photos[i].takenAt,
             'client_encoded': true,
           },
       ]),
@@ -543,6 +548,7 @@ class MediaService {
     required int fileSizeBytes,
     String? previewDataUrl,
     String? caption,
+    String? takenAt,
     void Function(int attempt, int maxAttempts)? onRetrying,
   }) =>
       _withRetry(
@@ -554,6 +560,7 @@ class MediaService {
           fileSizeBytes: fileSizeBytes,
           previewDataUrl: previewDataUrl,
           caption: caption,
+          takenAt: takenAt,
           clientEncoded: true,
         ),
         onRetry: onRetrying,
@@ -567,6 +574,7 @@ class MediaService {
     required String channelId,
     required PreparedVideo video,
     String? caption,
+    String? takenAt,
     Map<String, dynamic>? createData,
     void Function(String mediaItemId)? onMediaItemCreated,
     void Function(int attempt, int maxAttempts)? onRetrying,
@@ -579,6 +587,7 @@ class MediaService {
           fileSizeBytes: size,
           previewDataUrl: video.previewDataUrl,
           caption: caption,
+          takenAt: takenAt,
           onRetrying: onRetrying,
         );
     onProgress?.call(0, size);
@@ -721,10 +730,12 @@ class MediaService {
     required int fileSizeBytes,
     String? previewDataUrl,
     String? caption,
+    String? takenAt,
     bool clientEncoded = false,
   }) async {
     final response = await invokeEdge('create-upload', body: {
       'caption': ?caption,
+      'taken_at': ?takenAt,
       if (clientEncoded) 'client_encoded': true,
       'channel_id': channelId,
       'media_type': mediaType,

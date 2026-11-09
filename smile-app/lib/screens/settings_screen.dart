@@ -397,6 +397,17 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                 SmileInfoSection(
                   title: t.sendVideos,
                   children: [
+                    // "Full HD" (2026-11-09): off by default; on, the levels
+                    // below don't count.
+                    ValueListenableBuilder<bool>(
+                      valueListenable: VideoQuality.fullHd,
+                      builder: (context, fullHd, _) => SwitchListTile(
+                        title: Text(t.fullHdTitle),
+                        subtitle: Text(t.fullHdHint),
+                        value: fullHd,
+                        onChanged: VideoQuality.chooseFullHd,
+                      ),
+                    ),
                     ValueListenableBuilder<VideoQuality>(
                       valueListenable: VideoQuality.current,
                       builder: (context, quality, _) => Padding(
@@ -404,7 +415,11 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            SegmentedButton<VideoQuality>(
+                            ValueListenableBuilder<bool>(
+                              valueListenable: VideoQuality.fullHd,
+                              builder: (context, fullHd, child) =>
+                                  Opacity(opacity: fullHd ? 0.38 : 1, child: IgnorePointer(ignoring: fullHd, child: child)),
+                              child: SegmentedButton<VideoQuality>(
                               showSelectedIcon: false,
                               segments: [
                                 ButtonSegment(value: VideoQuality.high, label: Text(t.qualityHigh)),
@@ -413,6 +428,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                               ],
                               selected: {quality},
                               onSelectionChanged: (chosen) => VideoQuality.choose(chosen.first),
+                            ),
                             ),
                             const SizedBox(height: SmileSpacing.s),
                             Text(

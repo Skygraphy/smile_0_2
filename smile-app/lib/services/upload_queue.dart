@@ -38,6 +38,10 @@ class QueuedUpload {
   /// Its title, if one was written when sending (2026-10-17).
   String? get caption => meta['caption'] as String?;
 
+  /// When it was taken (ISO 8601), read from the picked file
+  /// ("Heute vor einem Jahr", migrations/0100).
+  String? get takenAt => meta['taken_at'] as String?;
+
   /// The video on the phone (converted copy, else the picked original).
   String? get localVideoPath => meta['video_path'] as String? ?? meta['source'] as String?;
 
@@ -196,10 +200,14 @@ class UploadQueue extends ChangeNotifier {
         // (2026-10-12: a waiting video couldn't be played or sent).
         meta['source'] = file.path;
         tile = await MediaService.videoPosterBytes(File(file.path));
+        final taken = await MediaShrink.videoTakenAt(file.path);
+        if (taken != null) meta['taken_at'] = taken.toUtc().toIso8601String();
         if (tile != null) await File('${dir.path}/tile.jpg').writeAsBytes(tile);
       } else {
         tile = await file.readAsBytes();
         await File('${dir.path}/original').writeAsBytes(tile);
+        final taken = await MediaShrink.photoTakenAt(tile);
+        if (taken != null) meta['taken_at'] = taken.toUtc().toIso8601String();
       }
       if (tile != null) meta['aspect_ratio'] = await _aspectRatio(tile);
       await _writeMeta(dir, meta);
@@ -454,7 +462,8 @@ class UploadQueue extends ChangeNotifier {
         // Registered while the phone converts (2026-10-09).
         if (online && item.meta['server_media_id'] == null) {
           _earlyCreate[item.id] = _mediaService
-              .createVideoUpload(channelId: item.channelId, fileSizeBytes: size, previewDataUrl: preview, caption: item.caption)
+              .createVideoUpload(
+                  channelId: item.channelId, fileSizeBytes: size, previewDataUrl: preview, caption: item.caption, takenAt: item.takenAt)
               .then<Map<String, dynamic>?>((data) async {
             item.meta['server_media_id'] = data['media_item_id'];
             await _writeMeta(item.dir, item.meta);
@@ -547,6 +556,7 @@ class UploadQueue extends ChangeNotifier {
             size: width != null && height != null ? (width, height) : null,
             preview: item.meta['preview'] as String?,
             caption: item.caption,
+            takenAt: item.takenAt,
           ),
         ));
       }
@@ -571,6 +581,7 @@ class UploadQueue extends ChangeNotifier {
             fileExtension: item.meta['extension'] as String,
             mimeType: item.meta['mime_type'] as String,
             caption: item.caption,
+            takenAt: item.takenAt,
           ),
         ],
         onMediaItemCreated: (_, id) => item.meta['server_media_id'] = id,
@@ -620,6 +631,7 @@ class UploadQueue extends ChangeNotifier {
       final mediaId = await _mediaService.sendPreparedVideo(
         channelId: item.channelId,
         caption: item.caption,
+        takenAt: item.takenAt,
         video: PreparedVideo(
           file: file,
           mimeType: item.meta['upload_mime'] as String,

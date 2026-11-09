@@ -1,3 +1,4 @@
+import 'package:exif/exif.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -42,6 +43,34 @@ class MediaShrink {
 
   /// The small picture of a photo for the album grid.
   static Future<Uint8List?> thumbnail(Uint8List photo) => _jpeg(photo, thumbnailMaxEdge, 80);
+
+  /// When a photo was taken (EXIF), read before shrinking drops it
+  /// ("Heute vor einem Jahr", migrations/0100). Null when it doesn't say.
+  static Future<DateTime?> photoTakenAt(Uint8List original) async {
+    try {
+      final data = await readExifFromBytes(original);
+      final raw = (data['EXIF DateTimeOriginal'] ?? data['Image DateTime'])?.printable;
+      final m = raw == null ? null : RegExp(r'^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})').firstMatch(raw);
+      if (m == null) return null;
+      final taken = DateTime(int.parse(m[1]!), int.parse(m[2]!), int.parse(m[3]!), int.parse(m[4]!), int.parse(m[5]!), int.parse(m[6]!));
+      return taken.year < 1971 || taken.isAfter(DateTime.now().add(const Duration(days: 1))) ? null : taken;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// When a video was recorded (its metadata), like [photoTakenAt].
+  static Future<DateTime?> videoTakenAt(String path) async {
+    try {
+      final raw = await _videoChannel.invokeMethod<String>('takenAt', {'input': path}).timeout(const Duration(seconds: 10));
+      final m = raw == null ? null : RegExp(r'^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})').firstMatch(raw);
+      if (m == null) return null;
+      final taken = DateTime.utc(int.parse(m[1]!), int.parse(m[2]!), int.parse(m[3]!), int.parse(m[4]!), int.parse(m[5]!), int.parse(m[6]!));
+      return taken.year < 1971 || taken.isAfter(DateTime.now().add(const Duration(days: 1))) ? null : taken;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// Width and height of an image as shown.
   static Future<(int, int)?> sizeOf(Uint8List image) async {
@@ -113,14 +142,16 @@ class MediaShrink {
       // The person's "Videos senden" setting (2026-10-12).
       await VideoQuality.load();
       final quality = VideoQuality.current.value;
+      // "Full HD" (2026-11-09) wins over the level.
+      final fullHd = VideoQuality.fullHd.value;
       final result = await _videoChannel
           .invokeMapMethod<String, Object?>(
             'compress',
             {
               'input': original.path,
               'output': output,
-              'shortSide': quality.shortSide,
-              'bitrate': quality.bitrate,
+              'shortSide': fullHd ? VideoQuality.fullHdShortSide : quality.shortSide,
+              'bitrate': fullHd ? VideoQuality.fullHdBitrate : quality.bitrate,
               'audioBitrate': quality.audioBitrate,
             },
             // Never waits forever (2026-10-12): stuck, the original goes up.

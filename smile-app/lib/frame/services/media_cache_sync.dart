@@ -11,7 +11,11 @@ class RemoteMediaEntry {
     this.channelId,
     this.senderName,
     this.caption,
+    this.takenAt,
   });
+
+  /// When it was taken, else sent (migrations/0100).
+  final DateTime? takenAt;
 
   final String mediaItemId;
   final String mediaType;
@@ -44,7 +48,15 @@ class CachedMediaEntry {
     this.channelId,
     this.senderName,
     this.caption,
+    this.takenAt,
   });
+
+  /// When it was taken, else sent (migrations/0100); null in entries
+  /// cached before -- then [sentAt] counts.
+  final DateTime? takenAt;
+
+  /// The day that counts for "Heute vor einem Jahr", in local time.
+  DateTime get takenOrSent => (takenAt ?? sentAt).toLocal();
 
   final String mediaItemId;
   final String mediaType;
@@ -83,6 +95,7 @@ class CachedMediaEntry {
         'channel_id': channelId,
         'sender_name': senderName,
         'caption': caption,
+        'taken_at': takenAt?.toUtc().toIso8601String(),
       };
 
   factory CachedMediaEntry.fromJson(Map<String, dynamic> json) => CachedMediaEntry(
@@ -96,6 +109,7 @@ class CachedMediaEntry {
         channelId: json['channel_id'] as String?,
         senderName: json['sender_name'] as String?,
         caption: json['caption'] as String?,
+        takenAt: DateTime.tryParse(json['taken_at'] as String? ?? ''),
       );
 
   /// The server's current sort order, album, sender and title (the title
@@ -111,6 +125,7 @@ class CachedMediaEntry {
         channelId: remote.channelId ?? channelId,
         senderName: remote.senderName ?? senderName,
         caption: remote.caption,
+        takenAt: remote.takenAt ?? takenAt,
       );
 
   CachedMediaEntry copyWith({int? sortOrder, String? channelId, String? senderName}) => CachedMediaEntry(
@@ -124,6 +139,7 @@ class CachedMediaEntry {
         channelId: channelId ?? this.channelId,
         senderName: senderName ?? this.senderName,
         caption: caption,
+        takenAt: takenAt,
       );
 }
 

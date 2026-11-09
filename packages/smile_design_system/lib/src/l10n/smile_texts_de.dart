@@ -195,6 +195,31 @@ class SmileTextsDe extends SmileTexts {
   String get pauseZoomTitle => 'Beim Anhalten weiter zoomen';
 
   @override
+  String get onThisDayTitle => 'Heute vor einem Jahr';
+
+  @override
+  String get onThisDayHint =>
+      'Fotos, die an diesem Tag in früheren Jahren aufgenommen wurden, laufen heute zuerst.';
+
+  @override
+  String onThisDayYears(int years) {
+    String _temp0 = intl.Intl.pluralLogic(
+      years,
+      locale: localeName,
+      other: 'Heute vor $years Jahren',
+      one: 'Heute vor einem Jahr',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fullHdTitle => 'Full HD';
+
+  @override
+  String get fullHdHint =>
+      '1080p, am Tablet am schärfsten. Rund 45 MB pro Minute Video, braucht länger zum Senden. Aus: es gilt die Stufe darunter.';
+
+  @override
   String get pauseZoomHint =>
       'Ein angehaltenes Foto zoomt im selben Tempo weiter. Aus: Es bleibt stehen, wie es gerade ist.';
 

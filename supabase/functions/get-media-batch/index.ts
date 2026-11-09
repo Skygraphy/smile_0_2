@@ -57,7 +57,7 @@ interface RequestBody {
 const FRAME_COLUMNS =
   "id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, " +
   "max_local_cache_gb, current_channel_id, control_level, controls, content_mode, recent_count, play_order, " +
-  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, unlock_code_hash, new_sound, new_sound_reminder, new_hint, easy_stop, pause_zoom, spaces(name, deleted_at)";
+  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, unlock_code_hash, new_sound, new_sound_reminder, new_hint, easy_stop, pause_zoom, on_this_day, spaces(name, deleted_at)";
 
 // What the Frame may change itself, by the control that allows it, and
 // what each value may be.
@@ -85,6 +85,7 @@ const SETTABLE: Record<string, { control: string; ok: (v: unknown) => boolean }>
   new_sound_reminder: { control: "playback", ok: (v) => typeof v === "boolean" },
   new_hint: { control: "playback", ok: (v) => typeof v === "boolean" },
   pause_zoom: { control: "playback", ok: (v) => typeof v === "boolean" },
+  on_this_day: { control: "playback", ok: (v) => typeof v === "boolean" },
 };
 
 Deno.serve(async (req) => {
@@ -358,6 +359,7 @@ Deno.serve(async (req) => {
     sort_key: number;
     sender_name: string | null;
     caption: string | null;
+    taken_at: string | null;
   }[];
 
   // Signed in one call per bucket instead of one per photo: with every
@@ -384,6 +386,8 @@ Deno.serve(async (req) => {
     sort_order: row.sort_key,
     sender_name: row.sender_name ?? null,
     caption: row.caption ?? null,
+    // When it was taken, else sent ("Heute vor einem Jahr", 0100).
+    taken_at: row.taken_at ?? null,
     display_url: displayUrls.get(row.storage_path_display) ?? null,
     poster_url: row.media_type === "video" && row.storage_path_thumbnail
       ? posterUrls.get(row.storage_path_thumbnail) ?? null

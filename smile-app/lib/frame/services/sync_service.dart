@@ -107,6 +107,7 @@ class FrameSettingsInfo {
     this.newHint = true,
     this.easyStop = true,
     this.pauseZoom = true,
+    this.onThisDay = true,
   });
 
   final String displayMode; // 'slideshow' | 'manual'
@@ -173,6 +174,10 @@ class FrameSettingsInfo {
   /// A stopped photo keeps its slow zoom (migrations/0096).
   final bool pauseZoom;
 
+  /// "Heute vor einem Jahr" (migrations/0100): what was taken on this day
+  /// in earlier years plays first.
+  final bool onThisDay;
+
   FrameControls get effectiveControls =>
       controls ?? FrameControls(next: true, back: true, pause: true, overview: true, album: channelSwitchEnabled);
 
@@ -204,6 +209,7 @@ class FrameSettingsInfo {
         newHint: json['new_hint'] as bool? ?? true,
         easyStop: json['easy_stop'] as bool? ?? true,
         pauseZoom: json['pause_zoom'] as bool? ?? true,
+        onThisDay: json['on_this_day'] as bool? ?? true,
       );
 }
 
@@ -623,6 +629,7 @@ class SyncService {
           channelId: remote.channelId,
           senderName: remote.senderName,
           caption: remote.caption,
+          takenAt: remote.takenAt,
         ));
         // A photo of the shown album is there: on screen at once, not only
         // after every album is downloaded (2026-10-16: a newly connected
@@ -763,6 +770,7 @@ class SyncService {
               channelId: data['channel_id'] as String?,
               senderName: e['sender_name'] as String?,
               caption: e['caption'] as String?,
+              takenAt: DateTime.tryParse(e['taken_at'] as String? ?? ''),
             )),
       );
       cursor = data['next_cursor'] as int?;

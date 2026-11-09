@@ -80,6 +80,18 @@
   "shareFailed": "Das Teilen hat leider nicht geklappt.",
   "preparing": "Wird vorbereitet …",
   "pauseZoomTitle": "Beim Anhalten weiter zoomen",
+  "onThisDayTitle": "Heute vor einem Jahr",
+  "onThisDayHint": "Fotos, die an diesem Tag in früheren Jahren aufgenommen wurden, laufen heute zuerst.",
+  "onThisDayYears": "{years, plural, =1{Heute vor einem Jahr} other{Heute vor {years} Jahren}}",
+  "@onThisDayYears": {
+    "placeholders": {
+      "years": {
+        "type": "int"
+      }
+    }
+  },
+  "fullHdTitle": "Full HD",
+  "fullHdHint": "1080p, am Tablet am schärfsten. Rund 45 MB pro Minute Video, braucht länger zum Senden. Aus: es gilt die Stufe darunter.",
   "pauseZoomHint": "Ein angehaltenes Foto zoomt im selben Tempo weiter. Aus: Es bleibt stehen, wie es gerade ist.",
   "tipDidYouKnow": "WUSSTEST DU?",
   "easyStopTitle": "Easy Stopping",

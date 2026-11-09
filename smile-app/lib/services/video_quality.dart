@@ -36,9 +36,23 @@ enum VideoQuality {
 
   static final current = ValueNotifier<VideoQuality>(standard);
 
+  /// "Full HD" (Ernst 2026-11-09, off by default): every video in 1080p,
+  /// whatever the level says.
+  static final fullHd = ValueNotifier<bool>(false);
+  static const _fullHdKey = 'video_full_hd';
+  static const fullHdShortSide = 1080;
+  static const fullHdBitrate = 6000000;
+
+  static Future<void> chooseFullHd(bool on) async {
+    unawaited(Tips.markUsed(TipId.videoQuality));
+    fullHd.value = on;
+    await Offline.write(_fullHdKey, on ? 'true' : 'false');
+  }
+
   static Future<void> load() async {
     final stored = await Offline.read(_key);
     current.value = VideoQuality.values.where((q) => q.name == stored).firstOrNull ?? standard;
+    fullHd.value = await Offline.read(_fullHdKey) == 'true';
   }
 
   static Future<void> choose(VideoQuality quality) async {
