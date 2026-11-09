@@ -81,6 +81,29 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity-alias>
+        <!-- Sharing photos and videos to Smile from other apps (2026-11-09,
+             ShareIn.kt). Switched off on a Frame by MainActivity.setLauncher. -->
+        <activity-alias
+            android:name=".ShareTarget"
+            android:targetActivity=".MainActivity"
+            android:label="${appLabel}"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*"/>
+                <data android:mimeType="video/*"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*"/>
+                <data android:mimeType="video/*"/>
+            </intent-filter>
+        </activity-alias>
         <!-- Every push (also while the app is closed) uses the Smile channel
              with heads-up importance and the Smile status bar icon. -->
         <meta-data

@@ -229,6 +229,22 @@
   "requestMembership": "Member werden",
   "requestSent": "Anfrage gesendet",
   "sendTo": "Senden an …",
+  "sharedPhotos": "{count, plural, =1{1 Foto} other{{count} Fotos}}",
+  "@sharedPhotos": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sharedVideos": "{count, plural, =1{1 Video} other{{count} Videos}}",
+  "@sharedVideos": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "sendToNoAlbum": "Du bist noch in keinem Album, in dem du Fotos teilen kannst.",
   "albumInSpace": "Album in {space}",
   "@albumInSpace": {

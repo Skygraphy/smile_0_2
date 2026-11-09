@@ -29,6 +29,7 @@ import 'services/offline_http_client.dart';
 import 'widgets/offline_hint.dart';
 import 'services/video_prefetcher.dart';
 import 'services/invite_links.dart';
+import 'services/share_in.dart';
 import 'services/upload_queue.dart';
 import 'frame/frame.dart' as frame;
 import 'package:flutter/services.dart';
@@ -127,6 +128,9 @@ Future<void> main() async {
   // Invites as links (smileapp.app/i/…), also brought along by the store
   // (2026-10-17) -- taken by HomeShell once someone is signed in.
   unawaited(InviteLinks.start());
+  // Photos and videos shared from other apps (2026-11-09) -- taken by
+  // HomeShell once someone is signed in; never on a Frame.
+  if (frame.FrameMode.active.value != true) unawaited(ShareIn.start());
   // Tips on or off (2026-10-18).
   unawaited(Tips.load());
   // "Töne im Album" on or off (2026-10-27).

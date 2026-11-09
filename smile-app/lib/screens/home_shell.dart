@@ -7,9 +7,11 @@ import '../services/frame_service.dart';
 import '../services/offline.dart';
 import '../services/sync_bus.dart';
 import '../services/invite_links.dart';
+import '../services/share_in.dart';
 import 'channels_home_screen.dart';
 import 'person_screen.dart';
 import 'scan_code_screen.dart';
+import 'share_in_screen.dart';
 import 'frames_screen.dart';
 import 'spaces_screen.dart';
 
@@ -44,11 +46,22 @@ class _HomeShellState extends State<HomeShell> with SyncReload {
     // An invite from a link waits for the sign-in -- taken here (2026-10-17).
     InviteLinks.pending.addListener(_takeInvite);
     WidgetsBinding.instance.addPostFrameCallback((_) => _takeInvite());
+    // Shared from another app (2026-11-09): "Senden an …".
+    ShareIn.pending.addListener(_takeShared);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _takeShared());
+  }
+
+  Future<void> _takeShared() async {
+    final files = ShareIn.pending.value;
+    if (files == null || !mounted) return;
+    ShareIn.clear();
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ShareInScreen(files: files)));
   }
 
   @override
   void dispose() {
     InviteLinks.pending.removeListener(_takeInvite);
+    ShareIn.pending.removeListener(_takeShared);
     super.dispose();
   }
 

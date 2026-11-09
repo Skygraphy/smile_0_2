@@ -576,6 +576,28 @@ class SmileTextsDe extends SmileTexts {
   String get sendTo => 'Senden an …';
 
   @override
+  String sharedPhotos(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Fotos',
+      one: '1 Foto',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String sharedVideos(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Videos',
+      one: '1 Video',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get sendToNoAlbum =>
       'Du bist noch in keinem Album, in dem du Fotos teilen kannst.';
 

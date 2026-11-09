@@ -1012,6 +1012,18 @@ abstract class SmileTexts {
   /// **'Senden an …'**
   String get sendTo;
 
+  /// No description provided for @sharedPhotos.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 Foto} other{{count} Fotos}}'**
+  String sharedPhotos(int count);
+
+  /// No description provided for @sharedVideos.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 Video} other{{count} Videos}}'**
+  String sharedVideos(int count);
+
   /// No description provided for @sendToNoAlbum.
   ///
   /// In de, this message translates to:

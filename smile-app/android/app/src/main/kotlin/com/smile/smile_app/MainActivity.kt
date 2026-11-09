@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
@@ -17,6 +18,13 @@ class MainActivity : FlutterActivity() {
         super.onCreate(savedInstanceState)
         // A Frame: screen on from the very first moment, before Dart runs.
         if (isFrame(this)) setFrameWindow(true)
+        // Shared from another app (2026-11-09) -- once, not after a rotation.
+        if (savedInstanceState == null) ShareIn.handle(this, intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        ShareIn.handle(this, intent)
     }
 
     /**
@@ -97,6 +105,12 @@ class MainActivity : FlutterActivity() {
             if (call.method == "play" && !isFrame(this)) sounds.play(call.arguments as? String)
             result.success(null)
         }
+        // Photos and videos shared from other apps (ShareIn.kt).
+        val share = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "smile/share_in")
+        share.setMethodCallHandler { call, result ->
+            if (call.method == "take") result.success(ShareIn.take()) else result.notImplemented()
+        }
+        ShareIn.channel = share
         // The chime for new photos (FrameChime.kt): only on a Frame.
         val chime = FrameChime(applicationContext)
         frameChime = chime
@@ -112,6 +126,7 @@ class MainActivity : FlutterActivity() {
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         queueChannel = null
+        ShareIn.channel = null
         albumSounds?.release()
         albumSounds = null
         frameChime?.release()
@@ -137,18 +152,21 @@ class MainActivity : FlutterActivity() {
         // test app, whose package name has ".test" added.
         val app = ComponentName(this, "com.smile.smile_app.AppLauncher")
         val frameEntry = ComponentName(this, "com.smile.smile_app.FrameLauncher")
+        // Sharing to Smile: only on a phone, never on a Frame (2026-11-09).
+        val shareTarget = ComponentName(this, "com.smile.smile_app.ShareTarget")
         fun set(component: ComponentName, on: Boolean) {
             val want = if (on) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
                 else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
             val now = pm.getComponentEnabledSetting(component)
             val isOn = now == PackageManager.COMPONENT_ENABLED_STATE_ENABLED ||
-                (now == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && component == app)
+                (now == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && component != frameEntry)
             if (isOn != on) pm.setComponentEnabledSetting(component, want, PackageManager.DONT_KILL_APP)
         }
         try {
             // Turn the new one on first: never both off.
             set(if (frame) frameEntry else app, true)
             set(if (frame) app else frameEntry, false)
+            set(shareTarget, !frame)
         } catch (_: Exception) {}
     }
 
