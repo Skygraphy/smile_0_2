@@ -1521,7 +1521,23 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    ?(title == null ? null : _titleBand(title)),
+                    // The title fades with its photo (Ernst 2026-11-10: it came
+                    // without the photo's cross-fade).
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.easeInOut,
+                      alignment: Alignment.bottomCenter,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 600),
+                        layoutBuilder: (current, previous) => Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [...previous, ?current],
+                        ),
+                        child: title == null
+                            ? const SizedBox(key: ValueKey('notitle'), width: double.infinity)
+                            : KeyedSubtree(key: ValueKey('title#$_slideNumber#$title'), child: _titleBand(title)),
+                      ),
+                    ),
                     // Fades and glides in and out (Ernst 2026-10-28: softer).
                     AnimatedSize(
                       duration: const Duration(milliseconds: 450),
