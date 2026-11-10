@@ -14,8 +14,15 @@ class AboutScreen extends StatefulWidget {
 
   static const site = 'https://smileapp.app';
   static const impressum = '$site/impressum.html';
+  static const impressumEn = '$site/en/legal-notice.html';
   static const privacy = '$site/datenschutz.html';
+  static const privacyEn = '$site/en/privacy.html';
   static const deleteAccount = '$site/konto-loeschen.html';
+  static const deleteAccountEn = '$site/en/delete-account.html';
+
+  /// The page in the app's language (2026-11-10): German, else English.
+  static String inLanguage(BuildContext context, String german, String english) =>
+      Localizations.localeOf(context).languageCode == 'de' ? german : english;
 
   /// Opens one of the pages in the browser; quietly nothing if it can't.
   static Future<void> open(String url) async {
@@ -72,20 +79,20 @@ class _AboutScreenState extends State<AboutScreen> {
             leading: icon(SmileIcons.card),
             title: t.impressum,
             trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
-            onTap: () => AboutScreen.open(AboutScreen.impressum),
+            onTap: () => AboutScreen.open(AboutScreen.inLanguage(context, AboutScreen.impressum, AboutScreen.impressumEn)),
           ),
           SmileObjectTile(
             leading: icon(SmileIcons.lock),
             title: t.privacyPolicy,
             trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
-            onTap: () => AboutScreen.open(AboutScreen.privacy),
+            onTap: () => AboutScreen.open(AboutScreen.inLanguage(context, AboutScreen.privacy, AboutScreen.privacyEn)),
           ),
           SmileObjectTile(
             leading: icon(SmileIcons.delete),
             title: t.deleteAccount,
             subtitle: t.deleteAccountWebHint,
             trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
-            onTap: () => AboutScreen.open(AboutScreen.deleteAccount),
+            onTap: () => AboutScreen.open(AboutScreen.inLanguage(context, AboutScreen.deleteAccount, AboutScreen.deleteAccountEn)),
           ),
           SmileObjectTile(
             leading: icon(SmileIcons.caption),

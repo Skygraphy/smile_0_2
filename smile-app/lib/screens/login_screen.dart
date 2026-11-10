@@ -221,7 +221,8 @@ class _LoginScreenState extends State<LoginScreen> {
             TextSpan(
               text: t.loginPrivacyLink,
               style: const TextStyle(color: SmileTheme.primary, fontWeight: FontWeight.w600),
-              recognizer: TapGestureRecognizer()..onTap = () => AboutScreen.open(AboutScreen.privacy),
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => AboutScreen.open(AboutScreen.inLanguage(context, AboutScreen.privacy, AboutScreen.privacyEn)),
             ),
             TextSpan(text: t.loginPrivacyAfter),
           ]),

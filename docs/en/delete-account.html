@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" href="../favicon.png">
+<title>Smile Delete Account</title>
+<meta name="description" content="How to delete your Smile account and all your data.">
+<meta name="theme-color" content="#0E0C0C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: one narrow reading column, numbered steps in the app, the e-mail way, what gets deleted. Dark like Smile. */
+:root { color-scheme: dark; --bg: #0E0C0C; --surface: #1A1716; --line: #332D2B; --fg: #F2EEEC; --muted: #B5ACA9; --coral: #FF6F61; --coral-soft: rgba(255,111,97,.14);
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.6; padding-inline: 16px; padding-block: 0 56px; }
+main { max-width: 680px; margin: 0 auto; }
+header { display: flex; align-items: center; gap: 12px; padding-block: 24px; }
+header a { display: flex; align-items: center; gap: 12px; color: var(--fg); text-decoration: none; }
+.logo { width: 34px; height: 34px; border-radius: 10px; background: var(--coral); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 21px; }
+.word { font-weight: 700; font-size: 23px; letter-spacing: -.01em; }
+.word b { color: var(--coral); font-weight: 700; }
+h1 { font-size: 30px; font-weight: 800; letter-spacing: -.02em; margin: 8px 0 12px; }
+h2 { font-size: 18px; font-weight: 700; margin: 32px 0 12px; }
+p, li { color: var(--muted); }
+p { margin: 0 0 12px; }
+b { color: var(--fg); font-weight: 600; }
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: s; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 32px 1fr; gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; color: var(--fg); }
+ol.steps li::before { content: counter(s); width: 28px; height: 28px; border-radius: 50%; background: var(--coral-soft); color: var(--coral); font-weight: 800; display: grid; place-items: center; font-size: 14px; }
+ul { margin: 0 0 12px; padding-left: 20px; display: grid; gap: 6px; }
+.mail { display: inline-block; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; color: var(--fg); user-select: all; }
+a { color: var(--coral); }
+footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header><a href="../"><span class="logo" aria-hidden="true">S</span><span class="word">S<b>m</b>ile</span></a></header>
+  <h1>Delete your Smile account</h1>
+  <p>You can delete your account yourself in the app at any time. It happens right away and can't be undone.</p>
+
+  <h2>In the app</h2>
+  <ol class="steps">
+    <li>Open Smile and tap ⋮ at the top right.</li>
+    <li>Tap <b>Settings</b>.</li>
+    <li>Tap <b>Delete account</b> at the very bottom, type your account's email address to confirm and tap Delete.</li>
+  </ol>
+
+  <h2>Without the app</h2>
+  <p>If you no longer have Smile on your phone, write from your account's email address to <span class="mail">admin@skygraphy.com</span> with the subject “Delete account”. We delete the account within 7 days and confirm it to you by email.</p>
+
+  <h2>What gets deleted</h2>
+  <ul>
+    <li>Your profile with name, profile picture and Smile name.</li>
+    <li>All photos and videos you sent, in all albums, with captions, hearts and files.</li>
+    <li>All your memberships, roles, invitations and requests, and the identifiers for notifications.</li>
+    <li>Spaces where you're the admin: your longest-standing co-admin takes them over. If there's no co-admin, the Space is deleted with all its albums, photos and Frames.</li>
+  </ul>
+  <p>Nothing is left behind. The providers' technical logs, which only contain IP addresses, disappear by themselves after a short time. More in the <a href="privacy.html">privacy policy</a>.</p>
+
+  <footer><a href="../">Smile</a><a href="legal-notice.html">Legal notice</a><a href="privacy.html">Privacy</a><a href="../konto-loeschen.html" lang="de">Deutsch</a><span>© 2026 Skygraphy Copter Technologies e.U.</span></footer>
+</main>
+</body>
+</html>

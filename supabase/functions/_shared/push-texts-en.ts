@@ -173,6 +173,19 @@ export const en: PushTexts = {
     body: `${p.actor ?? en.someone} ${p.removed ? "removed" : "changed"} the picture of ${p.space}.`,
   }),
 
+  // --- the hourly health check (to a Space's managers) ---
+  frameOffline: (p) => ({
+    title: "Frame offline",
+    body: `The Frame ${p.frame} in ${p.space} hasn't checked in for ${p.hours} hours (Wi-Fi, power or tablet off?).`,
+  }),
+  frameOnlineAgain: (p) => ({ title: "Frame back online", body: `The Frame ${p.frame} in ${p.space} is back online.` }),
+  spaceStorageHigh: (p) => ({
+    title: `${p.space}: ${p.gb} GB used`,
+    body: "Your Space is getting close to 10 GB. Everything keeps working – just so you know.",
+  }),
+  spaceStorageOk: (p) => ({ title: `${p.space}: below 8 GB again`, body: "Your Space's storage is below 8 GB again." }),
+  stillOngoing: (title) => `${title} (still)`,
+
   // --- trash ---
   trashed: (p) => ({
     title: p.kind === "channel" ? "Album deleted" : "Space deleted",

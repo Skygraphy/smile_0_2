@@ -34,6 +34,7 @@
   .name { color: #FF6F61; }
   .handle { color: #FF6F61; font-weight: 600; margin-top: -6px; }
   .handle:empty { display: none; }
+  .legal { margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -43,40 +44,83 @@
 
   <!-- Home -->
   <section id="home" class="card hidden">
-    <h1>Fotos und Videos für die Familie</h1>
-    <p>Teilt eure Momente in gemeinsamen Alben – auf dem Handy und auf dem Bilderrahmen in der Küche.</p>
-    <a class="btn" data-store="android" href="#">Smile für Android</a>
-    <a class="btn alt" aria-disabled="true">Bald im App Store</a>
+    <h1 data-i18n="homeTitle">Fotos und Videos für die Familie</h1>
+    <p data-i18n="homeText">Teilt eure Momente in gemeinsamen Alben – auf dem Handy und auf dem Bilderrahmen in der Küche.</p>
+    <a class="btn" data-store="android" href="#" data-i18n="android">Smile für Android</a>
+    <a class="btn alt" aria-disabled="true" data-i18n="appStore">Bald im App Store</a>
   </section>
 
   <!-- Invite -->
   <section id="invite" class="card hidden">
-    <h1 id="invite-title">Du wurdest zu Smile eingeladen</h1>
-    <p id="invite-text">Öffne die Einladung in Smile – oder hol dir Smile zuerst.</p>
-    <a class="btn" id="open-app" href="#">In Smile öffnen</a>
-    <a class="btn alt" data-store="android" href="#">Smile für Android holen</a>
-    <a class="btn alt" aria-disabled="true">Bald im App Store</a>
-    <p class="small">Nach der Installation bist du automatisch dabei. Falls nicht: In Smile auf ⋮ → Code scannen → Code eintippen und diesen Code eingeben:</p>
+    <h1 id="invite-title" data-i18n="inviteTitle">Du wurdest zu Smile eingeladen</h1>
+    <p id="invite-text" data-i18n="inviteText">Öffne die Einladung in Smile – oder hol dir Smile zuerst.</p>
+    <a class="btn" id="open-app" href="#" data-i18n="openInSmile">In Smile öffnen</a>
+    <a class="btn alt" data-store="android" href="#" data-i18n="getAndroid">Smile für Android holen</a>
+    <a class="btn alt" aria-disabled="true" data-i18n="appStore">Bald im App Store</a>
+    <p class="small" data-i18n="afterInstall">Nach der Installation bist du automatisch dabei. Falls nicht: In Smile auf ⋮ → Code scannen → Code eintippen und diesen Code eingeben:</p>
     <div class="code" id="code"></div>
   </section>
 
   <!-- Expired / unknown -->
   <section id="expired" class="card hidden">
-    <h1>Diese Einladung gilt nicht mehr</h1>
-    <p>Einladungen gelten 24 Stunden. Bitte die Person, dir eine neue zu schicken.</p>
-    <a class="btn alt" data-store="android" href="#">Smile für Android</a>
+    <h1 data-i18n="expiredTitle">Diese Einladung gilt nicht mehr</h1>
+    <p data-i18n="expiredText">Einladungen gelten 24 Stunden. Bitte die Person, dir eine neue zu schicken.</p>
+    <a class="btn alt" data-store="android" href="#" data-i18n="android">Smile für Android</a>
   </section>
 
   <!-- Person (Smile name) -->
   <section id="person" class="card hidden">
     <h1 id="person-title">Smile</h1>
     <p id="person-handle" class="handle"></p>
-    <p id="person-text">Öffne diesen Link in Smile, um die Person in ein Album einzuladen.</p>
-    <a class="btn" id="open-person" href="#">In Smile öffnen</a>
-    <a class="btn alt" data-store="android" href="#">Smile für Android holen</a>
+    <p id="person-text" data-i18n="personText">Öffne diesen Link in Smile, um die Person in ein Album einzuladen.</p>
+    <a class="btn" id="open-person" href="#" data-i18n="openInSmile">In Smile öffnen</a>
+    <a class="btn alt" data-store="android" href="#" data-i18n="getAndroid">Smile für Android holen</a>
   </section>
+  <p class="small legal"><a class="plain" data-i18n-href="imprintHref" href="/impressum.html" data-i18n="imprint">Impressum</a> · <a class="plain" data-i18n-href="privacyHref" href="/datenschutz.html" data-i18n="privacy">Datenschutz</a></p>
 </main>
 <script>
+  // German for German browsers, English for everyone else (2026-11-10).
+  const LANG = (navigator.language || 'de').toLowerCase().startsWith('de') ? 'de' : 'en';
+  const TEXTS = {
+    de: {
+      homeTitle: 'Fotos und Videos für die Familie',
+      homeText: 'Teilt eure Momente in gemeinsamen Alben – auf dem Handy und auf dem Bilderrahmen in der Küche.',
+      android: 'Smile für Android', getAndroid: 'Smile für Android holen', appStore: 'Bald im App Store',
+      inviteTitle: 'Du wurdest zu Smile eingeladen', inviteText: 'Öffne die Einladung in Smile – oder hol dir Smile zuerst.',
+      openInSmile: 'In Smile öffnen',
+      afterInstall: 'Nach der Installation bist du automatisch dabei. Falls nicht: In Smile auf ⋮ → Code scannen → Code eintippen und diesen Code eingeben:',
+      expiredTitle: 'Diese Einladung gilt nicht mehr', expiredText: 'Einladungen gelten 24 Stunden. Bitte die Person, dir eine neue zu schicken.',
+      personText: 'Öffne diesen Link in Smile, um die Person in ein Album einzuladen.',
+      someone: 'Jemand',
+      coAdmin: (who) => [who + ' lädt dich als Co-Admin von ', ' ein'],
+      share: (who) => [who + ' möchte das Album ', ' mit deinem Space teilen'],
+      member: (who) => [who + ' lädt dich in das Album ', ' ein'],
+      personInvite: (name) => 'Mit Smile kannst du ' + name + ' in ein Album einladen. Öffne den Link in Smile – oder hol dir Smile zuerst.',
+      personUnknown: 'Diesen Smile-Namen gibt es nicht.',
+      imprint: 'Impressum', privacy: 'Datenschutz', imprintHref: '/impressum.html', privacyHref: '/datenschutz.html',
+    },
+    en: {
+      homeTitle: 'Photos and videos for the family',
+      homeText: 'Share your moments in shared albums – on the phone and on the picture frame in the kitchen.',
+      android: 'Smile for Android', getAndroid: 'Get Smile for Android', appStore: 'Coming soon to the App Store',
+      inviteTitle: "You've been invited to Smile", inviteText: 'Open the invitation in Smile – or get Smile first.',
+      openInSmile: 'Open in Smile',
+      afterInstall: "After installing you're in automatically. If not: in Smile tap ⋮ → Scan code → Type code and enter this code:",
+      expiredTitle: 'This invitation is no longer valid', expiredText: 'Invitations are valid for 24 hours. Ask the person to send you a new one.',
+      personText: 'Open this link in Smile to invite the person to an album.',
+      someone: 'Someone',
+      coAdmin: (who) => [who + ' invites you as co-admin of ', ''],
+      share: (who) => [who + ' would like to share the album ', ' with your Space'],
+      member: (who) => [who + ' invites you to the album ', ''],
+      personInvite: (name) => 'With Smile you can invite ' + name + ' to an album. Open the link in Smile – or get Smile first.',
+      personUnknown: "This Smile name doesn't exist.",
+      imprint: 'Legal notice', privacy: 'Privacy', imprintHref: '/en/legal-notice.html', privacyHref: '/en/privacy.html',
+    },
+  }[LANG];
+  document.documentElement.lang = LANG;
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = TEXTS[el.dataset.i18n];
+  for (const el of document.querySelectorAll('[data-i18n-href]')) el.href = TEXTS[el.dataset.i18nHref];
+
   // One page for everything (also served as 404.html): the path decides.
   const PLAY = 'https://play.google.com/store/apps/details?id=com.smile.smile_app';
   const PREVIEW = 'https://wxuipqaozvgzthlgnbgz.supabase.co/functions/v1/invite-preview';
@@ -100,13 +144,10 @@
         return;
       }
       if (d.status !== 'ok') return;
-      const who = d.inviter || 'Jemand';
+      const who = d.inviter || TEXTS.someone;
       // The album or Space name in coral instead of „…“ (2026-10-17).
-      const parts = d.kind === 'space_co_owner'
-        ? [who + ' lädt dich als Co-Admin von ', d.target, ' ein']
-        : d.kind === 'album_share'
-          ? [who + ' möchte das Album ', d.target, ' mit deinem Space teilen']
-          : [who + ' lädt dich in das Album ', d.target, ' ein'];
+      const around = d.kind === 'space_co_owner' ? TEXTS.coAdmin(who) : d.kind === 'album_share' ? TEXTS.share(who) : TEXTS.member(who);
+      const parts = [around[0], d.target, around[1]];
       const title = document.getElementById('invite-title');
       title.textContent = parts[0];
       if (parts[1]) {
@@ -127,10 +168,9 @@
       if (d.status === 'ok' && d.name) {
         document.getElementById('person-title').textContent = d.name;
         document.getElementById('person-handle').textContent = '@' + d.handle;
-        document.getElementById('person-text').textContent =
-          'Mit Smile kannst du ' + d.name + ' in ein Album einladen. Öffne den Link in Smile – oder hol dir Smile zuerst.';
+        document.getElementById('person-text').textContent = TEXTS.personInvite(d.name);
       } else if (d.status === 'invalid') {
-        document.getElementById('person-text').textContent = 'Diesen Smile-Namen gibt es nicht.';
+        document.getElementById('person-text').textContent = TEXTS.personUnknown;
       }
     }).catch(() => {});
   } else {

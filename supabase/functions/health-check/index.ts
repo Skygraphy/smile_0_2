@@ -15,6 +15,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse } from "../_shared/cors.ts";
 import { checkPushAccess } from "../_shared/fcm.ts";
 import { pushNotificationToUsers } from "../_shared/push-users.ts";
+import type { Notice, PushTexts } from "../_shared/push-texts.ts";
 import { spaceManagerIds } from "../_shared/space-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -27,6 +28,12 @@ const HOUR = 3600 * 1000;
 const REMIND_AFTER = 24 * HOUR;
 const FRAME_OFFLINE_AFTER = 24 * HOUR;
 
+/** A text from the push catalog, written per recipient language (2026-11-10). */
+interface CatalogNotice {
+  key: string;
+  params: Record<string, unknown>;
+}
+
 interface Problem {
   title: string;
   body: string;
@@ -34,6 +41,14 @@ interface Problem {
   data: Record<string, string>;
   solvedTitle: string;
   solvedBody: string;
+  // For people who aren't Ernst (a Space's managers): their language.
+  notice?: CatalogNotice;
+  solvedNotice?: CatalogNotice;
+}
+
+function localized(n: CatalogNotice) {
+  // deno-lint-ignore no-explicit-any
+  return (t: PushTexts) => (t as any)[n.key](n.params) as Notice;
 }
 
 Deno.serve(async (req) => {
@@ -140,6 +155,8 @@ Deno.serve(async (req) => {
       data: { type: "frame_changed", space_id: f.space_id as string, space_name: space.name as string, frame_name: f.name as string },
       solvedTitle: "Frame wieder online",
       solvedBody: `Der Frame ${f.name} in ${space.name} ist wieder online.`,
+      notice: { key: "frameOffline", params: { frame: f.name, space: space.name, hours } },
+      solvedNotice: { key: "frameOnlineAgain", params: { frame: f.name, space: space.name } },
     });
   }
 
@@ -170,6 +187,8 @@ Deno.serve(async (req) => {
         data: { type: "space_renamed", space_id: spaceId, space_name: s.name },
         solvedTitle: `${s.name}: wieder unter 8 GB`,
         solvedBody: "Der Speicher eures Spaces liegt wieder unter 8 GB.",
+        notice: { key: "spaceStorageHigh", params: { space: s.name, gb: (s.bytes / 1024 ** 3).toFixed(0) } },
+        solvedNotice: { key: "spaceStorageOk", params: { space: s.name } },
       });
     }
   }
@@ -199,16 +218,32 @@ Deno.serve(async (req) => {
         title: p.title,
         body: p.body,
         recipients: p.recipients,
-        data: { ...p.data, solved_title: p.solvedTitle, solved_body: p.solvedBody },
+        data: {
+          ...p.data,
+          solved_title: p.solvedTitle,
+          solved_body: p.solvedBody,
+          ...(p.solvedNotice ? { solved_notice: JSON.stringify(p.solvedNotice) } : {}),
+        },
         first_seen_at: nowIso,
         last_notified_at: nowIso,
         resolved_at: null,
       });
-      await pushNotificationToUsers(supabaseAdmin, p.recipients, { title: p.title, body: p.body }, p.data);
+      await pushNotificationToUsers(supabaseAdmin, p.recipients, p.notice ? localized(p.notice) : { title: p.title, body: p.body }, p.data);
       announced++;
     } else if (now - new Date(existing.last_notified_at as string).getTime() >= REMIND_AFTER) {
       await supabaseAdmin.from("health_alerts").update({ body: p.body, last_notified_at: nowIso }).eq("key", key);
-      await pushNotificationToUsers(supabaseAdmin, p.recipients, { title: `${p.title} (weiterhin)`, body: p.body }, p.data);
+      const notice = p.notice;
+      await pushNotificationToUsers(
+        supabaseAdmin,
+        p.recipients,
+        notice
+          ? (t: PushTexts) => {
+            const n = localized(notice)(t);
+            return { title: t.stillOngoing(n.title), body: n.body };
+          }
+          : { title: `${p.title} (weiterhin)`, body: p.body },
+        p.data,
+      );
       announced++;
     }
   }
@@ -216,11 +251,13 @@ Deno.serve(async (req) => {
   for (const [key, a] of openByKey) {
     if (problems.has(key)) continue;
     await supabaseAdmin.from("health_alerts").update({ resolved_at: new Date(now).toISOString() }).eq("key", key);
-    const { solved_title, solved_body, ...data } = (a.data ?? {}) as Record<string, string>;
+    const { solved_title, solved_body, solved_notice, ...data } = (a.data ?? {}) as Record<string, string>;
     await pushNotificationToUsers(
       supabaseAdmin,
       a.recipients as string[],
-      { title: solved_title ?? "Wieder in Ordnung", body: solved_body ?? `Behoben: ${a.title}` },
+      solved_notice
+        ? localized(JSON.parse(solved_notice) as CatalogNotice)
+        : { title: solved_title ?? "Wieder in Ordnung", body: solved_body ?? `Behoben: ${a.title}` },
       data,
     );
     solved++;

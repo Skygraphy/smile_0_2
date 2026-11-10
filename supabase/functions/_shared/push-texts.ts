@@ -224,6 +224,25 @@ const de = {
     body: `${p.actor ?? de.someone} hat das Bild von ${p.space} ${p.removed ? "entfernt" : "geändert"}.`,
   }),
 
+  // --- the hourly health check (to a Space's managers) ---
+  frameOffline: (p: { frame: string; space: string; hours: number }): Notice => ({
+    title: "Frame offline",
+    body: `Der Frame ${p.frame} in ${p.space} meldet sich seit ${p.hours} Stunden nicht (WLAN, Strom oder Tablet aus?).`,
+  }),
+  frameOnlineAgain: (p: { frame: string; space: string }): Notice => ({
+    title: "Frame wieder online",
+    body: `Der Frame ${p.frame} in ${p.space} ist wieder online.`,
+  }),
+  spaceStorageHigh: (p: { space: string; gb: string }): Notice => ({
+    title: `${p.space}: ${p.gb} GB belegt`,
+    body: "Euer Space nähert sich 10 GB. Es geht alles weiter – nur zur Info.",
+  }),
+  spaceStorageOk: (p: { space: string }): Notice => ({
+    title: `${p.space}: wieder unter 8 GB`,
+    body: "Der Speicher eures Spaces liegt wieder unter 8 GB.",
+  }),
+  stillOngoing: (title: string): string => `${title} (weiterhin)`,
+
   // --- trash ---
   trashed: (p: { actor: Who; kind: "channel" | "space"; name: string; purgeAt: string | null }): Notice => ({
     title: p.kind === "channel" ? "Album gelöscht" : "Space gelöscht",
