@@ -1,3 +1,4 @@
+import 'app_texts.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -122,7 +123,7 @@ Future<bool> closeIfGone(BuildContext context, {required String table, required 
   if (_lastGoneNotice == null || now.difference(_lastGoneNotice!) > const Duration(seconds: 3)) {
     _lastGoneNotice = now;
     scaffoldMessengerKey.currentState?.showSnackBar(
-      const SnackBar(content: Text('Das ist nicht mehr verfügbar – gelöscht oder kein Zugriff mehr.')),
+      SnackBar(content: Text(AppTexts.current.noLongerAvailable)),
     );
   }
   return true;

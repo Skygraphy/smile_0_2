@@ -1,3 +1,4 @@
+import 'app_texts.dart';
 import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -36,10 +37,10 @@ class ForegroundNotifications {
     await _plugin
         .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(
-          const AndroidNotificationChannel(
+          AndroidNotificationChannel(
             channelId,
             'Smile',
-            description: 'Neue Fotos, Einladungen, Anfragen und Änderungen in deinen Alben und Spaces',
+            description: AppTexts.current.notificationChannelDescription,
             importance: Importance.high,
           ),
         );

@@ -187,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
   List<Widget> _buildEmailStep() {
     return [
       Text(
-        'Melde dich mit deiner E-Mail-Adresse an. Wir senden dir einen 6-stelligen Code.',
+        SmileTexts.of(context).loginIntro,
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 16),
@@ -195,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
         controller: _emailController,
         keyboardType: TextInputType.emailAddress,
         autofillHints: const [AutofillHints.email],
-        decoration: const InputDecoration(labelText: 'E-Mail-Adresse'),
+        decoration: InputDecoration(labelText: SmileTexts.of(context).emailAddress),
         onSubmitted: (_) => _requestCode(),
       ),
       ..._error(),
@@ -208,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : const Text('Code anfordern'),
+            : Text(SmileTexts.of(context).loginRequestCode),
       ),
       // The privacy policy before an account exists (2026-11-10, Google Play).
       const SizedBox(height: 14),
@@ -244,7 +244,7 @@ class _LoginScreenState extends State<LoginScreen> {
   List<Widget> _buildCodeStep() {
     return [
       Text(
-        'Wir haben einen Code an $_email gesendet. Bitte gib ihn ein.',
+        SmileTexts.of(context).loginCodeSent(_email),
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 16),
@@ -266,7 +266,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 20,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
-            : const Text('Bestätigen'),
+            : Text(SmileTexts.of(context).loginConfirm),
       ),
       const SizedBox(height: 8),
       TextButton(
@@ -277,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   _codeController.clear();
                   _errorMessage = null;
                 }),
-        child: const Text('Andere E-Mail-Adresse verwenden'),
+        child: Text(SmileTexts.of(context).loginOtherEmail),
       ),
     ];
   }

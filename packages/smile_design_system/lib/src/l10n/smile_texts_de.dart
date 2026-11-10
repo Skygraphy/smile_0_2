@@ -2738,4 +2738,1000 @@ class SmileTextsDe extends SmileTexts {
   String slideshowPosition(int n, int total) {
     return '$n von $total';
   }
+
+  @override
+  String get tipAlbums01 =>
+      'Ganz oben steht immer das Album, in dem zuletzt etwas passiert ist – wie bei WhatsApp.';
+
+  @override
+  String get tipAlbums02 =>
+      'Ein Punkt neben einem Album heißt: Hier gibt es Neues, das du noch nicht gesehen hast.';
+
+  @override
+  String get tipAlbums03 =>
+      'Unter dem Albumnamen siehst du, wer zuletzt etwas geschickt hat.';
+
+  @override
+  String get tipAlbums04 =>
+      'Mit der Kamera oben rechts machst du schnell ein Foto und wählst danach das Album aus.';
+
+  @override
+  String get tipAlbums05 =>
+      'Ein neues Album legst du auf der Seite deines Spaces an.';
+
+  @override
+  String get tipAlbums06 =>
+      'Ein Album gehört immer zu einem Space – zum Beispiel deiner Familie.';
+
+  @override
+  String get tipAlbums07 =>
+      'Tippe auf das Bild eines Albums, um es direkt zu öffnen.';
+
+  @override
+  String get tipAlbums08 =>
+      'Ein Album ohne Fotos zeigt seine Anfangsbuchstaben – bis das erste Foto kommt.';
+
+  @override
+  String get tipAlbums09 =>
+      'Über ⋮ → Code scannen trittst du mit einem QR-Code einem Album bei.';
+
+  @override
+  String get tipAlbums10 =>
+      'Unten wechselst du zwischen Alben, Frames und Spaces.';
+
+  @override
+  String get tipAlbums11 =>
+      'Ziehe die Liste nach unten, um sie sofort zu aktualisieren.';
+
+  @override
+  String get tipAlbums12 =>
+      'Neue Fotos anderer erscheinen von selbst – du musst nichts tun.';
+
+  @override
+  String get tipAlbums13 =>
+      'Auch ohne Internet siehst du die Alben, die du zuletzt geöffnet hast.';
+
+  @override
+  String get tipAlbums14 =>
+      'Alben, die du verlässt, verschwinden aus deiner Liste – die anderen behalten sie.';
+
+  @override
+  String get tipAlbums15 =>
+      'Ein Album kann gleichzeitig auf mehreren Frames laufen.';
+
+  @override
+  String get tipAlbums16 =>
+      'Das Bild eines Albums kann der Admin jederzeit ändern.';
+
+  @override
+  String get tipAlbums17 =>
+      'Neue Alben stehen erst ganz oben, sobald darin etwas passiert.';
+
+  @override
+  String get tipAlbums18 =>
+      'Tipp: Lege für jede Gelegenheit ein eigenes Album an – Urlaub, Geburtstag, Kinder.';
+
+  @override
+  String get tipAlbums19 =>
+      'Ein Album hat keine Größengrenze – schick so viele Fotos, wie du willst.';
+
+  @override
+  String get tipAlbum01 =>
+      'Deine eigenen Fotos stehen rechts, die der anderen links – wie in einem Chat.';
+
+  @override
+  String get tipAlbum02 =>
+      'Halte ein Foto lange gedrückt, um mehrere auszuwählen.';
+
+  @override
+  String get tipAlbum03 =>
+      'Mit „Alle auswählen“ markierst du alle Fotos auf einmal.';
+
+  @override
+  String get tipAlbum04 =>
+      'Mit + unten rechts schickst du Fotos und Videos aus deiner Galerie.';
+
+  @override
+  String get tipAlbum05 =>
+      'Du kannst mehrere Fotos und Videos auf einmal auswählen und schicken.';
+
+  @override
+  String get tipAlbum06 =>
+      'Beim Senden kannst du jedem Foto einen Titel geben.';
+
+  @override
+  String get tipAlbum07 =>
+      'Einen Titel kannst du auch später noch ändern – im Vollbild oben.';
+
+  @override
+  String get tipAlbum08 =>
+      'Fotos werden vor dem Senden verkleinert – das spart Zeit und Datenvolumen.';
+
+  @override
+  String get tipAlbum09 =>
+      'Videos werden auf dem Handy verkleinert und sind dadurch schnell da.';
+
+  @override
+  String get tipAlbum10 =>
+      'Ohne Internet wartet dein Foto mit einer kleinen Uhr und wird später geschickt.';
+
+  @override
+  String get tipAlbum11 =>
+      'Ein Foto, das noch wartet, kannst du mit „Nicht senden“ zurückhalten.';
+
+  @override
+  String get tipAlbum12 =>
+      'Deine Fotos werden auch geschickt, wenn du Smile schon geschlossen hast.';
+
+  @override
+  String get tipAlbum13 =>
+      'Die Datumsangabe oben zeigt beim Blättern, von welchem Tag die Fotos sind.';
+
+  @override
+  String get tipAlbum14 =>
+      'Wer ein Foto geschickt hat, steht mit Bild und Namen daneben.';
+
+  @override
+  String get tipAlbum15 =>
+      'Mit „Ausblenden“ verschwindet ein Foto nur bei dir – die anderen sehen es weiter.';
+
+  @override
+  String get tipAlbum16 =>
+      'Ausgeblendete Fotos holst du über ⋮ jederzeit wieder zurück.';
+
+  @override
+  String get tipAlbum17 =>
+      '„Löschen“ entfernt ein Foto für alle – das darf nur, wer es geschickt hat, oder der Admin.';
+
+  @override
+  String get tipAlbum18 => 'Gelöschte Fotos liegen 30 Tage im Papierkorb.';
+
+  @override
+  String get tipAlbum19 =>
+      'Über ⋮ startest du eine Diashow des Albums direkt am Handy.';
+
+  @override
+  String get tipAlbum20 =>
+      'Tippe oben auf den Albumnamen, um zur Info-Seite des Albums zu kommen.';
+
+  @override
+  String get tipAlbum21 =>
+      'Beim Senden und Empfangen gibt es einen kurzen Ton – abschaltbar in den Einstellungen.';
+
+  @override
+  String get tipAlbum22 =>
+      'Videos zeigen ein kleines Symbol – tippe darauf, um sie abzuspielen.';
+
+  @override
+  String get tipAlbum23 =>
+      'Schon angesehene Videos sind auch ohne Internet abspielbar.';
+
+  @override
+  String get tipAlbum24 =>
+      'Neue Fotos anderer tauchen im offenen Album sofort auf.';
+
+  @override
+  String get tipViewer01 =>
+      'Wische nach links und rechts, um durch alle Fotos und Videos zu blättern.';
+
+  @override
+  String get tipViewer02 => 'Mit zwei Fingern vergrößerst du ein Foto.';
+
+  @override
+  String get tipViewer03 =>
+      'Doppeltippen vergrößert ein Foto – nochmal doppeltippen, und es ist wieder ganz.';
+
+  @override
+  String get tipViewer04 =>
+      'Mit dem Herz oben machst du ein Foto zum Lieblingsbild eines Frames.';
+
+  @override
+  String get tipViewer05 =>
+      'Mit dem Frame-Symbol oben zeigst du das Foto sofort am Frame.';
+
+  @override
+  String get tipViewer06 =>
+      'Die Leiste oben bleibt beim Wischen stehen – ihre Knöpfe gelten fürs gezeigte Foto.';
+
+  @override
+  String get tipViewer07 =>
+      'Im Vollbild siehst du das ganze Foto – im Album wird es manchmal angeschnitten.';
+
+  @override
+  String get tipViewer08 =>
+      'Ein Titel steht unten im Bild – genau wie später am Frame.';
+
+  @override
+  String get tipViewer09 => 'Videos starten erst, wenn du zu ihnen wischst.';
+
+  @override
+  String get tipViewer10 =>
+      'Tippe auf ein Video, um es anzuhalten oder weiterlaufen zu lassen.';
+
+  @override
+  String get tipViewer11 =>
+      'Am Balken unten springst du in einem Video vor und zurück.';
+
+  @override
+  String get tipViewer12 =>
+      'Mit dem Pfeil oben links kommst du zurück ins Album.';
+
+  @override
+  String get tipViewer13 =>
+      'Ein vergrößertes Foto verschiebst du mit einem Finger.';
+
+  @override
+  String get tipViewer14 =>
+      'Auch Fotos, die noch unterwegs sind, kannst du schon groß ansehen.';
+
+  @override
+  String get tipViewer15 =>
+      'Mit dem Titel-Symbol oben gibst du einem Foto nachträglich einen Titel.';
+
+  @override
+  String get tipAlbumInfo01 =>
+      'Hier siehst du, wer im Album ist und wer mitposten darf.';
+
+  @override
+  String get tipAlbumInfo02 =>
+      'Mit „Einladen“ holst du weitere Personen ins Album.';
+
+  @override
+  String get tipAlbumInfo03 =>
+      'Mit „Teilen“ zeigst du das Album einem anderen Space – zum Ansehen.';
+
+  @override
+  String get tipAlbumInfo04 =>
+      'Geteilte Spaces sehen das Album, können aber nichts hineinschicken.';
+
+  @override
+  String get tipAlbumInfo05 =>
+      'Tippe auf eine Person, um zu sehen, welche Rolle sie hat.';
+
+  @override
+  String get tipAlbumInfo06 =>
+      'Der Admin kann Personen aus dem Album entfernen.';
+
+  @override
+  String get tipAlbumInfo07 =>
+      'Unter „Läuft auf“ siehst du, auf welchen Frames das Album gerade läuft.';
+
+  @override
+  String get tipAlbumInfo08 =>
+      'Mit „Auf Frame zeigen“ legst du das Album mit einem Tipp auf einen Frame.';
+
+  @override
+  String get tipAlbumInfo09 =>
+      'Den Namen ändert der Admin mit einem Tipp auf den Namen.';
+
+  @override
+  String get tipAlbumInfo10 =>
+      'Das Albumbild kann ein eigenes Foto oder ein Foto aus dem Album sein.';
+
+  @override
+  String get tipAlbumInfo11 =>
+      'Ein geteiltes Album eines anderen Spaces nimmst du mit „Aus … entfernen“ wieder heraus.';
+
+  @override
+  String get tipAlbumInfo12 =>
+      'Gehört dir ein Album nicht, bleibt es beim Entfernen beim Besitzer erhalten.';
+
+  @override
+  String get tipAlbumInfo13 =>
+      '„Album verlassen“ beendet nur deine Mitgliedschaft – das Album bleibt bestehen.';
+
+  @override
+  String get tipAlbumInfo14 =>
+      '„Album löschen“ legt das Album 30 Tage in den Papierkorb.';
+
+  @override
+  String get tipAlbumInfo15 =>
+      'Beitrittsanfragen zum Album entscheidet der Admin unter Neuigkeiten.';
+
+  @override
+  String get tipInvite01 =>
+      'Leute, die du schon aus Smile kennst, lädst du einfach mit ihrem Namen ein.';
+
+  @override
+  String get tipInvite02 =>
+      'Mit einem QR-Code ist jemand neben dir sofort im Album – ohne Rückfrage.';
+
+  @override
+  String get tipInvite03 =>
+      'Einen Einladungslink kannst du per WhatsApp oder SMS verschicken.';
+
+  @override
+  String get tipInvite04 =>
+      'Ein abgetippter Code geht als Anfrage an den Admin – der entscheidet.';
+
+  @override
+  String get tipInvite05 =>
+      'Über „Aus Kontakten“ findest du Leute aus deinem Telefonbuch, die schon Smile haben.';
+
+  @override
+  String get tipInvite06 =>
+      'Wer Smile noch nicht hat, bekommt aus deinen Kontakten eine Einladung per SMS oder WhatsApp.';
+
+  @override
+  String get tipInvite07 => 'Ein Einladungscode gilt 24 Stunden.';
+
+  @override
+  String get tipInvite08 => 'Ein neuer Code macht den alten sofort ungültig.';
+
+  @override
+  String get tipInvite09 =>
+      'Co-Admin und Frame-Admin wird man nur per Name oder QR-Code vor Ort.';
+
+  @override
+  String get tipInvite10 =>
+      'Unbeantwortete Einladungen kannst du jederzeit zurückziehen.';
+
+  @override
+  String get tipInvite11 =>
+      'Eingeladene sehen deine Einladung unter Neuigkeiten und entscheiden selbst.';
+
+  @override
+  String get tipInvite12 =>
+      'Mit deinem Smile-Namen (@name) finden dich andere leichter.';
+
+  @override
+  String get tipInvite13 =>
+      'Unter „Meine Karte“ zeigst du deinen eigenen QR-Code zum Scannen.';
+
+  @override
+  String get tipInvite14 =>
+      'Offene Anfragen verfallen nach einiger Zeit von selbst.';
+
+  @override
+  String get tipFrames01 =>
+      'Ein Frame ist ein Tablet, das deine Alben als Bilderrahmen zeigt.';
+
+  @override
+  String get tipFrames02 =>
+      'Der grüne Punkt am Frame-Bild heißt: Der Frame ist gerade online.';
+
+  @override
+  String get tipFrames03 =>
+      'Unter „Frames“ siehst du alle Frames, die du verwaltest.';
+
+  @override
+  String get tipFrames04 =>
+      'Einen neuen Frame verbindest du mit einem QR-Code, den er beim ersten Start zeigt.';
+
+  @override
+  String get tipFrames05 =>
+      'Ein neues Tablet kann einen alten Frame ersetzen – Alben und Einstellungen bleiben.';
+
+  @override
+  String get tipFrames06 =>
+      'Unter „Einstellungen & Gerät“ siehst du Akku, Gerät und letzten Kontakt des Frames.';
+
+  @override
+  String get tipFrames07 =>
+      'Ist ein Frame länger offline, bekommst du eine Nachricht.';
+
+  @override
+  String get tipFrames08 =>
+      'Einen Frame kannst du vorübergehend sperren – und später wieder freigeben.';
+
+  @override
+  String get tipFrames09 =>
+      'Den Namen und das Bild eines Frames änderst du unter „Einstellungen & Gerät“.';
+
+  @override
+  String get tipFrames10 => 'Auf einem Frame können mehrere Alben laufen.';
+
+  @override
+  String get tipFrames11 =>
+      '„Alben verwalten“ legt fest, welche Alben ein Frame zeigt.';
+
+  @override
+  String get tipFrames12 =>
+      'Ein Frame zeigt auch Alben, die mit seinem Space geteilt sind.';
+
+  @override
+  String get tipFrames13 =>
+      'Der Frame merkt sich alle Fotos – er zeigt sie auch ohne Internet weiter.';
+
+  @override
+  String get tipFrames14 => 'Mit der Nachtruhe bleibt der Frame nachts dunkel.';
+
+  @override
+  String get tipFrames15 =>
+      'Tipp: Hefte die Smile-App am Tablet an, dann kann niemand versehentlich hinaus.';
+
+  @override
+  String get tipFrames16 =>
+      'Mit „Große Uhr“ zeigt der Frame Datum und Uhrzeit groß – praktisch für Oma.';
+
+  @override
+  String get tipFrames17 =>
+      'Wer ein Foto geschickt hat, steht am Frame oben links.';
+
+  @override
+  String get tipFrames18 =>
+      'Ein Frame dreht sich mit dem Tablet – wenn du es so einstellst.';
+
+  @override
+  String get tipFrames19 =>
+      'Ein gelöschter Frame zeigt wieder den QR-Code zum Verbinden.';
+
+  @override
+  String get tipFrame01 =>
+      'Tippe auf ein Album im Streifen oben, um es sofort am Frame zu zeigen.';
+
+  @override
+  String get tipFrame02 =>
+      '„Läuft gerade“ zeigt, was der Frame in diesem Moment abspielt.';
+
+  @override
+  String get tipFrame03 =>
+      'Mit der Fernbedienung hältst du den Frame an oder blätterst weiter.';
+
+  @override
+  String get tipFrame04 =>
+      '„Neueste 20 Fotos abspielen“ zeigt die neuesten Fotos aller Alben.';
+
+  @override
+  String get tipFrame05 =>
+      'Lieblingsbilder sind eine eigene Auswahl nur für diesen Frame.';
+
+  @override
+  String get tipFrame06 =>
+      'Unter „Alle ansehen“ siehst du alle Lieblingsbilder eines Frames.';
+
+  @override
+  String get tipFrame07 =>
+      'Mit „Ton bei Videos“ entscheidest du, ob Videos am Frame Ton haben.';
+
+  @override
+  String get tipFrame08 =>
+      'Die Kachel „Bedienstufe“ legt fest, was man am Frame selbst tun kann.';
+
+  @override
+  String get tipFrame09 =>
+      'Mit „Frame-Admin einladen“ darf jemand anderes diesen Frame bedienen – zum Beispiel die Eltern eines Kindes.';
+
+  @override
+  String get tipFrame10 =>
+      'Ein Frame-Admin bestimmt Bedienung und Alben – aber nicht Name, Gerät oder Löschen.';
+
+  @override
+  String get tipFrame11 =>
+      'Unter „Am Frame entsperren“ legst du einen Code für den Frame fest.';
+
+  @override
+  String get tipFrame12 =>
+      'Mit dem Code zeigt der Frame nach langem Druck auf die Uhr alle Knöpfe.';
+
+  @override
+  String get tipFrame13 =>
+      'Der entsperrte Frame sperrt sich nach 2 Minuten ohne Berührung von selbst.';
+
+  @override
+  String get tipFrame14 => 'Ohne Code lässt sich am Frame nichts entsperren.';
+
+  @override
+  String get tipFrame15 =>
+      'Das Abzeichen „Frame-Admin“ zeigt Frames, die du für jemand anderen bedienst.';
+
+  @override
+  String get tipControls01 =>
+      'Easy Stopping: Ein Tippen auf den Frame hält das Bild an, noch eins lässt es weiterlaufen.';
+
+  @override
+  String get tipControls02 =>
+      'Ein angehaltener Frame läuft nach 10 Minuten von selbst weiter.';
+
+  @override
+  String get tipControls03 =>
+      'Stufe 1 „Nur zuschauen“: Am Frame geht nur Antippen zum Anhalten.';
+
+  @override
+  String get tipControls04 =>
+      'Stufe 2: Pause und ein großer Weiter-Knopf – ideal für den Anfang.';
+
+  @override
+  String get tipControls05 => 'Stufe 3: Dazu Zurück und die neuesten Fotos.';
+
+  @override
+  String get tipControls06 =>
+      'Stufe 4: Dazu Übersicht, Album wechseln, Anzeigedauer und Titel.';
+
+  @override
+  String get tipControls07 =>
+      'Stufe 5: Am Frame lässt sich alles selbst einstellen.';
+
+  @override
+  String get tipControls08 =>
+      'Einzelne Knöpfe kannst du auch einzeln erlauben – das ist dann „Eigene Auswahl“.';
+
+  @override
+  String get tipControls09 =>
+      'Am Frame wischt man nach links zum nächsten Foto – ab Stufe 2.';
+
+  @override
+  String get tipControls10 =>
+      'Nach rechts wischen geht zum vorigen Foto – ab Stufe 3.';
+
+  @override
+  String get tipControls11 =>
+      'Mit „Merken“ macht man direkt am Frame ein Foto zum Lieblingsbild.';
+
+  @override
+  String get tipControls12 =>
+      'Die „Übersicht“ am Frame zeigt alle Fotos als Kacheln zum Antippen.';
+
+  @override
+  String get tipControls13 =>
+      'Mit „Album“ wechselt man am Frame selbst das Album.';
+
+  @override
+  String get tipControls14 =>
+      'Die Knöpfe am Frame verschwinden nach ein paar Sekunden von selbst.';
+
+  @override
+  String get tipControls15 =>
+      'Die Bedienstufe kannst du jederzeit ändern – der Frame folgt sofort.';
+
+  @override
+  String get tipPlayback01 =>
+      '„Was läuft“: ein Album, alle Alben im Wechsel, die neuesten oder die Lieblingsbilder.';
+
+  @override
+  String get tipPlayback02 =>
+      'Die Reihenfolge: neueste zuerst, älteste zuerst oder gemischt.';
+
+  @override
+  String get tipPlayback03 =>
+      'Die Anzeigedauer bestimmt, wie lange jedes Foto zu sehen ist.';
+
+  @override
+  String get tipPlayback04 =>
+      'Am Ende eines Albums fängt der Frame von vorn an – oder zeigt die Übersicht.';
+
+  @override
+  String get tipPlayback05 =>
+      'Videos können ganz laufen, nur so lang wie ein Foto, oder gar nicht.';
+
+  @override
+  String get tipPlayback06 =>
+      '„Füllen“: Fotos füllen den Bildschirm – oder werden ganz gezeigt.';
+
+  @override
+  String get tipPlayback07 =>
+      '„Automatisch füllen“ füllt nur, wenn das Foto zum Bildschirm passt.';
+
+  @override
+  String get tipPlayback08 => 'Das langsame Zoomen bringt Leben in die Fotos.';
+
+  @override
+  String get tipPlayback09 =>
+      '„Neues gleich zeigen“: Ein neues Foto erscheint sofort am Frame.';
+
+  @override
+  String get tipPlayback10 =>
+      '„Ton bei neuen Fotos“: Der Frame meldet sich mit einem Dreiklang.';
+
+  @override
+  String get tipPlayback11 =>
+      '„Erinnern, bis jemand schaut“: Der Ton kommt stündlich wieder, höchstens dreimal.';
+
+  @override
+  String get tipPlayback12 =>
+      '„Hinweis auf Neues“: Ein leuchtender Hinweis bleibt, bis jemand tippt.';
+
+  @override
+  String get tipPlayback13 =>
+      'Ein Tippen auf den Hinweis zeigt genau die neuen Fotos.';
+
+  @override
+  String get tipPlayback14 => 'Die Nachtruhe schaltet den Frame nachts dunkel.';
+
+  @override
+  String get tipPlayback15 =>
+      'In der Nachtruhe bleibt der Frame still – auch bei neuen Fotos.';
+
+  @override
+  String get tipPlayback16 =>
+      '„Große Uhr“ zeigt Datum und Uhrzeit groß am Frame.';
+
+  @override
+  String get tipPlayback17 =>
+      '„Absender zeigen“ blendet ein, wer ein Foto geschickt hat.';
+
+  @override
+  String get tipPlayback18 => '„Titel zeigen“ blendet die Titel der Fotos ein.';
+
+  @override
+  String get tipPlayback19 =>
+      '„Mit dem Gerät drehen“ dreht den Frame auch, wenn das Tablet das sonst nicht tut.';
+
+  @override
+  String get tipPlayback20 =>
+      'Jede Änderung hier ist in unter einer Sekunde am Frame.';
+
+  @override
+  String get tipFavorites01 =>
+      'Lieblingsbilder sind pro Frame – jeder Frame hat seine eigenen.';
+
+  @override
+  String get tipFavorites02 =>
+      'Mit dem Herz im Vollbild machst du ein Foto zum Lieblingsbild.';
+
+  @override
+  String get tipFavorites03 =>
+      'Bei mehreren Frames wählst du, für welchen Frame das Herz gilt.';
+
+  @override
+  String get tipFavorites04 =>
+      'Mit „Hinzufügen“ wählst du mehrere Lieblingsbilder auf einmal aus.';
+
+  @override
+  String get tipFavorites05 =>
+      'Lieblingsbilder kann man am Frame als eigene Runde abspielen.';
+
+  @override
+  String get tipFavorites06 =>
+      'Wer ein Lieblingsbild markiert hat, siehst du in der Liste.';
+
+  @override
+  String get tipFavorites07 =>
+      'Ein Lieblingsbild, das am Frame gemerkt wurde, steht dort mit „Am Frame“.';
+
+  @override
+  String get tipFavorites08 =>
+      'Über ⋮ entfernst du alle Lieblingsbilder eines Frames auf einmal.';
+
+  @override
+  String get tipFavorites09 =>
+      'Ist „Lieblingsbilder“ eingestellt, ist der Knopf am Frame eingerahmt.';
+
+  @override
+  String get tipSpaces01 =>
+      'Ein Space ist dein Haushalt oder deine Familie – mit Alben und Frames.';
+
+  @override
+  String get tipSpaces02 => 'Jeder Space hat einen Admin, der alles darf.';
+
+  @override
+  String get tipSpaces03 =>
+      'Co-Admins verwalten den Space mit – Alben, Frames und Personen.';
+
+  @override
+  String get tipSpaces04 =>
+      'Mit „Co-Admin einladen“ bekommst du Hilfe beim Verwalten.';
+
+  @override
+  String get tipSpaces05 =>
+      'Der Admin kann seine Rolle an einen Co-Admin übergeben.';
+
+  @override
+  String get tipSpaces06 =>
+      'Ein Co-Admin kann die Rolle jederzeit selbst abgeben.';
+
+  @override
+  String get tipSpaces07 => 'Einen Space löschen kann nur der Admin.';
+
+  @override
+  String get tipSpaces08 => 'Ein gelöschter Space liegt 30 Tage im Papierkorb.';
+
+  @override
+  String get tipSpaces09 =>
+      'Du kannst in mehreren Spaces sein – zum Beispiel bei dir und bei den Eltern.';
+
+  @override
+  String get tipSpaces10 =>
+      'Ein Space kann Alben eines anderen Spaces zum Ansehen bekommen.';
+
+  @override
+  String get tipSpaces11 => 'Jeder Space kann ein eigenes Bild haben.';
+
+  @override
+  String get tipSpaces12 => 'Neue Alben legst du in einem Space an.';
+
+  @override
+  String get tipSpaces13 => 'Neue Frames verbindest du über einen Space.';
+
+  @override
+  String get tipSpaces14 =>
+      'Wer einen Space verwaltet, ist automatisch in allen seinen Alben.';
+
+  @override
+  String get tipSpaces15 =>
+      'Den Namen des Spaces ändert der Admin mit einem Tipp darauf.';
+
+  @override
+  String get tipNews01 =>
+      'Unter Neuigkeiten findest du Einladungen, Anfragen und alle Nachrichten der letzten 30 Tage.';
+
+  @override
+  String get tipNews02 =>
+      'Ein roter Punkt an Neuigkeiten heißt: Hier wartet etwas auf deine Antwort.';
+
+  @override
+  String get tipNews03 => 'Einladungen nimmst du hier an – oder lehnst sie ab.';
+
+  @override
+  String get tipNews04 =>
+      'Als Admin entscheidest du hier über Beitrittsanfragen.';
+
+  @override
+  String get tipNews05 => 'Der Papierkorb liegt bei den Neuigkeiten.';
+
+  @override
+  String get tipNews06 =>
+      'Aus dem Papierkorb holst du Gelöschtes 30 Tage lang zurück.';
+
+  @override
+  String get tipNews07 =>
+      'Nach 30 Tagen wird der Papierkorb von selbst geleert.';
+
+  @override
+  String get tipNews08 =>
+      'Tippe auf eine Nachricht, um direkt zum Album oder Frame zu kommen.';
+
+  @override
+  String get tipNews09 =>
+      'Auch Pushes, die du weggewischt hast, findest du hier wieder.';
+
+  @override
+  String get tipNews10 =>
+      'Viele neue Fotos derselben Person kommen als eine Nachricht.';
+
+  @override
+  String get tipSettings01 =>
+      'Dein Name ist Pflicht – so wissen alle, von wem ein Foto kommt.';
+
+  @override
+  String get tipSettings02 =>
+      'Ohne eigenes Bild zeigt Smile deine Anfangsbuchstaben.';
+
+  @override
+  String get tipSettings03 => 'Tippe auf dein Bild, um es zu ändern.';
+
+  @override
+  String get tipSettings04 =>
+      'Unter „Smile-Name“ wählst du einen @Namen, mit dem dich andere finden.';
+
+  @override
+  String get tipSettings05 =>
+      '„Meine Karte“ zeigt deinen QR-Code – andere scannen ihn zum Einladen.';
+
+  @override
+  String get tipSettings06 =>
+      'Unter „Töne im Album“ schaltest du die Plopp-Töne ein oder aus.';
+
+  @override
+  String get tipSettings07 => 'Bei lautlosem Handy bleibt Smile still.';
+
+  @override
+  String get tipSettings08 =>
+      'Unter „Videoqualität“ wählst du, wie stark Videos verkleinert werden.';
+
+  @override
+  String get tipSettings09 =>
+      '„Tipps von vorne zeigen“ bringt alle Tipps zurück.';
+
+  @override
+  String get tipSettings10 =>
+      '„Keine Tipps mehr“ schaltet alle Tipps ab – hier wieder ein.';
+
+  @override
+  String get tipSettings11 =>
+      'Benachrichtigungen kommen für neue Fotos, Einladungen und Änderungen an deinen Frames.';
+
+  @override
+  String get tipSettings12 =>
+      'Dein Konto kannst du in den Einstellungen löschen – mit allem, was dir gehört.';
+
+  @override
+  String get tipSettings13 =>
+      'Abmelden ist jederzeit möglich – deine Alben bleiben auf dem Server.';
+
+  @override
+  String get tipSettings14 =>
+      'Smile meldet sich mit einem Code per E-Mail an – ganz ohne Passwort.';
+
+  @override
+  String get tipSettings15 =>
+      'Smile ist dunkel gestaltet – so leuchten die Fotos am schönsten.';
+
+  @override
+  String get tipGeneral01 =>
+      'Smile ist wie WhatsApp für Fotos – nur ohne Chat und mit Bilderrahmen.';
+
+  @override
+  String get tipGeneral02 => 'Alles, was du änderst, sehen die anderen sofort.';
+
+  @override
+  String get tipGeneral03 =>
+      'Smile arbeitet auch offline – Änderungen werden nachgeschickt.';
+
+  @override
+  String get tipGeneral04 =>
+      'Fotos in Smile sind privat – nur Mitglieder eines Albums sehen sie.';
+
+  @override
+  String get tipGeneral05 =>
+      'Wer ein Album verlässt, sieht dessen Fotos danach nicht mehr.';
+
+  @override
+  String get tipGeneral06 =>
+      'Lange drücken öffnet fast überall weitere Möglichkeiten.';
+
+  @override
+  String get tipGeneral07 =>
+      'Das ⋮ oben rechts hat auf jeder Seite weitere Funktionen.';
+
+  @override
+  String get tipGeneral08 => 'Nach unten ziehen aktualisiert fast jede Liste.';
+
+  @override
+  String get tipGeneral09 =>
+      'Ein Tipp auf einen Namen oder ein Bild zeigt meistens mehr.';
+
+  @override
+  String get tipGeneral10 =>
+      'Smile schickt nur Fotos und Videos – keine Nachrichten.';
+
+  @override
+  String get tipGeneral11 =>
+      'Ein Album ist kein Einzelchat: Es kann immer weitere Leute aufnehmen.';
+
+  @override
+  String get tipGeneral12 =>
+      'Ein Frame braucht kein eigenes Konto – er wird mit einem Code verbunden.';
+
+  @override
+  String get tipGeneral13 => 'Fotos werden verschlüsselt übertragen.';
+
+  @override
+  String membershipRequestFailed(String reason) {
+    return 'Anfrage fehlgeschlagen: $reason';
+  }
+
+  @override
+  String withdrawFailed(String reason) {
+    return 'Zurückziehen fehlgeschlagen: $reason';
+  }
+
+  @override
+  String get deleteFailedShort => 'Löschen fehlgeschlagen.';
+
+  @override
+  String get hideFailedShort => 'Ausblenden fehlgeschlagen.';
+
+  @override
+  String get unhideFailedShort => 'Einblenden fehlgeschlagen.';
+
+  @override
+  String photosNotDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count Fotos konnten nicht gelöscht werden (nicht deine eigenen).',
+      one: '1 Foto konnte nicht gelöscht werden (nicht dein eigenes).',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String photosNotPossible(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Bei $count Fotos nicht möglich.',
+      one: 'Bei 1 Foto nicht möglich.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get loginIntro =>
+      'Melde dich mit deiner E-Mail-Adresse an. Wir senden dir einen 6-stelligen Code.';
+
+  @override
+  String get loginRequestCode => 'Code anfordern';
+
+  @override
+  String loginCodeSent(String email) {
+    return 'Wir haben einen Code an $email gesendet. Bitte gib ihn ein.';
+  }
+
+  @override
+  String get loginConfirm => 'Bestätigen';
+
+  @override
+  String get loginOtherEmail => 'Andere E-Mail-Adresse verwenden';
+
+  @override
+  String avatarUploadFailed(String reason) {
+    return 'Bild konnte nicht hochgeladen werden: $reason';
+  }
+
+  @override
+  String get enterYourName => 'Bitte gib deinen Namen ein.';
+
+  @override
+  String saveFailedWith(String reason) {
+    return 'Speichern fehlgeschlagen: $reason';
+  }
+
+  @override
+  String get avatarUrlInvalid => 'Das ist keine gültige Internetadresse.';
+
+  @override
+  String get avatarUrlUnreachable =>
+      'Das Bild konnte nicht geladen werden. Bitte prüfe die Adresse.';
+
+  @override
+  String get avatarUrlNotImage => 'Die Adresse zeigt auf kein Bild.';
+
+  @override
+  String get notificationChannelDescription =>
+      'Neue Fotos, Einladungen, Anfragen und Änderungen in deinen Alben und Spaces';
+
+  @override
+  String get errUserNotFound => 'Diese Person hat noch keinen Smile-Account.';
+
+  @override
+  String get errNotAlbumManager =>
+      'Du bist nicht berechtigt, dieses Album zu verwalten.';
+
+  @override
+  String get errRequestPending =>
+      'Es gibt bereits eine offene Einladung/Anfrage.';
+
+  @override
+  String get errNotSpaceAdmin => 'Nur der Admin kann das tun.';
+
+  @override
+  String get errAlreadyAdmin => 'Diese Person ist bereits Admin.';
+
+  @override
+  String get errAlreadyCoAdmin => 'Diese Person ist bereits Co-Admin.';
+
+  @override
+  String get errInvitePending => 'Es gibt bereits eine offene Einladung.';
+
+  @override
+  String get errNotCoAdmin => 'Diese Person ist kein Co-Admin.';
+
+  @override
+  String get errGeneric =>
+      'Das hat leider nicht geklappt. Bitte versuche es noch einmal.';
+
+  @override
+  String get noLongerAvailable =>
+      'Das ist nicht mehr verfügbar – gelöscht oder kein Zugriff mehr.';
+
+  @override
+  String get dateToday => 'Heute';
+
+  @override
+  String get dateYesterday => 'Gestern';
+
+  @override
+  String get timeJustNow => 'gerade eben';
+
+  @override
+  String timeMinutesAgo(int minutes) {
+    return 'vor $minutes Min.';
+  }
+
+  @override
+  String timeHoursAgo(int hours) {
+    return 'vor $hours Std.';
+  }
+
+  @override
+  String get dateNumericPattern => 'dd.MM.yyyy';
+
+  @override
+  String get dateNumericShortPattern => 'dd.MM.yy';
+
+  @override
+  String get licenseOther => 'Lizenz';
 }

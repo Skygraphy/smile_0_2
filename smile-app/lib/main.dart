@@ -407,7 +407,7 @@ class _ProfileGateState extends State<_ProfileGate> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Profil konnte nicht geladen werden: ${errorReason(context, e)}';
+        _errorMessage = SmileTexts.of(context).profileLoadError(errorReason(context, e));
       });
     }
   }
@@ -427,7 +427,7 @@ class _ProfileGateState extends State<_ProfileGate> {
               children: [
                 Text(_errorMessage!, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
-                ElevatedButton(onPressed: _check, child: const Text('Erneut versuchen')),
+                ElevatedButton(onPressed: _check, child: Text(SmileTexts.of(context).retry)),
               ],
             ),
           ),

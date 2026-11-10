@@ -69,7 +69,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     try {
       url = await widget.profileService.uploadMyAvatarPicked(picture);
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'Bild konnte nicht hochgeladen werden: ${errorReason(context, e)}');
+      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).avatarUploadFailed(errorReason(context, e)));
     }
     if (!mounted) return;
     setState(() {
@@ -85,7 +85,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   Future<void> _save() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      setState(() => _errorMessage = 'Bitte gib deinen Namen ein.');
+      setState(() => _errorMessage = SmileTexts.of(context).enterYourName);
       return;
     }
     setState(() {
@@ -96,7 +96,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       await widget.profileService.setDisplayName(name, withAvatar: _avatarUrl != null);
       widget.onDone();
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'Speichern fehlgeschlagen: ${errorReason(context, e)}');
+      if (mounted) setState(() => _errorMessage = SmileTexts.of(context).saveFailedWith(errorReason(context, e)));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

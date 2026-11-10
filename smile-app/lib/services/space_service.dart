@@ -1,3 +1,4 @@
+import 'app_texts.dart';
 import '../main.dart';
 import 'edge_functions.dart';
 import 'local_changes.dart';
@@ -96,7 +97,7 @@ class MyCoOwnerInvite {
   final String? founderAvatarUrl;
   final DateTime requestedAt;
 
-  String get founderLabel => founderDisplayName ?? 'Jemand';
+  String get founderLabel => founderDisplayName ?? AppTexts.current.someone;
 
   factory MyCoOwnerInvite.fromJson(Map<String, dynamic> json) => MyCoOwnerInvite(
         id: json['id'] as String,
@@ -241,13 +242,13 @@ class SpaceServiceException implements Exception {
   final String code;
 
   String get message => switch (code) {
-        'user_not_found' => 'Diese Person hat noch keinen Smile-Account.',
-        'not_space_founder' => 'Nur der Admin kann das tun.',
-        'already_founder' => 'Diese Person ist bereits Admin.',
-        'already_co_owner' => 'Diese Person ist bereits Co-Admin.',
-        'invite_already_pending' => 'Es gibt bereits eine offene Einladung.',
-        'not_a_co_owner' => 'Diese Person ist kein Co-Admin.',
-        _ => 'Das hat leider nicht geklappt. Bitte versuche es noch einmal.',
+        'user_not_found' => AppTexts.current.errUserNotFound,
+        'not_space_founder' => AppTexts.current.errNotSpaceAdmin,
+        'already_founder' => AppTexts.current.errAlreadyAdmin,
+        'already_co_owner' => AppTexts.current.errAlreadyCoAdmin,
+        'invite_already_pending' => AppTexts.current.errInvitePending,
+        'not_a_co_owner' => AppTexts.current.errNotCoAdmin,
+        _ => AppTexts.current.errGeneric,
       };
 
   @override

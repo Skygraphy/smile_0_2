@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 
 /// A plain "enter someone's email" prompt -- shared by every flow that
 /// looks a person up by email server-side (album_info_screen.dart's
@@ -38,13 +39,13 @@ class _EmailDialogState extends State<EmailDialog> {
             controller: _controller,
             autofocus: true,
             keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(labelText: 'E-Mail-Adresse'),
+            decoration: InputDecoration(labelText: SmileTexts.of(context).emailAddress),
             onSubmitted: (value) => Navigator.of(context).pop(value),
           ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Abbrechen')),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(SmileTexts.of(context).actionCancel)),
         TextButton(onPressed: () => Navigator.of(context).pop(_controller.text), child: Text(widget.confirmLabel)),
       ],
     );

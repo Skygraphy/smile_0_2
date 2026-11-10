@@ -4605,6 +4605,1536 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'{n} von {total}'**
   String slideshowPosition(int n, int total);
+
+  /// No description provided for @tipAlbums01.
+  ///
+  /// In de, this message translates to:
+  /// **'Ganz oben steht immer das Album, in dem zuletzt etwas passiert ist – wie bei WhatsApp.'**
+  String get tipAlbums01;
+
+  /// No description provided for @tipAlbums02.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Punkt neben einem Album heißt: Hier gibt es Neues, das du noch nicht gesehen hast.'**
+  String get tipAlbums02;
+
+  /// No description provided for @tipAlbums03.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter dem Albumnamen siehst du, wer zuletzt etwas geschickt hat.'**
+  String get tipAlbums03;
+
+  /// No description provided for @tipAlbums04.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit der Kamera oben rechts machst du schnell ein Foto und wählst danach das Album aus.'**
+  String get tipAlbums04;
+
+  /// No description provided for @tipAlbums05.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein neues Album legst du auf der Seite deines Spaces an.'**
+  String get tipAlbums05;
+
+  /// No description provided for @tipAlbums06.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Album gehört immer zu einem Space – zum Beispiel deiner Familie.'**
+  String get tipAlbums06;
+
+  /// No description provided for @tipAlbums07.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippe auf das Bild eines Albums, um es direkt zu öffnen.'**
+  String get tipAlbums07;
+
+  /// No description provided for @tipAlbums08.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Album ohne Fotos zeigt seine Anfangsbuchstaben – bis das erste Foto kommt.'**
+  String get tipAlbums08;
+
+  /// No description provided for @tipAlbums09.
+  ///
+  /// In de, this message translates to:
+  /// **'Über ⋮ → Code scannen trittst du mit einem QR-Code einem Album bei.'**
+  String get tipAlbums09;
+
+  /// No description provided for @tipAlbums10.
+  ///
+  /// In de, this message translates to:
+  /// **'Unten wechselst du zwischen Alben, Frames und Spaces.'**
+  String get tipAlbums10;
+
+  /// No description provided for @tipAlbums11.
+  ///
+  /// In de, this message translates to:
+  /// **'Ziehe die Liste nach unten, um sie sofort zu aktualisieren.'**
+  String get tipAlbums11;
+
+  /// No description provided for @tipAlbums12.
+  ///
+  /// In de, this message translates to:
+  /// **'Neue Fotos anderer erscheinen von selbst – du musst nichts tun.'**
+  String get tipAlbums12;
+
+  /// No description provided for @tipAlbums13.
+  ///
+  /// In de, this message translates to:
+  /// **'Auch ohne Internet siehst du die Alben, die du zuletzt geöffnet hast.'**
+  String get tipAlbums13;
+
+  /// No description provided for @tipAlbums14.
+  ///
+  /// In de, this message translates to:
+  /// **'Alben, die du verlässt, verschwinden aus deiner Liste – die anderen behalten sie.'**
+  String get tipAlbums14;
+
+  /// No description provided for @tipAlbums15.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Album kann gleichzeitig auf mehreren Frames laufen.'**
+  String get tipAlbums15;
+
+  /// No description provided for @tipAlbums16.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Bild eines Albums kann der Admin jederzeit ändern.'**
+  String get tipAlbums16;
+
+  /// No description provided for @tipAlbums17.
+  ///
+  /// In de, this message translates to:
+  /// **'Neue Alben stehen erst ganz oben, sobald darin etwas passiert.'**
+  String get tipAlbums17;
+
+  /// No description provided for @tipAlbums18.
+  ///
+  /// In de, this message translates to:
+  /// **'Tipp: Lege für jede Gelegenheit ein eigenes Album an – Urlaub, Geburtstag, Kinder.'**
+  String get tipAlbums18;
+
+  /// No description provided for @tipAlbums19.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Album hat keine Größengrenze – schick so viele Fotos, wie du willst.'**
+  String get tipAlbums19;
+
+  /// No description provided for @tipAlbum01.
+  ///
+  /// In de, this message translates to:
+  /// **'Deine eigenen Fotos stehen rechts, die der anderen links – wie in einem Chat.'**
+  String get tipAlbum01;
+
+  /// No description provided for @tipAlbum02.
+  ///
+  /// In de, this message translates to:
+  /// **'Halte ein Foto lange gedrückt, um mehrere auszuwählen.'**
+  String get tipAlbum02;
+
+  /// No description provided for @tipAlbum03.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Alle auswählen“ markierst du alle Fotos auf einmal.'**
+  String get tipAlbum03;
+
+  /// No description provided for @tipAlbum04.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit + unten rechts schickst du Fotos und Videos aus deiner Galerie.'**
+  String get tipAlbum04;
+
+  /// No description provided for @tipAlbum05.
+  ///
+  /// In de, this message translates to:
+  /// **'Du kannst mehrere Fotos und Videos auf einmal auswählen und schicken.'**
+  String get tipAlbum05;
+
+  /// No description provided for @tipAlbum06.
+  ///
+  /// In de, this message translates to:
+  /// **'Beim Senden kannst du jedem Foto einen Titel geben.'**
+  String get tipAlbum06;
+
+  /// No description provided for @tipAlbum07.
+  ///
+  /// In de, this message translates to:
+  /// **'Einen Titel kannst du auch später noch ändern – im Vollbild oben.'**
+  String get tipAlbum07;
+
+  /// No description provided for @tipAlbum08.
+  ///
+  /// In de, this message translates to:
+  /// **'Fotos werden vor dem Senden verkleinert – das spart Zeit und Datenvolumen.'**
+  String get tipAlbum08;
+
+  /// No description provided for @tipAlbum09.
+  ///
+  /// In de, this message translates to:
+  /// **'Videos werden auf dem Handy verkleinert und sind dadurch schnell da.'**
+  String get tipAlbum09;
+
+  /// No description provided for @tipAlbum10.
+  ///
+  /// In de, this message translates to:
+  /// **'Ohne Internet wartet dein Foto mit einer kleinen Uhr und wird später geschickt.'**
+  String get tipAlbum10;
+
+  /// No description provided for @tipAlbum11.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Foto, das noch wartet, kannst du mit „Nicht senden“ zurückhalten.'**
+  String get tipAlbum11;
+
+  /// No description provided for @tipAlbum12.
+  ///
+  /// In de, this message translates to:
+  /// **'Deine Fotos werden auch geschickt, wenn du Smile schon geschlossen hast.'**
+  String get tipAlbum12;
+
+  /// No description provided for @tipAlbum13.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Datumsangabe oben zeigt beim Blättern, von welchem Tag die Fotos sind.'**
+  String get tipAlbum13;
+
+  /// No description provided for @tipAlbum14.
+  ///
+  /// In de, this message translates to:
+  /// **'Wer ein Foto geschickt hat, steht mit Bild und Namen daneben.'**
+  String get tipAlbum14;
+
+  /// No description provided for @tipAlbum15.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Ausblenden“ verschwindet ein Foto nur bei dir – die anderen sehen es weiter.'**
+  String get tipAlbum15;
+
+  /// No description provided for @tipAlbum16.
+  ///
+  /// In de, this message translates to:
+  /// **'Ausgeblendete Fotos holst du über ⋮ jederzeit wieder zurück.'**
+  String get tipAlbum16;
+
+  /// No description provided for @tipAlbum17.
+  ///
+  /// In de, this message translates to:
+  /// **'„Löschen“ entfernt ein Foto für alle – das darf nur, wer es geschickt hat, oder der Admin.'**
+  String get tipAlbum17;
+
+  /// No description provided for @tipAlbum18.
+  ///
+  /// In de, this message translates to:
+  /// **'Gelöschte Fotos liegen 30 Tage im Papierkorb.'**
+  String get tipAlbum18;
+
+  /// No description provided for @tipAlbum19.
+  ///
+  /// In de, this message translates to:
+  /// **'Über ⋮ startest du eine Diashow des Albums direkt am Handy.'**
+  String get tipAlbum19;
+
+  /// No description provided for @tipAlbum20.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippe oben auf den Albumnamen, um zur Info-Seite des Albums zu kommen.'**
+  String get tipAlbum20;
+
+  /// No description provided for @tipAlbum21.
+  ///
+  /// In de, this message translates to:
+  /// **'Beim Senden und Empfangen gibt es einen kurzen Ton – abschaltbar in den Einstellungen.'**
+  String get tipAlbum21;
+
+  /// No description provided for @tipAlbum22.
+  ///
+  /// In de, this message translates to:
+  /// **'Videos zeigen ein kleines Symbol – tippe darauf, um sie abzuspielen.'**
+  String get tipAlbum22;
+
+  /// No description provided for @tipAlbum23.
+  ///
+  /// In de, this message translates to:
+  /// **'Schon angesehene Videos sind auch ohne Internet abspielbar.'**
+  String get tipAlbum23;
+
+  /// No description provided for @tipAlbum24.
+  ///
+  /// In de, this message translates to:
+  /// **'Neue Fotos anderer tauchen im offenen Album sofort auf.'**
+  String get tipAlbum24;
+
+  /// No description provided for @tipViewer01.
+  ///
+  /// In de, this message translates to:
+  /// **'Wische nach links und rechts, um durch alle Fotos und Videos zu blättern.'**
+  String get tipViewer01;
+
+  /// No description provided for @tipViewer02.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit zwei Fingern vergrößerst du ein Foto.'**
+  String get tipViewer02;
+
+  /// No description provided for @tipViewer03.
+  ///
+  /// In de, this message translates to:
+  /// **'Doppeltippen vergrößert ein Foto – nochmal doppeltippen, und es ist wieder ganz.'**
+  String get tipViewer03;
+
+  /// No description provided for @tipViewer04.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit dem Herz oben machst du ein Foto zum Lieblingsbild eines Frames.'**
+  String get tipViewer04;
+
+  /// No description provided for @tipViewer05.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit dem Frame-Symbol oben zeigst du das Foto sofort am Frame.'**
+  String get tipViewer05;
+
+  /// No description provided for @tipViewer06.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Leiste oben bleibt beim Wischen stehen – ihre Knöpfe gelten fürs gezeigte Foto.'**
+  String get tipViewer06;
+
+  /// No description provided for @tipViewer07.
+  ///
+  /// In de, this message translates to:
+  /// **'Im Vollbild siehst du das ganze Foto – im Album wird es manchmal angeschnitten.'**
+  String get tipViewer07;
+
+  /// No description provided for @tipViewer08.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Titel steht unten im Bild – genau wie später am Frame.'**
+  String get tipViewer08;
+
+  /// No description provided for @tipViewer09.
+  ///
+  /// In de, this message translates to:
+  /// **'Videos starten erst, wenn du zu ihnen wischst.'**
+  String get tipViewer09;
+
+  /// No description provided for @tipViewer10.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippe auf ein Video, um es anzuhalten oder weiterlaufen zu lassen.'**
+  String get tipViewer10;
+
+  /// No description provided for @tipViewer11.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Balken unten springst du in einem Video vor und zurück.'**
+  String get tipViewer11;
+
+  /// No description provided for @tipViewer12.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit dem Pfeil oben links kommst du zurück ins Album.'**
+  String get tipViewer12;
+
+  /// No description provided for @tipViewer13.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein vergrößertes Foto verschiebst du mit einem Finger.'**
+  String get tipViewer13;
+
+  /// No description provided for @tipViewer14.
+  ///
+  /// In de, this message translates to:
+  /// **'Auch Fotos, die noch unterwegs sind, kannst du schon groß ansehen.'**
+  String get tipViewer14;
+
+  /// No description provided for @tipViewer15.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit dem Titel-Symbol oben gibst du einem Foto nachträglich einen Titel.'**
+  String get tipViewer15;
+
+  /// No description provided for @tipAlbumInfo01.
+  ///
+  /// In de, this message translates to:
+  /// **'Hier siehst du, wer im Album ist und wer mitposten darf.'**
+  String get tipAlbumInfo01;
+
+  /// No description provided for @tipAlbumInfo02.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Einladen“ holst du weitere Personen ins Album.'**
+  String get tipAlbumInfo02;
+
+  /// No description provided for @tipAlbumInfo03.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Teilen“ zeigst du das Album einem anderen Space – zum Ansehen.'**
+  String get tipAlbumInfo03;
+
+  /// No description provided for @tipAlbumInfo04.
+  ///
+  /// In de, this message translates to:
+  /// **'Geteilte Spaces sehen das Album, können aber nichts hineinschicken.'**
+  String get tipAlbumInfo04;
+
+  /// No description provided for @tipAlbumInfo05.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippe auf eine Person, um zu sehen, welche Rolle sie hat.'**
+  String get tipAlbumInfo05;
+
+  /// No description provided for @tipAlbumInfo06.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Admin kann Personen aus dem Album entfernen.'**
+  String get tipAlbumInfo06;
+
+  /// No description provided for @tipAlbumInfo07.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter „Läuft auf“ siehst du, auf welchen Frames das Album gerade läuft.'**
+  String get tipAlbumInfo07;
+
+  /// No description provided for @tipAlbumInfo08.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Auf Frame zeigen“ legst du das Album mit einem Tipp auf einen Frame.'**
+  String get tipAlbumInfo08;
+
+  /// No description provided for @tipAlbumInfo09.
+  ///
+  /// In de, this message translates to:
+  /// **'Den Namen ändert der Admin mit einem Tipp auf den Namen.'**
+  String get tipAlbumInfo09;
+
+  /// No description provided for @tipAlbumInfo10.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Albumbild kann ein eigenes Foto oder ein Foto aus dem Album sein.'**
+  String get tipAlbumInfo10;
+
+  /// No description provided for @tipAlbumInfo11.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein geteiltes Album eines anderen Spaces nimmst du mit „Aus … entfernen“ wieder heraus.'**
+  String get tipAlbumInfo11;
+
+  /// No description provided for @tipAlbumInfo12.
+  ///
+  /// In de, this message translates to:
+  /// **'Gehört dir ein Album nicht, bleibt es beim Entfernen beim Besitzer erhalten.'**
+  String get tipAlbumInfo12;
+
+  /// No description provided for @tipAlbumInfo13.
+  ///
+  /// In de, this message translates to:
+  /// **'„Album verlassen“ beendet nur deine Mitgliedschaft – das Album bleibt bestehen.'**
+  String get tipAlbumInfo13;
+
+  /// No description provided for @tipAlbumInfo14.
+  ///
+  /// In de, this message translates to:
+  /// **'„Album löschen“ legt das Album 30 Tage in den Papierkorb.'**
+  String get tipAlbumInfo14;
+
+  /// No description provided for @tipAlbumInfo15.
+  ///
+  /// In de, this message translates to:
+  /// **'Beitrittsanfragen zum Album entscheidet der Admin unter Neuigkeiten.'**
+  String get tipAlbumInfo15;
+
+  /// No description provided for @tipInvite01.
+  ///
+  /// In de, this message translates to:
+  /// **'Leute, die du schon aus Smile kennst, lädst du einfach mit ihrem Namen ein.'**
+  String get tipInvite01;
+
+  /// No description provided for @tipInvite02.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit einem QR-Code ist jemand neben dir sofort im Album – ohne Rückfrage.'**
+  String get tipInvite02;
+
+  /// No description provided for @tipInvite03.
+  ///
+  /// In de, this message translates to:
+  /// **'Einen Einladungslink kannst du per WhatsApp oder SMS verschicken.'**
+  String get tipInvite03;
+
+  /// No description provided for @tipInvite04.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein abgetippter Code geht als Anfrage an den Admin – der entscheidet.'**
+  String get tipInvite04;
+
+  /// No description provided for @tipInvite05.
+  ///
+  /// In de, this message translates to:
+  /// **'Über „Aus Kontakten“ findest du Leute aus deinem Telefonbuch, die schon Smile haben.'**
+  String get tipInvite05;
+
+  /// No description provided for @tipInvite06.
+  ///
+  /// In de, this message translates to:
+  /// **'Wer Smile noch nicht hat, bekommt aus deinen Kontakten eine Einladung per SMS oder WhatsApp.'**
+  String get tipInvite06;
+
+  /// No description provided for @tipInvite07.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Einladungscode gilt 24 Stunden.'**
+  String get tipInvite07;
+
+  /// No description provided for @tipInvite08.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein neuer Code macht den alten sofort ungültig.'**
+  String get tipInvite08;
+
+  /// No description provided for @tipInvite09.
+  ///
+  /// In de, this message translates to:
+  /// **'Co-Admin und Frame-Admin wird man nur per Name oder QR-Code vor Ort.'**
+  String get tipInvite09;
+
+  /// No description provided for @tipInvite10.
+  ///
+  /// In de, this message translates to:
+  /// **'Unbeantwortete Einladungen kannst du jederzeit zurückziehen.'**
+  String get tipInvite10;
+
+  /// No description provided for @tipInvite11.
+  ///
+  /// In de, this message translates to:
+  /// **'Eingeladene sehen deine Einladung unter Neuigkeiten und entscheiden selbst.'**
+  String get tipInvite11;
+
+  /// No description provided for @tipInvite12.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit deinem Smile-Namen (@name) finden dich andere leichter.'**
+  String get tipInvite12;
+
+  /// No description provided for @tipInvite13.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter „Meine Karte“ zeigst du deinen eigenen QR-Code zum Scannen.'**
+  String get tipInvite13;
+
+  /// No description provided for @tipInvite14.
+  ///
+  /// In de, this message translates to:
+  /// **'Offene Anfragen verfallen nach einiger Zeit von selbst.'**
+  String get tipInvite14;
+
+  /// No description provided for @tipFrames01.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Frame ist ein Tablet, das deine Alben als Bilderrahmen zeigt.'**
+  String get tipFrames01;
+
+  /// No description provided for @tipFrames02.
+  ///
+  /// In de, this message translates to:
+  /// **'Der grüne Punkt am Frame-Bild heißt: Der Frame ist gerade online.'**
+  String get tipFrames02;
+
+  /// No description provided for @tipFrames03.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter „Frames“ siehst du alle Frames, die du verwaltest.'**
+  String get tipFrames03;
+
+  /// No description provided for @tipFrames04.
+  ///
+  /// In de, this message translates to:
+  /// **'Einen neuen Frame verbindest du mit einem QR-Code, den er beim ersten Start zeigt.'**
+  String get tipFrames04;
+
+  /// No description provided for @tipFrames05.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein neues Tablet kann einen alten Frame ersetzen – Alben und Einstellungen bleiben.'**
+  String get tipFrames05;
+
+  /// No description provided for @tipFrames06.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter „Einstellungen & Gerät“ siehst du Akku, Gerät und letzten Kontakt des Frames.'**
+  String get tipFrames06;
+
+  /// No description provided for @tipFrames07.
+  ///
+  /// In de, this message translates to:
+  /// **'Ist ein Frame länger offline, bekommst du eine Nachricht.'**
+  String get tipFrames07;
+
+  /// No description provided for @tipFrames08.
+  ///
+  /// In de, this message translates to:
+  /// **'Einen Frame kannst du vorübergehend sperren – und später wieder freigeben.'**
+  String get tipFrames08;
+
+  /// No description provided for @tipFrames09.
+  ///
+  /// In de, this message translates to:
+  /// **'Den Namen und das Bild eines Frames änderst du unter „Einstellungen & Gerät“.'**
+  String get tipFrames09;
+
+  /// No description provided for @tipFrames10.
+  ///
+  /// In de, this message translates to:
+  /// **'Auf einem Frame können mehrere Alben laufen.'**
+  String get tipFrames10;
+
+  /// No description provided for @tipFrames11.
+  ///
+  /// In de, this message translates to:
+  /// **'„Alben verwalten“ legt fest, welche Alben ein Frame zeigt.'**
+  String get tipFrames11;
+
+  /// No description provided for @tipFrames12.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Frame zeigt auch Alben, die mit seinem Space geteilt sind.'**
+  String get tipFrames12;
+
+  /// No description provided for @tipFrames13.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Frame merkt sich alle Fotos – er zeigt sie auch ohne Internet weiter.'**
+  String get tipFrames13;
+
+  /// No description provided for @tipFrames14.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit der Nachtruhe bleibt der Frame nachts dunkel.'**
+  String get tipFrames14;
+
+  /// No description provided for @tipFrames15.
+  ///
+  /// In de, this message translates to:
+  /// **'Tipp: Hefte die Smile-App am Tablet an, dann kann niemand versehentlich hinaus.'**
+  String get tipFrames15;
+
+  /// No description provided for @tipFrames16.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Große Uhr“ zeigt der Frame Datum und Uhrzeit groß – praktisch für Oma.'**
+  String get tipFrames16;
+
+  /// No description provided for @tipFrames17.
+  ///
+  /// In de, this message translates to:
+  /// **'Wer ein Foto geschickt hat, steht am Frame oben links.'**
+  String get tipFrames17;
+
+  /// No description provided for @tipFrames18.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Frame dreht sich mit dem Tablet – wenn du es so einstellst.'**
+  String get tipFrames18;
+
+  /// No description provided for @tipFrames19.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein gelöschter Frame zeigt wieder den QR-Code zum Verbinden.'**
+  String get tipFrames19;
+
+  /// No description provided for @tipFrame01.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippe auf ein Album im Streifen oben, um es sofort am Frame zu zeigen.'**
+  String get tipFrame01;
+
+  /// No description provided for @tipFrame02.
+  ///
+  /// In de, this message translates to:
+  /// **'„Läuft gerade“ zeigt, was der Frame in diesem Moment abspielt.'**
+  String get tipFrame02;
+
+  /// No description provided for @tipFrame03.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit der Fernbedienung hältst du den Frame an oder blätterst weiter.'**
+  String get tipFrame03;
+
+  /// No description provided for @tipFrame04.
+  ///
+  /// In de, this message translates to:
+  /// **'„Neueste 20 Fotos abspielen“ zeigt die neuesten Fotos aller Alben.'**
+  String get tipFrame04;
+
+  /// No description provided for @tipFrame05.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbilder sind eine eigene Auswahl nur für diesen Frame.'**
+  String get tipFrame05;
+
+  /// No description provided for @tipFrame06.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter „Alle ansehen“ siehst du alle Lieblingsbilder eines Frames.'**
+  String get tipFrame06;
+
+  /// No description provided for @tipFrame07.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Ton bei Videos“ entscheidest du, ob Videos am Frame Ton haben.'**
+  String get tipFrame07;
+
+  /// No description provided for @tipFrame08.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Kachel „Bedienstufe“ legt fest, was man am Frame selbst tun kann.'**
+  String get tipFrame08;
+
+  /// No description provided for @tipFrame09.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Frame-Admin einladen“ darf jemand anderes diesen Frame bedienen – zum Beispiel die Eltern eines Kindes.'**
+  String get tipFrame09;
+
+  /// No description provided for @tipFrame10.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Frame-Admin bestimmt Bedienung und Alben – aber nicht Name, Gerät oder Löschen.'**
+  String get tipFrame10;
+
+  /// No description provided for @tipFrame11.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter „Am Frame entsperren“ legst du einen Code für den Frame fest.'**
+  String get tipFrame11;
+
+  /// No description provided for @tipFrame12.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit dem Code zeigt der Frame nach langem Druck auf die Uhr alle Knöpfe.'**
+  String get tipFrame12;
+
+  /// No description provided for @tipFrame13.
+  ///
+  /// In de, this message translates to:
+  /// **'Der entsperrte Frame sperrt sich nach 2 Minuten ohne Berührung von selbst.'**
+  String get tipFrame13;
+
+  /// No description provided for @tipFrame14.
+  ///
+  /// In de, this message translates to:
+  /// **'Ohne Code lässt sich am Frame nichts entsperren.'**
+  String get tipFrame14;
+
+  /// No description provided for @tipFrame15.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Abzeichen „Frame-Admin“ zeigt Frames, die du für jemand anderen bedienst.'**
+  String get tipFrame15;
+
+  /// No description provided for @tipControls01.
+  ///
+  /// In de, this message translates to:
+  /// **'Easy Stopping: Ein Tippen auf den Frame hält das Bild an, noch eins lässt es weiterlaufen.'**
+  String get tipControls01;
+
+  /// No description provided for @tipControls02.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein angehaltener Frame läuft nach 10 Minuten von selbst weiter.'**
+  String get tipControls02;
+
+  /// No description provided for @tipControls03.
+  ///
+  /// In de, this message translates to:
+  /// **'Stufe 1 „Nur zuschauen“: Am Frame geht nur Antippen zum Anhalten.'**
+  String get tipControls03;
+
+  /// No description provided for @tipControls04.
+  ///
+  /// In de, this message translates to:
+  /// **'Stufe 2: Pause und ein großer Weiter-Knopf – ideal für den Anfang.'**
+  String get tipControls04;
+
+  /// No description provided for @tipControls05.
+  ///
+  /// In de, this message translates to:
+  /// **'Stufe 3: Dazu Zurück und die neuesten Fotos.'**
+  String get tipControls05;
+
+  /// No description provided for @tipControls06.
+  ///
+  /// In de, this message translates to:
+  /// **'Stufe 4: Dazu Übersicht, Album wechseln, Anzeigedauer und Titel.'**
+  String get tipControls06;
+
+  /// No description provided for @tipControls07.
+  ///
+  /// In de, this message translates to:
+  /// **'Stufe 5: Am Frame lässt sich alles selbst einstellen.'**
+  String get tipControls07;
+
+  /// No description provided for @tipControls08.
+  ///
+  /// In de, this message translates to:
+  /// **'Einzelne Knöpfe kannst du auch einzeln erlauben – das ist dann „Eigene Auswahl“.'**
+  String get tipControls08;
+
+  /// No description provided for @tipControls09.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Frame wischt man nach links zum nächsten Foto – ab Stufe 2.'**
+  String get tipControls09;
+
+  /// No description provided for @tipControls10.
+  ///
+  /// In de, this message translates to:
+  /// **'Nach rechts wischen geht zum vorigen Foto – ab Stufe 3.'**
+  String get tipControls10;
+
+  /// No description provided for @tipControls11.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Merken“ macht man direkt am Frame ein Foto zum Lieblingsbild.'**
+  String get tipControls11;
+
+  /// No description provided for @tipControls12.
+  ///
+  /// In de, this message translates to:
+  /// **'Die „Übersicht“ am Frame zeigt alle Fotos als Kacheln zum Antippen.'**
+  String get tipControls12;
+
+  /// No description provided for @tipControls13.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Album“ wechselt man am Frame selbst das Album.'**
+  String get tipControls13;
+
+  /// No description provided for @tipControls14.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Knöpfe am Frame verschwinden nach ein paar Sekunden von selbst.'**
+  String get tipControls14;
+
+  /// No description provided for @tipControls15.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Bedienstufe kannst du jederzeit ändern – der Frame folgt sofort.'**
+  String get tipControls15;
+
+  /// No description provided for @tipPlayback01.
+  ///
+  /// In de, this message translates to:
+  /// **'„Was läuft“: ein Album, alle Alben im Wechsel, die neuesten oder die Lieblingsbilder.'**
+  String get tipPlayback01;
+
+  /// No description provided for @tipPlayback02.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Reihenfolge: neueste zuerst, älteste zuerst oder gemischt.'**
+  String get tipPlayback02;
+
+  /// No description provided for @tipPlayback03.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Anzeigedauer bestimmt, wie lange jedes Foto zu sehen ist.'**
+  String get tipPlayback03;
+
+  /// No description provided for @tipPlayback04.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Ende eines Albums fängt der Frame von vorn an – oder zeigt die Übersicht.'**
+  String get tipPlayback04;
+
+  /// No description provided for @tipPlayback05.
+  ///
+  /// In de, this message translates to:
+  /// **'Videos können ganz laufen, nur so lang wie ein Foto, oder gar nicht.'**
+  String get tipPlayback05;
+
+  /// No description provided for @tipPlayback06.
+  ///
+  /// In de, this message translates to:
+  /// **'„Füllen“: Fotos füllen den Bildschirm – oder werden ganz gezeigt.'**
+  String get tipPlayback06;
+
+  /// No description provided for @tipPlayback07.
+  ///
+  /// In de, this message translates to:
+  /// **'„Automatisch füllen“ füllt nur, wenn das Foto zum Bildschirm passt.'**
+  String get tipPlayback07;
+
+  /// No description provided for @tipPlayback08.
+  ///
+  /// In de, this message translates to:
+  /// **'Das langsame Zoomen bringt Leben in die Fotos.'**
+  String get tipPlayback08;
+
+  /// No description provided for @tipPlayback09.
+  ///
+  /// In de, this message translates to:
+  /// **'„Neues gleich zeigen“: Ein neues Foto erscheint sofort am Frame.'**
+  String get tipPlayback09;
+
+  /// No description provided for @tipPlayback10.
+  ///
+  /// In de, this message translates to:
+  /// **'„Ton bei neuen Fotos“: Der Frame meldet sich mit einem Dreiklang.'**
+  String get tipPlayback10;
+
+  /// No description provided for @tipPlayback11.
+  ///
+  /// In de, this message translates to:
+  /// **'„Erinnern, bis jemand schaut“: Der Ton kommt stündlich wieder, höchstens dreimal.'**
+  String get tipPlayback11;
+
+  /// No description provided for @tipPlayback12.
+  ///
+  /// In de, this message translates to:
+  /// **'„Hinweis auf Neues“: Ein leuchtender Hinweis bleibt, bis jemand tippt.'**
+  String get tipPlayback12;
+
+  /// No description provided for @tipPlayback13.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Tippen auf den Hinweis zeigt genau die neuen Fotos.'**
+  String get tipPlayback13;
+
+  /// No description provided for @tipPlayback14.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Nachtruhe schaltet den Frame nachts dunkel.'**
+  String get tipPlayback14;
+
+  /// No description provided for @tipPlayback15.
+  ///
+  /// In de, this message translates to:
+  /// **'In der Nachtruhe bleibt der Frame still – auch bei neuen Fotos.'**
+  String get tipPlayback15;
+
+  /// No description provided for @tipPlayback16.
+  ///
+  /// In de, this message translates to:
+  /// **'„Große Uhr“ zeigt Datum und Uhrzeit groß am Frame.'**
+  String get tipPlayback16;
+
+  /// No description provided for @tipPlayback17.
+  ///
+  /// In de, this message translates to:
+  /// **'„Absender zeigen“ blendet ein, wer ein Foto geschickt hat.'**
+  String get tipPlayback17;
+
+  /// No description provided for @tipPlayback18.
+  ///
+  /// In de, this message translates to:
+  /// **'„Titel zeigen“ blendet die Titel der Fotos ein.'**
+  String get tipPlayback18;
+
+  /// No description provided for @tipPlayback19.
+  ///
+  /// In de, this message translates to:
+  /// **'„Mit dem Gerät drehen“ dreht den Frame auch, wenn das Tablet das sonst nicht tut.'**
+  String get tipPlayback19;
+
+  /// No description provided for @tipPlayback20.
+  ///
+  /// In de, this message translates to:
+  /// **'Jede Änderung hier ist in unter einer Sekunde am Frame.'**
+  String get tipPlayback20;
+
+  /// No description provided for @tipFavorites01.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbilder sind pro Frame – jeder Frame hat seine eigenen.'**
+  String get tipFavorites01;
+
+  /// No description provided for @tipFavorites02.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit dem Herz im Vollbild machst du ein Foto zum Lieblingsbild.'**
+  String get tipFavorites02;
+
+  /// No description provided for @tipFavorites03.
+  ///
+  /// In de, this message translates to:
+  /// **'Bei mehreren Frames wählst du, für welchen Frame das Herz gilt.'**
+  String get tipFavorites03;
+
+  /// No description provided for @tipFavorites04.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Hinzufügen“ wählst du mehrere Lieblingsbilder auf einmal aus.'**
+  String get tipFavorites04;
+
+  /// No description provided for @tipFavorites05.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbilder kann man am Frame als eigene Runde abspielen.'**
+  String get tipFavorites05;
+
+  /// No description provided for @tipFavorites06.
+  ///
+  /// In de, this message translates to:
+  /// **'Wer ein Lieblingsbild markiert hat, siehst du in der Liste.'**
+  String get tipFavorites06;
+
+  /// No description provided for @tipFavorites07.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Lieblingsbild, das am Frame gemerkt wurde, steht dort mit „Am Frame“.'**
+  String get tipFavorites07;
+
+  /// No description provided for @tipFavorites08.
+  ///
+  /// In de, this message translates to:
+  /// **'Über ⋮ entfernst du alle Lieblingsbilder eines Frames auf einmal.'**
+  String get tipFavorites08;
+
+  /// No description provided for @tipFavorites09.
+  ///
+  /// In de, this message translates to:
+  /// **'Ist „Lieblingsbilder“ eingestellt, ist der Knopf am Frame eingerahmt.'**
+  String get tipFavorites09;
+
+  /// No description provided for @tipSpaces01.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Space ist dein Haushalt oder deine Familie – mit Alben und Frames.'**
+  String get tipSpaces01;
+
+  /// No description provided for @tipSpaces02.
+  ///
+  /// In de, this message translates to:
+  /// **'Jeder Space hat einen Admin, der alles darf.'**
+  String get tipSpaces02;
+
+  /// No description provided for @tipSpaces03.
+  ///
+  /// In de, this message translates to:
+  /// **'Co-Admins verwalten den Space mit – Alben, Frames und Personen.'**
+  String get tipSpaces03;
+
+  /// No description provided for @tipSpaces04.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit „Co-Admin einladen“ bekommst du Hilfe beim Verwalten.'**
+  String get tipSpaces04;
+
+  /// No description provided for @tipSpaces05.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Admin kann seine Rolle an einen Co-Admin übergeben.'**
+  String get tipSpaces05;
+
+  /// No description provided for @tipSpaces06.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Co-Admin kann die Rolle jederzeit selbst abgeben.'**
+  String get tipSpaces06;
+
+  /// No description provided for @tipSpaces07.
+  ///
+  /// In de, this message translates to:
+  /// **'Einen Space löschen kann nur der Admin.'**
+  String get tipSpaces07;
+
+  /// No description provided for @tipSpaces08.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein gelöschter Space liegt 30 Tage im Papierkorb.'**
+  String get tipSpaces08;
+
+  /// No description provided for @tipSpaces09.
+  ///
+  /// In de, this message translates to:
+  /// **'Du kannst in mehreren Spaces sein – zum Beispiel bei dir und bei den Eltern.'**
+  String get tipSpaces09;
+
+  /// No description provided for @tipSpaces10.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Space kann Alben eines anderen Spaces zum Ansehen bekommen.'**
+  String get tipSpaces10;
+
+  /// No description provided for @tipSpaces11.
+  ///
+  /// In de, this message translates to:
+  /// **'Jeder Space kann ein eigenes Bild haben.'**
+  String get tipSpaces11;
+
+  /// No description provided for @tipSpaces12.
+  ///
+  /// In de, this message translates to:
+  /// **'Neue Alben legst du in einem Space an.'**
+  String get tipSpaces12;
+
+  /// No description provided for @tipSpaces13.
+  ///
+  /// In de, this message translates to:
+  /// **'Neue Frames verbindest du über einen Space.'**
+  String get tipSpaces13;
+
+  /// No description provided for @tipSpaces14.
+  ///
+  /// In de, this message translates to:
+  /// **'Wer einen Space verwaltet, ist automatisch in allen seinen Alben.'**
+  String get tipSpaces14;
+
+  /// No description provided for @tipSpaces15.
+  ///
+  /// In de, this message translates to:
+  /// **'Den Namen des Spaces ändert der Admin mit einem Tipp darauf.'**
+  String get tipSpaces15;
+
+  /// No description provided for @tipNews01.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter Neuigkeiten findest du Einladungen, Anfragen und alle Nachrichten der letzten 30 Tage.'**
+  String get tipNews01;
+
+  /// No description provided for @tipNews02.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein roter Punkt an Neuigkeiten heißt: Hier wartet etwas auf deine Antwort.'**
+  String get tipNews02;
+
+  /// No description provided for @tipNews03.
+  ///
+  /// In de, this message translates to:
+  /// **'Einladungen nimmst du hier an – oder lehnst sie ab.'**
+  String get tipNews03;
+
+  /// No description provided for @tipNews04.
+  ///
+  /// In de, this message translates to:
+  /// **'Als Admin entscheidest du hier über Beitrittsanfragen.'**
+  String get tipNews04;
+
+  /// No description provided for @tipNews05.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Papierkorb liegt bei den Neuigkeiten.'**
+  String get tipNews05;
+
+  /// No description provided for @tipNews06.
+  ///
+  /// In de, this message translates to:
+  /// **'Aus dem Papierkorb holst du Gelöschtes 30 Tage lang zurück.'**
+  String get tipNews06;
+
+  /// No description provided for @tipNews07.
+  ///
+  /// In de, this message translates to:
+  /// **'Nach 30 Tagen wird der Papierkorb von selbst geleert.'**
+  String get tipNews07;
+
+  /// No description provided for @tipNews08.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippe auf eine Nachricht, um direkt zum Album oder Frame zu kommen.'**
+  String get tipNews08;
+
+  /// No description provided for @tipNews09.
+  ///
+  /// In de, this message translates to:
+  /// **'Auch Pushes, die du weggewischt hast, findest du hier wieder.'**
+  String get tipNews09;
+
+  /// No description provided for @tipNews10.
+  ///
+  /// In de, this message translates to:
+  /// **'Viele neue Fotos derselben Person kommen als eine Nachricht.'**
+  String get tipNews10;
+
+  /// No description provided for @tipSettings01.
+  ///
+  /// In de, this message translates to:
+  /// **'Dein Name ist Pflicht – so wissen alle, von wem ein Foto kommt.'**
+  String get tipSettings01;
+
+  /// No description provided for @tipSettings02.
+  ///
+  /// In de, this message translates to:
+  /// **'Ohne eigenes Bild zeigt Smile deine Anfangsbuchstaben.'**
+  String get tipSettings02;
+
+  /// No description provided for @tipSettings03.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippe auf dein Bild, um es zu ändern.'**
+  String get tipSettings03;
+
+  /// No description provided for @tipSettings04.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter „Smile-Name“ wählst du einen @Namen, mit dem dich andere finden.'**
+  String get tipSettings04;
+
+  /// No description provided for @tipSettings05.
+  ///
+  /// In de, this message translates to:
+  /// **'„Meine Karte“ zeigt deinen QR-Code – andere scannen ihn zum Einladen.'**
+  String get tipSettings05;
+
+  /// No description provided for @tipSettings06.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter „Töne im Album“ schaltest du die Plopp-Töne ein oder aus.'**
+  String get tipSettings06;
+
+  /// No description provided for @tipSettings07.
+  ///
+  /// In de, this message translates to:
+  /// **'Bei lautlosem Handy bleibt Smile still.'**
+  String get tipSettings07;
+
+  /// No description provided for @tipSettings08.
+  ///
+  /// In de, this message translates to:
+  /// **'Unter „Videoqualität“ wählst du, wie stark Videos verkleinert werden.'**
+  String get tipSettings08;
+
+  /// No description provided for @tipSettings09.
+  ///
+  /// In de, this message translates to:
+  /// **'„Tipps von vorne zeigen“ bringt alle Tipps zurück.'**
+  String get tipSettings09;
+
+  /// No description provided for @tipSettings10.
+  ///
+  /// In de, this message translates to:
+  /// **'„Keine Tipps mehr“ schaltet alle Tipps ab – hier wieder ein.'**
+  String get tipSettings10;
+
+  /// No description provided for @tipSettings11.
+  ///
+  /// In de, this message translates to:
+  /// **'Benachrichtigungen kommen für neue Fotos, Einladungen und Änderungen an deinen Frames.'**
+  String get tipSettings11;
+
+  /// No description provided for @tipSettings12.
+  ///
+  /// In de, this message translates to:
+  /// **'Dein Konto kannst du in den Einstellungen löschen – mit allem, was dir gehört.'**
+  String get tipSettings12;
+
+  /// No description provided for @tipSettings13.
+  ///
+  /// In de, this message translates to:
+  /// **'Abmelden ist jederzeit möglich – deine Alben bleiben auf dem Server.'**
+  String get tipSettings13;
+
+  /// No description provided for @tipSettings14.
+  ///
+  /// In de, this message translates to:
+  /// **'Smile meldet sich mit einem Code per E-Mail an – ganz ohne Passwort.'**
+  String get tipSettings14;
+
+  /// No description provided for @tipSettings15.
+  ///
+  /// In de, this message translates to:
+  /// **'Smile ist dunkel gestaltet – so leuchten die Fotos am schönsten.'**
+  String get tipSettings15;
+
+  /// No description provided for @tipGeneral01.
+  ///
+  /// In de, this message translates to:
+  /// **'Smile ist wie WhatsApp für Fotos – nur ohne Chat und mit Bilderrahmen.'**
+  String get tipGeneral01;
+
+  /// No description provided for @tipGeneral02.
+  ///
+  /// In de, this message translates to:
+  /// **'Alles, was du änderst, sehen die anderen sofort.'**
+  String get tipGeneral02;
+
+  /// No description provided for @tipGeneral03.
+  ///
+  /// In de, this message translates to:
+  /// **'Smile arbeitet auch offline – Änderungen werden nachgeschickt.'**
+  String get tipGeneral03;
+
+  /// No description provided for @tipGeneral04.
+  ///
+  /// In de, this message translates to:
+  /// **'Fotos in Smile sind privat – nur Mitglieder eines Albums sehen sie.'**
+  String get tipGeneral04;
+
+  /// No description provided for @tipGeneral05.
+  ///
+  /// In de, this message translates to:
+  /// **'Wer ein Album verlässt, sieht dessen Fotos danach nicht mehr.'**
+  String get tipGeneral05;
+
+  /// No description provided for @tipGeneral06.
+  ///
+  /// In de, this message translates to:
+  /// **'Lange drücken öffnet fast überall weitere Möglichkeiten.'**
+  String get tipGeneral06;
+
+  /// No description provided for @tipGeneral07.
+  ///
+  /// In de, this message translates to:
+  /// **'Das ⋮ oben rechts hat auf jeder Seite weitere Funktionen.'**
+  String get tipGeneral07;
+
+  /// No description provided for @tipGeneral08.
+  ///
+  /// In de, this message translates to:
+  /// **'Nach unten ziehen aktualisiert fast jede Liste.'**
+  String get tipGeneral08;
+
+  /// No description provided for @tipGeneral09.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Tipp auf einen Namen oder ein Bild zeigt meistens mehr.'**
+  String get tipGeneral09;
+
+  /// No description provided for @tipGeneral10.
+  ///
+  /// In de, this message translates to:
+  /// **'Smile schickt nur Fotos und Videos – keine Nachrichten.'**
+  String get tipGeneral10;
+
+  /// No description provided for @tipGeneral11.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Album ist kein Einzelchat: Es kann immer weitere Leute aufnehmen.'**
+  String get tipGeneral11;
+
+  /// No description provided for @tipGeneral12.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Frame braucht kein eigenes Konto – er wird mit einem Code verbunden.'**
+  String get tipGeneral12;
+
+  /// No description provided for @tipGeneral13.
+  ///
+  /// In de, this message translates to:
+  /// **'Fotos werden verschlüsselt übertragen.'**
+  String get tipGeneral13;
+
+  /// No description provided for @membershipRequestFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Anfrage fehlgeschlagen: {reason}'**
+  String membershipRequestFailed(String reason);
+
+  /// No description provided for @withdrawFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurückziehen fehlgeschlagen: {reason}'**
+  String withdrawFailed(String reason);
+
+  /// No description provided for @deleteFailedShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Löschen fehlgeschlagen.'**
+  String get deleteFailedShort;
+
+  /// No description provided for @hideFailedShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Ausblenden fehlgeschlagen.'**
+  String get hideFailedShort;
+
+  /// No description provided for @unhideFailedShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Einblenden fehlgeschlagen.'**
+  String get unhideFailedShort;
+
+  /// No description provided for @photosNotDeleted.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 Foto konnte nicht gelöscht werden (nicht dein eigenes).} other{{count} Fotos konnten nicht gelöscht werden (nicht deine eigenen).}}'**
+  String photosNotDeleted(int count);
+
+  /// No description provided for @photosNotPossible.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{Bei 1 Foto nicht möglich.} other{Bei {count} Fotos nicht möglich.}}'**
+  String photosNotPossible(int count);
+
+  /// No description provided for @loginIntro.
+  ///
+  /// In de, this message translates to:
+  /// **'Melde dich mit deiner E-Mail-Adresse an. Wir senden dir einen 6-stelligen Code.'**
+  String get loginIntro;
+
+  /// No description provided for @loginRequestCode.
+  ///
+  /// In de, this message translates to:
+  /// **'Code anfordern'**
+  String get loginRequestCode;
+
+  /// No description provided for @loginCodeSent.
+  ///
+  /// In de, this message translates to:
+  /// **'Wir haben einen Code an {email} gesendet. Bitte gib ihn ein.'**
+  String loginCodeSent(String email);
+
+  /// No description provided for @loginConfirm.
+  ///
+  /// In de, this message translates to:
+  /// **'Bestätigen'**
+  String get loginConfirm;
+
+  /// No description provided for @loginOtherEmail.
+  ///
+  /// In de, this message translates to:
+  /// **'Andere E-Mail-Adresse verwenden'**
+  String get loginOtherEmail;
+
+  /// No description provided for @avatarUploadFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Bild konnte nicht hochgeladen werden: {reason}'**
+  String avatarUploadFailed(String reason);
+
+  /// No description provided for @enterYourName.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte gib deinen Namen ein.'**
+  String get enterYourName;
+
+  /// No description provided for @saveFailedWith.
+  ///
+  /// In de, this message translates to:
+  /// **'Speichern fehlgeschlagen: {reason}'**
+  String saveFailedWith(String reason);
+
+  /// No description provided for @avatarUrlInvalid.
+  ///
+  /// In de, this message translates to:
+  /// **'Das ist keine gültige Internetadresse.'**
+  String get avatarUrlInvalid;
+
+  /// No description provided for @avatarUrlUnreachable.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Bild konnte nicht geladen werden. Bitte prüfe die Adresse.'**
+  String get avatarUrlUnreachable;
+
+  /// No description provided for @avatarUrlNotImage.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Adresse zeigt auf kein Bild.'**
+  String get avatarUrlNotImage;
+
+  /// No description provided for @notificationChannelDescription.
+  ///
+  /// In de, this message translates to:
+  /// **'Neue Fotos, Einladungen, Anfragen und Änderungen in deinen Alben und Spaces'**
+  String get notificationChannelDescription;
+
+  /// No description provided for @errUserNotFound.
+  ///
+  /// In de, this message translates to:
+  /// **'Diese Person hat noch keinen Smile-Account.'**
+  String get errUserNotFound;
+
+  /// No description provided for @errNotAlbumManager.
+  ///
+  /// In de, this message translates to:
+  /// **'Du bist nicht berechtigt, dieses Album zu verwalten.'**
+  String get errNotAlbumManager;
+
+  /// No description provided for @errRequestPending.
+  ///
+  /// In de, this message translates to:
+  /// **'Es gibt bereits eine offene Einladung/Anfrage.'**
+  String get errRequestPending;
+
+  /// No description provided for @errNotSpaceAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Nur der Admin kann das tun.'**
+  String get errNotSpaceAdmin;
+
+  /// No description provided for @errAlreadyAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Diese Person ist bereits Admin.'**
+  String get errAlreadyAdmin;
+
+  /// No description provided for @errAlreadyCoAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Diese Person ist bereits Co-Admin.'**
+  String get errAlreadyCoAdmin;
+
+  /// No description provided for @errInvitePending.
+  ///
+  /// In de, this message translates to:
+  /// **'Es gibt bereits eine offene Einladung.'**
+  String get errInvitePending;
+
+  /// No description provided for @errNotCoAdmin.
+  ///
+  /// In de, this message translates to:
+  /// **'Diese Person ist kein Co-Admin.'**
+  String get errNotCoAdmin;
+
+  /// No description provided for @errGeneric.
+  ///
+  /// In de, this message translates to:
+  /// **'Das hat leider nicht geklappt. Bitte versuche es noch einmal.'**
+  String get errGeneric;
+
+  /// No description provided for @noLongerAvailable.
+  ///
+  /// In de, this message translates to:
+  /// **'Das ist nicht mehr verfügbar – gelöscht oder kein Zugriff mehr.'**
+  String get noLongerAvailable;
+
+  /// No description provided for @dateToday.
+  ///
+  /// In de, this message translates to:
+  /// **'Heute'**
+  String get dateToday;
+
+  /// No description provided for @dateYesterday.
+  ///
+  /// In de, this message translates to:
+  /// **'Gestern'**
+  String get dateYesterday;
+
+  /// No description provided for @timeJustNow.
+  ///
+  /// In de, this message translates to:
+  /// **'gerade eben'**
+  String get timeJustNow;
+
+  /// No description provided for @timeMinutesAgo.
+  ///
+  /// In de, this message translates to:
+  /// **'vor {minutes} Min.'**
+  String timeMinutesAgo(int minutes);
+
+  /// No description provided for @timeHoursAgo.
+  ///
+  /// In de, this message translates to:
+  /// **'vor {hours} Std.'**
+  String timeHoursAgo(int hours);
+
+  /// No description provided for @dateNumericPattern.
+  ///
+  /// In de, this message translates to:
+  /// **'dd.MM.yyyy'**
+  String get dateNumericPattern;
+
+  /// No description provided for @dateNumericShortPattern.
+  ///
+  /// In de, this message translates to:
+  /// **'dd.MM.yy'**
+  String get dateNumericShortPattern;
+
+  /// No description provided for @licenseOther.
+  ///
+  /// In de, this message translates to:
+  /// **'Lizenz'**
+  String get licenseOther;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

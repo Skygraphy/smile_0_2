@@ -1,3 +1,4 @@
+import 'app_texts.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -204,13 +205,13 @@ class LocalChanges extends ChangeNotifier {
         ? error.message
         : context != null
             ? errorReasonIn(SmileTexts.of(context), error)
-            : 'Bitte versuche es noch einmal.';
+            : AppTexts.current.tryAgainReason;
     final message = text ??
         (error is AvatarUrlException
             ? reason
             : context != null
                 ? SmileTexts.of(context).changeNotSaved(reason)
-                : 'Die Änderung wurde nicht gespeichert. $reason');
+                : AppTexts.current.changeNotSaved(reason));
     messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 }

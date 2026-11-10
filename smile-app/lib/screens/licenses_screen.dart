@@ -20,26 +20,26 @@ class _Package {
   final List<String> texts = [];
 
   /// "MIT", "BSD · Apache 2.0", ...
-  String get kinds {
+  String kinds(SmileTexts t) {
     final seen = <String>[];
     for (final text in texts) {
-      final kind = _kindOf(text);
+      final kind = _kindOf(t, text);
       if (!seen.contains(kind)) seen.add(kind);
     }
     return seen.take(2).join(' · ');
   }
 }
 
-String _kindOf(String text) {
-  final t = text.toLowerCase();
-  if (t.contains('apache license')) return 'Apache 2.0';
-  if (t.contains('open font license')) return 'OFL';
-  if (t.contains('mozilla public license')) return 'MPL';
-  if (t.contains('permission is hereby granted, free of charge')) return 'MIT';
-  if (t.contains('redistribution and use in source and binary forms')) return 'BSD';
-  if (t.contains('gnu lesser general public')) return 'LGPL';
-  if (t.contains('zlib')) return 'zlib';
-  return 'Lizenz';
+String _kindOf(SmileTexts t, String text) {
+  final lower = text.toLowerCase();
+  if (lower.contains('apache license')) return 'Apache 2.0';
+  if (lower.contains('open font license')) return 'OFL';
+  if (lower.contains('mozilla public license')) return 'MPL';
+  if (lower.contains('permission is hereby granted, free of charge')) return 'MIT';
+  if (lower.contains('redistribution and use in source and binary forms')) return 'BSD';
+  if (lower.contains('gnu lesser general public')) return 'LGPL';
+  if (lower.contains('zlib')) return 'zlib';
+  return t.licenseOther;
 }
 
 class _LicensesScreenState extends State<LicensesScreen> {
@@ -116,7 +116,7 @@ class _LicensesScreenState extends State<LicensesScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      _Chip(p.kinds),
+                      _Chip(p.kinds(t)),
                       const SizedBox(width: 8),
                       Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
                     ],
@@ -158,7 +158,7 @@ class _LicenseScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: [
           for (final text in package.texts) ...[
-            Align(alignment: Alignment.centerLeft, child: _Chip(_kindOf(text))),
+            Align(alignment: Alignment.centerLeft, child: _Chip(_kindOf(SmileTexts.of(context), text))),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),

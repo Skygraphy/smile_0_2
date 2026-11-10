@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../services/perf.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -517,7 +518,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       await _loadMyStatus();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Anfrage fehlgeschlagen: ${errorReason(context, e)}')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(SmileTexts.of(context).membershipRequestFailed(errorReason(context, e)))));
     } finally {
       if (mounted) setState(() => _isRequestingMembership = false);
     }
@@ -532,7 +533,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       await _loadMyStatus();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Zurückziehen fehlgeschlagen: ${errorReason(context, e)}')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(SmileTexts.of(context).withdrawFailed(errorReason(context, e)))));
     } finally {
       if (mounted) setState(() => _isRequestingMembership = false);
     }
@@ -1094,6 +1095,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   }
 
   Future<void> _deleteForEveryone(List<String> ids) async {
+    final failed = SmileTexts.of(context).deleteFailedShort;
     _clearSelection();
     // One after the other, each photo disappears with its own short tick,
     // like WhatsApp (2026-10-10).
@@ -1107,7 +1109,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       overrides: {for (final id in ids) LocalChanges.mediaGone(id): _viewName},
       commit: () async => result = await widget.mediaService.deletePhotos(ids),
       affects: tablesChanged({'media_items', 'channels'}, channelIds: {widget.channelId}),
-      failureText: 'Löschen fehlgeschlagen.',
+      failureText: failed,
     );
     // From here LocalChanges keeps them hidden -- or they come back.
     if (mounted) setState(() => _leaving.removeAll(ids));
@@ -1115,7 +1117,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     final denied = result?.deniedIds ?? const [];
     LocalChanges.instance.drop(denied.map(LocalChanges.mediaGone));
     setState(() {
-      _errorMessage = denied.isEmpty ? null : '${denied.length} Foto(s) konnten nicht gelöscht werden (nicht eigenes Foto).';
+      _errorMessage = denied.isEmpty ? null : SmileTexts.of(context).photosNotDeleted(denied.length);
     });
     await _load();
   }
@@ -1244,12 +1246,12 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       overrides: {for (final id in ids) LocalChanges.mediaGone(id): _viewName},
       commit: () async => result = hiding ? await widget.mediaService.hidePhotos(ids) : await widget.mediaService.unhidePhotos(ids),
       affects: tablesChanged({'media_items', 'media_item_hides', 'channels'}, channelIds: {widget.channelId}),
-      failureText: hiding ? 'Ausblenden fehlgeschlagen.' : 'Einblenden fehlgeschlagen.',
+      failureText: hiding ? SmileTexts.of(context).hideFailedShort : SmileTexts.of(context).unhideFailedShort,
     );
     if (!saved || !mounted) return;
     final denied = result?.deniedIds ?? const [];
     LocalChanges.instance.drop(denied.map(LocalChanges.mediaGone));
-    setState(() => _errorMessage = denied.isEmpty ? null : '${denied.length} Foto(s) nicht möglich.');
+    setState(() => _errorMessage = denied.isEmpty ? null : SmileTexts.of(context).photosNotPossible(denied.length));
     await _load();
   }
 
@@ -2109,12 +2111,13 @@ class _DateSeparator extends StatelessWidget {
 
   bool _isSameDay(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 
-  String _label() {
+  String _label(BuildContext context) {
+    final t = SmileTexts.of(context);
     final local = date.toLocal();
     final now = DateTime.now();
-    if (_isSameDay(local, now)) return 'Heute';
-    if (_isSameDay(local, now.subtract(const Duration(days: 1)))) return 'Gestern';
-    return '${local.day.toString().padLeft(2, '0')}.${local.month.toString().padLeft(2, '0')}.${local.year}';
+    if (_isSameDay(local, now)) return t.dateToday;
+    if (_isSameDay(local, now.subtract(const Duration(days: 1)))) return t.dateYesterday;
+    return DateFormat(t.dateNumericPattern, Localizations.localeOf(context).toLanguageTag()).format(local);
   }
 
   @override
@@ -2132,7 +2135,7 @@ class _DateSeparator extends StatelessWidget {
                 ? [BoxShadow(color: Colors.black.withValues(alpha: 0.35), blurRadius: 6, offset: const Offset(0, 2))]
                 : null,
           ),
-          child: Text(_label(), style: theme.textTheme.bodySmall),
+          child: Text(_label(context), style: theme.textTheme.bodySmall),
         ),
       ),
     );

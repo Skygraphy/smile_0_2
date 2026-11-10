@@ -124,7 +124,7 @@ class Tips {
       final seen = (prefs.getStringList(_cardsSeenKey) ?? const []).toSet();
       final due = [
         for (final p in {page, TipPage.general})
-          for (final (i, _) in (tipCards[p] ?? const <String>[]).indexed)
+          for (final (i, _) in (tipCards[p] ?? const <String Function(SmileTexts)>[]).indexed)
             if (!seen.contains('${p.name}/$i')) (p, i),
       ];
       if (due.isEmpty) return;
@@ -136,7 +136,7 @@ class Tips {
       final (p, i) = due[Random().nextInt(due.length)];
       await _noteShown(prefs);
       if (!context.mounted) return;
-      _showText(context, (_) => tipCards[p]![i], label: (t) => t.tipDidYouKnow, onUnderstood: () async {
+      _showText(context, (t) => tipCards[p]![i](t), label: (t) => t.tipDidYouKnow, onUnderstood: () async {
         final prefs = await _prefs();
         final seen = prefs?.getStringList(_cardsSeenKey) ?? const [];
         await prefs?.setStringList(_cardsSeenKey, [...seen, '${p.name}/$i']);

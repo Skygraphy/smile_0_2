@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../services/perf.dart';
 import '../services/tips.dart';
 import '../services/tip_cards.dart';
@@ -260,18 +261,18 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
     final now = DateTime.now();
     final local = time.toLocal();
     final diff = now.difference(local);
-    if (diff.inMinutes < 1) return 'gerade eben';
-    if (diff.inMinutes < 60) return 'vor ${diff.inMinutes} Min.';
-    if (diff.inHours < 24 && now.day == local.day) return 'vor ${diff.inHours} Std.';
+    final t = SmileTexts.of(context);
+    final language = Localizations.localeOf(context).toLanguageTag();
+    if (diff.inMinutes < 1) return t.timeJustNow;
+    if (diff.inMinutes < 60) return t.timeMinutesAgo(diff.inMinutes);
+    if (diff.inHours < 24 && now.day == local.day) return t.timeHoursAgo(diff.inHours);
     final yesterday = now.subtract(const Duration(days: 1));
     if (local.year == yesterday.year && local.month == yesterday.month && local.day == yesterday.day) {
-      return 'Gestern';
+      return t.dateYesterday;
     }
-    if (diff.inDays < 7) {
-      const weekdays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-      return weekdays[local.weekday - 1];
-    }
-    return '${local.day.toString().padLeft(2, '0')}.${local.month.toString().padLeft(2, '0')}.${local.year.toString().substring(2)}';
+    // "Di" -- the language's short weekday, without its dot.
+    if (diff.inDays < 7) return DateFormat.E(language).format(local).replaceAll('.', '');
+    return DateFormat(t.dateNumericShortPattern, language).format(local);
   }
 
   @override

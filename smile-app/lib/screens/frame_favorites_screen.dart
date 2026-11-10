@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/tips.dart';
@@ -150,10 +151,9 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
     );
   }
 
-  static const _months = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sept.', 'Okt.', 'Nov.', 'Dez.'];
-
   /// "Am Frame · heute 9:41", "Ernst · 10. Okt."
-  String _caption(SmileTexts t, FrameFavorite favorite) {
+  String _caption(BuildContext context, SmileTexts t, FrameFavorite favorite) {
+    final language = Localizations.localeOf(context).toLanguageTag();
     final who = favorite.onFrame ? t.favoriteOnFrame : (favorite.markedByName ?? t.someone);
     final at = favorite.markedAt.toLocal();
     final now = DateTime.now();
@@ -164,7 +164,7 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
         ? t.favoriteToday(time)
         : sameDay(at, yesterday)
             ? t.favoriteYesterday(time)
-            : '${at.day}. ${_months[at.month - 1]}${at.year == now.year ? '' : ' ${at.year}'}';
+            : (at.year == now.year ? DateFormat.MMMd(language) : DateFormat.yMMMd(language)).format(at);
     return '$who · $when';
   }
 
@@ -292,7 +292,7 @@ class _FrameFavoritesScreenState extends State<FrameFavoritesScreen> with SyncRe
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              _caption(t, favorite),
+                              _caption(context, t, favorite),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 11.5, color: scheme.onSurfaceVariant, height: 1.25),

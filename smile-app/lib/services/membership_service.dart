@@ -1,3 +1,4 @@
+import 'app_texts.dart';
 import '../main.dart';
 import 'edge_functions.dart';
 import 'local_changes.dart';
@@ -400,10 +401,10 @@ class ChannelRequestException implements Exception {
   final String code;
 
   String get message => switch (code) {
-        'user_not_found' => 'Diese Person hat noch keinen Smile-Account.',
-        'not_channel_sco' => 'Du bist nicht berechtigt, dieses Album zu verwalten.',
-        'request_already_pending' => 'Es gibt bereits eine offene Einladung/Anfrage.',
-        _ => 'Das hat leider nicht geklappt. Bitte versuche es noch einmal.',
+        'user_not_found' => AppTexts.current.errUserNotFound,
+        'not_channel_sco' => AppTexts.current.errNotAlbumManager,
+        'request_already_pending' => AppTexts.current.errRequestPending,
+        _ => AppTexts.current.errGeneric,
       };
 
   @override

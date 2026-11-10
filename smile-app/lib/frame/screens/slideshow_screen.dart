@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
@@ -1587,11 +1588,6 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     );
   }
 
-  static const _weekdays = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
-  static const _months = [
-    'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
-  ];
-
   /// Big and plain: time, weekday, date -- for someone who may not know
   /// which day it is.
   /// "1:47" until it locks again -- coral in the last 10 seconds.
@@ -1644,7 +1640,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                 fontFeatures: [FontFeature.tabularFigures()]),
           ),
           Text(
-            '${_weekdays[now.weekday - 1]}, ${now.day}. ${_months[now.month - 1]}',
+            // "Dienstag, 10. November" in the Frame's language.
+            DateFormat.MMMMEEEEd(Localizations.localeOf(context).toLanguageTag()).format(now),
             style: const TextStyle(color: Colors.white, fontSize: 18),
           ),
         ],

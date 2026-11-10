@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'app_texts.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -58,21 +59,21 @@ Future<void> uploadPictureBytes(String objectPath, PickedPicture picture) =>
 Future<PickedPicture> fetchPictureFromUrl(String url) async {
   final uri = Uri.tryParse(url);
   if (uri == null || !uri.isAbsolute || !(uri.isScheme('http') || uri.isScheme('https'))) {
-    throw AvatarUrlException('Das ist keine gültige Internetadresse.');
+    throw AvatarUrlException(AppTexts.current.avatarUrlInvalid);
   }
   final http.Response response;
   try {
     response = await http.get(uri).timeout(const Duration(seconds: 20));
   } catch (e) {
     debugPrint('SmileAvatar: $e');
-    throw AvatarUrlException('Das Bild konnte nicht geladen werden. Bitte prüfe die Adresse.');
+    throw AvatarUrlException(AppTexts.current.avatarUrlUnreachable);
   }
   if (response.statusCode != 200) {
-    throw AvatarUrlException('Das Bild konnte nicht geladen werden. Bitte prüfe die Adresse.');
+    throw AvatarUrlException(AppTexts.current.avatarUrlUnreachable);
   }
   final contentType = response.headers['content-type'] ?? '';
   if (!contentType.startsWith('image/')) {
-    throw AvatarUrlException('Die Adresse zeigt auf kein Bild.');
+    throw AvatarUrlException(AppTexts.current.avatarUrlNotImage);
   }
   return (bytes: response.bodyBytes, mimeType: contentType.split(';').first.trim());
 }
