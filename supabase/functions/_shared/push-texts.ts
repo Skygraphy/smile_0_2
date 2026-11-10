@@ -3,6 +3,8 @@
 // the language of their app (profiles.language); a new language is one more
 // catalog below with the same keys -- TypeScript checks that none is missing.
 
+import { en } from "./push-texts-en.ts";
+
 export type Notice = { title: string; body: string };
 type Who = string | null;
 
@@ -240,7 +242,7 @@ export type PushTexts = typeof de;
 /** A notification written in the recipient's language. */
 export type Localized = (t: PushTexts) => Notice;
 
-const catalogs: Record<string, PushTexts> = { de };
+const catalogs: Record<string, PushTexts> = { de, en };
 
 /** The catalog for a language; German for an unknown or missing one. */
 export function pushTexts(language?: string | null): PushTexts {

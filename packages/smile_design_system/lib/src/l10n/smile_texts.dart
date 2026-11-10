@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'smile_texts_de.dart';
+import 'smile_texts_en.dart';
 
 // ignore_for_file: type=lint
 
@@ -92,7 +93,10 @@ abstract class SmileTexts {
       ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('de')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('de'),
+    Locale('en'),
+  ];
 
   /// No description provided for @space.
   ///
@@ -6189,7 +6193,7 @@ class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['de'].contains(locale.languageCode);
+      <String>['de', 'en'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_SmileTextsDelegate old) => false;
@@ -6200,6 +6204,8 @@ SmileTexts lookupSmileTexts(Locale locale) {
   switch (locale.languageCode) {
     case 'de':
       return SmileTextsDe();
+    case 'en':
+      return SmileTextsEn();
   }
 
   throw FlutterError(
