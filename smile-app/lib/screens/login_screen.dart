@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -5,6 +6,7 @@ import '../main.dart';
 import '../services/offline.dart';
 import '../services/test_media.dart' show smileTestMode;
 import '../widgets/otp_code_field.dart';
+import 'about_screen.dart';
 import '../frame/frame.dart' as frame;
 import 'package:smile_design_system/smile_design_system.dart';
 
@@ -208,6 +210,25 @@ class _LoginScreenState extends State<LoginScreen> {
               )
             : const Text('Code anfordern'),
       ),
+      // The privacy policy before an account exists (2026-11-10, Google Play).
+      const SizedBox(height: 14),
+      Builder(builder: (context) {
+        final t = SmileTexts.of(context);
+        final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+        return Text.rich(
+          TextSpan(children: [
+            TextSpan(text: t.loginPrivacyBefore),
+            TextSpan(
+              text: t.loginPrivacyLink,
+              style: const TextStyle(color: SmileTheme.primary, fontWeight: FontWeight.w600),
+              recognizer: TapGestureRecognizer()..onTap = () => AboutScreen.open(AboutScreen.privacy),
+            ),
+            TextSpan(text: t.loginPrivacyAfter),
+          ]),
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12.5, color: muted),
+        );
+      }),
       const SizedBox(height: 32),
       // One app (2026-10-11): an old tablet becomes a Frame from here.
       OutlinedButton.icon(

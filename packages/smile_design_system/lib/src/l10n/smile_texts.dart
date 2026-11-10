@@ -1984,6 +1984,72 @@ abstract class SmileTexts {
   /// **'Konto'**
   String get account;
 
+  /// No description provided for @aboutSmile.
+  ///
+  /// In de, this message translates to:
+  /// **'Über Smile'**
+  String get aboutSmile;
+
+  /// No description provided for @aboutSmileHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Version {version} · Impressum · Datenschutz'**
+  String aboutSmileHint(String version);
+
+  /// No description provided for @versionValue.
+  ///
+  /// In de, this message translates to:
+  /// **'Version {version}'**
+  String versionValue(String version);
+
+  /// No description provided for @impressum.
+  ///
+  /// In de, this message translates to:
+  /// **'Impressum'**
+  String get impressum;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In de, this message translates to:
+  /// **'Datenschutz'**
+  String get privacyPolicy;
+
+  /// No description provided for @deleteAccountWebHint.
+  ///
+  /// In de, this message translates to:
+  /// **'So geht es, auch ohne App'**
+  String get deleteAccountWebHint;
+
+  /// No description provided for @licenses.
+  ///
+  /// In de, this message translates to:
+  /// **'Lizenzen'**
+  String get licenses;
+
+  /// No description provided for @licensesHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Verwendete Open-Source-Software'**
+  String get licensesHint;
+
+  /// No description provided for @loginPrivacyBefore.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit der Anmeldung gilt unsere '**
+  String get loginPrivacyBefore;
+
+  /// No description provided for @loginPrivacyLink.
+  ///
+  /// In de, this message translates to:
+  /// **'Datenschutzerklärung'**
+  String get loginPrivacyLink;
+
+  /// No description provided for @loginPrivacyAfter.
+  ///
+  /// In de, this message translates to:
+  /// **'.'**
+  String get loginPrivacyAfter;
+
   /// No description provided for @emailAddress.
   ///
   /// In de, this message translates to:

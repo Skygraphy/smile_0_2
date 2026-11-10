@@ -684,6 +684,31 @@
   "pictureUrl": "Bild-URL",
   "load": "Laden",
   "account": "Konto",
+  "aboutSmile": "Über Smile",
+  "aboutSmileHint": "Version {version} · Impressum · Datenschutz",
+  "@aboutSmileHint": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "versionValue": "Version {version}",
+  "@versionValue": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "impressum": "Impressum",
+  "privacyPolicy": "Datenschutz",
+  "deleteAccountWebHint": "So geht es, auch ohne App",
+  "licenses": "Lizenzen",
+  "licensesHint": "Verwendete Open-Source-Software",
+  "loginPrivacyBefore": "Mit der Anmeldung gilt unsere ",
+  "loginPrivacyLink": "Datenschutzerklärung",
+  "loginPrivacyAfter": ".",
   "emailAddress": "E-Mail-Adresse",
   "signOut": "Abmelden",
   "signOutQuestion": "Möchtest du dich wirklich abmelden?",

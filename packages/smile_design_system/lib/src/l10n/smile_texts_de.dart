@@ -1189,6 +1189,43 @@ class SmileTextsDe extends SmileTexts {
   String get account => 'Konto';
 
   @override
+  String get aboutSmile => 'Über Smile';
+
+  @override
+  String aboutSmileHint(String version) {
+    return 'Version $version · Impressum · Datenschutz';
+  }
+
+  @override
+  String versionValue(String version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get impressum => 'Impressum';
+
+  @override
+  String get privacyPolicy => 'Datenschutz';
+
+  @override
+  String get deleteAccountWebHint => 'So geht es, auch ohne App';
+
+  @override
+  String get licenses => 'Lizenzen';
+
+  @override
+  String get licensesHint => 'Verwendete Open-Source-Software';
+
+  @override
+  String get loginPrivacyBefore => 'Mit der Anmeldung gilt unsere ';
+
+  @override
+  String get loginPrivacyLink => 'Datenschutzerklärung';
+
+  @override
+  String get loginPrivacyAfter => '.';
+
+  @override
   String get emailAddress => 'E-Mail-Adresse';
 
   @override

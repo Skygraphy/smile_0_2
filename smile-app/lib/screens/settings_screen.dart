@@ -17,6 +17,8 @@ import '../widgets/friendly_error.dart';
 import '../services/video_quality.dart';
 import '../services/upload_queue.dart';
 import 'intro_screen.dart';
+import 'about_screen.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'avatar_viewer_screen.dart';
 import 'handle_edit_screen.dart';
 import '../services/album_sounds.dart';
@@ -508,6 +510,28 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                       ),
                     SmileActionRow(icon: SmileIcons.leave, label: t.signOut, destructive: true, onTap: _confirmSignOut),
                     SmileActionRow(icon: SmileIcons.delete, label: t.deleteAccount, destructive: true, onTap: _confirmDeleteAccount),
+                  ],
+                ),
+                // "Über Smile" (2026-11-10): Impressum, Datenschutz, Lizenzen.
+                SmileInfoSection(
+                  title: t.aboutSmile,
+                  children: [
+                    FutureBuilder<PackageInfo>(
+                      future: PackageInfo.fromPlatform(),
+                      builder: (context, info) => SmileObjectTile(
+                        leading: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(color: SmileTheme.primary, borderRadius: BorderRadius.circular(8)),
+                          alignment: Alignment.center,
+                          child: const Text('S', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                        ),
+                        title: t.aboutSmile,
+                        subtitle: t.aboutSmileHint(info.data?.version ?? ''),
+                        trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
+                        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AboutScreen())),
+                      ),
+                    ),
                   ],
                 ),
               ],
