@@ -3,6 +3,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'licenses_screen.dart';
+
 /// "Über Smile" (2026-11-10): version, Impressum, Datenschutz, how to delete
 /// the account, and the open-source licences. Impressum and Datenschutz are
 /// the pages on smileapp.app -- Google Play wants the privacy policy reachable
@@ -69,28 +71,27 @@ class _AboutScreenState extends State<AboutScreen> {
           SmileObjectTile(
             leading: icon(SmileIcons.card),
             title: t.impressum,
-            trailing: Icon(SmileIcons.web, size: 18, color: scheme.onSurfaceVariant),
+            trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
             onTap: () => AboutScreen.open(AboutScreen.impressum),
           ),
           SmileObjectTile(
             leading: icon(SmileIcons.lock),
             title: t.privacyPolicy,
-            trailing: Icon(SmileIcons.web, size: 18, color: scheme.onSurfaceVariant),
+            trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
             onTap: () => AboutScreen.open(AboutScreen.privacy),
           ),
           SmileObjectTile(
             leading: icon(SmileIcons.delete),
             title: t.deleteAccount,
             subtitle: t.deleteAccountWebHint,
-            trailing: Icon(SmileIcons.web, size: 18, color: scheme.onSurfaceVariant),
+            trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
             onTap: () => AboutScreen.open(AboutScreen.deleteAccount),
           ),
           SmileObjectTile(
             leading: icon(SmileIcons.caption),
-            title: t.licenses,
-            subtitle: t.licensesHint,
+            title: t.openSourceLicenses,
             trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
-            onTap: () => showLicensePage(context: context, applicationName: 'Smile', applicationVersion: _version),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LicensesScreen())),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 28, 16, 24),

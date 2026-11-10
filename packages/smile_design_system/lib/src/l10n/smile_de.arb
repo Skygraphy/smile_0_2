@@ -704,8 +704,17 @@
   "impressum": "Impressum",
   "privacyPolicy": "Datenschutz",
   "deleteAccountWebHint": "So geht es, auch ohne App",
-  "licenses": "Lizenzen",
-  "licensesHint": "Verwendete Open-Source-Software",
+  "openSourceLicenses": "Open-Source-Lizenzen",
+  "openSourceThanks": "Smile verwendet diese freie Software. Danke an alle, die sie entwickeln.",
+  "searchHint": "Suchen …",
+  "licenseCount": "{count} Lizenzen",
+  "@licenseCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "loginPrivacyBefore": "Mit der Anmeldung gilt unsere ",
   "loginPrivacyLink": "Datenschutzerklärung",
   "loginPrivacyAfter": ".",

@@ -48,6 +48,8 @@ final navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Inter and Phosphor from the app itself, never from Google (2026-11-10).
+  SmileFonts.setUp();
   Perf.mark('main');
   // Never Flutter's red error screen for people (2026-10-11): a part that
   // fails to build stays empty; the error goes to the log (and Crashlytics).

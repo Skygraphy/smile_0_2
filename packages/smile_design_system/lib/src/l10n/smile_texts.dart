@@ -2020,17 +2020,29 @@ abstract class SmileTexts {
   /// **'So geht es, auch ohne App'**
   String get deleteAccountWebHint;
 
-  /// No description provided for @licenses.
+  /// No description provided for @openSourceLicenses.
   ///
   /// In de, this message translates to:
-  /// **'Lizenzen'**
-  String get licenses;
+  /// **'Open-Source-Lizenzen'**
+  String get openSourceLicenses;
 
-  /// No description provided for @licensesHint.
+  /// No description provided for @openSourceThanks.
   ///
   /// In de, this message translates to:
-  /// **'Verwendete Open-Source-Software'**
-  String get licensesHint;
+  /// **'Smile verwendet diese freie Software. Danke an alle, die sie entwickeln.'**
+  String get openSourceThanks;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Suchen …'**
+  String get searchHint;
+
+  /// No description provided for @licenseCount.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} Lizenzen'**
+  String licenseCount(int count);
 
   /// No description provided for @loginPrivacyBefore.
   ///

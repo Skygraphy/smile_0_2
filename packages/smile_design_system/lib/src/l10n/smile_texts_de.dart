@@ -1211,10 +1211,19 @@ class SmileTextsDe extends SmileTexts {
   String get deleteAccountWebHint => 'So geht es, auch ohne App';
 
   @override
-  String get licenses => 'Lizenzen';
+  String get openSourceLicenses => 'Open-Source-Lizenzen';
 
   @override
-  String get licensesHint => 'Verwendete Open-Source-Software';
+  String get openSourceThanks =>
+      'Smile verwendet diese freie Software. Danke an alle, die sie entwickeln.';
+
+  @override
+  String get searchHint => 'Suchen …';
+
+  @override
+  String licenseCount(int count) {
+    return '$count Lizenzen';
+  }
 
   @override
   String get loginPrivacyBefore => 'Mit der Anmeldung gilt unsere ';

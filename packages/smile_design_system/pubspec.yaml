@@ -24,6 +24,13 @@ flutter:
   generate: true
   uses-material-design: true
 
+  # Inter 4.1 (OFL, google_fonts/OFL.txt), bundled so GoogleFonts never
+  # fetches it at run time (2026-11-10, SmileFonts); the licence texts for
+  # "Open-Source-Lizenzen".
+  assets:
+    - google_fonts/
+    - fonts/PHOSPHOR_LICENSE
+
   # Phosphor Icons 2.1 (MIT, see fonts/PHOSPHOR_LICENSE), bundled directly:
   # the phosphor_flutter package (last release 2.1.0, 2024) no longer
   # compiles on current Flutter because IconData became a final class.
