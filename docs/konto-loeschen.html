@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" href="favicon.png">
+<title>Smile Konto löschen</title>
+<meta name="description" content="So löschst du dein Smile-Konto und alle deine Daten.">
+<meta name="theme-color" content="#0E0C0C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: one narrow reading column, numbered steps in the app, the e-mail way, what gets deleted. Dark like Smile. */
+:root { color-scheme: dark; --bg: #0E0C0C; --surface: #1A1716; --line: #332D2B; --fg: #F2EEEC; --muted: #B5ACA9; --coral: #FF6F61; --coral-soft: rgba(255,111,97,.14);
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.6; padding-inline: 16px; padding-block: 0 56px; }
+main { max-width: 680px; margin: 0 auto; }
+header { display: flex; align-items: center; gap: 12px; padding-block: 24px; }
+header a { display: flex; align-items: center; gap: 12px; color: var(--fg); text-decoration: none; }
+.logo { width: 34px; height: 34px; border-radius: 10px; background: var(--coral); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 21px; }
+.word { font-weight: 700; font-size: 23px; letter-spacing: -.01em; }
+.word b { color: var(--coral); font-weight: 700; }
+h1 { font-size: 30px; font-weight: 800; letter-spacing: -.02em; margin: 8px 0 12px; }
+h2 { font-size: 18px; font-weight: 700; margin: 32px 0 12px; }
+p, li { color: var(--muted); }
+p { margin: 0 0 12px; }
+b { color: var(--fg); font-weight: 600; }
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: s; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 32px 1fr; gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; color: var(--fg); }
+ol.steps li::before { content: counter(s); width: 28px; height: 28px; border-radius: 50%; background: var(--coral-soft); color: var(--coral); font-weight: 800; display: grid; place-items: center; font-size: 14px; }
+ul { margin: 0 0 12px; padding-left: 20px; display: grid; gap: 6px; }
+.mail { display: inline-block; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; color: var(--fg); user-select: all; }
+a { color: var(--coral); }
+footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header><a href="./"><span class="logo" aria-hidden="true">S</span><span class="word">S<b>m</b>ile</span></a></header>
+  <h1>Smile-Konto löschen</h1>
+  <p>Du kannst dein Konto jederzeit selbst in der App löschen. Das geht sofort und kann nicht rückgängig gemacht werden.</p>
+
+  <h2>In der App</h2>
+  <ol class="steps">
+    <li>Öffne Smile und tippe oben rechts auf ⋮.</li>
+    <li>Tippe auf <b>Einstellungen</b>.</li>
+    <li>Tippe ganz unten auf <b>Konto löschen</b>, gib zur Bestätigung die E-Mail-Adresse deines Kontos ein und tippe auf Löschen.</li>
+  </ol>
+
+  <h2>Ohne App</h2>
+  <p>Hast du Smile nicht mehr auf dem Handy, schreib von der E-Mail-Adresse deines Kontos an <span class="mail">admin@skygraphy.com</span> mit dem Betreff „Konto löschen“. Wir löschen das Konto innerhalb von 7 Tagen und bestätigen es dir per E-Mail.</p>
+
+  <h2>Was gelöscht wird</h2>
+  <ul>
+    <li>Dein Profil mit Name, Profilbild und Smile-Name.</li>
+    <li>Alle Fotos und Videos, die du geschickt hast, in allen Alben, samt Titeln, Herzen und Dateien.</li>
+    <li>Alle deine Mitgliedschaften, Rollen, Einladungen und Anfragen sowie die Kennungen für Mitteilungen.</li>
+    <li>Spaces, deren Administrator du bist: Dein längster Co-Admin übernimmt sie. Gibt es keinen Co-Admin, wird der Space mit allen Alben, Fotos und Frames gelöscht.</li>
+  </ul>
+  <p>Es bleibt nichts zurück. Technische Protokolle der Anbieter, die nur IP-Adressen enthalten, verschwinden von selbst nach kurzer Zeit. Mehr dazu in der <a href="datenschutz.html">Datenschutzerklärung</a>.</p>
+
+  <footer><a href="./">Smile</a><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a><span>© 2026 Skygraphy Copter Technologies e.U.</span></footer>
+</main>
+</body>
+</html>

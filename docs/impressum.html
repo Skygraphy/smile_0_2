@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" href="favicon.png">
+<title>Smile Impressum</title>
+<meta name="description" content="Impressum und Offenlegung für Smile und smileapp.app.">
+<meta name="theme-color" content="#0E0C0C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: one narrow reading column, brand header, label/value list. Dark like Smile. */
+:root { color-scheme: dark; --bg: #0E0C0C; --surface: #1A1716; --line: #332D2B; --fg: #F2EEEC; --muted: #B5ACA9; --coral: #FF6F61;
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.6; padding-inline: 16px; padding-block: 0 56px; }
+main { max-width: 680px; margin: 0 auto; }
+header { display: flex; align-items: center; gap: 12px; padding-block: 24px; }
+header a { display: flex; align-items: center; gap: 12px; color: var(--fg); text-decoration: none; }
+.logo { width: 34px; height: 34px; border-radius: 10px; background: var(--coral); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 21px; }
+.word { font-weight: 700; font-size: 23px; letter-spacing: -.01em; }
+.word b { color: var(--coral); font-weight: 700; }
+h1 { font-size: 30px; font-weight: 800; letter-spacing: -.02em; margin: 8px 0 24px; }
+h2 { font-size: 18px; font-weight: 700; margin: 32px 0 10px; }
+p { margin: 0 0 12px; color: var(--muted); }
+dl { display: grid; grid-template-columns: minmax(0, 13em) minmax(0, 1fr); gap: 10px 20px; margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+dt { color: var(--muted); font-size: 14.5px; }
+dd { margin: 0; }
+a { color: var(--coral); }
+footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+footer a { color: var(--muted); }
+@media (max-width: 560px) { dl { grid-template-columns: 1fr; gap: 2px; } dd { margin-bottom: 10px; } }
+</style>
+</head>
+<body>
+<main>
+  <header><a href="./"><span class="logo" aria-hidden="true">S</span><span class="word">S<b>m</b>ile</span></a></header>
+  <h1>Impressum</h1>
+
+  <h2>Angaben nach § 5 ECG und § 25 MedienG</h2>
+  <dl>
+    <dt>Firma</dt><dd>Skygraphy Copter Technologies e.U.</dd>
+    <dt>Rechtsform</dt><dd>Einzelunternehmen</dd>
+    <dt>Inhaber</dt><dd>DI Dr. Ernst Schiener</dd>
+    <dt>Anschrift</dt><dd>Waldgasse 13, 3400 Klosterneuburg, Österreich</dd>
+    <dt>E-Mail</dt><dd>admin@skygraphy.com</dd>
+    <dt>Firmenbuch</dt><dd>FN 409426y, Landesgericht Korneuburg</dd>
+    <dt>UID-Nummer</dt><dd>ATU68757703</dd>
+    <dt>Unternehmensgegenstand</dt><dd>Fotografie, Video, Luftbildaufnahmen, Herstellung von Multicoptern</dd>
+    <dt>Gewerbe</dt><dd>Mechatronik; Dienstleistungen in der automatischen Datenverarbeitung und Informationstechnik</dd>
+    <dt>Kammer</dt><dd>Mitglied der Wirtschaftskammer Niederösterreich</dd>
+    <dt>Gewerbebehörde</dt><dd>Bezirkshauptmannschaft Tulln</dd>
+    <dt>Rechtsvorschriften</dt><dd>Gewerbeordnung, abrufbar unter <a href="https://www.ris.bka.gv.at" target="_blank" rel="noopener">www.ris.bka.gv.at</a></dd>
+  </dl>
+
+  <h2>Offenlegung nach § 25 MedienG</h2>
+  <p>Medieninhaber und Herausgeber ist Skygraphy Copter Technologies e.U. Diese Website informiert über die App Smile, ihre Funktionen und Preise.</p>
+
+  <h2>Haftung für Links</h2>
+  <p>Diese Website enthält Links zu Websites anderer Anbieter. Für deren Inhalte sind ausschließlich deren Betreiber verantwortlich.</p>
+
+  <footer><a href="./">Smile</a><a href="datenschutz.html">Datenschutz</a><a href="konto-loeschen.html">Konto löschen</a><span>© 2026 Skygraphy Copter Technologies e.U.</span></footer>
+</main>
+</body>
+</html>
