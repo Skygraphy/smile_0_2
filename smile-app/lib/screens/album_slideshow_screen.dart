@@ -386,6 +386,26 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
 
   static const _gap = 24.0;
 
+  /// The photo's title (2026-10-17) in the Frame's style, at the bottom of
+  /// its own page; hidden softly while the controls show.
+  Widget _slideCaption(List<MediaItem> items, int i) {
+    if (!_prefs.captions || items.isEmpty) return const SizedBox.shrink();
+    final caption = items[i % items.length].caption?.trim();
+    if (caption == null || caption.isEmpty) return const SizedBox.shrink();
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: IgnorePointer(
+        child: AnimatedOpacity(
+          opacity: _chrome ? 0 : 1,
+          duration: const Duration(milliseconds: 300),
+          child: SmileViewerCaption(caption, maxLines: 3),
+        ),
+      ),
+    );
+  }
+
   Widget _slide(BuildContext context, List<MediaItem> items, int i) {
     if (items.isEmpty) return const SizedBox.shrink();
     final item = items[i % items.length];
@@ -457,7 +477,12 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                             child: Transform.scale(scale: 1 - 0.1 * away, child: child),
                           );
                         },
-                        child: _slide(context, items, i),
+                        // The title belongs to its photo (Ernst 2026-11-10): it glides
+                        // and fades with it instead of switching halfway.
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [_slide(context, items, i), _slideCaption(items, i)],
+                        ),
                       ),
                     ),
                   ),
@@ -465,15 +490,6 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
               ),
             ),
 
-            // The photo's title (2026-10-17), while the controls are hidden.
-            if (_prefs.captions && !_chrome && items.isNotEmpty && (_current.caption?.trim().isNotEmpty ?? false))
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                // The Frame's style (2026-10-17).
-                child: SmileViewerCaption(_current.caption!.trim(), maxLines: 3),
-              ),
             AnimatedOpacity(
               opacity: _chrome ? 1 : 0,
               duration: const Duration(milliseconds: 200),
