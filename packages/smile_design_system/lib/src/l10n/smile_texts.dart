@@ -6135,6 +6135,48 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Lizenz'**
   String get licenseOther;
+
+  /// No description provided for @language.
+  ///
+  /// In de, this message translates to:
+  /// **'Sprache'**
+  String get language;
+
+  /// No description provided for @languageAutomatic.
+  ///
+  /// In de, this message translates to:
+  /// **'Automatisch'**
+  String get languageAutomatic;
+
+  /// No description provided for @languageAutomaticValue.
+  ///
+  /// In de, this message translates to:
+  /// **'Automatisch ({language})'**
+  String languageAutomaticValue(String language);
+
+  /// No description provided for @languageLikePhone.
+  ///
+  /// In de, this message translates to:
+  /// **'Wie das Handy: {language}'**
+  String languageLikePhone(String language);
+
+  /// No description provided for @languageSheetHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Gilt für die App und die Mitteilungen, die du bekommst.'**
+  String get languageSheetHint;
+
+  /// No description provided for @frameLanguage.
+  ///
+  /// In de, this message translates to:
+  /// **'Sprache am Frame'**
+  String get frameLanguage;
+
+  /// No description provided for @frameLanguageLikeTablet.
+  ///
+  /// In de, this message translates to:
+  /// **'Wie das Tablet'**
+  String get frameLanguageLikeTablet;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

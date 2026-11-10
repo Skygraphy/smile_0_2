@@ -141,6 +141,15 @@ class _FramePlaybackScreenState extends State<FramePlaybackScreen> with SyncRelo
             padding: const EdgeInsets.only(bottom: SmileSpacing.m),
             child: Text(t.playbackHint, style: TextStyle(color: scheme.onSurfaceVariant)),
           ),
+          // The Frame's own language (2026-11-10).
+          card([
+            label(t.frameLanguage),
+            chips<String?>(
+              [(null, t.frameLanguageLikeTablet), for (final code in SmileLanguages.codes) (code, SmileLanguages.nameOf(code))],
+              f.frameLanguage,
+              'language',
+            ),
+          ]),
           card([
             label(t.whatPlays),
             chips(

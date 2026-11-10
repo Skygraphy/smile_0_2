@@ -29,6 +29,7 @@ import 'services/offline_http_client.dart';
 import 'widgets/offline_hint.dart';
 import 'services/video_prefetcher.dart';
 import 'services/invite_links.dart';
+import 'services/app_language.dart';
 import 'services/share_in.dart';
 import 'services/upload_queue.dart';
 import 'frame/frame.dart' as frame;
@@ -50,6 +51,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Inter and Phosphor from the app itself, never from Google (2026-11-10).
   SmileFonts.setUp();
+  // The chosen language, else the phone's (2026-11-10).
+  await AppLanguage.load();
   Perf.mark('main');
   // Never Flutter's red error screen for people (2026-10-11): a part that
   // fails to build stays empty; the error goes to the log (and Crashlytics).
@@ -283,20 +286,24 @@ class SmileApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    // The app's language (2026-11-10): chosen, else the phone's.
+    return ValueListenableBuilder<String?>(
+      valueListenable: AppLanguage.choice,
+      builder: (context, _, _) => MaterialApp(
       title: 'Smile',
       navigatorKey: navigatorKey,
       scaffoldMessengerKey: scaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: SmileTheme.themeData,
-      // German only for now; all Smile terms come from SmileTexts, and the
-      // Material/Cupertino delegates make built-in widgets German too.
-      locale: const Locale('de'),
+      // All Smile terms come from SmileTexts; the Material/Cupertino
+      // delegates make built-in widgets speak the same language.
+      locale: Locale(AppLanguage.effective),
       localizationsDelegates: SmileTexts.localizationsDelegates,
       supportedLocales: SmileTexts.supportedLocales,
       // Offline: one quiet hint on every screen (2026-10-09).
       builder: (context, child) => OfflineHintOverlay(child: child ?? const SizedBox.shrink()),
       home: AuthGate(),
+      ),
     );
   }
 }

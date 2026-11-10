@@ -5,6 +5,7 @@
 // media_items update itself wakes them (sync_notify). What remains is the
 // visible "new photo" notification for the channel's human members.
 import { pushNotificationToUsers } from "./push-users.ts";
+import { pushTexts } from "./push-texts.ts";
 import { fetchProfilesByUserId } from "./profiles.ts";
 
 /** Photos a sender posts within this many minutes count as one batch. */
@@ -21,13 +22,9 @@ export async function announceReadyPhoto(supabaseAdmin: any, mediaItemId: string
 }
 
 /** "5 neue Fotos" instead of "Foto" -- only the media types actually in the batch. */
+/** The new-photo text in German -- the catalog's (push-texts.ts) newPhotos. */
 export function batchBody(senderName: string, photos: number, videos: number, caption?: string | null): string {
-  const total = photos + videos;
-  // One photo with a title: the title is the message (2026-10-17).
-  if (total <= 1 && caption) return `${senderName}: ${caption}`;
-  if (total <= 1) return `${senderName} hat ${videos === 1 ? "ein Video" : "ein Foto"} geteilt.`;
-  const kind = videos === 0 ? "Fotos" : photos === 0 ? "Videos" : "Fotos und Videos";
-  return `${senderName} hat ${total} neue ${kind} geteilt.`;
+  return pushTexts("de").newPhotos({ sender: senderName, photos, videos, caption });
 }
 
 /**
@@ -49,7 +46,7 @@ async function notifyChannelMembersOfNewPhoto(supabaseAdmin: any, channelId: str
 
   let photos = 1;
   let videos = 0;
-  let senderName = "Jemand";
+  let senderName: string | null = null;
   let caption: string | null = null;
   if (senderId) {
     const since = new Date(Date.now() - BATCH_MINUTES * 60_000).toISOString();
@@ -75,7 +72,7 @@ async function notifyChannelMembersOfNewPhoto(supabaseAdmin: any, channelId: str
   await pushNotificationToUsers(
     supabaseAdmin,
     recipientIds,
-    { title: channel?.name ?? "Neues Foto", body: batchBody(senderName, photos, videos, caption) },
+    (t) => ({ title: channel?.name ?? t.newPhotosTitleFallback, body: t.newPhotos({ sender: senderName, photos, videos, caption }) }),
     { type: "new_photo", channel_id: channelId, channel_name: channel?.name ?? "" },
     senderId ? { collapseKey: `photos_${channelId}_${senderId}`, collapseWindowMinutes: BATCH_MINUTES } : undefined,
   );

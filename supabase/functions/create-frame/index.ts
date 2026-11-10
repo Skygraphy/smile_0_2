@@ -77,10 +77,7 @@ Deno.serve(async (req) => {
       await pushNotificationToUsers(
         supabaseAdmin,
         managers.filter((u) => u !== actorId),
-        {
-          title: "Neuer Frame",
-          body: `${profiles.get(actorId)?.display_name ?? "Jemand"} hat den Frame ${frame.name} in ${space?.name ?? ""} angelegt.`,
-        },
+        (t) => t.frameCreated({ actor: profiles.get(actorId)?.display_name ?? null, frame: frame.name as string, space: space?.name ?? "" }),
         { type: "frame_changed", space_id: body.space_id, space_name: space?.name ?? "", frame_name: frame.name as string },
       );
       return jsonResponse({

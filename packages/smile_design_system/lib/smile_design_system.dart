@@ -4,6 +4,7 @@
 library;
 
 export 'src/icons/smile_icons.dart';
+export 'src/l10n/smile_languages.dart';
 export 'src/l10n/smile_texts.dart';
 export 'src/theme/smile_fonts.dart';
 export 'src/theme/smile_theme.dart';

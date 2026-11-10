@@ -109,10 +109,7 @@ Deno.serve(async (req) => {
       await pushNotificationToUsers(
         supabaseAdmin,
         [failed.sender_id as string],
-        {
-          title: "Hochladen fehlgeschlagen",
-          body: `Dein ${failed.media_type === "video" ? "Video" : "Foto"} in ${channelName} konnte nicht verarbeitet werden. Bitte versuche es noch einmal.`,
-        },
+        (t) => t.mediaFailed({ video: failed.media_type === "video", album: channelName }),
         { type: "media_failed", channel_id: failed.channel_id as string, channel_name: channelName },
       );
     }

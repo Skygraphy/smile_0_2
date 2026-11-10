@@ -57,10 +57,7 @@ Deno.serve(async (req) => {
   await pushNotificationToUsers(
     supabaseAdmin,
     (await spaceManagerIds(supabaseAdmin, frame.space_id as string)).filter((u) => u !== actorId),
-    {
-      title: "Frame gelöscht",
-      body: `${profiles.get(actorId)?.display_name ?? "Jemand"} hat den Frame ${frame.name} in ${spaceName} gelöscht.`,
-    },
+    (t) => t.frameDeleted({ actor: profiles.get(actorId)?.display_name ?? null, frame: frame.name as string, space: spaceName }),
     { type: "frame_deleted", space_id: frame.space_id as string, space_name: spaceName, frame_name: frame.name as string },
   );
 

@@ -108,6 +108,7 @@ class FrameSettingsInfo {
     this.easyStop = true,
     this.pauseZoom = true,
     this.onThisDay = true,
+    this.language,
   });
 
   final String displayMode; // 'slideshow' | 'manual'
@@ -178,6 +179,9 @@ class FrameSettingsInfo {
   /// in earlier years plays first.
   final bool onThisDay;
 
+  /// The Frame's language, set in the app (migrations/0101); null: the tablet's.
+  final String? language;
+
   FrameControls get effectiveControls =>
       controls ?? FrameControls(next: true, back: true, pause: true, overview: true, album: channelSwitchEnabled);
 
@@ -210,6 +214,7 @@ class FrameSettingsInfo {
         easyStop: json['easy_stop'] as bool? ?? true,
         pauseZoom: json['pause_zoom'] as bool? ?? true,
         onThisDay: json['on_this_day'] as bool? ?? true,
+        language: json['language'] as String?,
       );
 }
 

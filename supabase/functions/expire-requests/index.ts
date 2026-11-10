@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     ...(shares ?? []).map((r) => r.target_user_id as string),
     ...(coAdmins ?? []).map((r) => r.invitee_user_id as string),
   ]);
-  const nameOf = (id: string) => people.get(id)?.display_name ?? "Jemand";
+  const nameOf = (id: string) => people.get(id)?.display_name ?? null;
 
   let expired = 0;
   for (const r of memberships ?? []) {
@@ -59,14 +59,14 @@ Deno.serve(async (req) => {
         await pushNotificationToUsers(
           supabaseAdmin,
           await spaceManagerIds(supabaseAdmin, channel.space_id as string),
-          { title: "Einladung abgelaufen", body: `${nameOf(r.user_id as string)} hat die Einladung ins Album ${channel.name} nicht beantwortet.` },
+          (t) => t.inviteExpired({ name: nameOf(r.user_id as string), album: channel.name }),
           { type: "request_expired", channel_id: r.channel_id as string, channel_name: channel.name as string },
         );
       } else {
         await pushNotificationToUsers(
           supabaseAdmin,
           [r.user_id as string],
-          { title: "Anfrage abgelaufen", body: `Deine Anfrage, Member im Album ${channel.name} zu werden, wurde nicht beantwortet.` },
+          (t) => t.ownRequestExpired({ album: channel.name, share: false }),
           { type: "own_request_expired" },
         );
       }
@@ -81,14 +81,14 @@ Deno.serve(async (req) => {
         await pushNotificationToUsers(
           supabaseAdmin,
           await spaceManagerIds(supabaseAdmin, channel.space_id as string),
-          { title: "Einladung abgelaufen", body: `${nameOf(r.target_user_id as string)} hat das Teilen von ${channel.name} nicht beantwortet.` },
+          (t) => t.shareInviteExpired({ name: nameOf(r.target_user_id as string), album: channel.name }),
           { type: "request_expired", channel_id: r.channel_id as string, channel_name: channel.name as string },
         );
       } else {
         await pushNotificationToUsers(
           supabaseAdmin,
           [r.target_user_id as string],
-          { title: "Anfrage abgelaufen", body: `Deine Anfrage, das Album ${channel.name} mit deinem Space zu sehen, wurde nicht beantwortet.` },
+          (t) => t.ownRequestExpired({ album: channel.name, share: true }),
           { type: "own_request_expired" },
         );
       }
@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       await pushNotificationToUsers(
         supabaseAdmin,
         [space.owner_id as string],
-        { title: "Einladung abgelaufen", body: `${nameOf(r.invitee_user_id as string)} hat die Einladung als Co-Admin von ${space.name} nicht beantwortet.` },
+        (t) => t.coAdminInviteExpired({ name: nameOf(r.invitee_user_id as string), space: space.name }),
         { type: "co_admin_invite_expired", space_id: r.space_id as string, space_name: space.name as string },
       );
     }

@@ -3,12 +3,15 @@
 // data messages, and fans out to every token a
 // user has registered (multiple devices/reinstalls).
 import { sendNotification } from "./fcm.ts";
+import { type Localized, type Notice, pushTexts } from "./push-texts.ts";
 
 // deno-lint-ignore no-explicit-any
 export async function pushNotificationToUsers(
   supabaseAdmin: any,
   userIds: string[],
-  notification: { title: string; body: string },
+  // A fixed text, or one written per recipient language (push-texts.ts,
+  // profiles.language -- 2026-11-10).
+  notification: Notice | Localized,
   data?: Record<string, string>,
   // Several pushes about the same thing in a row (a batch of photos) show as
   // ONE notification and ONE Verlauf entry that keeps being updated: with the
@@ -17,6 +20,19 @@ export async function pushNotificationToUsers(
 ): Promise<void> {
   if (userIds.length === 0) return;
   const collapseKey = options?.collapseKey;
+  // Each person's language -- German when unknown.
+  const languageOf = new Map<string, string>();
+  if (typeof notification === "function") {
+    const { data: profiles } = await supabaseAdmin.from("profiles").select("user_id, language").in("user_id", userIds);
+    for (const row of profiles ?? []) languageOf.set(row.user_id as string, (row.language as string | null) ?? "de");
+  }
+  const rendered = new Map<string, Notice>();
+  const textFor = (userId: string): Notice => {
+    if (typeof notification !== "function") return notification;
+    const language = languageOf.get(userId) ?? "de";
+    if (!rendered.has(language)) rendered.set(language, notification(pushTexts(language)));
+    return rendered.get(language)!;
+  };
   if (collapseKey) data = { ...(data ?? {}), collapse_key: collapseKey };
 
   // Kept for 30 days as the "Verlauf" in Neuigkeiten (migrations/0059) --
@@ -35,8 +51,8 @@ export async function pushNotificationToUsers(
     await supabaseAdmin.from("user_notifications").insert(
       [...new Set(userIds)].map((userId) => ({
         user_id: userId,
-        title: notification.title,
-        body: notification.body,
+        title: textFor(userId).title,
+        body: textFor(userId).body,
         data: data ?? {},
       })),
     );
@@ -46,13 +62,13 @@ export async function pushNotificationToUsers(
 
   const { data: tokens } = await supabaseAdmin
     .from("user_push_tokens")
-    .select("id, fcm_token")
+    .select("id, user_id, fcm_token")
     .in("user_id", userIds);
 
   await Promise.all(
-    (tokens ?? []).map(async (t: { id: string; fcm_token: string }) => {
+    (tokens ?? []).map(async (t: { id: string; user_id: string; fcm_token: string }) => {
       try {
-        await sendNotification(t.fcm_token, notification, data, collapseKey);
+        await sendNotification(t.fcm_token, textFor(t.user_id), data, collapseKey);
       } catch (err) {
         // Best-effort -- but a permanently dead
         // token (app uninstalled, token rotated) is worth pruning so it

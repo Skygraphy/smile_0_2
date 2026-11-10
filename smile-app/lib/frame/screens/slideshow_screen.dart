@@ -15,6 +15,7 @@ import '../services/media_cache_sync.dart';
 import '../services/push_service.dart';
 import '../services/push_sync_signal.dart';
 import '../services/frame_chime.dart';
+import '../services/frame_language.dart';
 import '../services/sync_service.dart';
 import 'video_slide.dart';
 
@@ -263,6 +264,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     // The code changed or was taken away: locked again.
     if (_unlocked && settings.unlockCodeHash != _settings?.unlockCodeHash) _lock();
     debugPrint('SmileFrameTiming: settings applied (push) captions=${settings.showCaptions} interval=${settings.slideshowIntervalSeconds}');
+    FrameLanguage.apply(settings.language);
     setState(() {
       if (_choiceChanged(_settings, settings)) _startOver();
       _settings = settings;
@@ -283,6 +285,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final albumChanged = _currentChannelId != null && result.channelId != null && result.channelId != _currentChannelId;
     // The unlock code changed or was taken away: locked again.
     if (_unlocked && result.settings?.unlockCodeHash != _settings?.unlockCodeHash) _lock();
+    if (result.settings != null) FrameLanguage.apply(result.settings!.language);
     setState(() {
       if (albumChanged || _choiceChanged(_settings, result.settings)) _startOver();
       _deactivated = result.deactivated;

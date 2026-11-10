@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import 'frame_mode.dart';
+import 'services/frame_language.dart';
 import 'screens/slideshow_screen.dart';
 
 /// The app while this device is a Frame (FrameMode): only the slideshow,
@@ -12,14 +13,18 @@ class FrameModeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Smile',
-      debugShowCheckedModeBanner: false,
-      theme: SmileTheme.themeData,
-      locale: const Locale('de'),
-      localizationsDelegates: SmileTexts.localizationsDelegates,
-      supportedLocales: SmileTexts.supportedLocales,
-      home: SlideshowScreen(onUnpaired: FrameMode.leave),
+    // The Frame's own language (2026-11-10): set in the app, else the tablet's.
+    return ValueListenableBuilder<String>(
+      valueListenable: FrameLanguage.code,
+      builder: (context, language, _) => MaterialApp(
+        title: 'Smile',
+        debugShowCheckedModeBanner: false,
+        theme: SmileTheme.themeData,
+        locale: Locale(language),
+        localizationsDelegates: SmileTexts.localizationsDelegates,
+        supportedLocales: SmileTexts.supportedLocales,
+        home: SlideshowScreen(onUnpaired: FrameMode.leave),
+      ),
     );
   }
 }

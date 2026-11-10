@@ -3734,4 +3734,30 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get licenseOther => 'Lizenz';
+
+  @override
+  String get language => 'Sprache';
+
+  @override
+  String get languageAutomatic => 'Automatisch';
+
+  @override
+  String languageAutomaticValue(String language) {
+    return 'Automatisch ($language)';
+  }
+
+  @override
+  String languageLikePhone(String language) {
+    return 'Wie das Handy: $language';
+  }
+
+  @override
+  String get languageSheetHint =>
+      'Gilt für die App und die Mitteilungen, die du bekommst.';
+
+  @override
+  String get frameLanguage => 'Sprache am Frame';
+
+  @override
+  String get frameLanguageLikeTablet => 'Wie das Tablet';
 }

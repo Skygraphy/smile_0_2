@@ -1644,5 +1644,26 @@
   },
   "dateNumericPattern": "dd.MM.yyyy",
   "dateNumericShortPattern": "dd.MM.yy",
-  "licenseOther": "Lizenz"
+  "licenseOther": "Lizenz",
+  "language": "Sprache",
+  "languageAutomatic": "Automatisch",
+  "languageAutomaticValue": "Automatisch ({language})",
+  "@languageAutomaticValue": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "languageLikePhone": "Wie das Handy: {language}",
+  "@languageLikePhone": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "languageSheetHint": "Gilt für die App und die Mitteilungen, die du bekommst.",
+  "frameLanguage": "Sprache am Frame",
+  "frameLanguageLikeTablet": "Wie das Tablet"
 }

@@ -5,7 +5,7 @@
 export const FRAME_SETTING_COLUMNS =
   "display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, max_local_cache_gb, control_level, " +
   "controls, content_mode, recent_count, play_order, end_behavior, show_new_immediately, show_clock, show_sender, " +
-  "quiet_from, quiet_to, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, unlock_code_hash, new_sound, new_sound_reminder, new_hint, easy_stop, pause_zoom, on_this_day";
+  "quiet_from, quiet_to, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, unlock_code_hash, new_sound, new_sound_reminder, new_hint, easy_stop, pause_zoom, on_this_day, language";
 
 // deno-lint-ignore no-explicit-any
 export function frameSettings(frame: Record<string, any>) {
@@ -43,5 +43,7 @@ export function frameSettings(frame: Record<string, any>) {
     pause_zoom: frame.pause_zoom ?? true,
     // "Heute vor einem Jahr" (migrations/0100).
     on_this_day: frame.on_this_day ?? true,
+    // "Sprache am Frame" (migrations/0101); null: the tablet's.
+    language: frame.language ?? null,
   };
 }

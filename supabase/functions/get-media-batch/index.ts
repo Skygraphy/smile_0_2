@@ -57,7 +57,7 @@ interface RequestBody {
 const FRAME_COLUMNS =
   "id, lifecycle_state, space_id, display_mode, slideshow_interval_seconds, channel_switch_enabled, video_sound, " +
   "max_local_cache_gb, current_channel_id, control_level, controls, content_mode, recent_count, play_order, " +
-  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, unlock_code_hash, new_sound, new_sound_reminder, new_hint, easy_stop, pause_zoom, on_this_day, spaces(name, deleted_at)";
+  "end_behavior, show_new_immediately, show_clock, show_sender, quiet_from, quiet_to, playing_round, video_length, fill_mode, slow_zoom, rotate_with_device, show_captions, unlock_code_hash, new_sound, new_sound_reminder, new_hint, easy_stop, pause_zoom, on_this_day, language, spaces(name, deleted_at)";
 
 // What the Frame may change itself, by the control that allows it, and
 // what each value may be.
@@ -201,10 +201,7 @@ Deno.serve(async (req) => {
       await pushNotificationToUsers(
         supabase,
         [...new Set([...managers, ...admins])],
-        {
-          title: `${row.name} läuft wieder`,
-          body: "Das Tablet wurde neu gestartet, z. B. nach einem Stromausfall. War der Frame angeheftet, bitte neu anheften.",
-        },
+        (t) => t.frameRunsAgain({ frame: row.name as string }),
         { type: "frame_changed", space_id: row.space_id as string, space_name: spaceName, frame_name: row.name as string },
       );
     }
@@ -301,14 +298,10 @@ Deno.serve(async (req) => {
               supabase.from("channels").select("name").eq("id", media.channel_id).maybeSingle(),
             ]);
             const channelName = (channelRow?.name as string | undefined) ?? "";
-            const what = media.media_type === "video" ? "dein Video" : "dein Foto";
             await pushNotificationToUsers(
               supabase,
               [media.sender_id as string],
-              {
-                title: `${frameRow?.name ?? "Ein Frame"} hat ${what} gemerkt ♥`,
-                body: `Aus dem Album ${channelName} – jetzt ein Lieblingsbild am Frame.`,
-              },
+              (t) => t.frameFavorite({ frame: (frameRow?.name as string | undefined) ?? null, video: media.media_type === "video", album: channelName }),
               { type: "frame_favorite", channel_id: media.channel_id as string, channel_name: channelName },
             );
           }

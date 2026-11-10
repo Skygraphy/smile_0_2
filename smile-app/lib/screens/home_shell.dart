@@ -8,6 +8,7 @@ import '../services/offline.dart';
 import '../services/sync_bus.dart';
 import '../services/invite_links.dart';
 import '../services/share_in.dart';
+import '../services/app_language.dart';
 import 'channels_home_screen.dart';
 import 'person_screen.dart';
 import 'scan_code_screen.dart';
@@ -48,6 +49,8 @@ class _HomeShellState extends State<HomeShell> with SyncReload {
     WidgetsBinding.instance.addPostFrameCallback((_) => _takeInvite());
     // Shared from another app (2026-11-09): "Senden an …".
     ShareIn.pending.addListener(_takeShared);
+    // The server writes notifications in the app's language (2026-11-10).
+    unawaited(AppLanguage.report());
     WidgetsBinding.instance.addPostFrameCallback((_) => _takeShared());
   }
 

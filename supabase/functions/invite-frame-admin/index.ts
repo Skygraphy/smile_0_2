@@ -64,11 +64,11 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "invite_failed", detail: insertError.message }, 500);
   }
 
-  const inviter = (await fetchProfilesByUserId(admin, [userId])).get(userId)?.display_name ?? "Jemand";
+  const inviter = (await fetchProfilesByUserId(admin, [userId])).get(userId)?.display_name ?? null;
   await pushNotificationToUsers(
     admin,
     [inviteeId],
-    { title: "Einladung als Frame-Admin", body: `${inviter} möchte dich zum Frame-Admin von ${frame.name} machen. Annehmen unter Neuigkeiten.` },
+    (t) => t.frameAdminInvite({ inviter, frame: frame.name }),
     { type: "frame_admin_invite", frame_id: frame.id, frame_name: frame.name },
   );
 

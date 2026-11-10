@@ -97,10 +97,7 @@ Deno.serve(async (req) => {
     await pushNotificationToUsers(
       supabaseAdmin,
       managers.filter((u) => u !== userId),
-      {
-        title: "Frame zeigt neues Album",
-        body: `${profiles.get(userId)?.display_name ?? "Jemand"}: Der Frame ${frameRow?.name ?? ""} zeigt jetzt auch ${channel.name}.`,
-      },
+      (t) => t.frameShowsNewAlbum({ actor: profiles.get(userId)?.display_name ?? null, frame: frameRow?.name ?? "", album: channel.name }),
       { type: "frame_changed", space_id: frame.space_id, space_name: spaceRow?.name ?? "", frame_name: frameRow?.name ?? "" },
     );
   }

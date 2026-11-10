@@ -85,6 +85,9 @@ class SmileFrame {
 
   /// "Heute vor einem Jahr" (migrations/0100).
   bool get onThisDay => playback['on_this_day'] as bool? ?? true;
+
+  /// "Sprache am Frame" (migrations/0101); null: like the tablet.
+  String? get frameLanguage => playback['language'] as String?;
   bool get showClock => playback['show_clock'] as bool? ?? false;
   bool get showSender => playback['show_sender'] as bool? ?? true;
   String? get quietFrom => playback['quiet_from'] as String?;
@@ -290,7 +293,7 @@ class FrameService {
     'control_level', 'controls', 'content_mode', 'recent_count', 'play_order', 'end_behavior', 'slideshow_interval_seconds',
     'show_new_immediately', 'show_clock', 'show_sender', 'quiet_from', 'quiet_to', 'playing_round',
     'video_length', 'fill_mode', 'slow_zoom', 'rotate_with_device', 'show_captions',
-    'new_sound', 'new_sound_reminder', 'new_hint', 'easy_stop', 'pause_zoom', 'on_this_day',
+    'new_sound', 'new_sound_reminder', 'new_hint', 'easy_stop', 'pause_zoom', 'on_this_day', 'language',
   ];
 
   static final _frameColumns = 'id, name, lifecycle_state, channel_switch_enabled, video_sound, avatar_path, current_channel_id, pairing_code, '

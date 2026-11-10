@@ -145,18 +145,13 @@ Deno.serve(async (req) => {
         bySenderAndAlbum.set(key, entry);
       }
       if (bySenderAndAlbum.size > 0) {
-        const actorName = (await fetchProfilesByUserId(supabaseAdmin, [userId])).get(userId)?.display_name ?? "Jemand";
+        const actorName = (await fetchProfilesByUserId(supabaseAdmin, [userId])).get(userId)?.display_name ?? null;
         for (const e of bySenderAndAlbum.values()) {
           const { data: ch } = await supabaseAdmin.from("channels").select("name").eq("id", e.channel).maybeSingle();
           await pushNotificationToUsers(
             supabaseAdmin,
             [e.sender],
-            {
-              title: "Foto gelöscht",
-              body: e.count === 1
-                ? `${actorName} hat dein Foto aus ${ch?.name ?? ""} gelöscht.`
-                : `${actorName} hat ${e.count} deiner Fotos aus ${ch?.name ?? ""} gelöscht.`,
-            },
+            (t) => t.photosDeleted({ actor: actorName, count: e.count, album: ch?.name ?? "" }),
             { type: "photo_deleted", channel_id: e.channel, channel_name: ch?.name ?? "" },
           );
         }

@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
   const userId = userData.user.id;
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-  const name = (await fetchProfilesByUserId(supabaseAdmin, [userId])).get(userId)?.display_name ?? "Jemand";
+  const name = (await fetchProfilesByUserId(supabaseAdmin, [userId])).get(userId)?.display_name ?? null;
 
   const { data: ownedSpaces } = await supabaseAdmin.from("spaces").select("id, name").eq("owner_id", userId);
   const handovers: { spaceName: string; successorId: string; spaceId: string }[] = [];
@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     await pushNotificationToUsers(
       supabaseAdmin,
       [h.successorId],
-      { title: "Du bist jetzt Admin", body: `${name} hat das Smile-Konto gelöscht. Du bist jetzt Admin des Space ${h.spaceName}.` },
+      (t) => t.nowAdminAfterAccountDeleted({ name, space: h.spaceName }),
       { type: "space_ownership_transferred", space_id: h.spaceId, space_name: h.spaceName },
     );
   }
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     await pushNotificationToUsers(
       supabaseAdmin,
       people,
-      { title: "Space gelöscht", body: `${name} hat das Smile-Konto gelöscht. Den Space ${spaceName} mit allen Alben gibt es nicht mehr.` },
+      (t) => t.spaceGoneWithAccount({ name, space: spaceName }),
       { type: "space_deleted_with_account" },
     );
   }

@@ -18,6 +18,7 @@ import '../services/video_quality.dart';
 import '../services/upload_queue.dart';
 import 'intro_screen.dart';
 import 'about_screen.dart';
+import '../services/app_language.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'avatar_viewer_screen.dart';
 import 'handle_edit_screen.dart';
@@ -269,6 +270,8 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
     await supabase.auth.signOut();
   }
 
+  Future<void> _pickLanguage() => _showLanguageSheet(context);
+
   @override
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
@@ -512,6 +515,24 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                     SmileActionRow(icon: SmileIcons.delete, label: t.deleteAccount, destructive: true, onTap: _confirmDeleteAccount),
                   ],
                 ),
+                // "Sprache" (2026-11-10): the phone's, or one chosen.
+                SmileInfoSection(
+                  title: t.language,
+                  children: [
+                    ValueListenableBuilder<String?>(
+                      valueListenable: AppLanguage.choice,
+                      builder: (context, chosen, _) => SmileObjectTile(
+                        leading: Icon(SmileIcons.web, color: scheme.onSurfaceVariant),
+                        title: t.language,
+                        subtitle: chosen == null
+                            ? t.languageAutomaticValue(SmileLanguages.nameOf(AppLanguage.deviceLanguage))
+                            : SmileLanguages.nameOf(chosen),
+                        trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
+                        onTap: _pickLanguage,
+                      ),
+                    ),
+                  ],
+                ),
                 // "Über Smile" (2026-11-10): Impressum, Datenschutz, Lizenzen.
                 SmileInfoSection(
                   title: t.aboutSmile,
@@ -538,6 +559,45 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
             ),
     );
   }
+}
+
+/// Automatisch or one of Smile's languages, each named in itself.
+Future<void> _showLanguageSheet(BuildContext context) async {
+  final t = SmileTexts.of(context);
+  final chosen = await showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(SmileSpacing.l, 0, SmileSpacing.l, SmileSpacing.s),
+            child: Text(t.languageSheetHint, style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          ),
+          RadioGroup<String>(
+            groupValue: AppLanguage.choice.value ?? '',
+            onChanged: (v) => Navigator.of(context).pop(v),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<String>(
+                  value: '',
+                  title: Text(t.languageAutomatic),
+                  subtitle: Text(t.languageLikePhone(SmileLanguages.nameOf(AppLanguage.deviceLanguage))),
+                ),
+                for (final code in SmileLanguages.codes)
+                  RadioListTile<String>(value: code, title: Text(SmileLanguages.nameOf(code))),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (chosen == null) return;
+  await AppLanguage.choose(chosen.isEmpty ? null : chosen);
 }
 
 class _DeleteAccountDialog extends StatefulWidget {
