@@ -153,7 +153,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
     UploadQueue.instance.addListener(_onQueue);
     _queueFailures = UploadQueue.instance.failures.listen((item) {
       if (mounted && item.channelId == widget.channelId) {
-        setState(() => _errorMessage = SmileTexts.of(context).sendFailed);
+        final t = SmileTexts.of(context);
+        setState(() => _errorMessage = item.failReason == 'space_full' ? t.sendFailedSpaceFull : t.sendFailed);
       }
     });
   }
@@ -893,10 +894,12 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// once; without a connection they wait there with a clock and go out by
   /// themselves later, even with Smile closed (UploadQueue).
   Future<void> _uploadFiles(List<XFile> picked, {List<String?>? captions}) async {
-    // Videos at most 2 minutes (2026-11-05): the longer ones stay here.
+    // Videos at most as long as the Space's plan allows (2026-11-11): the
+    // longer ones stay here.
+    final max = await VideoLimit.forAlbum(widget.channelId);
     final keep = <int>[];
     for (final (i, file) in picked.indexed) {
-      if (!await VideoLimit.tooLong(file)) keep.add(i);
+      if (!await VideoLimit.tooLong(file, max)) keep.add(i);
     }
     if (keep.length < picked.length) {
       if (!mounted) return;
@@ -905,7 +908,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(t.videoTooLongTitle),
-          content: Text(t.videoTooLongText),
+          content: Text(t.videoTooLongText(max.inMinutes)),
           actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.ok))],
         ),
       );

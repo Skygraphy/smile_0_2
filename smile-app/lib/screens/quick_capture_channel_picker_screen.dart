@@ -96,15 +96,16 @@ class _QuickCaptureChannelPickerScreenState extends State<QuickCaptureChannelPic
   /// queue sends it -- right away, or with a clock once there is a
   /// connection again, even with Smile closed.
   Future<void> _sendTo(UploadableChannel channel) async {
-    // Videos at most 2 minutes (2026-11-05).
-    if (await VideoLimit.tooLong(widget.file)) {
+    // Videos at most as long as the Space's plan allows (2026-11-11).
+    final max = await VideoLimit.forAlbum(channel.channelId);
+    if (await VideoLimit.tooLong(widget.file, max)) {
       if (!mounted) return;
       final t = SmileTexts.of(context);
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
           title: Text(t.videoTooLongTitle),
-          content: Text(t.videoTooLongText),
+          content: Text(t.videoTooLongText(max.inMinutes)),
           actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.ok))],
         ),
       );

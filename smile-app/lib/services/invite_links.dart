@@ -8,16 +8,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// An invite from a link or QR code: the code, and whether it was shown in
 /// person (QR -- in at once) or came by message (the admins decide).
 class InviteLink {
-  const InviteLink(this.code, {required this.inPerson}) : handle = null;
+  const InviteLink(this.code, {required this.inPerson})
+      : handle = null,
+        voucher = null;
 
   /// A person's card (smileapp.app/@name, 2026-10-17): open them to invite.
   const InviteLink.person(String this.handle)
       : code = '',
-        inPerson = true;
+        inPerson = true,
+        voucher = null;
+
+  /// A voucher card (smileapp.app/g/CODE, 2026-11-11): redeem it.
+  const InviteLink.voucher(String this.voucher)
+      : code = '',
+        inPerson = true,
+        handle = null;
 
   final String code;
   final bool inPerson;
   final String? handle;
+  final String? voucher;
 }
 
 /// Invites as real links (decided 2026-10-17, domain smileapp.app): the
@@ -32,6 +42,9 @@ class InviteLinks {
   static String forCode(String code, {required bool inPerson}) =>
       'https://$host/i/$code${inPerson ? '?s=1' : ''}';
 
+  /// A voucher's 8 characters (or SMILE-XXXX-XXXX): smileapp.app/g/… .
+  static final _voucherShape = RegExp(r'^(?:SMILE-?)?[A-Za-z0-9]{4}-?[A-Za-z0-9]{4}$', caseSensitive: false);
+
   /// A person's card: smileapp.app/@name.
   static String forHandle(String handle) => 'https://$host/@$handle';
 
@@ -44,6 +57,11 @@ class InviteLinks {
     if (old != null) return InviteLink(_clean(old.group(1)!), inPerson: true);
     final referrer = RegExp(r'(?:^|&)invite=([A-Za-z0-9-]{6,7})').firstMatch(text);
     final personReferrer = RegExp(r'(?:^|&)person=([A-Za-z0-9._]{3,24})').firstMatch(text);
+    final voucherReferrer = RegExp(r'(?:^|&)voucher=([A-Za-z0-9-]{8,15})').firstMatch(text);
+    if (voucherReferrer != null && !text.contains('://')) {
+      final code = voucherReferrer.group(1)!;
+      return _voucherShape.hasMatch(code) ? InviteLink.voucher(code.toUpperCase()) : null;
+    }
     if (personReferrer != null && !text.contains('://')) {
       final handle = personReferrer.group(1)!.toLowerCase();
       return _handleShape.hasMatch(handle) ? InviteLink.person(handle) : null;
@@ -57,6 +75,11 @@ class InviteLinks {
     if (person != null) {
       final handle = person.group(1)!.toLowerCase();
       return _handleShape.hasMatch(handle) ? InviteLink.person(handle) : null;
+    }
+    final voucher = RegExp(r'^/g/([A-Za-z0-9-]{8,15})/?$').firstMatch(uri.path);
+    if (voucher != null) {
+      final code = voucher.group(1)!;
+      return _voucherShape.hasMatch(code) ? InviteLink.voucher(code.toUpperCase()) : null;
     }
     final match = RegExp(r'^/i/([A-Za-z0-9-]{6,7})/?$').firstMatch(uri.path);
     if (match == null) return null;
@@ -110,7 +133,7 @@ class InviteLinks {
       await prefs.setBool(_referrerKey, true);
       final details = await PlayInstallReferrer.installReferrer;
       final referrer = details.installReferrer;
-      if (referrer != null && (referrer.contains('invite=') || referrer.contains('person='))) {
+      if (referrer != null && (referrer.contains('invite=') || referrer.contains('person=') || referrer.contains('voucher='))) {
         _take(Uri.decodeComponent(referrer));
       }
     } catch (_) {
@@ -121,7 +144,7 @@ class InviteLinks {
   static Future<void> _savePending(InviteLink link) async {
     try {
       await (await SharedPreferences.getInstance())
-          .setString(_pendingKey, '${link.handle != null ? '@${link.handle}' : link.code}|${link.inPerson ? 1 : 0}|${DateTime.now().millisecondsSinceEpoch}');
+          .setString(_pendingKey, '${link.voucher != null ? 'g:${link.voucher}' : link.handle != null ? '@${link.handle}' : link.code}|${link.inPerson ? 1 : 0}|${DateTime.now().millisecondsSinceEpoch}');
     } catch (_) {}
   }
 
@@ -136,9 +159,11 @@ class InviteLinks {
         await clear();
         return;
       }
-      pending.value = parts[0].startsWith('@')
-          ? InviteLink.person(parts[0].substring(1))
-          : InviteLink(parts[0], inPerson: parts.length > 1 && parts[1] == '1');
+      pending.value = parts[0].startsWith('g:')
+          ? InviteLink.voucher(parts[0].substring(2))
+          : parts[0].startsWith('@')
+              ? InviteLink.person(parts[0].substring(1))
+              : InviteLink(parts[0], inPerson: parts.length > 1 && parts[1] == '1');
     } catch (_) {}
   }
 }

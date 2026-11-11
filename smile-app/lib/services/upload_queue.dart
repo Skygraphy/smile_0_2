@@ -35,6 +35,9 @@ class QueuedUpload {
   double? get aspectRatio => (meta['aspect_ratio'] as num?)?.toDouble();
   bool get prepared => meta['prepared'] == true;
 
+  /// Set when the server refused it: e.g. 'space_full' (migrations/0102).
+  String? failReason;
+
   /// Its title, if one was written when sending (2026-10-17).
   String? get caption => meta['caption'] as String?;
 
@@ -687,6 +690,8 @@ class UploadQueue extends ChangeNotifier {
 
   Future<void> _fail(QueuedUpload item, Object error) async {
     debugPrint('SmileQueue: ${item.id} refused: $error');
+    // Why (2026-11-11): a full Space gets its own message.
+    item.failReason = error is MediaServiceException ? error.code : null;
     _items.remove(item);
     await _deleteDir(item);
     notifyListeners();

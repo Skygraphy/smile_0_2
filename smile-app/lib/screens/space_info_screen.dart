@@ -6,6 +6,10 @@ import '../services/tips.dart';
 import '../services/tip_cards.dart';
 import '../services/offline_http_client.dart';
 import '../widgets/friendly_error.dart';
+import 'package:intl/intl.dart';
+import '../services/plan_service.dart';
+import 'plan_screen.dart';
+import 'redeem_voucher_screen.dart';
 
 import '../main.dart';
 import '../services/channel_service.dart';
@@ -79,31 +83,86 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
   Map<String, ChannelWithActivity> _covers = const {};
   String? _errorMessage;
 
-  /// bytes, photos, videos (space_storage, migrations/0098); null for
-  /// anyone who doesn't manage the Space.
-  Map<String, dynamic>? _storage;
-  static const _softLimitBytes = 10 * 1024 * 1024 * 1024;
+  /// The Frame plan with storage (space_plan, migrations/0102, 2026-11-11);
+  /// null for anyone who doesn't manage the Space.
+  SpacePlan? _plan;
 
-  Future<void> _loadStorage() async {
+  Future<void> _loadPlan() async {
     try {
-      final data = await supabase.rpc('space_storage', params: {'p_space': widget.spaceId});
-      if (mounted && data is Map) setState(() => _storage = data.cast<String, dynamic>());
+      final plan = await PlanService().load(widget.spaceId);
+      if (mounted) setState(() => _plan = plan);
     } catch (_) {}
   }
 
-  static String _gb(num bytes) {
+  String _gb(num bytes) {
+    final locale = Localizations.localeOf(context).toLanguageTag();
     final gb = bytes / (1024 * 1024 * 1024);
-    return gb < 0.1 ? '${(bytes / (1024 * 1024)).toStringAsFixed(0)} MB' : '${gb.toStringAsFixed(1).replaceAll('.', ',')} GB';
+    return gb < 0.1
+        ? '${NumberFormat.decimalPattern(locale).format((bytes / (1024 * 1024)).round())} MB'
+        : '${NumberFormat('#,##0.#', locale).format(gb)} GB';
   }
 
-  static String _count(num n) => n.toInt().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
+  String _count(num n) => NumberFormat.decimalPattern(Localizations.localeOf(context).toLanguageTag()).format(n);
 
-  Widget _storageCard(SmileTexts t, Map<String, dynamic> s) {
+  Future<void> _openPlan() async {
+    final changed = await Navigator.of(context).push<bool>(MaterialPageRoute(
+      builder: (_) => PlanScreen(spaceId: widget.spaceId, spaceName: _name, plan: _plan),
+    ));
+    if (changed == true) await _loadPlan();
+  }
+
+  Future<void> _openRedeem() async {
+    final changed = await Navigator.of(context).push<bool>(MaterialPageRoute(
+      builder: (_) => RedeemVoucherScreen(spaceId: widget.spaceId, spaceName: _name),
+    ));
+    if (changed == true) await _loadPlan();
+  }
+
+  Widget _planCard(SmileTexts t, SpacePlan plan) {
     final scheme = Theme.of(context).colorScheme;
-    final bytes = (s['bytes'] as num?) ?? 0;
-    final share = (bytes / _softLimitBytes).clamp(0.0, 1.0).toDouble();
+    final date = DateFormat.yMMMMd(Localizations.localeOf(context).toLanguageTag());
+    final share = plan.storageBytes == 0 ? 0.0 : (plan.usedBytes / plan.storageBytes).clamp(0.0, 1.0).toDouble();
+    final full = share >= 0.95;
+    final (IconData icon, Color color, String title, String? badge, String subtitle) = switch (plan.status) {
+      'trial' => (
+          SmileIcons.timer,
+          SmileTheme.primary,
+          t.planTrial,
+          t.planDaysLeft(plan.endsAt == null ? 0 : plan.endsAt!.difference(DateTime.now()).inDays.clamp(0, 999)),
+          t.planTrialUntil(plan.endsAt == null ? '' : date.format(plan.endsAt!)),
+        ),
+      'active' => (
+          SmileIcons.check,
+          SmileTheme.primary,
+          t.planFrames(plan.frames),
+          t.planActive,
+          [
+            switch (plan.source) { 'play' => t.planSourcePlay, 'staff' => t.planSourceStaff, _ => t.planSourceVoucher },
+            plan.endsAt == null ? t.planNoEnd : t.planUntil(date.format(plan.endsAt!)),
+          ].join(' · '),
+        ),
+      _ when !plan.trialUsed => (SmileIcons.frame, scheme.onSurfaceVariant, t.planFree, null, t.planTrialStartsWithFrame),
+      _ => (SmileIcons.warning, scheme.error, t.planNone, null, t.planNoneText),
+    };
+    final lines = [
+      if (plan.isActive) t.planFramesUsed(plan.framesUsed, plan.frames),
+      t.planVideoLength(plan.videoSeconds ~/ 60),
+    ].join(' · ');
     return SmileInfoSection(
+      title: t.planSectionTitle,
       children: [
+        SmileObjectTile(
+          leading: CircleAvatar(
+            radius: 20,
+            backgroundColor: color.withValues(alpha: 0.14),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          title: badge == null ? title : '$title · $badge',
+          subtitle: subtitle,
+          subtitleMaxLines: 3,
+          trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
+          onTap: _openPlan,
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(SmileSpacing.l, SmileSpacing.s, SmileSpacing.l, SmileSpacing.m),
           child: Column(
@@ -112,22 +171,30 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
               Row(
                 children: [
                   Expanded(child: Text(t.storageUsed)),
-                  Text(t.storageOf(_gb(bytes), _gb(_softLimitBytes)), style: TextStyle(color: scheme.onSurfaceVariant)),
+                  Text(t.storageOf(_gb(plan.usedBytes), _gb(plan.storageBytes)),
+                      style: TextStyle(color: full ? scheme.error : scheme.onSurfaceVariant)),
                 ],
               ),
               const SizedBox(height: SmileSpacing.s),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(value: share, minHeight: 8, backgroundColor: scheme.surfaceContainerHighest),
+                child: LinearProgressIndicator(
+                  value: share,
+                  minHeight: 8,
+                  color: full ? scheme.error : null,
+                  backgroundColor: scheme.surfaceContainerHighest,
+                ),
               ),
               const SizedBox(height: SmileSpacing.s),
               Text(
-                t.storageCounts(_count((s['photos'] as num?) ?? 0), _count((s['videos'] as num?) ?? 0)),
+                '${t.storageCounts(_count(plan.photos), _count(plan.videos))} · $lines',
                 style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
               ),
             ],
           ),
         ),
+        if (!plan.isActive && plan.trialUsed) SmileActionRow(icon: SmileIcons.frame, label: t.choosePlan, onTap: _openPlan),
+        SmileActionRow(icon: SmileIcons.voucher, label: t.redeemVoucher, onTap: _openRedeem),
       ],
     );
   }
@@ -135,7 +202,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
   @override
   void initState() {
     super.initState();
-    unawaited(_loadStorage());
+    unawaited(_loadPlan());
     // "Wusstest du?" (2026-10-29).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) Tips.offerCard(context, TipPage.spaces);
@@ -157,6 +224,7 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
   }
 
   Future<void> _load() async {
+    unawaited(_loadPlan());
     unawaited(loadAlbumCovers().then((c) {
       if (mounted) setState(() => _covers = c);
     }));
@@ -430,6 +498,17 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     );
   }
 
+  /// An active Frame that gets no new photos (no plan, or beyond it).
+  bool _frameUncovered(SmileFrame frame) {
+    final plan = _plan;
+    return plan != null && frame.lifecycleState == 'active' && !plan.coveredFrames.contains(frame.id);
+  }
+
+  String _frameSubtitle(SmileTexts t, SmileFrame frame) {
+    if (!_frameUncovered(frame)) return _frameStatus(t, frame);
+    return _plan!.isNone ? t.frameNoPlan : t.frameNotCovered;
+  }
+
   String _frameStatus(SmileTexts t, SmileFrame frame) => switch (frame.lifecycleState) {
         'active' => t.frameActive,
         'revoked' => t.frameRevoked,
@@ -503,8 +582,8 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
           SmileQuickAction(icon: SmileIcons.frame, label: t.frame, onTap: _connectFrame),
           if (isAdmin) SmileQuickAction(icon: SmileIcons.coAdmin, label: t.roleCoAdmin, onTap: _inviteCoAdmin),
         ]),
-        // What the Space holds (2026-11-05): only for who manages it.
-        if (_storage != null) _storageCard(t, _storage!),
+        // Frame plan and storage (2026-11-11): only for who manages it.
+        if (_plan != null) _planCard(t, _plan!),
         if (_errorMessage != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -583,7 +662,8 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
                   ),
                 ),
                 title: frameNameOf(frame.id, frame.name),
-                subtitle: _frameStatus(t, frame),
+                subtitle: _frameSubtitle(t, frame),
+                subtitleHighlight: _frameUncovered(frame),
                 trailing: Icon(SmileIcons.chevron, size: 16, color: muted),
                 onTap: () async {
                   await Navigator.of(context).push(

@@ -269,8 +269,8 @@ abstract class SmileTexts {
   /// No description provided for @videoTooLongText.
   ///
   /// In de, this message translates to:
-  /// **'Videos dürfen höchstens 2 Minuten lang sein. Kürze es in der Galerie und schick es dann noch einmal.'**
-  String get videoTooLongText;
+  /// **'Videos dürfen hier höchstens {minutes} Minuten lang sein. Kürze es in der Galerie und schick es dann noch einmal.'**
+  String videoTooLongText(int minutes);
 
   /// No description provided for @storageUsed.
   ///
@@ -6193,6 +6193,311 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Wie das Handy'**
   String get languageFollowsPhone;
+
+  /// No description provided for @planSectionTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame-Abo'**
+  String get planSectionTitle;
+
+  /// No description provided for @planTrial.
+  ///
+  /// In de, this message translates to:
+  /// **'Probezeit'**
+  String get planTrial;
+
+  /// No description provided for @planDaysLeft.
+  ///
+  /// In de, this message translates to:
+  /// **'{days, plural, =1{noch 1 Tag} other{noch {days} Tage}}'**
+  String planDaysLeft(int days);
+
+  /// No description provided for @planTrialUntil.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle Frames bekommen neue Fotos bis {date}'**
+  String planTrialUntil(String date);
+
+  /// No description provided for @planFrames.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 Frame} other{{count} Frames}}'**
+  String planFrames(int count);
+
+  /// No description provided for @planActive.
+  ///
+  /// In de, this message translates to:
+  /// **'aktiv'**
+  String get planActive;
+
+  /// No description provided for @planSourceVoucher.
+  ///
+  /// In de, this message translates to:
+  /// **'Gutschein'**
+  String get planSourceVoucher;
+
+  /// No description provided for @planSourcePlay.
+  ///
+  /// In de, this message translates to:
+  /// **'Google Play'**
+  String get planSourcePlay;
+
+  /// No description provided for @planSourceStaff.
+  ///
+  /// In de, this message translates to:
+  /// **'Smile'**
+  String get planSourceStaff;
+
+  /// No description provided for @planUntil.
+  ///
+  /// In de, this message translates to:
+  /// **'bis {date}'**
+  String planUntil(String date);
+
+  /// No description provided for @planNoEnd.
+  ///
+  /// In de, this message translates to:
+  /// **'ohne Ablauf'**
+  String get planNoEnd;
+
+  /// No description provided for @planNone.
+  ///
+  /// In de, this message translates to:
+  /// **'Kein Abo'**
+  String get planNone;
+
+  /// No description provided for @planNoneText.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Frames zeigen weiter alle Fotos, bekommen aber keine neuen.'**
+  String get planNoneText;
+
+  /// No description provided for @planFree.
+  ///
+  /// In de, this message translates to:
+  /// **'Kostenlos'**
+  String get planFree;
+
+  /// No description provided for @planTrialStartsWithFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Alben und Fotos sind kostenlos. Mit dem ersten Frame beginnen 2 Monate Probezeit.'**
+  String get planTrialStartsWithFrame;
+
+  /// No description provided for @planFramesUsed.
+  ///
+  /// In de, this message translates to:
+  /// **'{used} von {count} Frames'**
+  String planFramesUsed(int used, int count);
+
+  /// No description provided for @planVideoLength.
+  ///
+  /// In de, this message translates to:
+  /// **'Videos bis {minutes} Minuten'**
+  String planVideoLength(int minutes);
+
+  /// No description provided for @choosePlan.
+  ///
+  /// In de, this message translates to:
+  /// **'Abo wählen'**
+  String get choosePlan;
+
+  /// No description provided for @redeemVoucher.
+  ///
+  /// In de, this message translates to:
+  /// **'Gutschein einlösen'**
+  String get redeemVoucher;
+
+  /// No description provided for @planForSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Für den ganzen Space „{space}“. Mitglieder zahlen nie etwas.'**
+  String planForSpace(String space);
+
+  /// No description provided for @planTierMore.
+  ///
+  /// In de, this message translates to:
+  /// **'Mehr als 5'**
+  String get planTierMore;
+
+  /// No description provided for @planTierDetails.
+  ///
+  /// In de, this message translates to:
+  /// **'{gb} GB · Videos {minutes} Min.'**
+  String planTierDetails(int gb, int minutes);
+
+  /// No description provided for @planTierMoreDetails.
+  ///
+  /// In de, this message translates to:
+  /// **'je Frame +20 GB · 15 Min.'**
+  String get planTierMoreDetails;
+
+  /// No description provided for @planPerMonth.
+  ///
+  /// In de, this message translates to:
+  /// **'pro Monat'**
+  String get planPerMonth;
+
+  /// No description provided for @planPerExtraFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'je Frame'**
+  String get planPerExtraFrame;
+
+  /// No description provided for @planYearlyHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Jährlich zahlen: 2 Monate geschenkt'**
+  String get planYearlyHint;
+
+  /// No description provided for @planYours.
+  ///
+  /// In de, this message translates to:
+  /// **'deins'**
+  String get planYours;
+
+  /// No description provided for @planBuySoon.
+  ///
+  /// In de, this message translates to:
+  /// **'Kaufen geht bald direkt hier. Bis dahin mit einem Gutschein.'**
+  String get planBuySoon;
+
+  /// No description provided for @voucherForSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Für den Space'**
+  String get voucherForSpace;
+
+  /// No description provided for @voucherChangeSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'ändern'**
+  String get voucherChangeSpace;
+
+  /// No description provided for @voucherEnterCode.
+  ///
+  /// In de, this message translates to:
+  /// **'Gib den Code von deiner Karte ein'**
+  String get voucherEnterCode;
+
+  /// No description provided for @voucherCodeHint.
+  ///
+  /// In de, this message translates to:
+  /// **'SMILE-XXXX-XXXX'**
+  String get voucherCodeHint;
+
+  /// No description provided for @voucherRedeem.
+  ///
+  /// In de, this message translates to:
+  /// **'Einlösen'**
+  String get voucherRedeem;
+
+  /// No description provided for @voucherScan.
+  ///
+  /// In de, this message translates to:
+  /// **'QR-Code scannen'**
+  String get voucherScan;
+
+  /// No description provided for @voucherCodeNote.
+  ///
+  /// In de, this message translates to:
+  /// **'Groß- und Kleinschreibung ist egal.'**
+  String get voucherCodeNote;
+
+  /// No description provided for @voucherDone.
+  ///
+  /// In de, this message translates to:
+  /// **'Gutschein eingelöst'**
+  String get voucherDone;
+
+  /// No description provided for @voucherDoneText.
+  ///
+  /// In de, this message translates to:
+  /// **'{space} hat jetzt {frames} bis {date}.'**
+  String voucherDoneText(String space, String frames, String date);
+
+  /// No description provided for @voucherDoneLater.
+  ///
+  /// In de, this message translates to:
+  /// **'{space} hat {frames} vom {start} bis {date} – direkt nach dem, was schon läuft.'**
+  String voucherDoneLater(
+    String space,
+    String frames,
+    String start,
+    String date,
+  );
+
+  /// No description provided for @voucherGiftFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein Geschenk von {name}'**
+  String voucherGiftFrom(String name);
+
+  /// No description provided for @voucherNotFound.
+  ///
+  /// In de, this message translates to:
+  /// **'Diesen Code gibt es nicht. Prüf ihn bitte noch einmal.'**
+  String get voucherNotFound;
+
+  /// No description provided for @voucherAlreadyUsed.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieser Code wurde schon verwendet.'**
+  String get voucherAlreadyUsed;
+
+  /// No description provided for @voucherExpired.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieser Code ist abgelaufen.'**
+  String get voucherExpired;
+
+  /// No description provided for @voucherBlocked.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieser Code gilt nicht mehr.'**
+  String get voucherBlocked;
+
+  /// No description provided for @voucherRateLimited.
+  ///
+  /// In de, this message translates to:
+  /// **'Zu viele Versuche. Bitte versuch es in einer Stunde wieder.'**
+  String get voucherRateLimited;
+
+  /// No description provided for @voucherNotManager.
+  ///
+  /// In de, this message translates to:
+  /// **'Nur die Admins eines Spaces können einen Gutschein einlösen.'**
+  String get voucherNotManager;
+
+  /// No description provided for @voucherNoSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Leg zuerst einen Space an – der Gutschein gilt dann für ihn.'**
+  String get voucherNoSpace;
+
+  /// No description provided for @voucherPickSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Für welchen Space?'**
+  String get voucherPickSpace;
+
+  /// No description provided for @frameNotCovered.
+  ///
+  /// In de, this message translates to:
+  /// **'Bekommt keine neuen Fotos – mehr Frames als im Abo'**
+  String get frameNotCovered;
+
+  /// No description provided for @frameNoPlan.
+  ///
+  /// In de, this message translates to:
+  /// **'Bekommt keine neuen Fotos – kein Abo'**
+  String get frameNoPlan;
+
+  /// No description provided for @sendFailedSpaceFull.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Speicher dieses Spaces ist voll – nicht gesendet. Die Admins können Platz schaffen oder ein größeres Abo wählen.'**
+  String get sendFailedSpaceFull;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

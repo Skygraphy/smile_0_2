@@ -1,5 +1,5 @@
 // Voucher administration for Smile staff (2026-11-11, migrations/0102),
-// used by smileapp.app/verwaltung. Every call checks staff_members.
+// used by smileapp.app/verwaltung. Every call checks voucher_admins (0103).
 //
 // actions:
 //   list                         -> batches with counts
@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
   if (userError || !userData.user) return jsonResponse({ error: "invalid_session" }, 401);
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-  const { data: staff } = await supabaseAdmin.from("staff_members").select("id").eq("user_id", userData.user.id).maybeSingle();
+  const { data: staff } = await supabaseAdmin.from("voucher_admins").select("user_id").eq("user_id", userData.user.id).maybeSingle();
   if (!staff) return jsonResponse({ error: "not_staff" }, 403);
 
   // deno-lint-ignore no-explicit-any

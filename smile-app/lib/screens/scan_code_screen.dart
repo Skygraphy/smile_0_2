@@ -12,6 +12,7 @@ import '../services/test_media.dart' show smileTestMode;
 import '../widgets/friendly_error.dart';
 import 'channel_feed_screen.dart';
 import 'person_screen.dart';
+import 'redeem_voucher_screen.dart';
 
 /// The invited side (decided 2026-10-11): scan the QR code someone shows
 /// you -- in at once -- or type the code from a message -- then the
@@ -65,6 +66,13 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
       // so in person either way.
       final link = barcode.rawValue == null ? null : InviteLinks.parse(barcode.rawValue!);
       if (link != null) {
+        if (link.voucher != null) {
+          // A voucher card's QR code (2026-11-11): to redeeming it.
+          _busy = true;
+          unawaited(_scanner.stop());
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => RedeemVoucherScreen(code: link.voucher)));
+          return;
+        }
         if (link.handle != null) {
           _busy = true;
           _openPerson(link.handle!);

@@ -76,6 +76,15 @@
     <a class="btn" id="open-person" href="#" data-i18n="openInSmile">In Smile öffnen</a>
     <a class="btn alt" data-store="android" href="#" data-i18n="getAndroid">Smile für Android holen</a>
   </section>
+  <!-- Voucher card (smileapp.app/g/CODE, 2026-11-11) -->
+  <section id="voucher" class="card hidden">
+    <h1 data-i18n="voucherTitle">Ein Gutschein für Smile</h1>
+    <p data-i18n="voucherText">Damit bekommt dein Space ein Frame-Abo. Öffne den Gutschein in Smile – oder hol dir Smile zuerst und leg einen Space an.</p>
+    <a class="btn" id="open-voucher" href="#" data-i18n="openInSmile">In Smile öffnen</a>
+    <a class="btn alt" data-store="android" href="#" data-i18n="getAndroid">Smile für Android holen</a>
+    <p class="small" data-i18n="voucherManual">Falls Smile ihn nicht von selbst übernimmt: Space öffnen → Gutschein einlösen → diesen Code eingeben:</p>
+    <div class="code" id="voucher-code"></div>
+  </section>
   <p class="small legal"><a class="plain" data-i18n-href="imprintHref" href="/impressum.html" data-i18n="imprint">Impressum</a> · <a class="plain" data-i18n-href="privacyHref" href="/datenschutz.html" data-i18n="privacy">Datenschutz</a></p>
 </main>
 <script>
@@ -98,6 +107,9 @@
       personInvite: (name) => 'Mit Smile kannst du ' + name + ' in ein Album einladen. Öffne den Link in Smile – oder hol dir Smile zuerst.',
       personUnknown: 'Diesen Smile-Namen gibt es nicht.',
       imprint: 'Impressum', privacy: 'Datenschutz', imprintHref: '/impressum.html', privacyHref: '/datenschutz.html',
+      voucherTitle: 'Ein Gutschein für Smile',
+      voucherText: 'Damit bekommt dein Space ein Frame-Abo. Öffne den Gutschein in Smile – oder hol dir Smile zuerst und leg einen Space an.',
+      voucherManual: 'Falls Smile ihn nicht von selbst übernimmt: Space öffnen → Gutschein einlösen → diesen Code eingeben:',
     },
     en: {
       homeTitle: 'Photos and videos for the family',
@@ -115,6 +127,9 @@
       personInvite: (name) => 'With Smile you can invite ' + name + ' to an album. Open the link in Smile – or get Smile first.',
       personUnknown: "This Smile name doesn't exist.",
       imprint: 'Legal notice', privacy: 'Privacy', imprintHref: '/en/legal-notice.html', privacyHref: '/en/privacy.html',
+      voucherTitle: 'A voucher for Smile',
+      voucherText: 'It gives your Space a Frame plan. Open the voucher in Smile – or get Smile first and create a Space.',
+      voucherManual: "If Smile doesn't pick it up by itself: open your Space → Redeem voucher → enter this code:",
     },
   }[LANG];
   document.documentElement.lang = LANG;
@@ -128,6 +143,7 @@
   const path = decodeURIComponent(location.pathname);
   const invite = path.match(/^\/i\/([A-Za-z0-9-]{6,7})\/?$/);
   const person = path.match(/^\/@([a-z0-9._]{3,30})\/?$/i);
+  const voucher = path.match(/^\/g\/([A-Za-z0-9-]{8,15})\/?$/);
   let referrer = '';
 
   if (invite) {
@@ -158,6 +174,12 @@
       }
       title.append(parts[2]);
     }).catch(() => {});
+  } else if (voucher) {
+    const code = voucher[1].toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^SMILE(?=.{8}$)/, '');
+    referrer = 'voucher=' + code;
+    document.getElementById('voucher-code').textContent = 'SMILE-' + code.slice(0, 4) + '-' + code.slice(4);
+    document.getElementById('open-voucher').href = location.href;
+    show('voucher');
   } else if (person) {
     const handle = person[1].toLowerCase();
     referrer = 'person=' + handle;
@@ -185,7 +207,7 @@
   if (/Android/i.test(navigator.userAgent)) {
     const intent = 'intent://' + location.host + location.pathname + location.search +
       '#Intent;scheme=https;package=com.smile.smile_app;S.browser_fallback_url=' + encodeURIComponent(store) + ';end';
-    for (const id of ['open-app', 'open-person']) document.getElementById(id).href = intent;
+    for (const id of ['open-app', 'open-person', 'open-voucher']) document.getElementById(id).href = intent;
   }
 </script>
 </body>

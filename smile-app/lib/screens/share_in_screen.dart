@@ -77,9 +77,10 @@ class _ShareInScreenState extends State<ShareInScreen> with SyncReload {
     final t = SmileTexts.of(context);
     var files = widget.files;
     // Videos at most as long as allowed (2026-11-05): the longer ones stay here.
+    final max = await VideoLimit.forAlbum(channel.channelId);
     final keep = <XFile>[];
     for (final f in files) {
-      if (!await VideoLimit.tooLong(f)) keep.add(f);
+      if (!await VideoLimit.tooLong(f, max)) keep.add(f);
     }
     if (keep.length < files.length) {
       if (!mounted) return;
@@ -87,7 +88,7 @@ class _ShareInScreenState extends State<ShareInScreen> with SyncReload {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(t.videoTooLongTitle),
-          content: Text(t.videoTooLongText),
+          content: Text(t.videoTooLongText(max.inMinutes)),
           actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(t.ok))],
         ),
       );

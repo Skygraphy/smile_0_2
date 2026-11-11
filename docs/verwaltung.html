@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="favicon.png">
+<title>Smile Verwaltung</title>
+<meta name="theme-color" content="#0E0C0C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Voucher administration for Smile staff (2026-11-11, migrations/0102).
+   Everything is checked on the server (voucher-admin: staff_members);
+   without staff rights this page shows nothing. */
+:root { color-scheme: dark; --bg: #0E0C0C; --surface: #1A1716; --surface2: #24201F; --line: #332D2B; --fg: #F2EEEC; --muted: #B5ACA9; --dim: #7D7472;
+  --coral: #FF6F61; --coral-soft: rgba(255,111,97,.14); --green: #5BC48A; --green-soft: rgba(91,196,138,.14); --red: #FF8A80;
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 0 56px; }
+main { max-width: 1080px; margin: 0 auto; }
+header { display: flex; align-items: center; gap: 12px; padding-block: 22px; }
+.logo { width: 34px; height: 34px; border-radius: 10px; background: var(--coral); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 21px; }
+.word { font-weight: 700; font-size: 23px; } .word b { color: var(--coral); font-weight: 700; }
+header .who { margin-left: auto; color: var(--muted); font-size: 13px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+h1 { font-size: 24px; font-weight: 800; margin: 8px 0 14px; }
+h2 { font-size: 18px; font-weight: 700; margin: 0 0 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin-bottom: 18px; }
+.hidden { display: none !important; }
+label { display: block; color: var(--dim); font-size: 12.5px; margin-bottom: 4px; }
+input, select { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font: inherit; }
+input:focus, select:focus { outline: 2px solid var(--coral); outline-offset: -1px; }
+.form { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 14px; }
+button { font: inherit; font-weight: 700; border: 0; border-radius: 99px; padding: 9px 16px; cursor: pointer; background: var(--coral); color: #fff; }
+button.ghost { background: none; color: var(--fg); border: 1px solid var(--line); font-weight: 600; }
+button.small { padding: 5px 11px; font-size: 13px; }
+button:disabled { opacity: .5; cursor: default; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.msg { margin-top: 10px; font-size: 14px; } .msg.err { color: var(--red); } .msg.ok { color: var(--green); }
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+th { text-align: left; color: var(--dim); font-weight: 600; font-size: 12.5px; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle; }
+td.m { color: var(--muted); }
+.pill { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 99px; }
+.pill.ok { background: var(--green-soft); color: var(--green); } .pill.off { background: var(--surface2); color: var(--muted); }
+.stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.stats div { background: var(--surface2); border-radius: 12px; padding: 10px 14px; min-width: 120px; }
+.stats b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; } .stats span { color: var(--muted); font-size: 12.5px; }
+.codes { font-family: ui-monospace, Consolas, monospace; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; margin: 12px 0; }
+.codes span { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; text-align: center; user-select: all; }
+.warn { background: var(--coral-soft); color: var(--fg); border-radius: 12px; padding: 10px 14px; font-size: 14px; }
+.small { font-size: 13px; color: var(--muted); }
+a { color: var(--coral); }
+
+/* Print: only the cards, 2 x 4 per A4 page, cut along the thin lines. */
+#print { display: none; }
+@media print {
+  @page { size: A4; margin: 10mm; }
+  body { background: #fff; color: #1A1716; padding: 0; }
+  main { display: none; }
+  #print { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .vc { height: 68mm; border: 0.2mm dashed #bbb; padding: 6mm; display: grid; grid-template-columns: 1fr 30mm; gap: 3mm; break-inside: avoid; font-family: var(--font); color: #1A1716; }
+  .vc .w { font-weight: 700; font-size: 17pt; } .vc .w b { color: #FF6F61; }
+  .vc .t { font-size: 9pt; color: #5A5250; margin-top: 1mm; }
+  .vc .c { font-family: ui-monospace, Consolas, monospace; font-weight: 700; font-size: 12pt; letter-spacing: .5pt; margin-top: 3mm; }
+  .vc .q svg { width: 30mm; height: 30mm; display: block; }
+  .vc ol { grid-column: 1 / -1; margin: 0; padding-left: 4.5mm; font-size: 8pt; color: #5A5250; }
+  .vc .g { font-size: 8.5pt; color: #FF6F61; margin-top: 1.5mm; font-weight: 600; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <span class="logo" aria-hidden="true">S</span><span class="word">S<b>m</b>ile</span>
+    <div class="who"><span id="who"></span><button class="ghost small hidden" id="logout">Abmelden</button></div>
+  </header>
+
+  <!-- Login with the Smile account (e-mail code) -->
+  <section id="login" class="card hidden" style="max-width:440px">
+    <h1>Verwaltung</h1>
+    <p class="small">Melde dich mit deinem Smile-Konto an. Du bekommst einen Code per E-Mail.</p>
+    <div id="step-mail">
+      <label for="mail">E-Mail</label>
+      <input id="mail" type="email" autocomplete="email">
+      <div class="row" style="margin-top:12px"><button id="send">Code schicken</button></div>
+    </div>
+    <div id="step-code" class="hidden">
+      <label for="otp">Code aus der E-Mail</label>
+      <input id="otp" inputmode="numeric" autocomplete="one-time-code">
+      <div class="row" style="margin-top:12px"><button id="verify">Anmelden</button><button class="ghost" id="back">Andere E-Mail</button></div>
+    </div>
+    <div class="msg" id="login-msg"></div>
+  </section>
+
+  <section id="denied" class="card hidden">
+    <h1>Kein Zugang</h1>
+    <p class="small">Dieses Konto hat keine Mitarbeiter-Rechte.</p>
+  </section>
+
+  <div id="app" class="hidden">
+    <h1>Gutschein-Pakete</h1>
+    <div class="stats" id="stats"></div>
+
+    <section class="card">
+      <h2>Neues Paket</h2>
+      <div class="form">
+        <div><label for="f-name">Name (nur für dich)</label><input id="f-name" placeholder="z. B. Seniorenresidenz Am Park"></div>
+        <div><label for="f-kind">Art</label><select id="f-kind"><option value="partner">Partner (auf Rechnung)</option><option value="gift">Geschenk</option><option value="promo">Aktion (gratis)</option></select></div>
+        <div><label for="f-frames">Stufe</label><select id="f-frames"><option value="1">1 Frame</option><option value="3">3 Frames</option><option value="5">5 Frames</option></select></div>
+        <div><label for="f-months">Dauer</label><select id="f-months"><option value="1">1 Monat</option><option value="3">3 Monate</option><option value="6">6 Monate</option><option value="12" selected>12 Monate</option><option value="24">24 Monate</option></select></div>
+        <div><label for="f-count">Anzahl Codes</label><input id="f-count" type="number" min="1" max="500" value="10"></div>
+        <div><label for="f-until">Einlösbar bis</label><input id="f-until" type="date"></div>
+        <div><label for="f-invoice">Rechnungsnummer (optional)</label><input id="f-invoice"></div>
+        <div><label for="f-card">Name auf der Karte (optional)</label><input id="f-card" placeholder="„Ein Geschenk von …“"></div>
+      </div>
+      <div class="row" style="margin-top:14px"><button id="create">Codes erzeugen</button></div>
+      <div class="msg" id="create-msg"></div>
+    </section>
+
+    <!-- Fresh codes: shown only now -->
+    <section class="card hidden" id="fresh">
+      <h2 id="fresh-title">Neue Codes</h2>
+      <p class="warn">Diese Codes siehst du nur jetzt. Gespeichert ist nur ein Prüfwert – druck die Karten gleich oder sichere die Liste.</p>
+      <div class="codes" id="fresh-codes"></div>
+      <div class="row">
+        <label style="margin:0">Kartensprache</label>
+        <select id="card-lang" style="width:auto"><option value="de">Deutsch</option><option value="en">English</option></select>
+        <button id="print-cards">Karten drucken / PDF</button>
+        <button class="ghost" id="csv">Liste als Datei</button>
+        <button class="ghost" id="copy-partner">Partner-Link kopieren</button>
+      </div>
+      <div class="msg" id="fresh-msg"></div>
+    </section>
+
+    <section class="card">
+      <h2>Alle Pakete</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Paket</th><th>Art</th><th>Stufe · Dauer</th><th>Eingelöst</th><th>Einlösbar bis</th><th>Rechnung</th><th>Status</th><th></th></tr></thead>
+        <tbody id="batches"></tbody>
+      </table></div>
+      <div class="msg" id="list-msg"></div>
+    </section>
+
+    <section class="card hidden" id="detail">
+      <div class="row" style="justify-content:space-between"><h2 id="detail-title" style="margin:0"></h2><button class="ghost small" id="detail-close">Schließen</button></div>
+      <div class="tbl" style="margin-top:10px"><table>
+        <thead><tr><th>Karte</th><th>Status</th><th>Eingelöst am</th><th>Space</th><th></th></tr></thead>
+        <tbody id="codes"></tbody>
+      </table></div>
+    </section>
+  </div>
+</main>
+<div id="print"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://wxuipqaozvgzthlgnbgz.supabase.co';
+  const PUBLISHABLE_KEY = 'sb_publishable_Bb9-3HDlRCWoyHZsweKbZw_scLAvNpV';
+  const sb = supabase.createClient(SUPABASE_URL, PUBLISHABLE_KEY);
+  const $ = (id) => document.getElementById(id);
+  const show = (id, on = true) => $(id).classList.toggle('hidden', !on);
+  const KIND = { gift: 'Geschenk', partner: 'Partner', promo: 'Aktion' };
+  const date = (iso) => iso ? new Date(iso).toLocaleDateString('de-AT', { day: 'numeric', month: 'numeric', year: 'numeric' }) : '–';
+  const ERR = {
+    not_staff: 'Dieses Konto hat keine Mitarbeiter-Rechte.', invalid_name: 'Bitte einen Namen eingeben.',
+    invalid_count: 'Anzahl zwischen 1 und 500.', invalid_redeem_until: 'Das Datum muss in der Zukunft liegen.',
+  };
+  const say = (id, text, ok) => { const el = $(id); el.textContent = text || ''; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
+
+  async function call(body) {
+    const { data, error } = await sb.functions.invoke('voucher-admin', { body });
+    if (error) {
+      let code = 'failed';
+      try { code = (await error.context.json()).error || code; } catch (_) {}
+      throw new Error(code);
+    }
+    return data;
+  }
+
+  // --- Login ---------------------------------------------------------------
+  let mail = '';
+  $('send').onclick = async () => {
+    mail = $('mail').value.trim();
+    if (!mail) return;
+    $('send').disabled = true;
+    const { error } = await sb.auth.signInWithOtp({ email: mail, options: { shouldCreateUser: false } });
+    $('send').disabled = false;
+    if (error && !/rate|seconds/i.test(error.message)) return say('login-msg', 'Das hat nicht geklappt. Gibt es zu dieser E-Mail ein Smile-Konto?');
+    say('login-msg', '', true);
+    show('step-mail', false); show('step-code');
+    $('otp').focus();
+  };
+  $('back').onclick = () => { show('step-code', false); show('step-mail'); say('login-msg', ''); };
+  $('verify').onclick = async () => {
+    $('verify').disabled = true;
+    const { error } = await sb.auth.verifyOtp({ email: mail, token: $('otp').value.trim(), type: 'email' });
+    $('verify').disabled = false;
+    if (error) return say('login-msg', 'Der Code passt nicht oder ist abgelaufen.');
+    start();
+  };
+  $('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+  async function start() {
+    const { data: { session } } = await sb.auth.getSession();
+    show('login', !session);
+    if (!session) return;
+    $('who').textContent = session.user.email;
+    show('logout');
+    try {
+      await load();
+      show('app');
+    } catch (e) {
+      show(e.message === 'not_staff' ? 'denied' : 'login', true);
+      if (e.message !== 'not_staff') say('login-msg', 'Das hat nicht geklappt. Bitte neu anmelden.');
+    }
+  }
+
+  // --- Batches -------------------------------------------------------------
+  let batches = [];
+  async function load() {
+    const data = await call({ action: 'list' });
+    batches = data.batches;
+    const total = batches.reduce((s, b) => s + b.total, 0), used = batches.reduce((s, b) => s + b.redeemed, 0);
+    $('stats').innerHTML = '';
+    for (const [n, l] of [[total, 'Codes ausgegeben'], [used, 'eingelöst'], [batches.length, 'Pakete']]) {
+      const d = document.createElement('div'); d.innerHTML = '<b></b><span></span>';
+      d.querySelector('b').textContent = n; d.querySelector('span').textContent = l; $('stats').append(d);
+    }
+    const body = $('batches'); body.innerHTML = '';
+    for (const b of batches) {
+      const tr = document.createElement('tr');
+      const cells = [b.name, KIND[b.kind], `${b.frames} Frame${b.frames > 1 ? 's' : ''} · ${b.months} Mon.`, `${b.redeemed} / ${b.total}`,
+        date(b.redeem_until), b.invoice_ref || '–'];
+      cells.forEach((c, i) => { const td = document.createElement('td'); td.textContent = c; if (i === 1 || i >= 4) td.className = 'm'; tr.append(td); });
+      const st = document.createElement('td');
+      st.innerHTML = b.blocked_at ? '<span class="pill off">gesperrt</span>' : new Date(b.redeem_until) < new Date() ? '<span class="pill off">abgelaufen</span>' : '<span class="pill ok">aktiv</span>';
+      tr.append(st);
+      const act = document.createElement('td'); act.className = 'row';
+      const btn = (label, fn, ghost = true) => { const x = document.createElement('button'); x.className = (ghost ? 'ghost ' : '') + 'small'; x.textContent = label; x.onclick = fn; act.append(x); };
+      btn('Karten', () => detail(b));
+      if (b.partner_token) btn('Partner-Link', () => copy(partnerLink(b.partner_token), 'list-msg'));
+      btn(b.blocked_at ? 'Entsperren' : 'Sperren', async () => {
+        try { await call({ action: b.blocked_at ? 'unblock' : 'block', batch_id: b.id }); await load(); } catch (_) { say('list-msg', 'Das hat nicht geklappt.'); }
+      });
+      tr.append(act);
+      body.append(tr);
+    }
+  }
+
+  const partnerLink = (token) => `https://smileapp.app/partner#${token}`;
+  async function copy(text, msgId) {
+    try { await navigator.clipboard.writeText(text); say(msgId, 'Kopiert: ' + text, true); } catch (_) { say(msgId, text, true); }
+  }
+
+  async function detail(b) {
+    $('detail-title').textContent = b.name;
+    const body = $('codes'); body.innerHTML = '';
+    show('detail');
+    const { codes } = await call({ action: 'codes', batch_id: b.id });
+    for (const c of codes) {
+      const tr = document.createElement('tr');
+      const status = c.redeemed_at ? '<span class="pill ok">eingelöst</span>' : c.blocked_at ? '<span class="pill off">gesperrt</span>' : '<span class="pill off">offen</span>';
+      tr.innerHTML = '<td></td><td>' + status + '</td><td class="m"></td><td class="m"></td><td></td>';
+      tr.children[0].textContent = '…-' + c.last4;
+      tr.children[2].textContent = date(c.redeemed_at);
+      tr.children[3].textContent = c.spaces?.name || '–';
+      if (!c.redeemed_at) {
+        const x = document.createElement('button'); x.className = 'ghost small';
+        x.textContent = c.blocked_at ? 'Entsperren' : 'Sperren';
+        x.onclick = async () => { await call({ action: c.blocked_at ? 'unblock' : 'block', code_id: c.id }); detail(b); };
+        tr.children[4].append(x);
+      }
+      body.append(tr);
+    }
+    $('detail').scrollIntoView({ behavior: 'smooth' });
+  }
+  $('detail-close').onclick = () => show('detail', false);
+
+  // --- Create --------------------------------------------------------------
+  const inYear = new Date(); inYear.setFullYear(inYear.getFullYear() + 1);
+  $('f-until').value = inYear.toISOString().slice(0, 10);
+  let fresh = null;
+  $('create').onclick = async () => {
+    $('create').disabled = true;
+    say('create-msg', '');
+    try {
+      const until = new Date($('f-until').value + 'T23:59:59');
+      const data = await call({
+        action: 'create', name: $('f-name').value, kind: $('f-kind').value, frames: +$('f-frames').value,
+        months: +$('f-months').value, count: +$('f-count').value, redeem_until: until.toISOString(),
+        invoice_ref: $('f-invoice').value, card_name: $('f-card').value,
+      });
+      fresh = data;
+      $('fresh-title').textContent = `${data.codes.length} neue Codes – ${data.batch.name}`;
+      $('fresh-codes').innerHTML = '';
+      for (const c of data.codes) { const s = document.createElement('span'); s.textContent = c; $('fresh-codes').append(s); }
+      show('copy-partner', !!data.batch.partner_token);
+      show('fresh');
+      $('fresh').scrollIntoView({ behavior: 'smooth' });
+      await load();
+    } catch (e) {
+      say('create-msg', ERR[e.message] || 'Das hat nicht geklappt.');
+    } finally {
+      $('create').disabled = false;
+    }
+  };
+  $('copy-partner').onclick = () => fresh && copy(partnerLink(fresh.batch.partner_token), 'fresh-msg');
+  $('csv').onclick = () => {
+    if (!fresh) return;
+    const rows = ['Code;Link'].concat(fresh.codes.map((c) => `${c};https://smileapp.app/g/${c.replace(/^SMILE-/, '').replace('-', '')}`));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([rows.join('\r\n')], { type: 'text/csv' }));
+    a.download = `smile-gutscheine-${fresh.batch.name.replace(/[^\w-]+/g, '_')}.csv`;
+    a.click();
+  };
+
+  // --- Printed cards ---------------------------------------------------------
+  const CARD = {
+    de: {
+      title: (b) => `Gutschein für ${b.months} ${b.months === 1 ? 'Monat' : 'Monate'} Frame-Abo`,
+      tier: (b) => `${b.frames} Frame${b.frames > 1 ? 's' : ''}`,
+      until: (d) => `Einlösbar bis ${d}`, gift: (n) => `Ein Geschenk von ${n}`,
+      steps: ['Smile installieren und einen Space anlegen', 'QR-Code scannen oder Code eingeben (Space → Gutschein einlösen)', 'Frame verbinden und Fotos teilen'],
+      date: 'de-AT',
+    },
+    en: {
+      title: (b) => `Voucher for ${b.months} ${b.months === 1 ? 'month' : 'months'} of Frame plan`,
+      tier: (b) => `${b.frames} Frame${b.frames > 1 ? 's' : ''}`,
+      until: (d) => `Redeem by ${d}`, gift: (n) => `A gift from ${n}`,
+      steps: ['Install Smile and create a Space', 'Scan the QR code or enter the code (Space → Redeem voucher)', 'Connect a Frame and share photos'],
+      date: 'en-GB',
+    },
+  };
+  $('print-cards').onclick = () => {
+    if (!fresh) return;
+    const L = CARD[$('card-lang').value];
+    const b = fresh.batch;
+    const area = document.querySelector('div#print');
+    area.innerHTML = '';
+    for (const code of fresh.codes) {
+      const raw = code.replace(/^SMILE-/, '').replace('-', '');
+      const qr = qrcode(0, 'M'); qr.addData('https://smileapp.app/g/' + raw); qr.make();
+      const card = document.createElement('div'); card.className = 'vc';
+      card.innerHTML = '<div><div class="w">S<b>m</b>ile</div><div class="t"></div><div class="t"></div><div class="c"></div><div class="t"></div><div class="g"></div></div><div class="q"></div><ol></ol>';
+      const t = card.querySelectorAll('.t');
+      t[0].textContent = L.title(b); t[1].textContent = L.tier(b);
+      card.querySelector('.c').textContent = code;
+      t[2].textContent = L.until(new Date(b.redeem_until).toLocaleDateString(L.date));
+      card.querySelector('.g').textContent = b.card_name ? L.gift(b.card_name) : '';
+      card.querySelector('.q').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+      for (const s of L.steps) { const li = document.createElement('li'); li.textContent = s; card.querySelector('ol').append(li); }
+      area.append(card);
+    }
+    window.print();
+  };
+
+  start();
+</script>
+</body>
+</html>

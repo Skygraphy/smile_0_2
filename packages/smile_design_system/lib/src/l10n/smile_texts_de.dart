@@ -129,8 +129,9 @@ class SmileTextsDe extends SmileTexts {
   String get videoTooLongTitle => 'Video zu lang';
 
   @override
-  String get videoTooLongText =>
-      'Videos dürfen höchstens 2 Minuten lang sein. Kürze es in der Galerie und schick es dann noch einmal.';
+  String videoTooLongText(int minutes) {
+    return 'Videos dürfen hier höchstens $minutes Minuten lang sein. Kürze es in der Galerie und schick es dann noch einmal.';
+  }
 
   @override
   String get storageUsed => 'Belegt';
@@ -3768,4 +3769,202 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get languageFollowsPhone => 'Wie das Handy';
+
+  @override
+  String get planSectionTitle => 'Frame-Abo';
+
+  @override
+  String get planTrial => 'Probezeit';
+
+  @override
+  String planDaysLeft(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'noch $days Tage',
+      one: 'noch 1 Tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planTrialUntil(String date) {
+    return 'Alle Frames bekommen neue Fotos bis $date';
+  }
+
+  @override
+  String planFrames(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Frames',
+      one: '1 Frame',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planActive => 'aktiv';
+
+  @override
+  String get planSourceVoucher => 'Gutschein';
+
+  @override
+  String get planSourcePlay => 'Google Play';
+
+  @override
+  String get planSourceStaff => 'Smile';
+
+  @override
+  String planUntil(String date) {
+    return 'bis $date';
+  }
+
+  @override
+  String get planNoEnd => 'ohne Ablauf';
+
+  @override
+  String get planNone => 'Kein Abo';
+
+  @override
+  String get planNoneText =>
+      'Die Frames zeigen weiter alle Fotos, bekommen aber keine neuen.';
+
+  @override
+  String get planFree => 'Kostenlos';
+
+  @override
+  String get planTrialStartsWithFrame =>
+      'Alben und Fotos sind kostenlos. Mit dem ersten Frame beginnen 2 Monate Probezeit.';
+
+  @override
+  String planFramesUsed(int used, int count) {
+    return '$used von $count Frames';
+  }
+
+  @override
+  String planVideoLength(int minutes) {
+    return 'Videos bis $minutes Minuten';
+  }
+
+  @override
+  String get choosePlan => 'Abo wählen';
+
+  @override
+  String get redeemVoucher => 'Gutschein einlösen';
+
+  @override
+  String planForSpace(String space) {
+    return 'Für den ganzen Space „$space“. Mitglieder zahlen nie etwas.';
+  }
+
+  @override
+  String get planTierMore => 'Mehr als 5';
+
+  @override
+  String planTierDetails(int gb, int minutes) {
+    return '$gb GB · Videos $minutes Min.';
+  }
+
+  @override
+  String get planTierMoreDetails => 'je Frame +20 GB · 15 Min.';
+
+  @override
+  String get planPerMonth => 'pro Monat';
+
+  @override
+  String get planPerExtraFrame => 'je Frame';
+
+  @override
+  String get planYearlyHint => 'Jährlich zahlen: 2 Monate geschenkt';
+
+  @override
+  String get planYours => 'deins';
+
+  @override
+  String get planBuySoon =>
+      'Kaufen geht bald direkt hier. Bis dahin mit einem Gutschein.';
+
+  @override
+  String get voucherForSpace => 'Für den Space';
+
+  @override
+  String get voucherChangeSpace => 'ändern';
+
+  @override
+  String get voucherEnterCode => 'Gib den Code von deiner Karte ein';
+
+  @override
+  String get voucherCodeHint => 'SMILE-XXXX-XXXX';
+
+  @override
+  String get voucherRedeem => 'Einlösen';
+
+  @override
+  String get voucherScan => 'QR-Code scannen';
+
+  @override
+  String get voucherCodeNote => 'Groß- und Kleinschreibung ist egal.';
+
+  @override
+  String get voucherDone => 'Gutschein eingelöst';
+
+  @override
+  String voucherDoneText(String space, String frames, String date) {
+    return '$space hat jetzt $frames bis $date.';
+  }
+
+  @override
+  String voucherDoneLater(
+    String space,
+    String frames,
+    String start,
+    String date,
+  ) {
+    return '$space hat $frames vom $start bis $date – direkt nach dem, was schon läuft.';
+  }
+
+  @override
+  String voucherGiftFrom(String name) {
+    return 'Ein Geschenk von $name';
+  }
+
+  @override
+  String get voucherNotFound =>
+      'Diesen Code gibt es nicht. Prüf ihn bitte noch einmal.';
+
+  @override
+  String get voucherAlreadyUsed => 'Dieser Code wurde schon verwendet.';
+
+  @override
+  String get voucherExpired => 'Dieser Code ist abgelaufen.';
+
+  @override
+  String get voucherBlocked => 'Dieser Code gilt nicht mehr.';
+
+  @override
+  String get voucherRateLimited =>
+      'Zu viele Versuche. Bitte versuch es in einer Stunde wieder.';
+
+  @override
+  String get voucherNotManager =>
+      'Nur die Admins eines Spaces können einen Gutschein einlösen.';
+
+  @override
+  String get voucherNoSpace =>
+      'Leg zuerst einen Space an – der Gutschein gilt dann für ihn.';
+
+  @override
+  String get voucherPickSpace => 'Für welchen Space?';
+
+  @override
+  String get frameNotCovered =>
+      'Bekommt keine neuen Fotos – mehr Frames als im Abo';
+
+  @override
+  String get frameNoPlan => 'Bekommt keine neuen Fotos – kein Abo';
+
+  @override
+  String get sendFailedSpaceFull =>
+      'Der Speicher dieses Spaces ist voll – nicht gesendet. Die Admins können Platz schaffen oder ein größeres Abo wählen.';
 }

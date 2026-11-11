@@ -15,6 +15,7 @@ import 'scan_code_screen.dart';
 import 'share_in_screen.dart';
 import 'frames_screen.dart';
 import 'spaces_screen.dart';
+import 'redeem_voucher_screen.dart';
 
 enum _Tab { albums, frames, spaces }
 
@@ -79,7 +80,11 @@ class _HomeShellState extends State<HomeShell> with SyncReload {
     // (2026-10-17: it made opening a card slow).
     if (mounted) {
       await Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => link.handle != null ? PersonScreen(handle: link.handle!) : ScanCodeScreen(initial: link),
+        builder: (_) => link.voucher != null
+            ? RedeemVoucherScreen(code: link.voucher)
+            : link.handle != null
+                ? PersonScreen(handle: link.handle!)
+                : ScanCodeScreen(initial: link),
       ));
     }
     _takingInvite = false;

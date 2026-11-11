@@ -151,6 +151,10 @@ class SmileIcons {
   static const IconData handle = IconData(0xe0ac, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData card = IconData(0xe2c8, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 
+  /// Voucher codes and the Frame plan (2026-11-11). Phosphor `ticket`, `gift`.
+  static const IconData voucher = IconData(0xe490, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  static const IconData gift = IconData(0xe276, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+
   /// "Aus Kontakten" einladen (2026-10-17).
   static const IconData contacts = IconData(0xe6f8, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData check = IconData(0xe182, fontFamily: 'PhosphorRegular', fontPackage: _pkg);

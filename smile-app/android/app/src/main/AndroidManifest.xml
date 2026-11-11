@@ -47,6 +47,7 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https" android:host="smileapp.app" android:pathPrefix="/i/"/>
                 <data android:scheme="https" android:host="smileapp.app" android:pathPrefix="/@"/>
+                <data android:scheme="https" android:host="smileapp.app" android:pathPrefix="/g/"/>
             </intent-filter>
             <!-- The links are handled by InviteLinks (app_links), not by
                  Flutter's own router. -->
