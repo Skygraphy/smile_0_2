@@ -3760,4 +3760,9 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get frameLanguageLikeTablet => 'Wie das Tablet';
+
+  @override
+  String loginCodeStillValid(String email) {
+    return 'Wir haben dir gerade schon einen Code an $email geschickt. Er gilt noch – bitte gib ihn ein.';
+  }
 }

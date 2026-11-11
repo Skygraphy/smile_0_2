@@ -44,6 +44,10 @@ class _LoginScreenState extends State<LoginScreen> {
   /// itself can tell.
   static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$');
 
+  /// Set when a new code was refused because one went out less than a
+  /// minute ago (Supabase's rate limit, 2026-11-11): that code still works.
+  String? _codeNote;
+
   Future<void> _requestCode() async {
     final t = SmileTexts.of(context);
     if (_email.isEmpty || !_emailPattern.hasMatch(_email)) {
@@ -59,7 +63,23 @@ class _LoginScreenState extends State<LoginScreen> {
       // testsuite project's admin access (2026-10-19).
       if (!smileTestMode) await supabase.auth.signInWithOtp(email: _email);
       if (!mounted) return;
-      setState(() => _step = _LoginStep.enterCode);
+      setState(() {
+        _codeNote = null;
+        _step = _LoginStep.enterCode;
+      });
+    } on AuthApiException catch (e) {
+      // A code went out moments ago: it is still valid -- straight to entering it.
+      debugPrint('SmileLogin: $e');
+      if (!mounted) return;
+      if (e.code == 'over_email_send_rate_limit') {
+        final t = SmileTexts.of(context);
+        setState(() {
+          _codeNote = t.loginCodeStillValid(_email);
+          _step = _LoginStep.enterCode;
+        });
+      } else {
+        setState(() => _errorMessage = SmileTexts.of(context).loginSendFailed);
+      }
     } catch (e) {
       // Never the server's own (English) text (2026-10-11).
       debugPrint('SmileLogin: $e');
@@ -245,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
   List<Widget> _buildCodeStep() {
     return [
       Text(
-        SmileTexts.of(context).loginCodeSent(_email),
+        _codeNote ?? SmileTexts.of(context).loginCodeSent(_email),
         textAlign: TextAlign.center,
       ),
       const SizedBox(height: 16),

@@ -1013,5 +1013,6 @@
   "languageLikePhone": "Like the phone: {language}",
   "languageSheetHint": "Applies to the app and the notifications you get.",
   "frameLanguage": "Language on the Frame",
-  "frameLanguageLikeTablet": "Like the tablet"
+  "frameLanguageLikeTablet": "Like the tablet",
+  "loginCodeStillValid": "We just sent a code to {email}. It's still valid – please enter it."
 }

@@ -1665,5 +1665,13 @@
   },
   "languageSheetHint": "Gilt für die App und die Mitteilungen, die du bekommst.",
   "frameLanguage": "Sprache am Frame",
-  "frameLanguageLikeTablet": "Wie das Tablet"
+  "frameLanguageLikeTablet": "Wie das Tablet",
+  "loginCodeStillValid": "Wir haben dir gerade schon einen Code an {email} geschickt. Er gilt noch – bitte gib ihn ein.",
+  "@loginCodeStillValid": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  }
 }

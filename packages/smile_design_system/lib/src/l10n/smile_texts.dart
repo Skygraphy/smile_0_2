@@ -6181,6 +6181,12 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Wie das Tablet'**
   String get frameLanguageLikeTablet;
+
+  /// No description provided for @loginCodeStillValid.
+  ///
+  /// In de, this message translates to:
+  /// **'Wir haben dir gerade schon einen Code an {email} geschickt. Er gilt noch – bitte gib ihn ein.'**
+  String loginCodeStillValid(String email);
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {
