@@ -233,13 +233,24 @@ const de = {
     title: "Frame wieder online",
     body: `Der Frame ${p.frame} in ${p.space} ist wieder online.`,
   }),
-  spaceStorageHigh: (p: { space: string; gb: string }): Notice => ({
-    title: `${p.space}: ${p.gb} GB belegt`,
-    body: "Euer Space nähert sich 10 GB. Es geht alles weiter – nur zur Info.",
+  spaceStorageHigh: (p: { space: string; percent: number; limitGb: number }): Notice => ({
+    title: `${p.space}: ${p.percent} % belegt`,
+    body: p.percent >= 100
+      ? `Der Speicher (${p.limitGb} GB) ist voll. Neue Fotos und Videos kommen erst wieder an, wenn Platz frei wird oder mit einem größeren Frame-Abo.`
+      : `Der Speicher (${p.limitGb} GB) wird knapp. Ist er voll, nimmt der Space keine neuen Fotos mehr an.`,
   }),
   spaceStorageOk: (p: { space: string }): Notice => ({
-    title: `${p.space}: wieder unter 8 GB`,
-    body: "Der Speicher eures Spaces liegt wieder unter 8 GB.",
+    title: `${p.space}: wieder genug Platz`,
+    body: "Der Speicher eures Spaces hat wieder genug Platz.",
+  }),
+  // Frame subscription (2026-11-11, migrations/0102)
+  planEndsSoon: (p: { space: string; trial: boolean; endsAt: string }): Notice => ({
+    title: p.trial ? `${p.space}: Probezeit endet bald` : `${p.space}: Frame-Abo endet bald`,
+    body: `Am ${germanDate(p.endsAt)} ist es so weit. Danach zeigen die Frames weiter alles, bekommen aber keine neuen Fotos. Abo wählen oder Gutschein einlösen geht auf der Space-Seite.`,
+  }),
+  planEnded: (p: { space: string; trial: boolean }): Notice => ({
+    title: p.trial ? `${p.space}: Probezeit ist vorbei` : `${p.space}: Frame-Abo ist abgelaufen`,
+    body: "Die Frames zeigen weiter alles, was sie haben, bekommen aber keine neuen Fotos. Abo wählen oder Gutschein einlösen geht auf der Space-Seite.",
   }),
   stillOngoing: (title: string): string => `${title} (weiterhin)`,
 

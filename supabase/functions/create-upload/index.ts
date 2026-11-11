@@ -38,6 +38,8 @@ interface CreateUploadRequest {
   caption?: string;
   // When it was taken (EXIF / video metadata, migrations/0100), ISO 8601.
   taken_at?: string;
+  // A video's length, if the phone knows it (plan limit, migrations/0102).
+  duration_ms?: number;
   // Several at once (2026-10-10): one request for a whole selection of
   // photos instead of one each -- every Edge Function call costs ~1 s.
   // channel_id is shared; each item has the per-file fields above.
@@ -136,6 +138,25 @@ Deno.serve(async (req) => {
   const access = await resolveChannelAccess(supabaseAdmin, body.channel_id, userId);
   if (!access.isMember) {
     return jsonResponse({ error: "not_a_channel_member" }, 403);
+  }
+
+  // The Space's plan (2026-11-11, migrations/0102): a full Space takes
+  // nothing more, a video may be as long as the plan allows (+1 s grace).
+  const { data: channelRow } = await supabaseAdmin.from("channels").select("space_id").eq("id", body.channel_id).maybeSingle();
+  if (channelRow?.space_id) {
+    const [{ data: plan }, { data: used }] = await Promise.all([
+      supabaseAdmin.rpc("space_entitlement_internal", { p_space: channelRow.space_id }),
+      supabaseAdmin.rpc("space_used_bytes", { p_space: channelRow.space_id }),
+    ]);
+    const limitBytes = Number(plan?.storage_bytes ?? 0);
+    const adding = items.reduce((sum, i) => sum + Number(i.file_size_bytes ?? 0), 0);
+    if (limitBytes > 0 && Number(used ?? 0) + adding > limitBytes) {
+      return jsonResponse({ error: "space_full" }, 409);
+    }
+    const videoSeconds = Number(plan?.video_seconds ?? 0);
+    if (videoSeconds > 0 && items.some((i) => i.media_type === "video" && Number(i.duration_ms ?? 0) > (videoSeconds + 1) * 1000)) {
+      return jsonResponse({ error: "video_too_long", video_seconds: videoSeconds }, 400);
+    }
   }
 
   // One insert for all; a millisecond apart, so they keep the order they

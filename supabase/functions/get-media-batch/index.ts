@@ -338,10 +338,14 @@ Deno.serve(async (req) => {
   }
 
   const limit = Math.min(Math.max(body.limit ?? DEFAULT_LIMIT, 1), MAX_LIMIT);
+  // Frame subscription (2026-11-11, migrations/0102): without cover the
+  // Frame keeps what it has and gets nothing uploaded after the cut-off.
+  const { data: until } = await supabase.rpc("frame_photos_until", { p_frame: claims.frame_id });
   const { data: page, error: pageError } = await supabase.rpc("frame_media_page", {
     p_channel: channelId,
     p_after: body.cursor ?? null,
     p_limit: limit,
+    p_until: until ?? null,
   });
   if (pageError) return jsonResponse({ error: "fetch_failed" }, 500);
   const rows = (page ?? []) as {

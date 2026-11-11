@@ -180,10 +180,20 @@ export const en: PushTexts = {
   }),
   frameOnlineAgain: (p) => ({ title: "Frame back online", body: `The Frame ${p.frame} in ${p.space} is back online.` }),
   spaceStorageHigh: (p) => ({
-    title: `${p.space}: ${p.gb} GB used`,
-    body: "Your Space is getting close to 10 GB. Everything keeps working – just so you know.",
+    title: `${p.space}: ${p.percent} % used`,
+    body: p.percent >= 100
+      ? `The storage (${p.limitGb} GB) is full. New photos and videos arrive again once there's room or with a bigger Frame plan.`
+      : `The storage (${p.limitGb} GB) is running low. Once it's full, the Space takes no new photos.`,
   }),
-  spaceStorageOk: (p) => ({ title: `${p.space}: below 8 GB again`, body: "Your Space's storage is below 8 GB again." }),
+  spaceStorageOk: (p) => ({ title: `${p.space}: enough room again`, body: "Your Space's storage has enough room again." }),
+  planEndsSoon: (p) => ({
+    title: p.trial ? `${p.space}: trial ends soon` : `${p.space}: Frame plan ends soon`,
+    body: `On ${englishDate(p.endsAt)} it ends. After that the Frames keep showing everything, but get no new photos. Choose a plan or redeem a voucher on the Space page.`,
+  }),
+  planEnded: (p) => ({
+    title: p.trial ? `${p.space}: trial is over` : `${p.space}: Frame plan has ended`,
+    body: "The Frames keep showing everything they have, but get no new photos. Choose a plan or redeem a voucher on the Space page.",
+  }),
   stillOngoing: (title) => `${title} (still)`,
 
   // --- trash ---

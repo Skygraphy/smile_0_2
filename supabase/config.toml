@@ -445,6 +445,8 @@ verify_jwt = false
 verify_jwt = false
 [functions.sync-fanout]
 verify_jwt = false
+[functions.voucher-partner]
+verify_jwt = false
 [functions.remove-storage-files]
 verify_jwt = false
 [functions.expire-requests]

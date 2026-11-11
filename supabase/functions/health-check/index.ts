@@ -160,36 +160,44 @@ Deno.serve(async (req) => {
     });
   }
 
-  // 5b. A Space past 8 GB (2026-11-05): its managers hear so -- nothing is
-  // blocked, the soft limit is 10 GB.
+  // 5b. A Space's storage at 80 % of its plan or more (2026-11-11,
+  // migrations/0102): its managers hear so. At 100 % create-upload refuses.
   {
-    const { data: rows } = await supabaseAdmin
-      .from("media_items")
-      .select("file_size_bytes, channels!inner(space_id, spaces!inner(name, deleted_at))")
-      .eq("processing_status", "ready")
-      .limit(200000);
-    const bySpace = new Map<string, { name: string; bytes: number }>();
-    // deno-lint-ignore no-explicit-any
-    for (const r of (rows ?? []) as any[]) {
-      const space = r.channels?.spaces;
-      if (!space || space.deleted_at) continue;
-      const entry = bySpace.get(r.channels.space_id) ?? { name: space.name, bytes: 0 };
-      entry.bytes += Number(r.file_size_bytes ?? 0);
-      bySpace.set(r.channels.space_id, entry);
-    }
-    for (const [spaceId, s] of bySpace) {
-      if (s.bytes < 8 * 1024 ** 3) continue;
-      const managers = await spaceManagerIds(supabaseAdmin, spaceId);
-      problems.set(`space_storage:${spaceId}`, {
-        title: `${s.name}: ${(s.bytes / 1024 ** 3).toFixed(0)} GB belegt`,
-        body: "Euer Space nähert sich 10 GB. Es geht alles weiter – nur zur Info.",
+    const { data: rows } = await supabaseAdmin.rpc("space_storage_levels");
+    for (const r of (rows ?? []) as { space_id: string; space_name: string; used_bytes: number; limit_bytes: number }[]) {
+      const limit = Number(r.limit_bytes);
+      if (!limit || Number(r.used_bytes) < limit * 0.8) continue;
+      const percent = Math.min(100, Math.floor((Number(r.used_bytes) / limit) * 100));
+      const limitGb = Math.round(limit / 1024 ** 3);
+      const managers = await spaceManagerIds(supabaseAdmin, r.space_id);
+      problems.set(`space_storage:${r.space_id}`, {
+        title: `${r.space_name}: ${percent} % belegt`,
+        body: `Der Speicher (${limitGb} GB) wird knapp.`,
         recipients: managers,
-        data: { type: "space_renamed", space_id: spaceId, space_name: s.name },
-        solvedTitle: `${s.name}: wieder unter 8 GB`,
-        solvedBody: "Der Speicher eures Spaces liegt wieder unter 8 GB.",
-        notice: { key: "spaceStorageHigh", params: { space: s.name, gb: (s.bytes / 1024 ** 3).toFixed(0) } },
-        solvedNotice: { key: "spaceStorageOk", params: { space: s.name } },
+        data: { type: "space_renamed", space_id: r.space_id, space_name: r.space_name },
+        solvedTitle: `${r.space_name}: wieder genug Platz`,
+        solvedBody: "Der Speicher eures Spaces hat wieder genug Platz.",
+        notice: { key: "spaceStorageHigh", params: { space: r.space_name, percent, limitGb } },
+        solvedNotice: { key: "spaceStorageOk", params: { space: r.space_name } },
       });
+    }
+  }
+
+  // 5c. Frame plan / trial ending (2026-11-11, migrations/0102): 30 and 7
+  // days before and the day after, once each, to the Space's managers.
+  {
+    const { data: due } = await supabaseAdmin.rpc("plan_reminders_due");
+    for (const r of (due ?? []) as { space_id: string; space_name: string; kind: string; source: string; ends_at: string }[]) {
+      const managers = await spaceManagerIds(supabaseAdmin, r.space_id);
+      const trial = r.source === "trial";
+      await pushNotificationToUsers(
+        supabaseAdmin,
+        managers,
+        r.kind === "ended"
+          ? (t: PushTexts) => t.planEnded({ space: r.space_name, trial })
+          : (t: PushTexts) => t.planEndsSoon({ space: r.space_name, trial, endsAt: r.ends_at }),
+        { type: "space_renamed", space_id: r.space_id, space_name: r.space_name },
+      );
     }
   }
 
