@@ -1,16 +1,26 @@
 <!-- Smile sign-in code (2026-11-10), German and English in one mail: Supabase
      sends one template to everyone. Paste into Dashboard > Authentication >
      Emails > Magic Link (the code login uses this template).
-     Subject: Dein Smile-Code / Your Smile code: {{ .Token }} -->
-<div style="background:#0E0C0C;padding:32px 16px;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;color:#F2EEEC">
-  <div style="max-width:440px;margin:0 auto;background:#1A1716;border-radius:20px;padding:28px 24px;text-align:center">
-    <div style="font-size:28px;font-weight:700;letter-spacing:-0.3px;margin-bottom:18px">S<span style="color:#FF6F61">m</span>ile</div>
-    <p style="margin:0 0 6px;font-size:16px">Dein Code für Smile</p>
-    <p style="margin:0 0 18px;font-size:14px;color:#B5ACA9">Your code for Smile</p>
-    <div style="font-size:36px;font-weight:800;letter-spacing:8px;color:#FF6F61;margin:0 0 20px">{{ .Token }}</div>
-    <p style="margin:0 0 4px;font-size:13px;color:#B5ACA9">Gib ihn in der App ein. Er gilt eine Stunde.</p>
-    <p style="margin:0 0 18px;font-size:13px;color:#B5ACA9">Enter it in the app. It's valid for one hour.</p>
-    <p style="margin:0;font-size:12px;color:#7d7472">Du hast keinen Code angefordert? Dann ignoriere diese E-Mail.<br>Didn't ask for a code? Just ignore this email.</p>
-  </div>
-  <p style="text-align:center;font-size:11px;color:#7d7472;margin:16px 0 0">Skygraphy Copter Technologies e.U. · smileapp.app</p>
-</div>
+     Subject: Dein Smile-Code / Your Smile code: {{ .Token }}
+     Tables with bgcolor (2026-11-11): Outlook ignores div backgrounds and
+     showed only dark stripes behind each paragraph. -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#0E0C0C" style="background-color:#0E0C0C;width:100%;min-height:100%;margin:0;padding:0">
+  <tr>
+    <td align="center" bgcolor="#0E0C0C" style="background-color:#0E0C0C;padding:40px 16px">
+      <table role="presentation" width="440" cellpadding="0" cellspacing="0" border="0" bgcolor="#1A1716" style="background-color:#1A1716;width:100%;max-width:440px;border-radius:20px">
+        <tr>
+          <td align="center" bgcolor="#1A1716" style="background-color:#1A1716;border-radius:20px;padding:32px 24px;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;color:#F2EEEC">
+            <div style="font-size:28px;font-weight:700;letter-spacing:-0.3px;color:#F2EEEC;margin:0 0 20px">S<span style="color:#FF6F61">m</span>ile</div>
+            <p style="margin:0 0 6px;font-size:16px;color:#F2EEEC">Dein Code für Smile</p>
+            <p style="margin:0 0 20px;font-size:14px;color:#B5ACA9">Your code for Smile</p>
+            <p style="margin:0 0 22px;font-size:36px;font-weight:800;letter-spacing:8px;color:#FF6F61">{{ .Token }}</p>
+            <p style="margin:0 0 4px;font-size:13px;color:#B5ACA9">Gib ihn in der App ein. Er gilt eine Stunde.</p>
+            <p style="margin:0 0 20px;font-size:13px;color:#B5ACA9">Enter it in the app. It's valid for one hour.</p>
+            <p style="margin:0;font-size:12px;line-height:1.5;color:#7D7472">Du hast keinen Code angefordert? Dann ignoriere diese E-Mail.<br>Didn't ask for a code? Just ignore this email.</p>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:18px 0 0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;font-size:11px;color:#7D7472">Skygraphy Copter Technologies e.U. · smileapp.app</p>
+    </td>
+  </tr>
+</table>
