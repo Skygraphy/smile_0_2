@@ -27,6 +27,11 @@ h1 { font-size: 24px; font-weight: 800; margin: 8px 0 14px; }
 h2 { font-size: 18px; font-weight: 700; margin: 0 0 12px; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; margin-bottom: 18px; }
 .hidden { display: none !important; }
+.narrow { max-width: 440px; margin: 8vh auto 18px; text-align: center; }
+.narrow .row { justify-content: center; }
+.narrow input#mail { text-align: center; }
+.otp { display: flex; gap: 8px; justify-content: center; margin: 6px 0 4px; }
+.otp input { width: 46px; height: 56px; padding: 0; text-align: center; font-size: 24px; font-weight: 800; border-radius: 12px; }
 label { display: block; color: var(--dim); font-size: 12.5px; margin-bottom: 4px; }
 input, select { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font: inherit; }
 input:focus, select:focus { outline: 2px solid var(--coral); outline-offset: -1px; }
@@ -78,7 +83,7 @@ a { color: var(--coral); }
   </header>
 
   <!-- Login with the Smile account (e-mail code) -->
-  <section id="login" class="card hidden" style="max-width:440px">
+  <section id="login" class="card narrow hidden">
     <h1>Verwaltung</h1>
     <p class="small">Melde dich mit deinem Smile-Konto an. Du bekommst einen Code per E-Mail.</p>
     <div id="step-mail">
@@ -87,14 +92,21 @@ a { color: var(--coral); }
       <div class="row" style="margin-top:12px"><button id="send">Code schicken</button></div>
     </div>
     <div id="step-code" class="hidden">
-      <label for="otp">Code aus der E-Mail</label>
-      <input id="otp" inputmode="numeric" autocomplete="one-time-code">
+      <label>Code aus der E-Mail</label>
+      <div class="otp" id="otp">
+        <input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Ziffer 1">
+        <input inputmode="numeric" maxlength="1" aria-label="Ziffer 2">
+        <input inputmode="numeric" maxlength="1" aria-label="Ziffer 3">
+        <input inputmode="numeric" maxlength="1" aria-label="Ziffer 4">
+        <input inputmode="numeric" maxlength="1" aria-label="Ziffer 5">
+        <input inputmode="numeric" maxlength="1" aria-label="Ziffer 6">
+      </div>
       <div class="row" style="margin-top:12px"><button id="verify">Anmelden</button><button class="ghost" id="back">Andere E-Mail</button></div>
     </div>
     <div class="msg" id="login-msg"></div>
   </section>
 
-  <section id="denied" class="card hidden">
+  <section id="denied" class="card narrow hidden">
     <h1>Kein Zugang</h1>
     <p class="small">Dieses Konto hat keine Mitarbeiter-Rechte.</p>
   </section>
@@ -191,14 +203,42 @@ a { color: var(--coral); }
     if (error && !/rate|seconds/i.test(error.message)) return say('login-msg', 'Das hat nicht geklappt. Gibt es zu dieser E-Mail ein Smile-Konto?');
     say('login-msg', '', true);
     show('step-mail', false); show('step-code');
-    $('otp').focus();
+    digits.forEach((d) => (d.value = ''));
+    digits[0].focus();
   };
+  // Six fields: typing moves on, backspace moves back, pasting fills all,
+  // the sixth digit signs in.
+  const digits = [...document.querySelectorAll('#otp input')];
+  const fill = (text, from = 0) => {
+    const only = text.replace(/\D/g, '').slice(0, 6 - from);
+    [...only].forEach((ch, i) => (digits[from + i].value = ch));
+    const next = Math.min(from + only.length, 5);
+    digits[next].focus();
+    if (digits.every((d) => d.value)) $('verify').click();
+  };
+  digits.forEach((d, i) => {
+    d.addEventListener('input', () => {
+      const v = d.value;
+      d.value = '';
+      if (v) fill(v, i);
+    });
+    d.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !d.value && i > 0) { digits[i - 1].value = ''; digits[i - 1].focus(); e.preventDefault(); }
+      if (e.key === 'Enter') $('verify').click();
+    });
+    d.addEventListener('paste', (e) => { e.preventDefault(); fill(e.clipboardData.getData('text'), i); });
+  });
+  $('mail').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('send').click(); });
   $('back').onclick = () => { show('step-code', false); show('step-mail'); say('login-msg', ''); };
   $('verify').onclick = async () => {
     $('verify').disabled = true;
-    const { error } = await sb.auth.verifyOtp({ email: mail, token: $('otp').value.trim(), type: 'email' });
+    const { error } = await sb.auth.verifyOtp({ email: mail, token: digits.map((d) => d.value).join(''), type: 'email' });
     $('verify').disabled = false;
-    if (error) return say('login-msg', 'Der Code passt nicht oder ist abgelaufen.');
+    if (error) {
+      digits.forEach((d) => (d.value = ''));
+      digits[0].focus();
+      return say('login-msg', 'Der Code passt nicht oder ist abgelaufen.');
+    }
     start();
   };
   $('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
