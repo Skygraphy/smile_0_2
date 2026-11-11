@@ -3765,4 +3765,7 @@ class SmileTextsDe extends SmileTexts {
   String loginCodeStillValid(String email) {
     return 'Wir haben dir gerade schon einen Code an $email geschickt. Er gilt noch – bitte gib ihn ein.';
   }
+
+  @override
+  String get languageFollowsPhone => 'Wie das Handy';
 }

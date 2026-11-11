@@ -6187,6 +6187,12 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Wir haben dir gerade schon einen Code an {email} geschickt. Er gilt noch – bitte gib ihn ein.'**
   String loginCodeStillValid(String email);
+
+  /// No description provided for @languageFollowsPhone.
+  ///
+  /// In de, this message translates to:
+  /// **'Wie das Handy'**
+  String get languageFollowsPhone;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

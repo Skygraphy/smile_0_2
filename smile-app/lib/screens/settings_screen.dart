@@ -466,6 +466,25 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                     ),
                   ],
                 ),
+                // "Sprache" (2026-11-10): the phone's, or one chosen.
+                SmileInfoSection(
+                  title: t.language,
+                  children: [
+                    ValueListenableBuilder<String?>(
+                      valueListenable: AppLanguage.choice,
+                      builder: (context, chosen, _) => SmileObjectTile(
+                        leading: Icon(SmileIcons.web, color: scheme.onSurfaceVariant),
+                        // The choice itself as the title -- no second "Sprache" (2026-11-11).
+                        title: chosen == null
+                            ? t.languageAutomaticValue(SmileLanguages.nameOf(AppLanguage.deviceLanguage))
+                            : SmileLanguages.nameOf(chosen),
+                        subtitle: chosen == null ? t.languageFollowsPhone : t.languageSheetHint,
+                        trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
+                        onTap: _pickLanguage,
+                      ),
+                    ),
+                  ],
+                ),
                 // Tipps (2026-10-18): on by default, all back from the start.
                 SmileInfoSection(
                   title: t.tipsSection,
@@ -502,37 +521,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                     ),
                   ],
                 ),
-                SmileInfoSection(
-                  title: t.account,
-                  children: [
-                    if (email != null)
-                      SmileObjectTile(
-                        leading: Icon(SmileIcons.email, color: scheme.onSurfaceVariant),
-                        title: email,
-                        subtitle: t.emailAddress,
-                      ),
-                    SmileActionRow(icon: SmileIcons.leave, label: t.signOut, destructive: true, onTap: _confirmSignOut),
-                    SmileActionRow(icon: SmileIcons.delete, label: t.deleteAccount, destructive: true, onTap: _confirmDeleteAccount),
-                  ],
-                ),
-                // "Sprache" (2026-11-10): the phone's, or one chosen.
-                SmileInfoSection(
-                  title: t.language,
-                  children: [
-                    ValueListenableBuilder<String?>(
-                      valueListenable: AppLanguage.choice,
-                      builder: (context, chosen, _) => SmileObjectTile(
-                        leading: Icon(SmileIcons.web, color: scheme.onSurfaceVariant),
-                        title: t.language,
-                        subtitle: chosen == null
-                            ? t.languageAutomaticValue(SmileLanguages.nameOf(AppLanguage.deviceLanguage))
-                            : SmileLanguages.nameOf(chosen),
-                        trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
-                        onTap: _pickLanguage,
-                      ),
-                    ),
-                  ],
-                ),
                 // "Über Smile" (2026-11-10): Impressum, Datenschutz, Lizenzen.
                 SmileInfoSection(
                   title: t.aboutSmile,
@@ -553,6 +541,20 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                         onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AboutScreen())),
                       ),
                     ),
+                  ],
+                ),
+                // Konto at the very bottom, like WhatsApp (Ernst 2026-11-11).
+                SmileInfoSection(
+                  title: t.account,
+                  children: [
+                    if (email != null)
+                      SmileObjectTile(
+                        leading: Icon(SmileIcons.email, color: scheme.onSurfaceVariant),
+                        title: email,
+                        subtitle: t.emailAddress,
+                      ),
+                    SmileActionRow(icon: SmileIcons.leave, label: t.signOut, destructive: true, onTap: _confirmSignOut),
+                    SmileActionRow(icon: SmileIcons.delete, label: t.deleteAccount, destructive: true, onTap: _confirmDeleteAccount),
                   ],
                 ),
               ],
