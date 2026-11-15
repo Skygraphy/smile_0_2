@@ -858,7 +858,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get inviteCoAdminHint =>
-      'Die Person braucht bereits einen Smile-Account. Nimmt sie an, verwaltet sie diesen Space mit allen Rechten außer Löschen.';
+      'Die Person braucht bereits einen Smile-Account. Nimmt sie an, verwaltet sie diesen Space mit allen Rechten außer Löschen und sieht alle Alben, auch neue. Gehst du, übernimmt sie den Space.';
 
   @override
   String get makeAdmin => 'Zum Admin machen';
@@ -2242,7 +2242,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get roleCoAdminHint =>
-      'Verwaltet den Space mit: Alben, Frames und Personen.';
+      'Verwaltet den Space mit und sieht alle Alben, auch neue. Übernimmt den Space, wenn der Admin geht.';
 
   @override
   String get roleMemberHint => 'Stellt Fotos und Videos ins Album.';

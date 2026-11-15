@@ -1457,7 +1457,7 @@ abstract class SmileTexts {
   /// No description provided for @inviteCoAdminHint.
   ///
   /// In de, this message translates to:
-  /// **'Die Person braucht bereits einen Smile-Account. Nimmt sie an, verwaltet sie diesen Space mit allen Rechten außer Löschen.'**
+  /// **'Die Person braucht bereits einen Smile-Account. Nimmt sie an, verwaltet sie diesen Space mit allen Rechten außer Löschen und sieht alle Alben, auch neue. Gehst du, übernimmt sie den Space.'**
   String get inviteCoAdminHint;
 
   /// No description provided for @makeAdmin.
@@ -3755,7 +3755,7 @@ abstract class SmileTexts {
   /// No description provided for @roleCoAdminHint.
   ///
   /// In de, this message translates to:
-  /// **'Verwaltet den Space mit: Alben, Frames und Personen.'**
+  /// **'Verwaltet den Space mit und sieht alle Alben, auch neue. Übernimmt den Space, wenn der Admin geht.'**
   String get roleCoAdminHint;
 
   /// No description provided for @roleMemberHint.
