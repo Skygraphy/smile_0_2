@@ -242,13 +242,23 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
   /// when videos may only last as long as a photo.
   void _schedule() {
     _next?.cancel();
-    if (_items.isEmpty || _paused) return;
+    if (_items.isEmpty || _paused || _zoomHeld) return;
     if (_current.isVideo && _prefs.videoLength != 'photo') return;
     _next = Timer(Duration(seconds: _prefs.seconds), _advance);
   }
 
   /// Stopped from the ⋮ (2026-11-05): no next photo, a video holds.
   bool _paused = false;
+
+  /// Zoomed by hand, or fingers on the photo zooming (2026-11-15, Ernst):
+  /// no next photo, no page turning, until it is whole again.
+  bool _zoomHeld = false;
+
+  void _onZoomHold(bool holding, int page) {
+    if (!mounted || page != _index) return;
+    setState(() => _zoomHeld = holding);
+    _schedule();
+  }
 
   void _setPaused(bool paused) {
     setState(() => _paused = paused);
@@ -422,12 +432,18 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
     }
     final url = item.displayUrl ?? item.thumbnailUrl;
     if (url == null) return const SizedBox.shrink();
-    return SmilePhotoStage(
+    // Zooming with two fingers, double tap, double tap and drag -- as in
+    // the full-screen view and on the Frame.
+    return SmileZoomView(
       key: ValueKey('${item.id}#$i'),
-      image: CachedNetworkImageProvider(url, cacheKey: item.displayUrl != null ? '${item.id}_display' : '${item.id}_grid'),
-      fillMode: SmileFillMode.parse(_prefs.fillMode),
-      slowZoom: _prefs.slowZoom && i == _index,
-      duration: Duration(seconds: _prefs.seconds),
+      onHold: (holding) => _onZoomHold(holding, i),
+      child: SmilePhotoStage(
+        image: CachedNetworkImageProvider(url, cacheKey: item.displayUrl != null ? '${item.id}_display' : '${item.id}_grid'),
+        fillMode: SmileFillMode.parse(_prefs.fillMode),
+        slowZoom: _prefs.slowZoom && i == _index,
+        held: i == _index && _zoomHeld,
+        duration: Duration(seconds: _prefs.seconds),
+      ),
     );
   }
 
@@ -453,9 +469,13 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                   maxWidth: box.maxWidth + _gap,
                   child: PageView.builder(
                     controller: _pages,
+                    physics: _zoomHeld ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
                     // No itemCount: endless (see _current).
                     onPageChanged: (i) {
-                      setState(() => _index = i);
+                      setState(() {
+                        _index = i;
+                        _zoomHeld = false;
+                      });
                       if (i > 0 && i % max(items.length, 1) == 0 && _prefs.order == 'shuffle') {
                         // A new round, a new shuffle.
                         _shuffleSeed++;
