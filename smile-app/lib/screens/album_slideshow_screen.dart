@@ -499,10 +499,7 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                         },
                         // The title belongs to its photo (Ernst 2026-11-10): it glides
                         // and fades with it instead of switching halfway.
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [_slide(context, items, i), _slideCaption(items, i)],
-                        ),
+                        child: Stack(fit: StackFit.expand, children: [_slide(context, items, i), _slideCaption(items, i)]),
                       ),
                     ),
                   ),
@@ -515,46 +512,74 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
               duration: const Duration(milliseconds: 200),
               child: IgnorePointer(
                 ignoring: !_chrome,
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(SmileSpacing.m),
-                    child: Stack(
-                      children: [
-                        // The full-screen viewer's bar (Ernst 2026-11-04: the round
-                        // gear and X did not fit the app): back, where, settings.
-                        Align(
-                          alignment: Alignment.topCenter,
-                          child: Container(
-                            decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(SmileRadius.m)),
-                            child: Row(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(SmileIcons.back, color: Colors.white),
-                                  onPressed: () => Navigator.of(context).pop(),
-                                ),
-                                Expanded(
-                                  child: items.isNotEmpty && widget.headline != null
-                                      ? SmileFitText(
-                                          '${widget.headline} · ${t.slideshowPosition(_index % items.length + 1, items.length)}',
-                                          style: const TextStyle(color: Colors.white, fontSize: 16),
-                                        )
-                                      : const SizedBox.shrink(),
-                                ),
-                                // ⋮ instead of the gear (Ernst 2026-11-05): the
-                                // frequent things at once, the rest behind
-                                // "Einstellungen …".
-                                PopupMenuButton<VoidCallback>(
-                                  icon: const Icon(SmileIcons.more, color: Colors.white),
-                                  tooltip: t.moreOptions,
-                                  onOpened: () => _hideChrome?.cancel(),
-                                  onCanceled: _keepChrome,
-                                  onSelected: (action) {
-                                    action();
-                                    _keepChrome();
-                                  },
-                                  itemBuilder: (context) {
-                                    PopupMenuItem<VoidCallback> item(IconData icon, String label, VoidCallback onTap, {bool? checked}) =>
-                                        PopupMenuItem(
+                child: Stack(
+                  children: [
+                    // Like other photo apps (Ernst 2026-11-16, variant A): no
+                    // box, the app's back and ⋮ right on the photo, a soft
+                    // dark fade above and below keeps them readable.
+                    const Positioned(left: 0, right: 0, top: 0, height: 140, child: _Fade(top: true)),
+                    const Positioned(left: 0, right: 0, bottom: 0, height: 120, child: _Fade(top: false)),
+                    SafeArea(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(SmileSpacing.xs, SmileSpacing.xs, SmileSpacing.xs, SmileSpacing.l),
+                        child: Stack(
+                          children: [
+                            Align(
+                              alignment: Alignment.topCenter,
+                              child: IconTheme(
+                                data: const IconThemeData(color: Colors.white, shadows: _shadow),
+                                child: Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(SmileIcons.back),
+                                      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                                      onPressed: () => Navigator.of(context).pop(),
+                                    ),
+                                    const SizedBox(width: SmileSpacing.xs),
+                                    Expanded(
+                                      child: items.isNotEmpty && widget.headline != null
+                                          ? Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  widget.headline!,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 17,
+                                                    fontWeight: FontWeight.w600,
+                                                    shadows: _shadow,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  t.slideshowPosition(_index % items.length + 1, items.length),
+                                                  style: const TextStyle(color: Colors.white70, fontSize: 13, shadows: _shadow),
+                                                ),
+                                              ],
+                                            )
+                                          : const SizedBox.shrink(),
+                                    ),
+                                    // ⋮ instead of the gear (Ernst 2026-11-05): the
+                                    // frequent things at once, the rest behind
+                                    // "Einstellungen …".
+                                    PopupMenuButton<VoidCallback>(
+                                      icon: const Icon(SmileIcons.more),
+                                      tooltip: t.moreOptions,
+                                      onOpened: () => _hideChrome?.cancel(),
+                                      onCanceled: _keepChrome,
+                                      onSelected: (action) {
+                                        action();
+                                        _keepChrome();
+                                      },
+                                      itemBuilder: (context) {
+                                        PopupMenuItem<VoidCallback> item(
+                                          IconData icon,
+                                          String label,
+                                          VoidCallback onTap, {
+                                          bool? checked,
+                                        }) => PopupMenuItem(
                                           value: onTap,
                                           child: Row(
                                             children: [
@@ -565,44 +590,50 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
                                             ],
                                           ),
                                         );
-                                    return [
-                                      _paused
-                                          ? item(SmileIcons.play, t.slideshowResume, () => _setPaused(false))
-                                          : item(SmileIcons.pause, t.slideshowPause, () => _setPaused(true)),
-                                      item(SmileIcons.soundOn, t.videoSound, () => _setPrefs(_prefs.copyWith(sound: !_prefs.sound)),
-                                          checked: _prefs.sound),
-                                      item(SmileIcons.caption, t.showCaptions, () => _setPrefs(_prefs.copyWith(captions: !_prefs.captions)),
-                                          checked: _prefs.captions),
-                                      const PopupMenuDivider(),
-                                      item(SmileIcons.settings, t.slideshowSettingsMore, () => unawaited(_openSettings())),
-                                    ];
-                                  },
+                                        return [
+                                          _paused
+                                              ? item(SmileIcons.play, t.slideshowResume, () => _setPaused(false))
+                                              : item(SmileIcons.pause, t.slideshowPause, () => _setPaused(true)),
+                                          item(
+                                            SmileIcons.soundOn,
+                                            t.videoSound,
+                                            () => _setPrefs(_prefs.copyWith(sound: !_prefs.sound)),
+                                            checked: _prefs.sound,
+                                          ),
+                                          item(
+                                            SmileIcons.caption,
+                                            t.showCaptions,
+                                            () => _setPrefs(_prefs.copyWith(captions: !_prefs.captions)),
+                                            checked: _prefs.captions,
+                                          ),
+                                          const PopupMenuDivider(),
+                                          item(SmileIcons.settings, t.slideshowSettingsMore, () => unawaited(_openSettings())),
+                                        ];
+                                      },
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
+                            if (items.isNotEmpty)
+                              Align(
+                                alignment: Alignment.bottomLeft,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: SmileSpacing.m),
+                                  child: Text(
+                                    [
+                                      widget.albumOf[_current.id] ?? widget.albumName,
+                                      if (_current.senderDisplayName != null) _current.senderDisplayName!,
+                                    ].join(' · '),
+                                    style: const TextStyle(color: Colors.white, fontSize: 14, shadows: _shadow),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                        if (items.isNotEmpty)
-                          Align(
-                            alignment: Alignment.bottomLeft,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.55),
-                                borderRadius: BorderRadius.circular(SmileRadius.m),
-                              ),
-                              child: Text(
-                                [
-                                  widget.albumOf[_current.id] ?? widget.albumName,
-                                  if (_current.senderDisplayName != null) _current.senderDisplayName!,
-                                ].join(' · '),
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -615,6 +646,27 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
 
 /// A video in the slideshow: from the phone if it is there, else streamed;
 /// plays while its page is shown, and says when it has ended.
+/// Keeps white icons and text readable on bright photos.
+const _shadow = [Shadow(color: Colors.black54, blurRadius: 6)];
+
+/// The soft dark fade behind the controls, at the top or the bottom.
+class _Fade extends StatelessWidget {
+  const _Fade({required this.top});
+
+  final bool top;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: top ? Alignment.topCenter : Alignment.bottomCenter,
+        end: top ? Alignment.bottomCenter : Alignment.topCenter,
+        colors: const [Color(0x99000000), Color(0x00000000)],
+      ),
+    ),
+  );
+}
+
 class _VideoSlide extends StatefulWidget {
   const _VideoSlide({super.key, required this.item, required this.active, required this.onEnded, this.withSound = true});
 
