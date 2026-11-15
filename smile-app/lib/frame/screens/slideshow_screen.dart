@@ -77,6 +77,38 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   int _currentIndex = 0;
   Timer? _syncTimer;
   Timer? _advanceTimer;
+
+  // Zooming with two fingers (2026-11-15, Ernst): the slideshow waits while
+  // a photo is zoomed or fingers are on it; a tap -- or a minute without a
+  // touch -- glides back to the whole photo, then it goes on.
+  final _zoomOut = ValueNotifier<int>(0);
+
+  void _zoomOutNow() => _zoomOut.value++;
+  bool _zoomHolding = false;
+  int _zoomSlide = -1;
+  Timer? _zoomIdle;
+
+  bool get _zoomHeld => _zoomHolding && _zoomSlide == _slideNumber;
+
+  void _onZoomHold(bool holding, int slide) {
+    if (!mounted) return;
+    setState(() {
+      _zoomHolding = holding;
+      _zoomSlide = slide;
+    });
+    if (holding) {
+      _advanceTimer?.cancel();
+      _armZoomIdle();
+    } else {
+      _zoomIdle?.cancel();
+      _restartAdvanceTimer();
+    }
+  }
+
+  void _armZoomIdle() {
+    _zoomIdle?.cancel();
+    _zoomIdle = Timer(const Duration(minutes: 1), _zoomOutNow);
+  }
   // Offline, the next attempt comes much sooner than the regular 2 minutes,
   // so album switching is back right after WLAN returns (2026-10-09).
   Timer? _offlineRetryTimer;
@@ -189,6 +221,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     widget.syncService.onEarlyResult = null;
     _syncTimer?.cancel();
     _advanceTimer?.cancel();
+    _zoomIdle?.cancel();
+    _zoomOut.dispose();
     _remind?.cancel();
     _easyResume?.cancel();
     _easyFlashTimer?.cancel();
@@ -610,7 +644,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     // A video plays to its end -- unless it may only last as long as a
     // photo (0079).
     final videoAsPhoto = _settings?.videoLength == 'photo';
-    if ((_showingVideo && !videoAsPhoto) || _paused || _quiet || _showGrid) return;
+    if ((_showingVideo && !videoAsPhoto) || _paused || _quiet || _showGrid || _zoomHeld) return;
     if (_settings?.displayMode == 'manual') return;
     // "Neueste" ends even with a single photo; "Lieblingsbilder" with one
     // photo just stays on it (endless, 2026-10-14).
@@ -1384,15 +1418,19 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       backgroundColor: Colors.black,
       body: Listener(
         // Every touch while unlocked keeps it unlocked a while longer.
-        onPointerDown: (_) => _touchedWhileUnlocked(),
+        onPointerDown: (_) {
+          _touchedWhileUnlocked();
+          if (_zoomHeld) _armZoomIdle();
+        },
         child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: _showGrid ? null : _onTap,
+        // Zoomed, a tap glides back to the whole photo.
+        onTap: _showGrid ? null : (_zoomHeld ? _zoomOutNow : _onTap),
         // The buttons: a long press (with Easy Stopping a tap only stops).
-        onLongPress: _showGrid ? null : _onLongPress,
+        onLongPress: _showGrid || _zoomHeld ? null : _onLongPress,
         // Swiping like the big buttons (2026-10-17): left = Weiter (from
         // level 2), right = Zurück (from level 3) -- the same switches.
-        onHorizontalDragEnd: _showGrid ? null : _onSwipe,
+        onHorizontalDragEnd: _showGrid || _zoomHeld ? null : _onSwipe,
         child: Stack(
           children: [
             Positioned.fill(child: body),
@@ -1915,14 +1953,20 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         final bytes = snapshot.data;
         if (bytes == null) return const SizedBox.expand();
         final settings = _settings;
-        return SmilePhotoStage(
-          image: MemoryImage(bytes),
-          fillMode: SmileFillMode.parse(settings?.fillMode),
-          // Stopped, the slow zoom carries on at the same speed -- or holds,
-          // as set (migrations/0096).
-          slowZoom: settings?.slowZoom ?? true,
-          held: _paused && !(settings?.pauseZoom ?? true),
-          duration: Duration(seconds: settings?.slideshowIntervalSeconds ?? 10),
+        final slide = _slideNumber;
+        return SmileZoomView(
+          doubleTap: false,
+          zoomOutWhen: _zoomOut,
+          onHold: (holding) => _onZoomHold(holding, slide),
+          child: SmilePhotoStage(
+            image: MemoryImage(bytes),
+            fillMode: SmileFillMode.parse(settings?.fillMode),
+            // Stopped, the slow zoom carries on at the same speed -- or holds,
+            // as set (migrations/0096). Zoomed by hand it holds.
+            slowZoom: settings?.slowZoom ?? true,
+            held: (_paused && !(settings?.pauseZoom ?? true)) || _zoomHeld,
+            duration: Duration(seconds: settings?.slideshowIntervalSeconds ?? 10),
+          ),
         );
       },
     );

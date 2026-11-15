@@ -19,5 +19,6 @@ export 'src/widgets/smile_named_text.dart';
 export 'src/widgets/smile_object_avatar.dart';
 export 'src/widgets/smile_object_tile.dart';
 export 'src/widgets/smile_photo_stage.dart';
+export 'src/widgets/smile_zoom_view.dart';
 export 'src/widgets/smile_role_badge.dart';
 export 'src/widgets/smile_wordmark.dart';
