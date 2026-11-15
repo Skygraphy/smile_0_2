@@ -23,6 +23,7 @@ class MediaPagerScreen extends StatefulWidget {
     this.onShowOnFrame,
     required this.canEditCaption,
     required this.onEditCaption,
+    this.onDelete,
   });
 
   /// Oldest first, as in the album.
@@ -41,6 +42,11 @@ class MediaPagerScreen extends StatefulWidget {
   /// The new title ('' = removed), null when nothing changed.
   final Future<String?> Function(MediaItem item, String? current) onEditCaption;
 
+  /// Asks as in the album -- for everyone or for me (2026-11-15, Ernst);
+  /// whether it is gone. The next photo shows then, after the last one
+  /// the album.
+  final Future<bool> Function(MediaItem item)? onDelete;
+
   @override
   State<MediaPagerScreen> createState() => _MediaPagerScreenState();
 }
@@ -56,6 +62,7 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
   }
 
   late final _controller = PageController(initialPage: widget.initialIndex);
+  late final List<MediaItem> _items = List.of(widget.items);
   late int _index = widget.initialIndex;
   bool _zoomed = false;
 
@@ -63,7 +70,7 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
   final Map<String, bool> _favorites = {};
   final Map<String, String?> _captions = {};
 
-  MediaItem get _current => widget.items[_index];
+  MediaItem get _current => _items[_index];
 
   bool _favoriteOf(MediaItem item) => _favorites[item.id] ?? widget.isFavorite(item);
 
@@ -82,6 +89,22 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
     final ok = await MediaExport.share([item]);
     messenger.hideCurrentSnackBar();
     if (!ok) messenger.showSnackBar(SnackBar(content: Text(t.shareFailed)));
+  }
+
+  Future<void> _delete(MediaItem item) async {
+    final gone = await widget.onDelete!(item);
+    if (!gone || !mounted) return;
+    if (_items.length == 1) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() {
+      _items.removeAt(_index);
+      // The newer one moves into its place; after the newest, the one before.
+      if (_index >= _items.length) _index = _items.length - 1;
+      _zoomed = false;
+    });
+    if (_controller.hasClients) _controller.jumpToPage(_index);
   }
 
   Future<void> _save(MediaItem item) async {
@@ -126,6 +149,8 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
                 if (now != null && mounted) setState(() => _captions[item.id] = now.isEmpty ? null : now);
               },
             ),
+          if (widget.onDelete != null)
+            IconButton(icon: const Icon(SmileIcons.delete), tooltip: t.actionDelete, onPressed: () => _delete(item)),
           // The ⋮ always rightmost (Ernst 2026-11-05).
           // Out of Smile (2026-11-05): share on, or into the gallery.
           if (MediaExport.canExport(item))
@@ -158,7 +183,7 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
             child: PageView.builder(
               controller: _controller,
               physics: _zoomed ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
-              itemCount: widget.items.length,
+              itemCount: _items.length,
               onPageChanged: (i) => setState(() {
                 _index = i;
                 _zoomed = false;
@@ -190,7 +215,7 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
   static const _gap = 24.0;
 
   Widget _page(int i) {
-    final page = widget.items[i];
+    final page = _items[i];
     return page.isVideo
         ? VideoPlayerScreen(
             key: ValueKey(page.id),

@@ -1042,17 +1042,19 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// when the caller may for every selected one (own photos, or the
   /// album's admin; the server checks too). "Für mich löschen" is the
   /// personal, reversible hide ("Ausgeblendet").
-  Future<void> _deleteSelection() async {
+  /// [only]: one photo from the full-screen view (2026-11-15) instead of
+  /// the marked ones. Whether it is gone (for everyone or for me).
+  Future<bool> _deleteSelection({List<String>? only}) async {
     final t = SmileTexts.of(context);
     final myUserId = supabase.auth.currentUser?.id;
     final isSco = _myStatus?.isSco ?? false;
-    final ids = _selectedIds.toList();
+    final ids = only ?? _selectedIds.toList();
     final forEveryone =
         isSco || ids.every((id) => (_items ?? const <MediaItem>[]).any((i) => i.id == id && i.senderId == myUserId));
     final forMe = !_showingHidden;
     if (!forEveryone && !forMe) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.deleteOnlyOwn)));
-      return;
+      return false;
     }
     final scheme = Theme.of(context).colorScheme;
     Widget option(String label, String? hint, bool value) => Align(
@@ -1089,12 +1091,13 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
         ),
       ),
     );
-    if (everyone == null || !mounted) return;
+    if (everyone == null || !mounted) return false;
     if (everyone) {
-      await _deleteForEveryone(ids);
+      unawaited(_deleteForEveryone(ids));
     } else {
-      await _applyHideToggleToSelection();
+      unawaited(_applyHideToggleToSelection(only: ids));
     }
+    return true;
   }
 
   Future<void> _deleteForEveryone(List<String> ids) async {
@@ -1156,12 +1159,12 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
         child: Row(
           children: [
             action(SmileIcons.selectAll, _allSelected ? t.selectNone : t.selectAll, _toggleSelectAll),
-            if (_showingHidden) action(SmileIcons.unhide, t.actionUnhide, _applyHideToggleToSelection),
+            if (_showingHidden) action(SmileIcons.unhide, t.actionUnhide, () => _applyHideToggleToSelection()),
             if (_canSetCover) action(SmileIcons.picture, t.coverShort, _setSelectedAsCover),
             // Out of Smile (2026-11-05).
             action(SmileIcons.forward, t.shareOutShort, _shareSelection),
             action(SmileIcons.saveToPhone, t.saveToPhoneShort, _saveSelection),
-            action(SmileIcons.delete, t.actionDelete, _deleteSelection, danger: true),
+            action(SmileIcons.delete, t.actionDelete, () => _deleteSelection(), danger: true),
           ],
         ),
       ),
@@ -1239,8 +1242,8 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
   /// selected photo(s) for just their own Smile-App view. Same multi-select
   /// flow as delete (long-press, tap to add more), no confirmation dialog
   /// since it's fully reversible -- just an eye icon next to the trash icon.
-  Future<void> _applyHideToggleToSelection() async {
-    final ids = _selectedIds.toList();
+  Future<void> _applyHideToggleToSelection({List<String>? only}) async {
+    final ids = only ?? _selectedIds.toList();
     _clearSelection();
     final hiding = !_showingHidden;
     // Out of this list at once; back with a message if the server says no.
@@ -1278,6 +1281,7 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
           onShowOnFrame: _frames.isEmpty ? null : (item) => _showOnFrame(item.id),
           canEditCaption: _canEditCaption,
           onEditCaption: _editCaption,
+          onDelete: (item) => _deleteSelection(only: [item.id]),
         ),
       ),
     );
