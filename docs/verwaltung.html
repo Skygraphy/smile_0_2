@@ -61,17 +61,21 @@ a { color: var(--coral); }
 /* Print: only the cards, 2 x 4 per A4 page, cut along the thin lines. */
 #print { display: none; }
 @media print {
-  @page { size: A4; margin: 10mm; }
+  /* No page margin: the browser then prints no date, title or address. */
+  @page { size: A4; margin: 0; }
   body { background: #fff; color: #1A1716; padding: 0; }
   main { display: none; }
-  #print { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
-  .vc { height: 68mm; border: 0.2mm dashed #bbb; padding: 6mm; display: grid; grid-template-columns: 1fr 30mm; gap: 3mm; break-inside: avoid; font-family: var(--font); color: #1A1716; }
-  .vc .w { font-weight: 700; font-size: 17pt; } .vc .w b { color: #FF6F61; }
-  .vc .t { font-size: 9pt; color: #5A5250; margin-top: 1mm; }
-  .vc .c { font-family: ui-monospace, Consolas, monospace; font-weight: 700; font-size: 12pt; letter-spacing: .5pt; margin-top: 3mm; }
-  .vc .q svg { width: 30mm; height: 30mm; display: block; }
-  .vc ol { grid-column: 1 / -1; margin: 0; padding-left: 4.5mm; font-size: 8pt; color: #5A5250; }
-  .vc .g { font-size: 8.5pt; color: #FF6F61; margin-top: 1.5mm; font-weight: 600; }
+  #print { display: block; }
+  #print .sheet { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 68mm; gap: 0; padding: 12mm 10mm; break-after: page; }
+  #print .sheet:last-child { break-after: auto; }
+  .vc { box-sizing: border-box; height: 68mm; overflow: hidden; border: 0.2mm dashed #bbb; padding: 6mm; display: grid; grid-template-columns: 1fr 26mm; grid-template-rows: auto 1fr; column-gap: 4mm; row-gap: 3mm; break-inside: avoid; font-family: var(--font); color: #1A1716; }
+  .vc > div:first-child { min-width: 0; }
+  .vc .w { font-weight: 700; font-size: 16pt; line-height: 1.1; } .vc .w b { color: #FF6F61; }
+  .vc .t { font-size: 9pt; color: #5A5250; margin-top: 1mm; line-height: 1.25; }
+  .vc .c { font-family: ui-monospace, Consolas, monospace; font-weight: 700; font-size: 11.5pt; letter-spacing: .3pt; margin-top: 2.5mm; white-space: nowrap; }
+  .vc .q svg { width: 26mm; height: 26mm; display: block; }
+  .vc ol { grid-column: 1 / -1; align-self: end; margin: 0; padding-left: 4.5mm; font-size: 8pt; line-height: 1.35; color: #5A5250; }
+  .vc .g { font-size: 9pt; color: #FF6F61; margin-top: 1.5mm; font-weight: 600; line-height: 1.25; }
 }
 </style>
 </head>
@@ -125,7 +129,7 @@ a { color: var(--coral); }
         <div><label for="f-count">Anzahl Codes</label><input id="f-count" type="number" min="1" max="500" value="10"></div>
         <div><label for="f-until">Einlösbar bis</label><input id="f-until" type="date"></div>
         <div><label for="f-invoice">Rechnungsnummer (optional)</label><input id="f-invoice"></div>
-        <div><label for="f-card">Name auf der Karte (optional)</label><input id="f-card" placeholder="„Ein Geschenk von …“"></div>
+        <div><label for="f-card">Geschenk von (optional)</label><input id="f-card" placeholder="z. B. Oma und Opa"></div>
       </div>
       <div class="row" style="margin-top:14px"><button id="create">Codes erzeugen</button></div>
       <div class="msg" id="create-msg"></div>
@@ -360,17 +364,17 @@ a { color: var(--coral); }
   // --- Printed cards ---------------------------------------------------------
   const CARD = {
     de: {
-      title: (b) => `Gutschein für ${b.months} ${b.months === 1 ? 'Monat' : 'Monate'} Frame-Abo`,
+      title: (b) => `Gutschein: ${b.months} ${b.months === 1 ? 'Monat' : 'Monate'} Frame-Abo`,
       tier: (b) => `${b.frames} Frame${b.frames > 1 ? 's' : ''}`,
       until: (d) => `Einlösbar bis ${d}`, gift: (n) => `Ein Geschenk von ${n}`,
-      steps: ['Smile installieren und einen Space anlegen', 'QR-Code scannen oder Code eingeben (Space → Gutschein einlösen)', 'Frame verbinden und Fotos teilen'],
+      steps: ['Smile installieren und einen Space anlegen', 'QR-Code scannen – oder in Smile: Spaces → Space → Gutschein einlösen', 'Frame verbinden und Fotos teilen'],
       date: 'de-AT',
     },
     en: {
-      title: (b) => `Voucher for ${b.months} ${b.months === 1 ? 'month' : 'months'} of Frame plan`,
+      title: (b) => `Voucher: ${b.months} ${b.months === 1 ? 'month' : 'months'} Frame plan`,
       tier: (b) => `${b.frames} Frame${b.frames > 1 ? 's' : ''}`,
       until: (d) => `Redeem by ${d}`, gift: (n) => `A gift from ${n}`,
-      steps: ['Install Smile and create a Space', 'Scan the QR code or enter the code (Space → Redeem voucher)', 'Connect a Frame and share photos'],
+      steps: ['Install Smile and create a Space', 'Scan the QR code – or in Smile: Spaces → Space → Redeem voucher', 'Connect a Frame and share photos'],
       date: 'en-GB',
     },
   };
@@ -380,7 +384,10 @@ a { color: var(--coral); }
     const b = fresh.batch;
     const area = document.querySelector('div#print');
     area.innerHTML = '';
-    for (const code of fresh.codes) {
+    let page;
+    for (const [i, code] of fresh.codes.entries()) {
+      // 8 cards per sheet, each sheet with its own margin.
+      if (i % 8 === 0) { page = document.createElement('div'); page.className = 'sheet'; area.append(page); }
       const raw = code.replace(/^SMILE-/, '').replace('-', '');
       const qr = qrcode(0, 'M'); qr.addData('https://smileapp.app/g/' + raw); qr.make();
       const card = document.createElement('div'); card.className = 'vc';
@@ -389,10 +396,12 @@ a { color: var(--coral); }
       t[0].textContent = L.title(b); t[1].textContent = L.tier(b);
       card.querySelector('.c').textContent = code;
       t[2].textContent = L.until(new Date(b.redeem_until).toLocaleDateString(L.date));
-      card.querySelector('.g').textContent = b.card_name ? L.gift(b.card_name) : '';
+      // Typed "Ein Geschenk von Ernst" must not print "Ein Geschenk von Ein Geschenk von Ernst".
+      const from = (b.card_name || '').trim().replace(/^[„"“]?\s*(ein geschenk von|a gift from)\s+/i, '').replace(/[“”"]$/, '').trim();
+      card.querySelector('.g').textContent = from ? L.gift(from) : '';
       card.querySelector('.q').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
       for (const s of L.steps) { const li = document.createElement('li'); li.textContent = s; card.querySelector('ol').append(li); }
-      area.append(card);
+      page.append(card);
     }
     window.print();
   };
