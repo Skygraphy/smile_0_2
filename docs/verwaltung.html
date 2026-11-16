@@ -161,8 +161,9 @@ a { color: var(--coral); }
 
     <section class="card hidden" id="detail">
       <div class="row" style="justify-content:space-between"><h2 id="detail-title" style="margin:0"></h2><button class="ghost small" id="detail-close">Schließen</button></div>
+      <p class="small" style="margin:6px 0 0">Aus Sicherheitsgründen ist nur das Ende jedes Codes gespeichert. Karten kannst du deshalb nur gleich nach dem Erzeugen drucken.</p>
       <div class="tbl" style="margin-top:10px"><table>
-        <thead><tr><th>Karte</th><th>Status</th><th>Eingelöst am</th><th>Space</th><th></th></tr></thead>
+        <thead><tr><th>Code</th><th>Status</th><th>Eingelöst am</th><th>Space</th><th></th></tr></thead>
         <tbody id="codes"></tbody>
       </table></div>
     </section>
@@ -284,7 +285,7 @@ a { color: var(--coral); }
       tr.append(st);
       const act = document.createElement('td'); act.className = 'row';
       const btn = (label, fn, ghost = true) => { const x = document.createElement('button'); x.className = (ghost ? 'ghost ' : '') + 'small'; x.textContent = label; x.onclick = fn; act.append(x); };
-      btn('Karten', () => detail(b));
+      btn('Codes', () => detail(b));
       if (b.partner_token) btn('Partner-Link', () => copy(partnerLink(b.partner_token), 'list-msg'));
       btn(b.blocked_at ? 'Entsperren' : 'Sperren', async () => {
         try { await call({ action: b.blocked_at ? 'unblock' : 'block', batch_id: b.id }); await load(); } catch (_) { say('list-msg', 'Das hat nicht geklappt.'); }
