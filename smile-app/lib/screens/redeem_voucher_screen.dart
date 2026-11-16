@@ -26,9 +26,17 @@ class RedeemVoucherScreen extends StatefulWidget {
   State<RedeemVoucherScreen> createState() => _RedeemVoucherScreenState();
 }
 
+/// From a link or QR code the code comes as NJGW4WM9; show it the way the
+/// card prints it, SMILE-NJGW-4WM9 (Ernst 2026-11-16). Anything else stays.
+String _asOnCard(String code) {
+  final plain = code.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '').replaceFirst(RegExp(r'^SMILE'), '');
+  if (plain.length != 8) return code;
+  return 'SMILE-${plain.substring(0, 4)}-${plain.substring(4)}';
+}
+
 class _RedeemVoucherScreenState extends State<RedeemVoucherScreen> {
   final _service = PlanService();
-  late final _code = TextEditingController(text: widget.code ?? '');
+  late final _code = TextEditingController(text: _asOnCard(widget.code ?? ''));
   late String? _spaceId = widget.spaceId;
   late String? _spaceName = widget.spaceName;
   Map<String, String>? _spaces;
@@ -98,7 +106,7 @@ class _RedeemVoucherScreenState extends State<RedeemVoucherScreen> {
     final raw = await Navigator.of(context).push<String>(MaterialPageRoute(builder: (_) => const _VoucherScanPage()));
     if (raw == null || !mounted) return;
     final link = RegExp(r'/g/([A-Za-z0-9-]+)').firstMatch(raw);
-    _code.text = link?.group(1) ?? raw;
+    _code.text = _asOnCard(link?.group(1) ?? raw);
     await _redeem();
   }
 
