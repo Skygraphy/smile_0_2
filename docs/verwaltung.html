@@ -35,7 +35,7 @@ h2 { font-size: 18px; font-weight: 700; margin: 0 0 12px; }
 label { display: block; color: var(--dim); font-size: 12.5px; margin-bottom: 4px; }
 input, select { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font: inherit; }
 input:focus, select:focus { outline: 2px solid var(--coral); outline-offset: -1px; }
-.form { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 14px; }
+.form { display: grid; grid-template-columns: repeat(auto-fit, minmax(225px, 1fr)); gap: 12px 14px; }
 button { font: inherit; font-weight: 700; border: 0; border-radius: 99px; padding: 9px 16px; cursor: pointer; background: var(--coral); color: #fff; }
 button.ghost { background: none; color: var(--fg); border: 1px solid var(--line); font-weight: 600; }
 button.small { padding: 5px 11px; font-size: 13px; }
@@ -122,14 +122,14 @@ a { color: var(--coral); }
     <section class="card">
       <h2>Neues Paket</h2>
       <div class="form">
-        <div><label for="f-name">Name (nur für dich)</label><input id="f-name" placeholder="z. B. Seniorenresidenz Am Park"></div>
+        <div><label for="f-name">Name (nur für dich)</label><input id="f-name" placeholder="z. B. Weihnachten 2026"></div>
         <div><label for="f-kind">Art</label><select id="f-kind"><option value="partner">Partner (auf Rechnung)</option><option value="gift">Geschenk</option><option value="promo">Aktion (gratis)</option></select></div>
         <div><label for="f-frames">Stufe</label><select id="f-frames"><option value="1">1 Frame</option><option value="3">3 Frames</option><option value="5">5 Frames</option></select></div>
         <div><label for="f-months">Dauer</label><select id="f-months"><option value="1">1 Monat</option><option value="3">3 Monate</option><option value="6">6 Monate</option><option value="12" selected>12 Monate</option><option value="24">24 Monate</option></select></div>
         <div><label for="f-count">Anzahl Codes</label><input id="f-count" type="number" min="1" max="500" value="10"></div>
         <div><label for="f-until">Einlösbar bis</label><input id="f-until" type="date"></div>
         <div><label for="f-invoice">Rechnungsnummer (optional)</label><input id="f-invoice"></div>
-        <div><label for="f-card">Geschenk von (optional)</label><input id="f-card" placeholder="z. B. Oma und Opa"></div>
+        <div><label for="f-card">Geschenk für (optional)</label><input id="f-card" placeholder="z. B. Oma und Opa"></div>
       </div>
       <div class="row" style="margin-top:14px"><button id="create">Codes erzeugen</button></div>
       <div class="msg" id="create-msg"></div>
@@ -365,7 +365,7 @@ a { color: var(--coral); }
   // Typed "Ein Geschenk von Ernst" must not become "Ein Geschenk von Ein Geschenk
   // von Ernst" on the card or in the app: keep only the name.
   function giftName(v) {
-    return (v || '').trim().replace(/^[„"“]?\s*(ein geschenk von|a gift from)\s+/i, '').replace(/[“”"]$/, '').trim();
+    return (v || '').trim().replace(/^[„"“]?\s*(ein geschenk (von|für)|a gift (from|for))\s+/i, '').replace(/[“”"]$/, '').trim();
   }
 
   // --- Printed cards ---------------------------------------------------------
@@ -373,14 +373,14 @@ a { color: var(--coral); }
     de: {
       title: (b) => `Gutschein: ${b.months} ${b.months === 1 ? 'Monat' : 'Monate'} Frame-Abo`,
       tier: (b) => `${b.frames} Frame${b.frames > 1 ? 's' : ''}`,
-      until: (d) => `Einlösbar bis ${d}`, gift: (n) => `Ein Geschenk von ${n}`,
+      until: (d) => `Einlösbar bis ${d}`, gift: (n) => `Ein Geschenk für ${n}`,
       steps: ['Smile installieren und einen Space anlegen', 'QR-Code scannen – oder in Smile: Spaces → Space → Gutschein einlösen', 'Frame verbinden und Fotos teilen'],
       date: 'de-AT',
     },
     en: {
       title: (b) => `Voucher: ${b.months} ${b.months === 1 ? 'month' : 'months'} Frame plan`,
       tier: (b) => `${b.frames} Frame${b.frames > 1 ? 's' : ''}`,
-      until: (d) => `Redeem by ${d}`, gift: (n) => `A gift from ${n}`,
+      until: (d) => `Redeem by ${d}`, gift: (n) => `A gift for ${n}`,
       steps: ['Install Smile and create a Space', 'Scan the QR code – or in Smile: Spaces → Space → Redeem voucher', 'Connect a Frame and share photos'],
       date: 'en-GB',
     },
@@ -409,6 +409,12 @@ a { color: var(--coral); }
       for (const s of L.steps) { const li = document.createElement('li'); li.textContent = s; card.querySelector('ol').append(li); }
       page.append(card);
     }
+    // The browser names the PDF after the page title: package and time, no spaces.
+    const now = new Date(), p2 = (n) => String(n).padStart(2, '0');
+    const stamp = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}_${p2(now.getHours())}${p2(now.getMinutes())}`;
+    const title = document.title;
+    document.title = `Smile-Gutscheine_${b.name.replace(/[^\p{L}\p{N}-]+/gu, '-').replace(/^-+|-+$/g, '')}_${stamp}`;
+    window.addEventListener('afterprint', () => { document.title = title; }, { once: true });
     window.print();
   };
 

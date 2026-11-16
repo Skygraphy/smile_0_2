@@ -1054,7 +1054,7 @@
   "voucherDone": "Voucher redeemed",
   "voucherDoneText": "{space} now has {frames} until {date}.",
   "voucherDoneLater": "{space} has {frames} from {start} until {date} – right after what is already running.",
-  "voucherGiftFrom": "A gift from {name}",
+  "voucherGiftFrom": "A gift for {name}",
   "voucherNotFound": "This code doesn't exist. Please check it again.",
   "voucherAlreadyUsed": "This code has already been used.",
   "voucherExpired": "This code has expired.",

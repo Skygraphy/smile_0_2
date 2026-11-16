@@ -6430,7 +6430,7 @@ abstract class SmileTexts {
   /// No description provided for @voucherGiftFrom.
   ///
   /// In de, this message translates to:
-  /// **'Ein Geschenk von {name}'**
+  /// **'Ein Geschenk für {name}'**
   String voucherGiftFrom(String name);
 
   /// No description provided for @voucherNotFound.

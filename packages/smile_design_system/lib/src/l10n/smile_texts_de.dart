@@ -3926,7 +3926,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String voucherGiftFrom(String name) {
-    return 'Ein Geschenk von $name';
+    return 'Ein Geschenk für $name';
   }
 
   @override

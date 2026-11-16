@@ -1724,7 +1724,7 @@
   "@voucherDoneText": {"placeholders":{"space":{"type":"String"},"frames":{"type":"String"},"date":{"type":"String"}}},
   "voucherDoneLater": "{space} hat {frames} vom {start} bis {date} – direkt nach dem, was schon läuft.",
   "@voucherDoneLater": {"placeholders":{"space":{"type":"String"},"frames":{"type":"String"},"start":{"type":"String"},"date":{"type":"String"}}},
-  "voucherGiftFrom": "Ein Geschenk von {name}",
+  "voucherGiftFrom": "Ein Geschenk für {name}",
   "@voucherGiftFrom": {"placeholders":{"name":{"type":"String"}}},
   "voucherNotFound": "Diesen Code gibt es nicht. Prüf ihn bitte noch einmal.",
   "voucherAlreadyUsed": "Dieser Code wurde schon verwendet.",
