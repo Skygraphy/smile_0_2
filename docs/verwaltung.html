@@ -335,7 +335,7 @@ a { color: var(--coral); }
       const data = await call({
         action: 'create', name: $('f-name').value, kind: $('f-kind').value, frames: +$('f-frames').value,
         months: +$('f-months').value, count: +$('f-count').value, redeem_until: until.toISOString(),
-        invoice_ref: $('f-invoice').value, card_name: $('f-card').value,
+        invoice_ref: $('f-invoice').value, card_name: giftName($('f-card').value),
       });
       fresh = data;
       $('fresh-title').textContent = `${data.codes.length} neue Codes – ${data.batch.name}`;
@@ -360,6 +360,12 @@ a { color: var(--coral); }
     a.download = `smile-gutscheine-${fresh.batch.name.replace(/[^\w-]+/g, '_')}.csv`;
     a.click();
   };
+
+  // Typed "Ein Geschenk von Ernst" must not become "Ein Geschenk von Ein Geschenk
+  // von Ernst" on the card or in the app: keep only the name.
+  function giftName(v) {
+    return (v || '').trim().replace(/^[„"“]?\s*(ein geschenk von|a gift from)\s+/i, '').replace(/[“”"]$/, '').trim();
+  }
 
   // --- Printed cards ---------------------------------------------------------
   const CARD = {
@@ -396,8 +402,7 @@ a { color: var(--coral); }
       t[0].textContent = L.title(b); t[1].textContent = L.tier(b);
       card.querySelector('.c').textContent = code;
       t[2].textContent = L.until(new Date(b.redeem_until).toLocaleDateString(L.date));
-      // Typed "Ein Geschenk von Ernst" must not print "Ein Geschenk von Ein Geschenk von Ernst".
-      const from = (b.card_name || '').trim().replace(/^[„"“]?\s*(ein geschenk von|a gift from)\s+/i, '').replace(/[“”"]$/, '').trim();
+      const from = giftName(b.card_name);
       card.querySelector('.g').textContent = from ? L.gift(from) : '';
       card.querySelector('.q').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
       for (const s of L.steps) { const li = document.createElement('li'); li.textContent = s; card.querySelector('ol').append(li); }
