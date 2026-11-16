@@ -1,4 +1,5 @@
 import java.util.Base64
+import java.util.Properties
 
 plugins {
     id("com.android.application")
@@ -19,8 +20,29 @@ val smileTest = (project.findProperty("dart-defines") as String? ?: "")
     .map { String(Base64.getDecoder().decode(it)) }
     .contains("SMILE_TEST=true")
 
+// Google Play upload key (2026-11-16): only the app bundle for Play
+// (`flutter build appbundle`) is signed with it. The APKs on our own
+// devices stay on the debug key, so they can still be updated in place
+// without uninstalling (which would unpair the kitchen Frame).
+val keyProps = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+val buildingBundle = gradle.startParameter.taskNames.any { it.contains("bundle", ignoreCase = true) }
+
 android {
     namespace = "com.smile.smile_app"
+
+    signingConfigs {
+        if (keyProps.containsKey("storeFile")) {
+            create("upload") {
+                storeFile = file(keyProps.getProperty("storeFile"))
+                storePassword = keyProps.getProperty("storePassword")
+                keyAlias = keyProps.getProperty("keyAlias")
+                keyPassword = keyProps.getProperty("keyPassword")
+            }
+        }
+    }
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -51,9 +73,9 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig =
+                if (buildingBundle && keyProps.containsKey("storeFile")) signingConfigs.getByName("upload")
+                else signingConfigs.getByName("debug")
             // Keeps what is only reached by reflection (WorkManager, proguard-rules.pro).
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }

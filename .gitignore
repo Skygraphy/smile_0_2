@@ -13,3 +13,4 @@ tools/testsuite/out/
 tools/testsuite/fixtures/media/
 tools/testsuite/node_modules/
 tools/testsuite/.run_*
+play-upload/
