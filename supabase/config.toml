@@ -453,3 +453,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.health-check]
 verify_jwt = false
+[functions.revenuecat-webhook]
+verify_jwt = false

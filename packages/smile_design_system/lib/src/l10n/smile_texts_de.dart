@@ -3967,4 +3967,89 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get sendFailedSpaceFull =>
       'Der Speicher dieses Spaces ist voll – nicht gesendet. Die Admins können Platz schaffen oder ein größeres Abo wählen.';
+
+  @override
+  String get planMonthly => 'Monatlich';
+
+  @override
+  String get planYearly => 'Jährlich';
+
+  @override
+  String get planYearlyBonus => '2 Monate gratis';
+
+  @override
+  String get planPerYear => 'pro Jahr';
+
+  @override
+  String get planBuy => 'Abo abschließen';
+
+  @override
+  String get planChange => 'Wechseln';
+
+  @override
+  String planCoverNote(String date) {
+    return 'Der Space ist noch bis $date abgedeckt. Schließt du jetzt ab, zahlst du den ersten Zeitraum heute, die nächste Zahlung verschiebt sich um diese Zeit nach hinten. So geht dir kein Tag verloren.';
+  }
+
+  @override
+  String get planCancelAnytime =>
+      'Kündigen kannst du jederzeit in Google Play.';
+
+  @override
+  String planYouPayNext(String date) {
+    return 'Du zahlst · nächste Zahlung am $date';
+  }
+
+  @override
+  String planYouPayEnds(String date) {
+    return 'Gekündigt · läuft bis $date';
+  }
+
+  @override
+  String get planBillingIssue =>
+      'Google konnte nicht abbuchen. Bitte prüf deine Zahlungsart in Google Play.';
+
+  @override
+  String get planManage => 'Abo in Google Play verwalten';
+
+  @override
+  String planOtherPays(String name) {
+    return '$name zahlt das Abo. Nur $name kann die Stufe ändern oder kündigen.';
+  }
+
+  @override
+  String get planSomeonePays =>
+      'Jemand anderes zahlt schon das Abo dieses Space.';
+
+  @override
+  String get planMoreFrames => 'Mehr als 5 Frames? Schreib uns.';
+
+  @override
+  String get planThanks => 'Danke! Das Abo ist aktiv.';
+
+  @override
+  String planProductInUse(String space) {
+    return 'Mit deinem Google-Konto läuft diese Stufe schon für „$space“. Wähl eine andere Stufe oder nimm einen Gutschein.';
+  }
+
+  @override
+  String get planStoreUnavailable =>
+      'Google Play ist gerade nicht erreichbar. Bitte versuch es später noch einmal.';
+
+  @override
+  String get planBuyFailed =>
+      'Der Kauf hat nicht geklappt. Bitte versuch es noch einmal.';
+
+  @override
+  String get playHintLeave =>
+      'Du zahlst das Frame-Abo dieses Space über Google Play. Es läuft weiter, bis du es dort kündigst. Lass es laufen, wenn die Frames weiter neue Fotos bekommen sollen.';
+
+  @override
+  String get playHintDeleteSpace =>
+      'Du zahlst das Frame-Abo dieses Space über Google Play. Google bucht es weiter ab, auch wenn der Space gelöscht ist. Kündige es bitte zuerst in Google Play.';
+
+  @override
+  String playHintDeleteAccount(String spaces) {
+    return 'Du zahlst ein Frame-Abo über Google Play ($spaces). Google bucht es weiter ab, auch wenn dein Smile-Konto gelöscht ist. Kündige es bitte zuerst in Google Play.';
+  }
 }

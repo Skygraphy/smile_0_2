@@ -9,6 +9,7 @@ import '../widgets/friendly_error.dart';
 import 'package:intl/intl.dart';
 import '../services/plan_service.dart';
 import 'plan_screen.dart';
+import '../services/play_billing.dart';
 import 'redeem_voucher_screen.dart';
 
 import '../main.dart';
@@ -375,12 +376,21 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     await _run(() => widget.spaceService.inviteCoOwner(spaceId: widget.spaceId, email: email.trim()));
   }
 
+  /// The payer's hint (2026-11-17): a Google Play subscription is not ours
+  /// to stop -- handing over, stepping down or deleting reminds them of it.
+  Future<String> _withPayHint(String message, String hint) async {
+    final paid = await PlayBilling.myPaidSpaceNames(onlySpace: widget.spaceId);
+    return paid.isEmpty ? message : '$message\n\n$hint';
+  }
+
   Future<void> _makeAdmin(SpaceCoOwner coAdmin) async {
     final t = SmileTexts.of(context);
+    final message = await _withPayHint(t.makeAdminMessage, t.playHintLeave);
+    if (!mounted) return;
     final confirmed = await showSmileConfirmDialog(
       context,
       title: t.makeAdminTitle(coAdmin.label),
-      message: t.makeAdminMessage,
+      message: message,
       confirmLabel: t.makeAdmin,
     );
     if (!confirmed) return;
@@ -415,10 +425,12 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
   Future<void> _removeCoAdmin(SpaceCoOwner coAdmin) async {
     final t = SmileTexts.of(context);
     final isSelf = coAdmin.userId == supabase.auth.currentUser?.id;
+    final message = isSelf ? await _withPayHint(t.stepDownMessage, t.playHintLeave) : t.removeCoAdminMessage;
+    if (!mounted) return;
     final confirmed = await showSmileConfirmDialog(
       context,
       title: isSelf ? '${t.stepDown}?' : t.removeCoAdminTitle(coAdmin.label),
-      message: isSelf ? t.stepDownMessage : t.removeCoAdminMessage,
+      message: message,
       confirmLabel: isSelf ? t.actionStepDown : t.actionRemove,
       destructive: true,
     );
@@ -453,10 +465,12 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
 
   Future<void> _delete() async {
     final t = SmileTexts.of(context);
+    final message = await _withPayHint(t.deleteSpaceMessage, t.playHintDeleteSpace);
+    if (!mounted) return;
     final confirmed = await showSmileConfirmDialog(
       context,
       title: t.deleteSpaceTitle(_name),
-      message: t.deleteSpaceMessage,
+      message: message,
       names: [_name],
       confirmLabel: t.actionDelete,
       destructive: true,

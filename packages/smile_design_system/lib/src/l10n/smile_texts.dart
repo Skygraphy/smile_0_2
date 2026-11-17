@@ -6498,6 +6498,138 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Der Speicher dieses Spaces ist voll – nicht gesendet. Die Admins können Platz schaffen oder ein größeres Abo wählen.'**
   String get sendFailedSpaceFull;
+
+  /// No description provided for @planMonthly.
+  ///
+  /// In de, this message translates to:
+  /// **'Monatlich'**
+  String get planMonthly;
+
+  /// No description provided for @planYearly.
+  ///
+  /// In de, this message translates to:
+  /// **'Jährlich'**
+  String get planYearly;
+
+  /// No description provided for @planYearlyBonus.
+  ///
+  /// In de, this message translates to:
+  /// **'2 Monate gratis'**
+  String get planYearlyBonus;
+
+  /// No description provided for @planPerYear.
+  ///
+  /// In de, this message translates to:
+  /// **'pro Jahr'**
+  String get planPerYear;
+
+  /// No description provided for @planBuy.
+  ///
+  /// In de, this message translates to:
+  /// **'Abo abschließen'**
+  String get planBuy;
+
+  /// No description provided for @planChange.
+  ///
+  /// In de, this message translates to:
+  /// **'Wechseln'**
+  String get planChange;
+
+  /// No description provided for @planCoverNote.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Space ist noch bis {date} abgedeckt. Schließt du jetzt ab, zahlst du den ersten Zeitraum heute, die nächste Zahlung verschiebt sich um diese Zeit nach hinten. So geht dir kein Tag verloren.'**
+  String planCoverNote(String date);
+
+  /// No description provided for @planCancelAnytime.
+  ///
+  /// In de, this message translates to:
+  /// **'Kündigen kannst du jederzeit in Google Play.'**
+  String get planCancelAnytime;
+
+  /// No description provided for @planYouPayNext.
+  ///
+  /// In de, this message translates to:
+  /// **'Du zahlst · nächste Zahlung am {date}'**
+  String planYouPayNext(String date);
+
+  /// No description provided for @planYouPayEnds.
+  ///
+  /// In de, this message translates to:
+  /// **'Gekündigt · läuft bis {date}'**
+  String planYouPayEnds(String date);
+
+  /// No description provided for @planBillingIssue.
+  ///
+  /// In de, this message translates to:
+  /// **'Google konnte nicht abbuchen. Bitte prüf deine Zahlungsart in Google Play.'**
+  String get planBillingIssue;
+
+  /// No description provided for @planManage.
+  ///
+  /// In de, this message translates to:
+  /// **'Abo in Google Play verwalten'**
+  String get planManage;
+
+  /// No description provided for @planOtherPays.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} zahlt das Abo. Nur {name} kann die Stufe ändern oder kündigen.'**
+  String planOtherPays(String name);
+
+  /// No description provided for @planSomeonePays.
+  ///
+  /// In de, this message translates to:
+  /// **'Jemand anderes zahlt schon das Abo dieses Space.'**
+  String get planSomeonePays;
+
+  /// No description provided for @planMoreFrames.
+  ///
+  /// In de, this message translates to:
+  /// **'Mehr als 5 Frames? Schreib uns.'**
+  String get planMoreFrames;
+
+  /// No description provided for @planThanks.
+  ///
+  /// In de, this message translates to:
+  /// **'Danke! Das Abo ist aktiv.'**
+  String get planThanks;
+
+  /// No description provided for @planProductInUse.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit deinem Google-Konto läuft diese Stufe schon für „{space}“. Wähl eine andere Stufe oder nimm einen Gutschein.'**
+  String planProductInUse(String space);
+
+  /// No description provided for @planStoreUnavailable.
+  ///
+  /// In de, this message translates to:
+  /// **'Google Play ist gerade nicht erreichbar. Bitte versuch es später noch einmal.'**
+  String get planStoreUnavailable;
+
+  /// No description provided for @planBuyFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Kauf hat nicht geklappt. Bitte versuch es noch einmal.'**
+  String get planBuyFailed;
+
+  /// No description provided for @playHintLeave.
+  ///
+  /// In de, this message translates to:
+  /// **'Du zahlst das Frame-Abo dieses Space über Google Play. Es läuft weiter, bis du es dort kündigst. Lass es laufen, wenn die Frames weiter neue Fotos bekommen sollen.'**
+  String get playHintLeave;
+
+  /// No description provided for @playHintDeleteSpace.
+  ///
+  /// In de, this message translates to:
+  /// **'Du zahlst das Frame-Abo dieses Space über Google Play. Google bucht es weiter ab, auch wenn der Space gelöscht ist. Kündige es bitte zuerst in Google Play.'**
+  String get playHintDeleteSpace;
+
+  /// No description provided for @playHintDeleteAccount.
+  ///
+  /// In de, this message translates to:
+  /// **'Du zahlst ein Frame-Abo über Google Play ({spaces}). Google bucht es weiter ab, auch wenn dein Smile-Konto gelöscht ist. Kündige es bitte zuerst in Google Play.'**
+  String playHintDeleteAccount(String spaces);
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

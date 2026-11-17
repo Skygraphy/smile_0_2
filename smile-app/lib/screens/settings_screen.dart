@@ -28,6 +28,7 @@ import '../services/tip_cards.dart';
 import 'my_card_screen.dart';
 import '../services/frame_service.dart';
 import '../services/preferred_frame.dart';
+import '../services/play_billing.dart';
 
 /// WhatsApp's own Settings screen layout: avatar with a small camera badge
 /// overlapping its bottom-right corner, name underneath. Three separate
@@ -233,6 +234,10 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
   Future<void> _confirmDeleteAccount() async {
     final t = SmileTexts.of(context);
     final email = supabase.auth.currentUser?.email ?? '';
+    // A Google Play subscription keeps charging after the account is gone
+    // (2026-11-17): name the Spaces it pays for.
+    final paid = await PlayBilling.myPaidSpaceNames();
+    if (!mounted) return;
     // Walkthrough 2026-10-06: an account was deleted on the wrong login
     // (a shared test device). The dialog now names the account and only
     // confirms once its e-mail address is typed in.
@@ -241,6 +246,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
       builder: (context) => _DeleteAccountDialog(
         name: _profile?.displayName ?? email,
         email: email,
+        paidSpaces: paid,
       ),
     );
     if (confirmed != true || !mounted) return;
@@ -603,10 +609,11 @@ Future<void> _showLanguageSheet(BuildContext context) async {
 }
 
 class _DeleteAccountDialog extends StatefulWidget {
-  const _DeleteAccountDialog({required this.name, required this.email});
+  const _DeleteAccountDialog({required this.name, required this.email, this.paidSpaces = const []});
 
   final String name;
   final String email;
+  final List<String> paidSpaces;
 
   @override
   State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
@@ -638,6 +645,13 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
             Text(t.deleteAccountWhich(widget.email), style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: SmileSpacing.m),
             Text(t.deleteAccountMessage),
+            if (widget.paidSpaces.isNotEmpty) ...[
+              const SizedBox(height: SmileSpacing.m),
+              Text(
+                t.playHintDeleteAccount(widget.paidSpaces.map((n) => '„$n“').join(', ')),
+                style: TextStyle(color: scheme.error, fontWeight: FontWeight.w600),
+              ),
+            ],
             const SizedBox(height: SmileSpacing.l),
             Text(t.deleteAccountTypeEmail),
             const SizedBox(height: SmileSpacing.s),

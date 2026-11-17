@@ -17,7 +17,16 @@ class SpacePlan {
         videoSeconds = (d['video_seconds'] as num?)?.toInt() ?? 120,
         photos = (d['photos'] as num?)?.toInt() ?? 0,
         videos = (d['videos'] as num?)?.toInt() ?? 0,
-        coveredFrames = {for (final id in (d['covered_frames'] as List? ?? const [])) id as String};
+        coveredFrames = {for (final id in (d['covered_frames'] as List? ?? const [])) id as String},
+        coverEndsAt = DateTime.tryParse(d['cover_ends_at'] as String? ?? '')?.toLocal(),
+        payerName = d['payer_name'] as String?,
+        hasPayer = d['payer_id'] != null,
+        payerIsMe = d['payer_is_me'] as bool? ?? false,
+        playProduct = d['play_product'] as String?,
+        playFrames = (d['play_frames'] as num?)?.toInt(),
+        playRenews = d['play_renews'] as bool?,
+        playEndsAt = DateTime.tryParse(d['play_ends_at'] as String? ?? '')?.toLocal(),
+        playBillingIssue = d['play_billing_issue'] as bool? ?? false;
 
   /// 'none', 'trial' or 'active'.
   final String status;
@@ -39,6 +48,22 @@ class SpacePlan {
 
   /// The Frames that get new photos (the first paired ones).
   final Set<String> coveredFrames;
+
+  /// Until when the Space is covered without Google Play (trial, codes):
+  /// buying now moves the second charge past this (play-sync).
+  final DateTime? coverEndsAt;
+
+  /// Who pays in Google Play (one person per Space), if anyone.
+  final String? payerName;
+  final bool hasPayer;
+  final bool payerIsMe;
+
+  /// Only for the payer: 'smile_frames_3:monthly', renewing, paid until.
+  final String? playProduct;
+  final int? playFrames;
+  final bool? playRenews;
+  final DateTime? playEndsAt;
+  final bool playBillingIssue;
 
   bool get isTrial => status == 'trial';
   bool get isActive => status == 'active';

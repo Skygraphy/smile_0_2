@@ -3936,4 +3936,87 @@ class SmileTextsEn extends SmileTexts {
   @override
   String get sendFailedSpaceFull =>
       'This Space\'s storage is full – not sent. Its admins can make room or choose a bigger plan.';
+
+  @override
+  String get planMonthly => 'Monthly';
+
+  @override
+  String get planYearly => 'Yearly';
+
+  @override
+  String get planYearlyBonus => '2 months free';
+
+  @override
+  String get planPerYear => 'per year';
+
+  @override
+  String get planBuy => 'Subscribe';
+
+  @override
+  String get planChange => 'Switch';
+
+  @override
+  String planCoverNote(String date) {
+    return 'The Space is covered until $date. If you subscribe now, you pay the first period today and the next payment moves back by that time. So you lose no days.';
+  }
+
+  @override
+  String get planCancelAnytime => 'You can cancel anytime in Google Play.';
+
+  @override
+  String planYouPayNext(String date) {
+    return 'You pay · next payment on $date';
+  }
+
+  @override
+  String planYouPayEnds(String date) {
+    return 'Cancelled · runs until $date';
+  }
+
+  @override
+  String get planBillingIssue =>
+      'Google could not charge you. Please check your payment method in Google Play.';
+
+  @override
+  String get planManage => 'Manage in Google Play';
+
+  @override
+  String planOtherPays(String name) {
+    return '$name pays for the plan. Only $name can change or cancel it.';
+  }
+
+  @override
+  String get planSomeonePays =>
+      'Someone else already pays for this Space\'s plan.';
+
+  @override
+  String get planMoreFrames => 'More than 5 Frames? Write to us.';
+
+  @override
+  String get planThanks => 'Thank you! The plan is active.';
+
+  @override
+  String planProductInUse(String space) {
+    return 'Your Google account already has this tier for “$space”. Choose another tier or use a voucher.';
+  }
+
+  @override
+  String get planStoreUnavailable =>
+      'Google Play cannot be reached right now. Please try again later.';
+
+  @override
+  String get planBuyFailed => 'The purchase did not work. Please try again.';
+
+  @override
+  String get playHintLeave =>
+      'You pay for this Space\'s Frame plan in Google Play. It keeps running until you cancel it there. Keep it if the Frames should keep getting new photos.';
+
+  @override
+  String get playHintDeleteSpace =>
+      'You pay for this Space\'s Frame plan in Google Play. Google keeps charging even if the Space is deleted. Please cancel it in Google Play first.';
+
+  @override
+  String playHintDeleteAccount(String spaces) {
+    return 'You pay for a Frame plan in Google Play ($spaces). Google keeps charging even after your Smile account is deleted. Please cancel it in Google Play first.';
+  }
 }
