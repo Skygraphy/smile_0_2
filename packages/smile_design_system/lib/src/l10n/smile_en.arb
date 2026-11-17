@@ -1087,5 +1087,6 @@
   "planBuyFailed": "The purchase did not work. Please try again.",
   "playHintLeave": "You pay for this Space's Frame plan in Google Play. It keeps running until you cancel it there. Keep it if the Frames should keep getting new photos.",
   "playHintDeleteSpace": "You pay for this Space's Frame plan in Google Play. Google keeps charging even if the Space is deleted. Please cancel it in Google Play first.",
-  "playHintDeleteAccount": "You pay for a Frame plan in Google Play ({spaces}). Google keeps charging even after your Smile account is deleted. Please cancel it in Google Play first."
+  "playHintDeleteAccount": "You pay for a Frame plan in Google Play ({spaces}). Google keeps charging even after your Smile account is deleted. Please cancel it in Google Play first.",
+  "planSwitched": "Switched. The new tier applies right away, the new price from the next payment."
 }

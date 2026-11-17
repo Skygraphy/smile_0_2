@@ -1764,5 +1764,6 @@
   "playHintLeave": "Du zahlst das Frame-Abo dieses Space über Google Play. Es läuft weiter, bis du es dort kündigst. Lass es laufen, wenn die Frames weiter neue Fotos bekommen sollen.",
   "playHintDeleteSpace": "Du zahlst das Frame-Abo dieses Space über Google Play. Google bucht es weiter ab, auch wenn der Space gelöscht ist. Kündige es bitte zuerst in Google Play.",
   "playHintDeleteAccount": "Du zahlst ein Frame-Abo über Google Play ({spaces}). Google bucht es weiter ab, auch wenn dein Smile-Konto gelöscht ist. Kündige es bitte zuerst in Google Play.",
-  "@playHintDeleteAccount": {"placeholders":{"spaces":{"type":"String"}}}
+  "@playHintDeleteAccount": {"placeholders":{"spaces":{"type":"String"}}},
+  "planSwitched": "Gewechselt. Die neue Stufe gilt ab sofort, der neue Preis ab der nächsten Zahlung."
 }

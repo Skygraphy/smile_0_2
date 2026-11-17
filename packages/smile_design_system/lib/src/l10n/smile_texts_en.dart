@@ -4019,4 +4019,8 @@ class SmileTextsEn extends SmileTexts {
   String playHintDeleteAccount(String spaces) {
     return 'You pay for a Frame plan in Google Play ($spaces). Google keeps charging even after your Smile account is deleted. Please cancel it in Google Play first.';
   }
+
+  @override
+  String get planSwitched =>
+      'Switched. The new tier applies right away, the new price from the next payment.';
 }

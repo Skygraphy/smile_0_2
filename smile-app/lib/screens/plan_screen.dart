@@ -67,15 +67,12 @@ class _PlanScreenState extends State<PlanScreen> {
     final t = SmileTexts.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = product.identifier);
-    final result = await PlayBilling.buy(
-      spaceId: widget.spaceId,
-      product: product,
-      currentProduct: _plan?.payerIsMe == true ? _plan?.playProduct : null,
-    );
+    final current = _plan?.payerIsMe == true ? _plan?.playProduct : null;
+    final result = await PlayBilling.buy(spaceId: widget.spaceId, product: product, currentProduct: current);
     if (!mounted) return;
     setState(() => _busy = null);
     final String? message = switch (result.outcome) {
-      PlayBuyOutcome.bought => t.planThanks,
+      PlayBuyOutcome.bought => current == null ? t.planThanks : t.planSwitched,
       PlayBuyOutcome.cancelled => null,
       PlayBuyOutcome.otherPayer => result.name == null ? t.planSomeonePays : t.planOtherPays(result.name!),
       PlayBuyOutcome.productInUse => t.planProductInUse(result.name ?? ''),

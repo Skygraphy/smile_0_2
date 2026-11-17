@@ -6630,6 +6630,12 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Du zahlst ein Frame-Abo über Google Play ({spaces}). Google bucht es weiter ab, auch wenn dein Smile-Konto gelöscht ist. Kündige es bitte zuerst in Google Play.'**
   String playHintDeleteAccount(String spaces);
+
+  /// No description provided for @planSwitched.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewechselt. Die neue Stufe gilt ab sofort, der neue Preis ab der nächsten Zahlung.'**
+  String get planSwitched;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

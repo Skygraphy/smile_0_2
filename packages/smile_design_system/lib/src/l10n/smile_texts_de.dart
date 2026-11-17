@@ -4052,4 +4052,8 @@ class SmileTextsDe extends SmileTexts {
   String playHintDeleteAccount(String spaces) {
     return 'Du zahlst ein Frame-Abo über Google Play ($spaces). Google bucht es weiter ab, auch wenn dein Smile-Konto gelöscht ist. Kündige es bitte zuerst in Google Play.';
   }
+
+  @override
+  String get planSwitched =>
+      'Gewechselt. Die neue Stufe gilt ab sofort, der neue Preis ab der nächsten Zahlung.';
 }

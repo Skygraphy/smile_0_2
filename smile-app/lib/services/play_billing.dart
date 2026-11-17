@@ -65,7 +65,9 @@ class PlayBilling {
   }
 
   /// Buys [product] for [spaceId]. With [currentProduct] ('smile_frames_1:monthly')
-  /// it is a switch: Google credits the rest of the old one.
+  /// it is a switch: the new tier applies at once, the billing day stays and
+  /// the new price starts there (no proration; Google cannot prorate a
+  /// subscription whose renewal was deferred for voucher or trial time).
   static Future<PlayBuyResult> buy({required String spaceId, required StoreProduct product, String? currentProduct}) async {
     final base = product.identifier.split(':').first;
     try {
@@ -88,7 +90,7 @@ class PlayBilling {
         product,
         productChangeInfo: old == null
             ? null
-            : StoreProductChangeInfo(old, replacementMode: StoreReplacementMode.withTimeProration),
+            : StoreProductChangeInfo(old, replacementMode: StoreReplacementMode.withoutProration),
       ));
       await sync();
       return const PlayBuyResult(PlayBuyOutcome.bought);
