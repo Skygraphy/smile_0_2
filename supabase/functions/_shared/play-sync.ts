@@ -84,7 +84,9 @@ export async function syncPlaySubscriber(admin: SupabaseClient, userId: string):
         ends_at: endsAt && endsAt > new Date(startsAt) ? endsAt.toISOString() : new Date(new Date(startsAt).getTime() + 1000).toISOString(),
         external_ref: ref,
         payer_id: userId,
-        store_product: s.product_plan_identifier ?? key,
+        // Always 'smile_frames_3:monthly' (RevenueCat keys by product, the
+        // base plan comes separately), the app compares against this.
+        store_product: key.includes(":") ? key : s.product_plan_identifier ? `${product}:${s.product_plan_identifier}` : key,
         will_renew: !s.unsubscribe_detected_at && !refunded,
         billing_issue: !!s.billing_issues_detected_at,
       };
