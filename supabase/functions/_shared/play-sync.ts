@@ -106,8 +106,14 @@ export async function syncPlaySubscriber(admin: SupabaseClient, userId: string):
         const { data: cover } = await admin.from("space_plans").select("ends_at")
           .eq("space_id", spaceId).neq("source", "play").gt("ends_at", purchased.toISOString())
           .order("ends_at", { ascending: false }).limit(1).maybeSingle();
+        // A switch from another Play tier: Google already carries the rest of
+        // the old one (which was deferred itself), so never move it again.
+        const { data: earlier } = await admin.from("space_plans").select("id")
+          .eq("space_id", spaceId).eq("source", "play").neq("id", rowId)
+          .gt("ends_at", new Date(purchased.getTime() - 5 * 60 * 1000).toISOString())
+          .limit(1).maybeSingle();
         await admin.from("space_plans").update({ deferred_at: new Date().toISOString() }).eq("id", rowId);
-        const coverEnd = cover?.ends_at ? new Date(cover.ends_at as string) : null;
+        const coverEnd = cover?.ends_at && !earlier ? new Date(cover.ends_at as string) : null;
         const extraMs = coverEnd ? coverEnd.getTime() - purchased.getTime() : 0;
         if (extraMs > 60 * 60 * 1000) {
           const newExpiry = expires.getTime() + extraMs;
