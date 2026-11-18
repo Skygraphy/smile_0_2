@@ -17,6 +17,10 @@ class PushSyncSignal {
   /// Frame (sync-fanout, 2026-10-27): shown at once, the sync follows.
   static void Function(Map<String, dynamic> settings)? onSettings;
 
+  /// Someone looks at this Frame's screen live (frame-live, 2026-11-18):
+  /// start sending pictures; the name is shown on the Frame.
+  static void Function(String watcher)? onLive;
+
   static void requestSync() {
     onSyncRequested?.call();
   }
@@ -25,6 +29,10 @@ class PushSyncSignal {
   static void handle(Map<String, dynamic> data) {
     debugPrint('SmileFrameTiming: push ${data['type']} ${data['command'] ?? ''}');
     final command = data['command'];
+    if (data['type'] == 'live') {
+      onLive?.call(data['watcher'] as String? ?? '');
+      return;
+    }
     if (data['type'] == 'command' && command is String) {
       onCommand?.call(command, data);
       return;

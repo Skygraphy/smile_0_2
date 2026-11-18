@@ -32,6 +32,27 @@ class MainActivity : FlutterActivity() {
      * the display sleep and show over the lock screen -- a dedicated
      * display, not a phone.
      */
+    private fun videoFrame(path: String?, ms: Long, width: Int): ByteArray? {
+        if (path == null || !File(path).exists()) return null
+        val retriever = android.media.MediaMetadataRetriever()
+        try {
+            retriever.setDataSource(path)
+            val us = ms * 1000
+            val option = android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC
+            val bitmap = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+                retriever.getScaledFrameAtTime(us, option, width, width)
+            } else {
+                retriever.getFrameAtTime(us, option)
+            }) ?: return null
+            val out = java.io.ByteArrayOutputStream()
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 80, out)
+            bitmap.recycle()
+            return out.toByteArray()
+        } finally {
+            retriever.release()
+        }
+    }
+
     private fun setFrameWindow(frame: Boolean) {
         if (frame) {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -65,6 +86,19 @@ class MainActivity : FlutterActivity() {
             // Frame tells its managers it runs again (2026-11-05).
             if (call.method == "uptimeMs") {
                 result.success(android.os.SystemClock.elapsedRealtime())
+                return@setMethodCallHandler
+            }
+            // Live look from the app (2026-11-18): a video's picture is not
+            // in a Flutter screenshot, so the frame at the playing position
+            // comes from the file itself (JPEG, at most [width] wide).
+            if (call.method == "videoFrame") {
+                val path = call.argument<String>("path")
+                val ms = (call.argument<Number>("ms") ?: 0).toLong()
+                val width = (call.argument<Number>("width") ?: 640).toInt()
+                Thread {
+                    val bytes = try { videoFrame(path, ms, width) } catch (e: Exception) { null }
+                    runOnUiThread { result.success(bytes) }
+                }.start()
                 return@setMethodCallHandler
             }
             result.success(null)

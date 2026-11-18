@@ -4010,6 +4010,67 @@ class SmileTextsEn extends SmileTexts {
   String get planCancelAnytime => 'You can cancel anytime in Google Play.';
 
   @override
+  String frameLiveWatching(String name) {
+    return '$name is watching';
+  }
+
+  @override
+  String get frameLiveSomeone => 'Someone is watching';
+
+  @override
+  String get liveOpen => 'Watch live';
+
+  @override
+  String liveTitle(String frame) {
+    return '$frame · Live';
+  }
+
+  @override
+  String get liveHint =>
+      'You see what the Frame shows right now. The Frame shows that you are watching. It ends by itself after 5 minutes.';
+
+  @override
+  String get liveWaiting => 'Waiting for the Frame …';
+
+  @override
+  String liveAge(int seconds) {
+    return 'Live · $seconds s ago';
+  }
+
+  @override
+  String liveStatePlaying(String album) {
+    return 'Playing · \"$album\"';
+  }
+
+  @override
+  String liveStatePlayingFrom(String album, String name) {
+    return 'Playing · \"$album\", from $name';
+  }
+
+  @override
+  String get liveStatePaused => 'Paused';
+
+  @override
+  String get liveStateQuiet => 'Quiet hours, the screen is dark.';
+
+  @override
+  String get liveStateOverview => 'The overview is open.';
+
+  @override
+  String get liveOffline => 'The Frame is not answering right now.';
+
+  @override
+  String get liveEnded => 'Ended after 5 minutes.';
+
+  @override
+  String get liveAgain => 'Watch again';
+
+  @override
+  String liveBusy(String name) {
+    return '$name is watching right now. Try again in a moment.';
+  }
+
+  @override
   String planYouPayNext(String date) {
     return 'You pay · next payment on $date';
   }

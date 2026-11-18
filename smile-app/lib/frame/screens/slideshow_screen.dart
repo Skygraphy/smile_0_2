@@ -1,15 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:crypto/crypto.dart';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
 import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/heartbeat_service.dart';
+import '../services/live_share.dart';
 import '../services/media_cache_store.dart';
 import '../services/media_cache_sync.dart';
 import '../services/push_service.dart';
@@ -184,6 +187,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     }).catchError((Object _) {}));
     PushSyncSignal.onCommand = _onCommand;
     PushSyncSignal.onSettings = (json) => _applySettings(FrameSettingsInfo.fromJson(json));
+    PushSyncSignal.onLive = _onLive;
     widget.syncService.onEarlyResult = _applyEarly;
     _minuteTimer = Timer.periodic(const Duration(seconds: 15), (_) => _tickClock());
     _init();
@@ -219,6 +223,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     PushSyncSignal.onSyncRequested = null;
     PushSyncSignal.onCommand = null;
     PushSyncSignal.onSettings = null;
+    PushSyncSignal.onLive = null;
     widget.syncService.onEarlyResult = null;
     _syncTimer?.cancel();
     _advanceTimer?.cancel();
@@ -1348,8 +1353,141 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
 
   // --- Build ----------------------------------------------------------------
 
+  // --- Live look from the app (2026-11-18, migrations/0107) -----------------
+  // Only the Space's Admin / Co-Admins; the Frame names who looks, the
+  // whole time (Ernst: "zur Kontrolle, nicht zur Überwachung").
+  final _liveShare = LiveShare();
+  final _screenKey = GlobalKey();
+  String? _liveWatcher;
+
+  void _onLive(String watcher) {
+    unawaited(_liveShare.run(
+      watcher: watcher,
+      capture: _captureScreen,
+      state: _liveState,
+      onWatcher: (name) {
+        if (mounted && name != _liveWatcher) setState(() => _liveWatcher = name);
+      },
+    ));
+  }
+
+  final _overlayKey = GlobalKey();
+  final _pillKey = GlobalKey();
+
+  RenderRepaintBoundary? _boundary(GlobalKey key) {
+    final o = key.currentContext?.findRenderObject();
+    return o is RenderRepaintBoundary && o.hasSize ? o : null;
+  }
+
+  /// Exactly what the screen shows (with the "schaut mit" hint), about
+  /// 640 pixels wide. A video's picture is missing from a Flutter
+  /// screenshot (Ernst: no black video): its frame at the playing position
+  /// is read from the file and laid in, the clock, title and hints over it.
+  Future<Uint8List?> _captureScreen() async {
+    final screen = _boundary(_screenKey);
+    if (screen == null) return null;
+    final ratio = min(1.0, 640 / screen.size.width);
+    final full = await screen.toImage(pixelRatio: ratio);
+    var result = full;
+    try {
+      final video = VideoSlide.onScreen;
+      final overlay = _boundary(_overlayKey);
+      final rect = video?.rect;
+      if (video != null && rect != null && overlay != null && (_current?.isVideo ?? false) && !_showGrid && !_quiet) {
+        final bytes = await _window.invokeMethod<Uint8List>('videoFrame', {
+          'path': video.path,
+          'ms': video.position.inMilliseconds,
+          'width': (rect.width * ratio).round(),
+        });
+        if (bytes != null) {
+          final picture = await decodeImageFromList(bytes);
+          final over = await overlay.toImage(pixelRatio: ratio);
+          final recorder = ui.PictureRecorder();
+          final canvas = Canvas(recorder);
+          final paint = Paint()..filterQuality = FilterQuality.medium;
+          canvas.drawImage(full, Offset.zero, paint);
+          canvas.drawImageRect(
+            picture,
+            Offset.zero & Size(picture.width.toDouble(), picture.height.toDouble()),
+            Rect.fromLTWH(rect.left * ratio, rect.top * ratio, rect.width * ratio, rect.height * ratio),
+            paint,
+          );
+          canvas.drawImage(over, overlay.localToGlobal(Offset.zero) * ratio, paint);
+          // "… schaut mit" lies above both.
+          final pill = _pillKey.currentContext?.findRenderObject();
+          if (pill is RenderBox && pill.hasSize) {
+            final r = pill.localToGlobal(Offset.zero) & pill.size;
+            final src = Rect.fromLTRB(r.left * ratio, r.top * ratio, r.right * ratio, r.bottom * ratio);
+            canvas.drawImageRect(full, src, src, paint);
+          }
+          result = await recorder.endRecording().toImage(full.width, full.height);
+          picture.dispose();
+          over.dispose();
+        }
+      }
+      final data = await result.toByteData(format: ui.ImageByteFormat.png);
+      return data?.buffer.asUint8List();
+    } finally {
+      if (!identical(result, full)) result.dispose();
+      full.dispose();
+    }
+  }
+
+  Map<String, dynamic> _liveState() {
+    final current = _current;
+    return {
+      'state': _quiet
+          ? 'quiet'
+          : _showGrid
+              ? 'overview'
+              : _paused
+                  ? 'paused'
+                  : 'playing',
+      'album': ?_channelName(current?.channelId ?? _currentChannelId),
+      'sender': ?current?.senderName,
+      'video': current?.isVideo ?? false,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
+    final watcher = _liveWatcher;
+    return RepaintBoundary(
+      key: _screenKey,
+      child: Stack(
+        children: [
+          Positioned.fill(child: _buildScreen(context)),
+          // At night the screen stays dark; otherwise always visible.
+          if (watcher != null && !_quiet)
+            Positioned(
+              top: _unlocked ? 84 : 20,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(child: Center(child: _watchingPill(SmileTexts.of(context), watcher))),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _watchingPill(SmileTexts t, String name) => Container(
+        key: _pillKey,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(30)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(SmileIcons.viewer, color: Colors.white, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              name.isEmpty ? t.frameLiveSomeone : t.frameLiveWatching(name),
+              style: const TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildScreen(BuildContext context) {
     if (!_loadedOnce) {
       return const Scaffold(
         backgroundColor: Colors.black,
@@ -1449,6 +1587,13 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         child: Stack(
           children: [
             Positioned.fill(child: body),
+            // Everything above the slide in its own layer: the live look
+            // lays it over a video's picture (a screenshot has none).
+            Positioned.fill(
+              child: RepaintBoundary(
+                key: _overlayKey,
+                child: Stack(
+                  children: [
             if (!_showGrid) Positioned.fill(child: SwipeDust(key: _dust)),
             // Top: only album · sender on the left and the clock on the
             // right -- fits also upright (2026-10-17). What round plays shows
@@ -1620,6 +1765,10 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                   ],
                 ),
               ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),

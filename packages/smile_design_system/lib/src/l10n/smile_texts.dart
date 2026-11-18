@@ -6589,6 +6589,102 @@ abstract class SmileTexts {
   /// **'Kündigen kannst du jederzeit in Google Play.'**
   String get planCancelAnytime;
 
+  /// No description provided for @frameLiveWatching.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} schaut mit'**
+  String frameLiveWatching(String name);
+
+  /// No description provided for @frameLiveSomeone.
+  ///
+  /// In de, this message translates to:
+  /// **'Jemand schaut mit'**
+  String get frameLiveSomeone;
+
+  /// No description provided for @liveOpen.
+  ///
+  /// In de, this message translates to:
+  /// **'Live ansehen'**
+  String get liveOpen;
+
+  /// No description provided for @liveTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'{frame} · Live'**
+  String liveTitle(String frame);
+
+  /// No description provided for @liveHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Du siehst, was der Frame gerade zeigt. Der Frame zeigt dabei an, dass du zuschaust. Nach 5 Minuten endet es von selbst.'**
+  String get liveHint;
+
+  /// No description provided for @liveWaiting.
+  ///
+  /// In de, this message translates to:
+  /// **'Warte auf den Frame …'**
+  String get liveWaiting;
+
+  /// No description provided for @liveAge.
+  ///
+  /// In de, this message translates to:
+  /// **'Live · vor {seconds} s'**
+  String liveAge(int seconds);
+
+  /// No description provided for @liveStatePlaying.
+  ///
+  /// In de, this message translates to:
+  /// **'Läuft · „{album}“'**
+  String liveStatePlaying(String album);
+
+  /// No description provided for @liveStatePlayingFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'Läuft · „{album}“, von {name}'**
+  String liveStatePlayingFrom(String album, String name);
+
+  /// No description provided for @liveStatePaused.
+  ///
+  /// In de, this message translates to:
+  /// **'Angehalten'**
+  String get liveStatePaused;
+
+  /// No description provided for @liveStateQuiet.
+  ///
+  /// In de, this message translates to:
+  /// **'Ruhezeit, der Bildschirm ist dunkel.'**
+  String get liveStateQuiet;
+
+  /// No description provided for @liveStateOverview.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Übersicht ist offen.'**
+  String get liveStateOverview;
+
+  /// No description provided for @liveOffline.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Frame antwortet gerade nicht.'**
+  String get liveOffline;
+
+  /// No description provided for @liveEnded.
+  ///
+  /// In de, this message translates to:
+  /// **'Nach 5 Minuten beendet.'**
+  String get liveEnded;
+
+  /// No description provided for @liveAgain.
+  ///
+  /// In de, this message translates to:
+  /// **'Nochmal ansehen'**
+  String get liveAgain;
+
+  /// No description provided for @liveBusy.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} schaut gerade zu. Versuch es gleich noch einmal.'**
+  String liveBusy(String name);
+
   /// No description provided for @planYouPayNext.
   ///
   /// In de, this message translates to:

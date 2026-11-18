@@ -194,6 +194,17 @@ Deno.serve(async (req) => {
     }
   }
 
+  // 5b3. Live looks at a Frame (migrations/0107) whose app went away without
+  // saying stop: nothing of them is kept.
+  {
+    const { data: stale } = await supabaseAdmin.from("frame_live").select("frame_id")
+      .lt("until", new Date(Date.now() - 60 * 1000).toISOString());
+    for (const r of (stale ?? []) as { frame_id: string }[]) {
+      await supabaseAdmin.from("frame_live").delete().eq("frame_id", r.frame_id);
+      await supabaseAdmin.storage.from("frame-live").remove([`${r.frame_id}.png`]);
+    }
+  }
+
   // 5c. Frame plan / trial ending (2026-11-11, migrations/0102): 30 and 7
   // days before and the day after, once each, to the Space's managers.
   {

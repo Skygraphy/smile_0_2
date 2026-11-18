@@ -556,6 +556,14 @@ class FrameService {
     await invokeEdge('notify-frame', body: {'frame_id': frameId, 'command': command, 'media_item_id': ?mediaItemId});
   }
 
+  /// Looking at the Frame's screen live (frame-live, 2026-11-18): "start",
+  /// "get" (every few seconds, keeps it going) or "stop".
+  Future<Map<String, dynamic>> live(String frameId, String action) async {
+    final r = await invokeEdge('frame-live', body: {'action': action, 'frame_id': frameId});
+    final data = r.data;
+    return data is Map ? data.cast<String, dynamic>() : const {};
+  }
+
   Future<List<FrameChannelAssignment>> listAssignedChannels(String frameId) async {
     final rows = await supabase
         .from('frame_channels')

@@ -27,6 +27,7 @@ import '../widgets/local_display.dart';
 import 'create_frame_screen.dart';
 import 'frame_controls_screen.dart';
 import 'frame_favorites_screen.dart';
+import 'frame_live_screen.dart';
 import 'frame_playback_screen.dart';
 import 'frame_settings_screen.dart';
 
@@ -742,6 +743,21 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                           onPressed: () => _command('newest'),
                         ),
                       ),
+                      // What the Frame shows right now (2026-11-18): only the
+                      // Space's Admin and Co-Admins.
+                      if (_frameAdmins != null && _managesSpace) ...[
+                        const SizedBox(height: SmileSpacing.s),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(SmileIcons.viewer),
+                            label: Text(t.liveOpen),
+                            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => FrameLiveScreen(frameId: widget.frameId, frameName: _shownName),
+                            )),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: SmileSpacing.m),

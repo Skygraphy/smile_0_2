@@ -455,3 +455,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.revenuecat-webhook]
 verify_jwt = false
+[functions.frame-live]
+verify_jwt = false

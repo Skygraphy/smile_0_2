@@ -4042,6 +4042,67 @@ class SmileTextsDe extends SmileTexts {
       'Kündigen kannst du jederzeit in Google Play.';
 
   @override
+  String frameLiveWatching(String name) {
+    return '$name schaut mit';
+  }
+
+  @override
+  String get frameLiveSomeone => 'Jemand schaut mit';
+
+  @override
+  String get liveOpen => 'Live ansehen';
+
+  @override
+  String liveTitle(String frame) {
+    return '$frame · Live';
+  }
+
+  @override
+  String get liveHint =>
+      'Du siehst, was der Frame gerade zeigt. Der Frame zeigt dabei an, dass du zuschaust. Nach 5 Minuten endet es von selbst.';
+
+  @override
+  String get liveWaiting => 'Warte auf den Frame …';
+
+  @override
+  String liveAge(int seconds) {
+    return 'Live · vor $seconds s';
+  }
+
+  @override
+  String liveStatePlaying(String album) {
+    return 'Läuft · „$album“';
+  }
+
+  @override
+  String liveStatePlayingFrom(String album, String name) {
+    return 'Läuft · „$album“, von $name';
+  }
+
+  @override
+  String get liveStatePaused => 'Angehalten';
+
+  @override
+  String get liveStateQuiet => 'Ruhezeit, der Bildschirm ist dunkel.';
+
+  @override
+  String get liveStateOverview => 'Die Übersicht ist offen.';
+
+  @override
+  String get liveOffline => 'Der Frame antwortet gerade nicht.';
+
+  @override
+  String get liveEnded => 'Nach 5 Minuten beendet.';
+
+  @override
+  String get liveAgain => 'Nochmal ansehen';
+
+  @override
+  String liveBusy(String name) {
+    return '$name schaut gerade zu. Versuch es gleich noch einmal.';
+  }
+
+  @override
   String planYouPayNext(String date) {
     return 'Du zahlst · nächste Zahlung am $date';
   }

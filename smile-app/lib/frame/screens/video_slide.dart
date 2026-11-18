@@ -35,8 +35,31 @@ class VideoSlide extends StatefulWidget {
   /// Pause on the Frame or from the app's remote control (2026-10-14).
   final bool paused;
 
+  /// The video on screen right now -- for the live look from the app
+  /// (2026-11-18): a Flutter screenshot has no video picture, so the frame
+  /// at [VideoOnScreen.position] is read from [VideoOnScreen.path].
+  static VideoOnScreen? onScreen;
+
   @override
   State<VideoSlide> createState() => _VideoSlideState();
+}
+
+class VideoOnScreen {
+  VideoOnScreen(this.path, this._controller, this._context);
+
+  final String path;
+  final VideoPlayerController _controller;
+  final BuildContext _context;
+
+  Duration get position => _controller.value.position;
+
+  /// Where the video sits on the screen (logical pixels), or null.
+  Rect? get rect {
+    if (!_context.mounted) return null;
+    final box = _context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
 }
 
 class _VideoSlideState extends State<VideoSlide> {
@@ -124,8 +147,11 @@ class _VideoSlideState extends State<VideoSlide> {
     if (mounted) widget.onFinished();
   }
 
+  final _videoKey = GlobalKey();
+
   @override
   void dispose() {
+    if (VideoSlide.onScreen?._controller == _controller) VideoSlide.onScreen = null;
     _fade?.cancel();
     final controller = _controller;
     final file = _playbackFile;
@@ -142,8 +168,18 @@ class _VideoSlideState extends State<VideoSlide> {
     if (controller == null || !controller.value.isInitialized) {
       return const Center(child: CircularProgressIndicator(color: Colors.white24));
     }
+    final file = _playbackFile;
+    if (file != null) {
+      // After this frame the key has its place on screen.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final context = _videoKey.currentContext;
+        if (mounted && context != null && VideoSlide.onScreen?._controller != controller) {
+          VideoSlide.onScreen = VideoOnScreen(file.path, controller, context);
+        }
+      });
+    }
     return Center(
-      child: AspectRatio(aspectRatio: controller.value.aspectRatio, child: VideoPlayer(controller)),
+      child: AspectRatio(key: _videoKey, aspectRatio: controller.value.aspectRatio, child: VideoPlayer(controller)),
     );
   }
 }
