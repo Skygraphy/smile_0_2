@@ -40,16 +40,16 @@ Deno.test("only managers look live, the Frame sends while asked, nothing stays",
     assertEquals(sent.body.watcher, "FL Owner");
 
     const got = await invoke("frame-live", accessToken, { action: "get", frame_id: frameId });
-    assert(typeof got.body.image_url === "string");
+    assert(typeof got.body.image === "string" && got.body.image.length > 0);
     assertEquals(got.body.state.state, "playing");
-    const img = await fetch(got.body.image_url);
-    assertEquals(img.status, 200);
-    assertEquals((await img.arrayBuffer()).byteLength > 0, true);
+    // Already shown: no picture again until a new one comes.
+    const again = await invoke("frame-live", accessToken, { action: "get", frame_id: frameId, since: got.body.captured_at });
+    assertEquals(again.body.image, null);
 
     // Stop: row and picture gone, the Frame stops.
     await invoke("frame-live", accessToken, { action: "stop", frame_id: frameId });
     assertEquals((await svc(`frame_live?frame_id=eq.${frameId}`)).body.length, 0);
-    // The file itself is gone (a signed URL may still be answered from cache).
+    // The file itself is gone.
     const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const direct = await fetch(`${Deno.env.get("SUPABASE_URL")}/storage/v1/object/frame-live/${frameId}.png`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` },

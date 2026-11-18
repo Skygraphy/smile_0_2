@@ -8,10 +8,10 @@
 // Frame (device token): {action: "upload", access_token, image (base64 PNG), state}
 //
 // "get" every few seconds keeps it going (until = now + 20 s, at most
-// started_at + 5 min) and returns the latest picture as a short-lived URL.
+// started_at + 5 min) and returns a new picture (base64) in the answer.
 // The Frame sends while until lies ahead; the answer tells it to stop.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { decodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
+import { decodeBase64, encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { sendDataMessage } from "../_shared/fcm.ts";
 import { verifyFrameAccessToken } from "../_shared/frame-jwt.ts";
@@ -71,7 +71,9 @@ async function fromFrame(body: { access_token?: string; image?: string; state?: 
   if (body.image) {
     const bytes = decodeBase64(body.image);
     if (bytes.length > MAX_IMAGE_BYTES) return jsonResponse({ error: "image_too_large" }, 413);
-    const { error } = await admin.storage.from(BUCKET).upload(path(claims.frame_id), bytes, { contentType: "image/png", upsert: true });
+    // JPEG since 2026-11-18 evening (smaller, sooner); PNG if the Frame could not convert.
+    const contentType = bytes[0] === 0xff && bytes[1] === 0xd8 ? "image/jpeg" : "image/png";
+    const { error } = await admin.storage.from(BUCKET).upload(path(claims.frame_id), bytes, { contentType, upsert: true });
     if (error) return jsonResponse({ error: "upload_failed" }, 500);
   }
   await admin.from("frame_live").update({
@@ -85,7 +87,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
-  let body: { action?: string; frame_id?: string; access_token?: string; image?: string; state?: unknown };
+  let body: { action?: string; frame_id?: string; since?: string; access_token?: string; image?: string; state?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -142,13 +144,15 @@ Deno.serve(async (req) => {
     if (now - captured > REPUSH_MS && now - (live.pushed_at ? new Date(live.pushed_at as string).getTime() : 0) > REPUSH_MS) {
       await wakeFrame(frame.id as string, frame.fcm_token as string | null, await displayName(me));
     }
-    let url: string | null = null;
-    if (live.captured_at) {
-      const { data } = await admin.storage.from(BUCKET).createSignedUrl(path(frame.id as string), 60);
-      url = data?.signedUrl ?? null;
+    // A new picture comes along in the answer itself (one round trip less);
+    // [since] is the captured_at the app already shows.
+    let image: string | null = null;
+    if (live.captured_at && live.captured_at !== body.since) {
+      const { data } = await admin.storage.from(BUCKET).download(path(frame.id as string));
+      if (data) image = encodeBase64(new Uint8Array(await data.arrayBuffer()));
     }
     return jsonResponse({
-      image_url: url,
+      image,
       captured_at: live.captured_at,
       state: live.state,
       last_seen_at: frame.last_seen_at,

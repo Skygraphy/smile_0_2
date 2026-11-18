@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/frame_service.dart';
@@ -23,7 +23,6 @@ class FrameLiveScreen extends StatefulWidget {
 
 class _FrameLiveScreenState extends State<FrameLiveScreen> {
   final _service = FrameService();
-  final _http = http.Client();
   Timer? _poll;
   Timer? _clock;
   bool _busy = false;
@@ -65,7 +64,7 @@ class _FrameLiveScreenState extends State<FrameLiveScreen> {
       // The polling below shows "not answering" if it stays like that.
     }
     _poll?.cancel();
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _get());
+    _poll = Timer.periodic(const Duration(seconds: 1), (_) => _get());
     unawaited(_get());
   }
 
@@ -73,7 +72,7 @@ class _FrameLiveScreenState extends State<FrameLiveScreen> {
     if (_busy || _ended) return;
     _busy = true;
     try {
-      final r = await _service.live(widget.frameId, 'get');
+      final r = await _service.live(widget.frameId, 'get', since: _imageAt);
       if (!mounted) return;
       if (r['ended'] == true) {
         _poll?.cancel();
@@ -81,13 +80,10 @@ class _FrameLiveScreenState extends State<FrameLiveScreen> {
         return;
       }
       final at = r['captured_at'] as String?;
-      final url = r['image_url'] as String?;
-      if (url != null && at != null && at != _imageAt) {
-        final response = await _http.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
-        if (response.statusCode == 200 && mounted) {
-          _image = response.bodyBytes;
-          _imageAt = at;
-        }
+      final image = r['image'] as String?;
+      if (image != null && at != null) {
+        _image = base64Decode(image);
+        _imageAt = at;
       }
       if (!mounted) return;
       setState(() {
@@ -107,7 +103,6 @@ class _FrameLiveScreenState extends State<FrameLiveScreen> {
     _poll?.cancel();
     _clock?.cancel();
     if (!_ended) unawaited(_service.live(widget.frameId, 'stop').catchError((Object _) => const <String, dynamic>{}));
-    _http.close();
     super.dispose();
   }
 

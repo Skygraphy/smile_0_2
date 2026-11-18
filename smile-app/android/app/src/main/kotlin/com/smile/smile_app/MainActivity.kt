@@ -91,6 +91,23 @@ class MainActivity : FlutterActivity() {
             // Live look from the app (2026-11-18): a video's picture is not
             // in a Flutter screenshot, so the frame at the playing position
             // comes from the file itself (JPEG, at most [width] wide).
+            // The live look's screenshot as a small JPEG (sent every 1.5 s).
+            if (call.method == "toJpeg") {
+                val png = call.arguments as? ByteArray
+                Thread {
+                    val bytes = try {
+                        val bitmap = android.graphics.BitmapFactory.decodeByteArray(png, 0, png?.size ?: 0)
+                        if (bitmap == null) null else {
+                            val out = java.io.ByteArrayOutputStream()
+                            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 75, out)
+                            bitmap.recycle()
+                            out.toByteArray()
+                        }
+                    } catch (e: Exception) { null }
+                    runOnUiThread { result.success(bytes) }
+                }.start()
+                return@setMethodCallHandler
+            }
             if (call.method == "videoFrame") {
                 val path = call.argument<String>("path")
                 val ms = (call.argument<Number>("ms") ?: 0).toLong()

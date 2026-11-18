@@ -20,14 +20,14 @@ class LiveShare {
   final http.Client _http;
   final FrameCredentialsStore _credentials;
 
-  static const _every = Duration(seconds: 3);
+  static const _every = Duration(milliseconds: 1500);
   // Never longer than the server allows, even if its answers get lost.
   static const _longest = Duration(minutes: 6);
 
   bool _running = false;
 
   /// Starts sending (a push "live" arrived); does nothing while it runs.
-  /// [capture] returns the screen as PNG, [state] what the Frame does
+  /// [capture] returns the screen as JPEG (PNG if that fails), [state] what the Frame does
   /// right now. [onWatcher] gets the name to show, null when it ends.
   Future<void> run({
     required Future<Uint8List?> Function() capture,

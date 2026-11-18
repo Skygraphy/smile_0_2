@@ -1426,7 +1426,14 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         }
       }
       final data = await result.toByteData(format: ui.ImageByteFormat.png);
-      return data?.buffer.asUint8List();
+      if (data == null) return null;
+      // A JPEG is about a tenth of the PNG: the picture arrives sooner.
+      final png = data.buffer.asUint8List();
+      try {
+        return await _window.invokeMethod<Uint8List>('toJpeg', png) ?? png;
+      } catch (_) {
+        return png;
+      }
     } finally {
       if (!identical(result, full)) result.dispose();
       full.dispose();
@@ -1463,7 +1470,14 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
               top: _unlocked ? 84 : 20,
               left: 0,
               right: 0,
-              child: IgnorePointer(child: Center(child: _watchingPill(SmileTexts.of(context), watcher))),
+              // Material: outside the Scaffold a Text gets the yellow
+              // "no text style" underline.
+              child: IgnorePointer(
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: Center(child: _watchingPill(SmileTexts.of(context), watcher)),
+                ),
+              ),
             ),
         ],
       ),
