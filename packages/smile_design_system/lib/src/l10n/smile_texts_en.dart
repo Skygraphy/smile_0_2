@@ -3957,7 +3957,53 @@ class SmileTextsEn extends SmileTexts {
 
   @override
   String planCoverNote(String date) {
-    return 'The Space is covered until $date. If you subscribe now, you pay the first period today and the next payment moves back by that time. So you lose no days.';
+    return 'Your voucher runs until $date. If you subscribe now, you pay from today and the voucher is set aside: the remaining time applies once the subscription ends.';
+  }
+
+  @override
+  String planTrialNote(String date) {
+    return 'The trial runs until $date. You don\'t need to do anything yet, we will remind you in time. If you subscribe now, the trial ends today.';
+  }
+
+  @override
+  String planParked(String time, String frames) {
+    return 'Set aside: voucher for $time ($frames). It applies once the subscription ends.';
+  }
+
+  @override
+  String planAfterPlay(String frames, String date) {
+    return 'After that your voucher applies: $frames until $date.';
+  }
+
+  @override
+  String get planThanksParked =>
+      'Thanks! The subscription is active. Your voucher is set aside.';
+
+  @override
+  String planMonthsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count months',
+      one: '1 month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planDaysCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String voucherDoneParked(String space, String frames, String time) {
+    return '$space gets $frames for $time. Because a subscription is running, the voucher is set aside and applies once the subscription ends.';
   }
 
   @override

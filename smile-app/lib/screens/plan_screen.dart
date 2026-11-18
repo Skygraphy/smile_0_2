@@ -68,11 +68,16 @@ class _PlanScreenState extends State<PlanScreen> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _busy = product.identifier);
     final current = _plan?.payerIsMe == true ? _plan?.playProduct : null;
+    final hadVoucher = current == null && _plan?.coverSource == 'voucher';
     final result = await PlayBilling.buy(spaceId: widget.spaceId, product: product, currentProduct: current);
     if (!mounted) return;
     setState(() => _busy = null);
     final String? message = switch (result.outcome) {
-      PlayBuyOutcome.bought => current == null ? t.planThanks : t.planSwitched,
+      PlayBuyOutcome.bought => current != null
+          ? t.planSwitched
+          : hadVoucher
+              ? t.planThanksParked
+              : t.planThanks,
       PlayBuyOutcome.cancelled => null,
       PlayBuyOutcome.otherPayer => result.name == null ? t.planSomeonePays : t.planOtherPays(result.name!),
       PlayBuyOutcome.productInUse => t.planProductInUse(result.name ?? ''),
@@ -192,6 +197,15 @@ class _PlanScreenState extends State<PlanScreen> {
     }
 
     final cover = plan?.coverEndsAt;
+    final coverNote = cover == null
+        ? null
+        : plan!.coverSource == 'trial'
+            ? t.planTrialNote(date.format(cover))
+            : plan.coverSource == 'voucher'
+                ? t.planCoverNote(date.format(cover))
+                : null;
+    final parkedDays = plan?.parkedDays ?? 0;
+    final parkedTime = parkedDays >= 45 ? t.planMonthsCount((parkedDays / 30.44).round()) : t.planDaysCount(parkedDays);
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -221,8 +235,11 @@ class _PlanScreenState extends State<PlanScreen> {
             for (final x in _tiers) tier(x),
             if (iPay && plan!.playBillingIssue) note(t.planBillingIssue, color: scheme.error),
             if (someoneElsePays) note(plan.payerName == null ? t.planSomeonePays : t.planOtherPays(plan.payerName!)),
-            if (canBuy && !iPay && cover != null)
-              note('${t.planCoverNote(date.format(cover))} ${t.planCancelAnytime}')
+            if (iPay && parkedDays > 0) note(t.planParked(parkedTime, t.planFrames(plan!.parkedFrames))),
+            if (iPay && plan!.playRenews == false && plan.afterPlayEndsAt != null)
+              note(t.planAfterPlay(t.planFrames(plan.afterPlayFrames ?? 1), date.format(plan.afterPlayEndsAt!))),
+            if (canBuy && !iPay && coverNote != null)
+              note('$coverNote ${t.planCancelAnytime}')
             else if (canBuy && !iPay)
               note(t.planCancelAnytime),
             if (PlayBilling.available && !_loadingProducts && _products.isEmpty) note(t.planStoreUnavailable),

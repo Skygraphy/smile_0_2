@@ -247,9 +247,11 @@ class _RedeemVoucherScreenState extends State<RedeemVoucherScreen> {
           Text(t.voucherDone, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           Text(
-            done.startsLater
-                ? t.voucherDoneLater(space, frames, date.format(done.startsAt), date.format(done.endsAt))
-                : t.voucherDoneText(space, frames, date.format(done.endsAt)),
+            done.parked
+                ? t.voucherDoneParked(space, frames, t.planMonthsCount(done.months))
+                : done.startsLater
+                    ? t.voucherDoneLater(space, frames, date.format(done.startsAt), date.format(done.endsAt))
+                    : t.voucherDoneText(space, frames, date.format(done.endsAt)),
             textAlign: TextAlign.center,
             style: TextStyle(color: scheme.onSurfaceVariant),
           ),

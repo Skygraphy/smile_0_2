@@ -66,8 +66,9 @@ class PlayBilling {
 
   /// Buys [product] for [spaceId]. With [currentProduct] ('smile_frames_1:monthly')
   /// it is a switch: the new tier applies at once, the billing day stays and
-  /// the new price starts there (no proration; Google cannot prorate a
-  /// subscription whose renewal was deferred for voucher or trial time).
+  /// the new price starts there (no proration). Voucher time is set aside
+  /// on the server instead of deferring Google (migrations/0106): a
+  /// deferred subscription cannot switch at all.
   static Future<PlayBuyResult> buy({required String spaceId, required StoreProduct product, String? currentProduct}) async {
     final base = product.identifier.split(':').first;
     try {

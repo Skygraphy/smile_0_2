@@ -6538,8 +6538,50 @@ abstract class SmileTexts {
   /// No description provided for @planCoverNote.
   ///
   /// In de, this message translates to:
-  /// **'Der Space ist noch bis {date} abgedeckt. Schließt du jetzt ab, zahlst du den ersten Zeitraum heute, die nächste Zahlung verschiebt sich um diese Zeit nach hinten. So geht dir kein Tag verloren.'**
+  /// **'Euer Gutschein gilt noch bis {date}. Schließt du jetzt ab, zahlst du ab heute und der Gutschein wird aufgehoben: Die restliche Zeit gilt, sobald das Abo einmal endet.'**
   String planCoverNote(String date);
+
+  /// No description provided for @planTrialNote.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Probezeit läuft noch bis {date}. Du musst jetzt noch nichts tun, wir erinnern dich rechtzeitig. Schließt du jetzt ab, endet die Probezeit heute.'**
+  String planTrialNote(String date);
+
+  /// No description provided for @planParked.
+  ///
+  /// In de, this message translates to:
+  /// **'Aufgehoben: Gutschein für {time} ({frames}). Er gilt, sobald das Abo endet.'**
+  String planParked(String time, String frames);
+
+  /// No description provided for @planAfterPlay.
+  ///
+  /// In de, this message translates to:
+  /// **'Danach gilt euer Gutschein: {frames} bis {date}.'**
+  String planAfterPlay(String frames, String date);
+
+  /// No description provided for @planThanksParked.
+  ///
+  /// In de, this message translates to:
+  /// **'Danke! Das Abo ist aktiv. Euer Gutschein ist aufgehoben.'**
+  String get planThanksParked;
+
+  /// No description provided for @planMonthsCount.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 Monat} other{{count} Monate}}'**
+  String planMonthsCount(int count);
+
+  /// No description provided for @planDaysCount.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 Tag} other{{count} Tage}}'**
+  String planDaysCount(int count);
+
+  /// No description provided for @voucherDoneParked.
+  ///
+  /// In de, this message translates to:
+  /// **'{space} bekommt {frames} für {time}. Weil gerade ein Abo läuft, wird der Gutschein aufgehoben und gilt, sobald das Abo endet.'**
+  String voucherDoneParked(String space, String frames, String time);
 
   /// No description provided for @planCancelAnytime.
   ///

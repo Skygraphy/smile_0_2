@@ -183,6 +183,17 @@ Deno.serve(async (req) => {
     }
   }
 
+  // 5b2. Voucher time parked during a Play subscription (migrations/0106):
+  // gives it back once the subscription has ended, in case a RevenueCat
+  // webhook got lost. Before the reminders, so they see the result.
+  {
+    const { data: parkedSpaces } = await supabaseAdmin.rpc("spaces_with_parked_time");
+    for (const spaceId of (parkedSpaces ?? []) as string[]) {
+      const { error } = await supabaseAdmin.rpc("reconcile_play_cover", { p_space: spaceId });
+      if (error) console.error(`health-check: reconcile ${spaceId}: ${error.message}`);
+    }
+  }
+
   // 5c. Frame plan / trial ending (2026-11-11, migrations/0102): 30 and 7
   // days before and the day after, once each, to the Space's managers.
   {

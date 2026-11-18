@@ -1,8 +1,8 @@
 // Google Play subscriptions via RevenueCat -> space_plans (2026-11-17,
-// migrations/0105). Called by the revenuecat-webhook and by the app right
-// after a purchase (play-subscription, action sync). Always reads the full
-// subscriber from RevenueCat, so the order or repetition of webhooks does
-// not matter.
+// migrations/0105, 0106). Called by the revenuecat-webhook and by the app
+// right after a purchase (play-subscription, action sync). Always reads the
+// full subscriber from RevenueCat, so the order or repetition of webhooks
+// does not matter.
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RC_KEY = Deno.env.get("REVENUECAT_SECRET_KEY") ?? "";
@@ -20,119 +20,93 @@ type RcSubscription = {
   store?: string;
 };
 
-async function rc(path: string, init?: RequestInit) {
-  return await fetch(`${RC_API}${path}`, {
-    ...init,
-    headers: { Authorization: `Bearer ${RC_KEY}`, "Content-Type": "application/json", ...(init?.headers ?? {}) },
-  });
-}
-
 async function subscriber(userId: string): Promise<Record<string, RcSubscription>> {
-  const r = await rc(`/subscribers/${encodeURIComponent(userId)}`);
+  const r = await fetch(`${RC_API}/subscribers/${encodeURIComponent(userId)}`, {
+    headers: { Authorization: `Bearer ${RC_KEY}`, "Content-Type": "application/json" },
+  });
   if (!r.ok) throw new Error(`revenuecat ${r.status}`);
   const j = await r.json();
   return (j?.subscriber?.subscriptions ?? {}) as Record<string, RcSubscription>;
 }
 
-export type SyncResult = { synced: number; deferred: number };
+export type SyncResult = { synced: number; parked: number; unparked: number };
 
-/// Brings all of this person's Smile subscriptions into space_plans.
+/// Brings all of this person's Smile subscriptions into space_plans, then
+/// sets voucher time aside / gives it back for every Space touched
+/// (reconcile_play_cover, migrations/0106). Google is never deferred: a
+/// deferred subscription cannot switch tiers any more (live-tested
+/// 2026-11-18).
 export async function syncPlaySubscriber(admin: SupabaseClient, userId: string): Promise<SyncResult> {
   if (!RC_KEY) throw new Error("REVENUECAT_SECRET_KEY missing");
-  let subs = await subscriber(userId);
+  const subs = await subscriber(userId);
   let synced = 0;
-  let deferred = 0;
+  const spaces = new Set<string>();
 
-  for (let pass = 0; pass < 2; pass++) {
-    let deferredThisPass = false;
-    for (const [key, s] of Object.entries(subs)) {
-      const product = key.split(":")[0];
-      const m = PRODUCT.exec(product);
-      if (!m || (s.store !== undefined && s.store !== "play_store")) continue;
-      const frames = parseInt(m[1], 10);
+  for (const [key, s] of Object.entries(subs)) {
+    const product = key.split(":")[0];
+    const m = PRODUCT.exec(product);
+    if (!m || (s.store !== undefined && s.store !== "play_store")) continue;
+    const frames = parseInt(m[1], 10);
 
-      const { data: link } = await admin.from("play_links").select("space_id")
-        .eq("user_id", userId).eq("product", product).maybeSingle();
-      if (!link) {
-        console.warn(`play-sync: no space for ${userId} ${product}`);
-        continue;
-      }
-      const spaceId = link.space_id as string;
-      const ref = `rc:${userId}:${product}`;
-      const purchased = new Date(s.purchase_date);
-      const expires = s.expires_date ? new Date(s.expires_date) : null;
-      const refunded = s.refunded_at ? new Date(s.refunded_at) : null;
-      const endsAt = refunded && (!expires || refunded < expires) ? refunded : expires;
-
-      const { data: existing } = await admin.from("space_plans").select("id, starts_at, deferred_at, space_id")
-        .eq("external_ref", ref).maybeSingle();
-
-      // A product moved to another Space (bought again for a different one):
-      // start a fresh row there, the old one keeps its history.
-      let rowId = existing?.id as string | undefined;
-      if (existing && existing.space_id !== spaceId) {
-        await admin.from("space_plans").update({ external_ref: `${ref}:${existing.id}` }).eq("id", existing.id);
-        rowId = undefined;
-      }
-
-      const startsAt = rowId ? existing!.starts_at : purchased.toISOString();
-      const row = {
-        space_id: spaceId,
-        source: "play",
-        frames,
-        starts_at: startsAt,
-        ends_at: endsAt && endsAt > new Date(startsAt) ? endsAt.toISOString() : new Date(new Date(startsAt).getTime() + 1000).toISOString(),
-        external_ref: ref,
-        payer_id: userId,
-        // Always 'smile_frames_3:monthly' (RevenueCat keys by product, the
-        // base plan comes separately), the app compares against this.
-        store_product: key.includes(":") ? key : s.product_plan_identifier ? `${product}:${s.product_plan_identifier}` : key,
-        will_renew: !s.unsubscribe_detected_at && !refunded,
-        billing_issue: !!s.billing_issues_detected_at,
-      };
-      if (rowId) {
-        await admin.from("space_plans").update(row).eq("id", rowId);
-      } else {
-        const { data: ins } = await admin.from("space_plans").insert(row).select("id").single();
-        rowId = ins?.id;
-      }
-      synced++;
-
-      // Bought while the Space was still covered (trial, voucher, staff):
-      // Google has charged the first period now, so the second charge is
-      // moved back by what was left of that cover. Once per subscription.
-      const deferredAt = existing && existing.space_id === spaceId ? existing.deferred_at : null;
-      if (rowId && !deferredAt && expires && expires > new Date() && !refunded) {
-        const { data: cover } = await admin.from("space_plans").select("ends_at")
-          .eq("space_id", spaceId).neq("source", "play").gt("ends_at", purchased.toISOString())
-          .order("ends_at", { ascending: false }).limit(1).maybeSingle();
-        // A switch from another Play tier: Google already carries the rest of
-        // the old one (which was deferred itself), so never move it again.
-        const { data: earlier } = await admin.from("space_plans").select("id")
-          .eq("space_id", spaceId).eq("source", "play").neq("id", rowId)
-          .gt("ends_at", new Date(purchased.getTime() - 5 * 60 * 1000).toISOString())
-          .limit(1).maybeSingle();
-        await admin.from("space_plans").update({ deferred_at: new Date().toISOString() }).eq("id", rowId);
-        const coverEnd = cover?.ends_at && !earlier ? new Date(cover.ends_at as string) : null;
-        const extraMs = coverEnd ? coverEnd.getTime() - purchased.getTime() : 0;
-        if (extraMs > 60 * 60 * 1000) {
-          const newExpiry = expires.getTime() + extraMs;
-          const r = await rc(`/subscribers/${encodeURIComponent(userId)}/subscriptions/${encodeURIComponent(product)}/defer`, {
-            method: "POST",
-            body: JSON.stringify({ expiry_time_ms: newExpiry }),
-          });
-          if (r.ok) {
-            deferred++;
-            deferredThisPass = true;
-          } else {
-            console.error(`play-sync: defer failed ${r.status} ${await r.text()}`);
-          }
-        }
-      }
+    const { data: link } = await admin.from("play_links").select("space_id")
+      .eq("user_id", userId).eq("product", product).maybeSingle();
+    if (!link) {
+      console.warn(`play-sync: no space for ${userId} ${product}`);
+      continue;
     }
-    // After a deferral the expiry changed at Google: read once more.
-    if (!deferredThisPass) break;
-    subs = await subscriber(userId);
+    const spaceId = link.space_id as string;
+    const ref = `rc:${userId}:${product}`;
+    const purchased = new Date(s.purchase_date);
+    const expires = s.expires_date ? new Date(s.expires_date) : null;
+    const refunded = s.refunded_at ? new Date(s.refunded_at) : null;
+    const endsAt = refunded && (!expires || refunded < expires) ? refunded : expires;
+
+    const { data: existing } = await admin.from("space_plans").select("id, starts_at, space_id")
+      .eq("external_ref", ref).maybeSingle();
+
+    // A product moved to another Space (bought again for a different one):
+    // start a fresh row there, the old one keeps its history.
+    let rowId = existing?.id as string | undefined;
+    if (existing && existing.space_id !== spaceId) {
+      await admin.from("space_plans").update({ external_ref: `${ref}:${existing.id}` }).eq("id", existing.id);
+      spaces.add(existing.space_id as string);
+      rowId = undefined;
+    }
+
+    const startsAt = rowId ? existing!.starts_at : purchased.toISOString();
+    const row = {
+      space_id: spaceId,
+      source: "play",
+      frames,
+      starts_at: startsAt,
+      ends_at: endsAt && endsAt > new Date(startsAt) ? endsAt.toISOString() : new Date(new Date(startsAt).getTime() + 1000).toISOString(),
+      external_ref: ref,
+      payer_id: userId,
+      // Always 'smile_frames_3:monthly' (RevenueCat keys by product, the
+      // base plan comes separately), the app compares against this.
+      store_product: key.includes(":") ? key : s.product_plan_identifier ? `${product}:${s.product_plan_identifier}` : key,
+      will_renew: !s.unsubscribe_detected_at && !refunded,
+      billing_issue: !!s.billing_issues_detected_at,
+    };
+    if (rowId) {
+      await admin.from("space_plans").update(row).eq("id", rowId);
+    } else {
+      await admin.from("space_plans").insert(row);
+    }
+    spaces.add(spaceId);
+    synced++;
   }
-  return { synced, deferred };
+
+  let parked = 0;
+  let unparked = 0;
+  for (const spaceId of spaces) {
+    const { data, error } = await admin.rpc("reconcile_play_cover", { p_space: spaceId });
+    if (error) {
+      console.error(`play-sync: reconcile ${spaceId} failed: ${error.message}`);
+      continue;
+    }
+    parked += Number(data?.parked ?? 0);
+    unparked += Number(data?.unparked ?? 0);
+  }
+  return { synced, parked, unparked };
 }

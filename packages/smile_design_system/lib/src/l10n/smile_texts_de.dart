@@ -3988,7 +3988,53 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String planCoverNote(String date) {
-    return 'Der Space ist noch bis $date abgedeckt. Schließt du jetzt ab, zahlst du den ersten Zeitraum heute, die nächste Zahlung verschiebt sich um diese Zeit nach hinten. So geht dir kein Tag verloren.';
+    return 'Euer Gutschein gilt noch bis $date. Schließt du jetzt ab, zahlst du ab heute und der Gutschein wird aufgehoben: Die restliche Zeit gilt, sobald das Abo einmal endet.';
+  }
+
+  @override
+  String planTrialNote(String date) {
+    return 'Die Probezeit läuft noch bis $date. Du musst jetzt noch nichts tun, wir erinnern dich rechtzeitig. Schließt du jetzt ab, endet die Probezeit heute.';
+  }
+
+  @override
+  String planParked(String time, String frames) {
+    return 'Aufgehoben: Gutschein für $time ($frames). Er gilt, sobald das Abo endet.';
+  }
+
+  @override
+  String planAfterPlay(String frames, String date) {
+    return 'Danach gilt euer Gutschein: $frames bis $date.';
+  }
+
+  @override
+  String get planThanksParked =>
+      'Danke! Das Abo ist aktiv. Euer Gutschein ist aufgehoben.';
+
+  @override
+  String planMonthsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Monate',
+      one: '1 Monat',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planDaysCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Tage',
+      one: '1 Tag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String voucherDoneParked(String space, String frames, String time) {
+    return '$space bekommt $frames für $time. Weil gerade ein Abo läuft, wird der Gutschein aufgehoben und gilt, sobald das Abo endet.';
   }
 
   @override
