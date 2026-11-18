@@ -17,6 +17,7 @@ import '../services/push_sync_signal.dart';
 import '../services/frame_chime.dart';
 import '../services/frame_language.dart';
 import '../services/sync_service.dart';
+import 'swipe_dust.dart';
 import 'video_slide.dart';
 
 /// The Frame's actual display. What it plays and how comes from the app
@@ -1024,7 +1025,19 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     _keepBar();
   }
 
+  /// The quiet trace of a wipe (2026-11-18), also where swiping does nothing.
+  final _dust = GlobalKey<SwipeDustState>();
+
+  void _onSwipeStart(DragStartDetails details) {
+    if (!_quiet) _dust.currentState?.start(details.localPosition);
+  }
+
+  void _onSwipeUpdate(DragUpdateDetails details) {
+    if (!_quiet) _dust.currentState?.moveTo(details.localPosition);
+  }
+
   void _onSwipe(DragEndDetails details) {
+    _dust.currentState?.end();
     if (_quiet) return;
     final v = details.primaryVelocity ?? 0;
     if (v < -300 && _controls.next) {
@@ -1430,10 +1443,13 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         onLongPress: _showGrid || _zoomHeld ? null : _onLongPress,
         // Swiping like the big buttons (2026-10-17): left = Weiter (from
         // level 2), right = Zurück (from level 3) -- the same switches.
+        onHorizontalDragStart: _showGrid || _zoomHeld ? null : _onSwipeStart,
+        onHorizontalDragUpdate: _showGrid || _zoomHeld ? null : _onSwipeUpdate,
         onHorizontalDragEnd: _showGrid || _zoomHeld ? null : _onSwipe,
         child: Stack(
           children: [
             Positioned.fill(child: body),
+            if (!_showGrid) Positioned.fill(child: SwipeDust(key: _dust)),
             // Top: only album · sender on the left and the clock on the
             // right -- fits also upright (2026-10-17). What round plays shows
             // on its button (coral border), no extra pill in the middle.
