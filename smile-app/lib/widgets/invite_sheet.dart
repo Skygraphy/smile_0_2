@@ -138,7 +138,13 @@ class _InviteSheetState extends State<_InviteSheet> {
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
       child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+        // The keyboard, or else Android's navigation bar (2026-11-19: "Per
+        // E-Mail einladen" sat half under |||, ○, <).
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom > 0
+              ? MediaQuery.viewInsetsOf(context).bottom
+              : MediaQuery.viewPaddingOf(context).bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
