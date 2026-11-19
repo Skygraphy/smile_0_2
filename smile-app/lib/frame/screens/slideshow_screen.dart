@@ -1148,22 +1148,16 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final sorted = [..._assignedChannels]..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));
     final picked = await showModalBottomSheet<String>(
       context: context,
-      showDragHandle: true,
       // Scrolls when there are more albums than fit (found 2026-10-10 with
       // 7 albums on the landscape P610: "bottom overflowed").
       isScrollControlled: true,
-      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
-      builder: (context) => SafeArea(
+      backgroundColor: const Color(0xFF1C1E22),
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85, maxWidth: MediaQuery.sizeOf(context).width * 0.96),
+      builder: (context) => _FrameSheet(
+        title: SmileTexts.of(context).chooseAlbum,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(SmileTexts.of(context).chooseAlbum, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-              ),
-            ),
             Flexible(
               child: ListView(
                 shrinkWrap: true,
@@ -1209,16 +1203,16 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final current = _settings?.slideshowIntervalSeconds ?? 10;
     final picked = await showModalBottomSheet<int>(
       context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
+      backgroundColor: const Color(0xFF1C1E22),
+      constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.96),
+      builder: (context) => _FrameSheet(
+        title: t.durationQuestion,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          padding: const EdgeInsets.fromLTRB(32, 0, 32, 28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(t.durationQuestion, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 20),
               _ChoiceBar(parts: [
                 for (final seconds in const [5, 10, 20, 60])
                   (
@@ -1264,7 +1258,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     final screen = MediaQuery.sizeOf(context);
     await showModalBottomSheet<void>(
       context: context,
-      showDragHandle: true,
+      showDragHandle: false,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF1C1E22),
       constraints: BoxConstraints(maxHeight: screen.height * 0.92, maxWidth: screen.width * 0.96),
@@ -1359,7 +1353,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
             _SwitchRow(icon: SmileIcons.rotate, label: t.rotateShort, value: rotate, onTap: () => set('rotate_with_device', !rotate, () => rotate = !rotate)),
           ];
 
-          return SafeArea(
+          return _FrameSheet(
+            title: t.playbackTitle,
             child: LayoutBuilder(
               builder: (context, box) {
                 final wide = box.maxWidth >= 900;
@@ -1368,8 +1363,6 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(t.playbackTitle, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Colors.white)),
-                      const SizedBox(height: 22),
                       if (wide)
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2453,6 +2446,90 @@ class _BigButton extends StatelessWidget {
 }
 
 /// One big choice in the Frame's sheets (display time, playback).
+/// Every window on the Frame (Ernst 2026-11-19: Oma won't know to tap
+/// outside): the title with a big "Fertig" button that always stays in
+/// view, and it closes by itself after a minute nobody touches it. Each
+/// change is saved at once -- "Fertig" only closes, nothing is lost.
+class _FrameSheet extends StatefulWidget {
+  const _FrameSheet({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  State<_FrameSheet> createState() => _FrameSheetState();
+}
+
+class _FrameSheetState extends State<_FrameSheet> {
+  Timer? _idle;
+
+  void _arm() {
+    _idle?.cancel();
+    _idle = Timer(const Duration(minutes: 1), () {
+      if (mounted) Navigator.of(context).maybePop();
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _arm();
+  }
+
+  @override
+  void dispose() {
+    _idle?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = SmileTexts.of(context);
+    return Listener(
+      onPointerDown: (_) => _arm(),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(32, 24, 24, 20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(widget.title, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Colors.white)),
+                  ),
+                  const SizedBox(width: 16),
+                  Material(
+                    color: SmileTheme.primary,
+                    borderRadius: BorderRadius.circular(18),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(SmileIcons.check, size: 28, color: Color(0xFF1A0F0E)),
+                            const SizedBox(width: 10),
+                            Text(t.done, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF1A0F0E))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Flexible(child: widget.child),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// One question as one bar (design A, Ernst 2026-11-19): the parts share
 /// the width -- never wider than the screen -- and the chosen one is filled
 /// with a check. A long label wraps onto a second line instead of scrolling.
