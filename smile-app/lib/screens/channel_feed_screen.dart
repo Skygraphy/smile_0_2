@@ -27,6 +27,7 @@ import 'album_info_screen.dart';
 import 'capture_preview_screen.dart';
 import 'send_preview_screen.dart';
 import '../services/preferred_frame.dart';
+import '../widgets/empty_album_guard.dart';
 import '../widgets/friendly_error.dart';
 import '../widgets/capture_choice.dart';
 import '../widgets/album_covers.dart';
@@ -432,6 +433,11 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
       if (picked.remember) await PreferredFrame.set(picked.frameId);
     }
     final target = frame;
+    if (!mounted) return;
+    if (!await confirmAlbumOnFrame(context,
+        channelId: widget.channelId, albumName: _shownName, frameName: frameNameOf(target.frameId, target.frameName))) {
+      return;
+    }
     String? previous;
     try {
       previous = (await FrameService().getFrame(target.frameId)).currentChannelId;

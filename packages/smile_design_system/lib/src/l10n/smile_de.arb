@@ -1841,5 +1841,9 @@
   "proposalFrom": "Vorschlag von {name} für {album}",
   "@proposalFrom": {"placeholders":{"name":{"type":"String"},"album":{"type":"String"}}},
   "proposalApproved": "{name} ist eingeladen.",
-  "@proposalApproved": {"placeholders":{"name":{"type":"String"}}}
+  "@proposalApproved": {"placeholders":{"name":{"type":"String"}}},
+  "emptyAlbumTitle": "Das Album ist noch leer",
+  "emptyAlbumMessage": "„{album}“ hat noch keine Fotos oder Videos. {frame} würde bis dahin nichts zeigen.",
+  "@emptyAlbumMessage": {"placeholders":{"album":{"type":"String"},"frame":{"type":"String"}}},
+  "emptyAlbumShowAnyway": "Trotzdem zeigen"
 }

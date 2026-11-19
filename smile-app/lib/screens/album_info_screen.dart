@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/offline_http_client.dart';
+import '../widgets/empty_album_guard.dart';
 import '../widgets/frame_status.dart';
 import '../widgets/friendly_error.dart';
 
@@ -238,6 +239,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   Future<void> _showHereNow(FrameShowing frame) async {
     final messenger = ScaffoldMessenger.of(context);
     final t = SmileTexts.of(context);
+    if (!await confirmAlbumOnFrame(context, channelId: widget.channelId, albumName: _shownName, frameName: frame.frameName)) return;
     final saved = await LocalChanges.instance.run(
       overrides: {LocalChanges.frameAlbum(frame.frameId): widget.channelId},
       commit: () => FrameService().showChannelNow(frameId: frame.frameId, channelId: widget.channelId),
@@ -376,7 +378,11 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
               ],
             ),
           );
-    if (frame == null) return;
+    if (frame == null || !mounted) return;
+    if (!await confirmAlbumOnFrame(context,
+        channelId: widget.channelId, albumName: _shownName, frameName: frameNameOf(frame.frameId, frame.frameName))) {
+      return;
+    }
     final saved = await LocalChanges.instance.run(
       overrides: {LocalChanges.frameAlbum(frame.frameId): widget.channelId},
       commit: () async {

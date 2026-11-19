@@ -1152,5 +1152,9 @@
   "proposalFrom": "Suggested by {name} for {album}",
   "@proposalFrom": {"placeholders":{"name":{"type":"String"},"album":{"type":"String"}}},
   "proposalApproved": "{name} has been invited.",
-  "@proposalApproved": {"placeholders":{"name":{"type":"String"}}}
+  "@proposalApproved": {"placeholders":{"name":{"type":"String"}}},
+  "emptyAlbumTitle": "The album is still empty",
+  "emptyAlbumMessage": "“{album}” has no photos or videos yet. {frame} would show nothing until then.",
+  "@emptyAlbumMessage": {"placeholders":{"album":{"type":"String"},"frame":{"type":"String"}}},
+  "emptyAlbumShowAnyway": "Show anyway"
 }

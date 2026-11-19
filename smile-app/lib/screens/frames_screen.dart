@@ -12,6 +12,7 @@ import '../services/frame_service.dart';
 import '../services/local_changes.dart';
 import '../services/offline.dart';
 import '../services/sync_bus.dart';
+import '../widgets/empty_album_guard.dart';
 import '../widgets/album_covers.dart';
 import '../widgets/frame_status.dart';
 import '../widgets/friendly_error.dart';
@@ -182,6 +183,10 @@ class _FramesScreenState extends State<FramesScreen> with SyncReload {
       ),
     );
     if (picked == null || picked.channelId == current || !mounted) return;
+    if (!await confirmAlbumOnFrame(context,
+        channelId: picked.channelId, albumName: albumNameOf(picked.channelId, picked.channelName), frameName: item.frame.name)) {
+      return;
+    }
     final saved = await LocalChanges.instance.run(
       overrides: {LocalChanges.frameAlbum(item.frame.id): picked.channelId},
       commit: () => _service.showChannelNow(frameId: item.frame.id, channelId: picked.channelId),

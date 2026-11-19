@@ -4283,4 +4283,15 @@ class SmileTextsDe extends SmileTexts {
   String proposalApproved(String name) {
     return '$name ist eingeladen.';
   }
+
+  @override
+  String get emptyAlbumTitle => 'Das Album ist noch leer';
+
+  @override
+  String emptyAlbumMessage(String album, String frame) {
+    return '„$album“ hat noch keine Fotos oder Videos. $frame würde bis dahin nichts zeigen.';
+  }
+
+  @override
+  String get emptyAlbumShowAnyway => 'Trotzdem zeigen';
 }

@@ -6972,6 +6972,24 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'{name} ist eingeladen.'**
   String proposalApproved(String name);
+
+  /// No description provided for @emptyAlbumTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Album ist noch leer'**
+  String get emptyAlbumTitle;
+
+  /// No description provided for @emptyAlbumMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'„{album}“ hat noch keine Fotos oder Videos. {frame} würde bis dahin nichts zeigen.'**
+  String emptyAlbumMessage(String album, String frame);
+
+  /// No description provided for @emptyAlbumShowAnyway.
+  ///
+  /// In de, this message translates to:
+  /// **'Trotzdem zeigen'**
+  String get emptyAlbumShowAnyway;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../main.dart';
 import '../services/invite_service.dart';
+import '../widgets/empty_album_guard.dart';
 import '../widgets/email_dialog.dart';
 import '../widgets/invite_sheet.dart';
 import 'invite_code_screen.dart';
@@ -157,6 +158,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
 
   Future<void> _showNow(FrameChannelAssignment album) async {
     if (album.channelId == _shownChannelId) return;
+    if (!await confirmAlbumOnFrame(context, channelId: album.channelId, albumName: album.channelName, frameName: _shownName)) return;
     final saved = await LocalChanges.instance.run(
       overrides: {LocalChanges.frameAlbum(widget.frameId): album.channelId},
       commit: () => _service.showChannelNow(frameId: widget.frameId, channelId: album.channelId),
@@ -262,7 +264,8 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
         ],
       ),
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
+    if (!await confirmAlbumOnFrame(context, channelId: picked.channelId, albumName: picked.channelName, frameName: _shownName)) return;
     final saved = await LocalChanges.instance.run(
       overrides: {LocalChanges.frameAlbum(widget.frameId): picked.channelId},
       commit: () async {

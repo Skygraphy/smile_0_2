@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/offline_http_client.dart';
+import '../widgets/empty_album_guard.dart';
 import '../widgets/friendly_error.dart';
 
 import '../services/frame_service.dart';
@@ -252,6 +253,10 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
   Future<void> _showNow(FrameChannelAssignment assignment) async {
     final messenger = ScaffoldMessenger.of(context);
     final t = SmileTexts.of(context);
+    if (!await confirmAlbumOnFrame(context,
+        channelId: assignment.channelId, albumName: assignment.channelName, frameName: _frame.name)) {
+      return;
+    }
     final saved = await LocalChanges.instance.run(
       overrides: {LocalChanges.frameAlbum(_frame.id): assignment.channelId},
       commit: () => widget.frameService.showChannelNow(frameId: _frame.id, channelId: assignment.channelId),
