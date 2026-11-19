@@ -23,6 +23,7 @@ class FrameControls {
     this.duration = false,
     this.playback = false,
     this.captions = false,
+    this.soundAll = false,
   });
 
   final bool next;
@@ -41,6 +42,9 @@ class FrameControls {
   /// The "Titel" button (migrations/0084, level 4).
   final bool captions;
 
+  /// Ton for all videos from the Frame's sound button (2026-11-19, level 3).
+  final bool soundAll;
+
   /// Everything -- the Frame unlocked with its code (Kindersperre, 0089).
   static const all = FrameControls(
     next: true,
@@ -54,11 +58,12 @@ class FrameControls {
     duration: true,
     playback: true,
     captions: true,
+    soundAll: true,
   );
 
   /// Level 1 "Nur zuschauen": touches are ignored.
   bool get any =>
-      next || back || pause || newest || favorite || favorites || overview || album || duration || playback || captions;
+      next || back || pause || newest || favorite || favorites || overview || album || duration || playback || captions || soundAll;
 
   factory FrameControls.fromJson(Map<String, dynamic>? json) {
     bool on(String key) => json?[key] == true;
@@ -74,6 +79,7 @@ class FrameControls {
       duration: on('duration'),
       playback: on('playback'),
       captions: on('captions'),
+      soundAll: on('sound_all'),
     );
   }
 }

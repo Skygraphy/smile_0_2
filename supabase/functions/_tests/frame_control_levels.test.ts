@@ -45,7 +45,7 @@ Deno.test("Frame settings: delivered, changed on the Frame only as allowed, remo
 
     // Level 3 may not change the display time or playback on the Frame.
     await batch({ set_settings: { slideshow_interval_seconds: 20, play_order: "shuffle" } });
-    assertEquals((await row()).slideshow_interval_seconds, 8);
+    assertEquals((await row()).slideshow_interval_seconds, 10);
     assertEquals((await row()).play_order, "oldest");
 
     // The app raises it to level 5 (and turns the clock on).

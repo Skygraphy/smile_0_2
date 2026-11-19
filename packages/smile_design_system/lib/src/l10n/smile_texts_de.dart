@@ -1970,7 +1970,8 @@ class SmileTextsDe extends SmileTexts {
   String get level3 => 'Einfach';
 
   @override
-  String get level3Hint => 'Zurück, Pause, Weiter und Neueste Fotos.';
+  String get level3Hint =>
+      'Zurück, Pause, Weiter, Neueste Fotos und Ton für alle Videos.';
 
   @override
   String get level4 => 'Komfort';
@@ -4163,4 +4164,40 @@ class SmileTextsDe extends SmileTexts {
   @override
   String get planSwitched =>
       'Gewechselt. Die neue Stufe gilt ab sofort, der neue Preis ab der nächsten Zahlung.';
+
+  @override
+  String get allowSoundAll => 'Ton für alle Videos ein- oder ausschalten';
+
+  @override
+  String get soundAskOff => 'Ton aus …';
+
+  @override
+  String get soundAskOn => 'Ton an …';
+
+  @override
+  String get soundOnlyThis => 'Nur bei diesem Video';
+
+  @override
+  String get soundForAll => 'Bei allen Videos';
+
+  @override
+  String get soundAllOn => 'Ab jetzt alle Videos mit Ton';
+
+  @override
+  String get soundAllOff => 'Ab jetzt alle Videos ohne Ton';
+
+  @override
+  String get soundOneOn => 'Ton an, nur bei diesem Video';
+
+  @override
+  String get soundOneOff => 'Ton aus, nur bei diesem Video';
+
+  @override
+  String get liveFrameSound => 'Am Frame: mit Ton';
+
+  @override
+  String get liveFrameMuted => 'Am Frame: ohne Ton';
+
+  @override
+  String get liveSoundApp => 'Ton in der App';
 }

@@ -53,6 +53,10 @@ class VideoOnScreen {
 
   Duration get position => _controller.value.position;
 
+  /// For the live sound in the app (2026-11-19): is it running, and audible?
+  bool get playing => _controller.value.isPlaying;
+  double get volume => _controller.value.volume;
+
   /// Where the video sits on the screen (logical pixels), or null.
   Rect? get rect {
     if (!_context.mounted) return null;

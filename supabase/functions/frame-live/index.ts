@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
-  let body: { action?: string; frame_id?: string; since?: string; access_token?: string; image?: string; state?: unknown };
+  let body: { action?: string; frame_id?: string; since?: string; video_have?: string; access_token?: string; image?: string; state?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -151,8 +151,25 @@ Deno.serve(async (req) => {
       const { data } = await admin.storage.from(BUCKET).download(path(frame.id as string));
       if (data) image = encodeBase64(new Uint8Array(await data.arrayBuffer()));
     }
+    // The live sound (2026-11-19): the video playing on the Frame, so the
+    // app can play its sound at the same place -- signed only when the app
+    // does not have this video yet. age_ms: how old the reported position
+    // is, measured on one clock (the server's).
+    // deno-lint-ignore no-explicit-any
+    const state = live.state as any;
+    let videoUrl: string | null = null;
+    const videoId = typeof state?.video_id === "string" ? state.video_id : null;
+    if (videoId && videoId !== body.video_have) {
+      const { data: media } = await admin.from("media_items").select("storage_path_display, media_type").eq("id", videoId).maybeSingle();
+      if (media?.storage_path_display && media.media_type === "video") {
+        const { data } = await admin.storage.from("media-display").createSignedUrl(media.storage_path_display as string, 60 * 60);
+        videoUrl = data?.signedUrl ?? null;
+      }
+    }
     return jsonResponse({
       image,
+      video_url: videoUrl,
+      age_ms: live.captured_at ? Math.max(0, now - captured) : null,
       captured_at: live.captured_at,
       state: live.state,
       last_seen_at: frame.last_seen_at,

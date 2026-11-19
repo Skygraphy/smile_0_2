@@ -531,7 +531,7 @@
   "level2": "Browse",
   "level2Hint": "Pause and a big Next button.",
   "level3": "Simple",
-  "level3Hint": "Back, Pause, Next and Newest photos.",
+  "level3Hint": "Back, Pause, Next, Newest photos and sound for all videos.",
   "level4": "Comfort",
   "level4Hint": "Plus Overview, Switch album, Display time and showing or hiding captions.",
   "level5": "Full control",
@@ -1111,5 +1111,17 @@
   "playHintLeave": "You pay for this Space's Frame plan in Google Play. It keeps running until you cancel it there. Keep it if the Frames should keep getting new photos.",
   "playHintDeleteSpace": "You pay for this Space's Frame plan in Google Play. Google keeps charging even if the Space is deleted. Please cancel it in Google Play first.",
   "playHintDeleteAccount": "You pay for a Frame plan in Google Play ({spaces}). Google keeps charging even after your Smile account is deleted. Please cancel it in Google Play first.",
-  "planSwitched": "Switched. The new tier applies right away, the new price from the next payment."
+  "planSwitched": "Switched. The new tier applies right away, the new price from the next payment.",
+  "allowSoundAll": "Turn sound on or off for all videos",
+  "soundAskOff": "Sound off …",
+  "soundAskOn": "Sound on …",
+  "soundOnlyThis": "Only for this video",
+  "soundForAll": "For all videos",
+  "soundAllOn": "All videos with sound from now on",
+  "soundAllOff": "All videos without sound from now on",
+  "soundOneOn": "Sound on, only for this video",
+  "soundOneOff": "Sound off, only for this video",
+  "liveFrameSound": "On the Frame: with sound",
+  "liveFrameMuted": "On the Frame: without sound",
+  "liveSoundApp": "Sound in the app"
 }

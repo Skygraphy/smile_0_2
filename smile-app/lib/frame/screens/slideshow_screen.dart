@@ -232,6 +232,8 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     _remind?.cancel();
     _easyResume?.cancel();
     _easyFlashTimer?.cancel();
+    _soundChoiceTimer?.cancel();
+    _soundNoteTimer?.cancel();
     _countdown?.cancel();
     _offlineRetryTimer?.cancel();
     _hideBar?.cancel();
@@ -538,10 +540,47 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   bool get _videoWithSound =>
       _soundForSlide == _slideNumber ? _soundOverride : (_settings?.videoSound ?? true);
 
+  /// Ton for all videos from the Frame (2026-11-19, controls.sound_all):
+  /// a tap on the sound button asks "only this video / all videos"; no
+  /// answer within 8 seconds counts as "only this video".
+  bool _soundChoice = false;
+  Timer? _soundChoiceTimer;
+  String? _soundNote;
+  Timer? _soundNoteTimer;
+
   void _toggleSound() {
+    if (!_controls.soundAll) {
+      _setSound(all: false);
+      return;
+    }
+    _hideBar?.cancel();
+    _soundChoiceTimer?.cancel();
+    final slide = _slideNumber;
+    setState(() => _soundChoice = true);
+    _soundChoiceTimer = Timer(const Duration(seconds: 8), () {
+      if (!mounted || !_soundChoice) return;
+      if (_slideNumber == slide && _showingVideo) {
+        _setSound(all: false);
+      } else {
+        setState(() => _soundChoice = false);
+      }
+    });
+  }
+
+  void _setSound({required bool all}) {
+    final t = SmileTexts.of(context);
+    final on = !_videoWithSound;
+    _soundChoiceTimer?.cancel();
     setState(() {
-      _soundOverride = !_videoWithSound;
+      _soundChoice = false;
+      _soundOverride = on;
       _soundForSlide = _slideNumber;
+      _soundNote = all ? (on ? t.soundAllOn : t.soundAllOff) : (on ? t.soundOneOn : t.soundOneOff);
+    });
+    if (all) _changeSettings({'video_sound': on});
+    _soundNoteTimer?.cancel();
+    _soundNoteTimer = Timer(const Duration(milliseconds: 2600), () {
+      if (mounted) setState(() => _soundNote = null);
     });
     _keepBar();
   }
@@ -1453,6 +1492,19 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
       'album': ?_channelName(current?.channelId ?? _currentChannelId),
       'sender': ?current?.senderName,
       'video': current?.isVideo ?? false,
+      // The live sound in the app (2026-11-19): which video, where, audible.
+      ...?_liveVideo(current),
+    };
+  }
+
+  Map<String, dynamic>? _liveVideo(CachedMediaEntry? current) {
+    final video = VideoSlide.onScreen;
+    if (current == null || !current.isVideo || video == null || _showGrid || _quiet) return null;
+    return {
+      'video_id': current.mediaItemId,
+      'position_ms': video.position.inMilliseconds,
+      'video_playing': video.playing,
+      'sound': _videoWithSound && video.volume > 0.05,
     };
   }
 
@@ -1726,8 +1778,25 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
             if (!_showGrid && _paused && !_easyStopped && !_barVisible)
               Positioned(bottom: aboveTitle + 24, left: 0, right: 0, child: Center(child: _pausedPill(t))),
             // A video: the big sound button in the middle, with the bar.
-            if (!_showGrid && _showingVideo && _barVisible)
+            if (!_showGrid && _showingVideo && _soundChoice)
+              Positioned.fill(child: Center(child: _soundChoiceCard(t)))
+            else if (!_showGrid && _showingVideo && _barVisible)
               Positioned.fill(child: Center(child: _soundButton(t))),
+            if (_soundNote != null && !_showGrid)
+              Positioned(
+                top: 110,
+                left: 0,
+                right: 0,
+                child: IgnorePointer(
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.65), borderRadius: BorderRadius.circular(30)),
+                      child: Text(_soundNote!, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ),
+              ),
             // At the bottom: the photo's title (2026-10-17, always while titles
             // are on) and, when open, the buttons below it.
             if (!_showGrid)
@@ -1864,6 +1933,44 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
             DateFormat.MMMMEEEEd(Localizations.localeOf(context).toLanguageTag()).format(now),
             style: const TextStyle(color: Colors.white, fontSize: 18),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// "Ton aus … nur bei diesem Video / bei allen Videos" (2026-11-19).
+  Widget _soundChoiceCard(SmileTexts t) {
+    final on = _videoWithSound;
+    Widget choice(String label, bool main, VoidCallback onTap) => SizedBox(
+          width: double.infinity,
+          child: Material(
+            color: main ? SmileTheme.primary : const Color(0xFF2A2626),
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
+                child: Text(label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: main ? const Color(0xFF1A0F0E) : Colors.white)),
+              ),
+            ),
+          ),
+        );
+    return Container(
+      width: 480,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: const Color(0xEE1D2024), borderRadius: BorderRadius.circular(26)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(on ? t.soundAskOff : t.soundAskOn,
+              style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 18),
+          choice(t.soundOnlyThis, true, () => _setSound(all: false)),
+          const SizedBox(height: 12),
+          choice(t.soundForAll, false, () => _setSound(all: true)),
         ],
       ),
     );

@@ -1081,7 +1081,7 @@
   "level2": "Blättern",
   "level2Hint": "Pause und ein großer Weiter-Knopf.",
   "level3": "Einfach",
-  "level3Hint": "Zurück, Pause, Weiter und Neueste Fotos.",
+  "level3Hint": "Zurück, Pause, Weiter, Neueste Fotos und Ton für alle Videos.",
   "level4": "Komfort",
   "level4Hint": "Dazu Übersicht, Album wechseln, Anzeigedauer und Titel ein- oder ausblenden.",
   "level5": "Alles selbst",
@@ -1800,5 +1800,17 @@
   "playHintDeleteSpace": "Du zahlst das Frame-Abo dieses Space über Google Play. Google bucht es weiter ab, auch wenn der Space gelöscht ist. Kündige es bitte zuerst in Google Play.",
   "playHintDeleteAccount": "Du zahlst ein Frame-Abo über Google Play ({spaces}). Google bucht es weiter ab, auch wenn dein Smile-Konto gelöscht ist. Kündige es bitte zuerst in Google Play.",
   "@playHintDeleteAccount": {"placeholders":{"spaces":{"type":"String"}}},
-  "planSwitched": "Gewechselt. Die neue Stufe gilt ab sofort, der neue Preis ab der nächsten Zahlung."
+  "planSwitched": "Gewechselt. Die neue Stufe gilt ab sofort, der neue Preis ab der nächsten Zahlung.",
+  "allowSoundAll": "Ton für alle Videos ein- oder ausschalten",
+  "soundAskOff": "Ton aus …",
+  "soundAskOn": "Ton an …",
+  "soundOnlyThis": "Nur bei diesem Video",
+  "soundForAll": "Bei allen Videos",
+  "soundAllOn": "Ab jetzt alle Videos mit Ton",
+  "soundAllOff": "Ab jetzt alle Videos ohne Ton",
+  "soundOneOn": "Ton an, nur bei diesem Video",
+  "soundOneOff": "Ton aus, nur bei diesem Video",
+  "liveFrameSound": "Am Frame: mit Ton",
+  "liveFrameMuted": "Am Frame: ohne Ton",
+  "liveSoundApp": "Ton in der App"
 }

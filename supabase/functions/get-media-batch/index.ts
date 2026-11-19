@@ -61,12 +61,13 @@ const FRAME_COLUMNS =
 
 // What the Frame may change itself, by the control that allows it, and
 // what each value may be.
-const SETTABLE: Record<string, { control: string; ok: (v: unknown) => boolean }> = {
+const SETTABLE: Record<string, { control: string | string[]; ok: (v: unknown) => boolean }> = {
   slideshow_interval_seconds: { control: "duration", ok: (v) => typeof v === "number" && v >= 3 && v <= 600 },
   play_order: { control: "playback", ok: (v) => ["newest", "oldest", "shuffle"].includes(v as string) },
   end_behavior: { control: "playback", ok: (v) => ["loop", "overview"].includes(v as string) },
   content_mode: { control: "playback", ok: (v) => ["album", "rotate", "recent", "favorites"].includes(v as string) },
-  video_sound: { control: "playback", ok: (v) => typeof v === "boolean" },
+  // Also from the sound button "Bei allen Videos" (sound_all, migrations/0108).
+  video_sound: { control: ["sound_all", "playback"], ok: (v) => typeof v === "boolean" },
   show_clock: { control: "playback", ok: (v) => typeof v === "boolean" },
   show_sender: { control: "playback", ok: (v) => typeof v === "boolean" },
   video_length: { control: "playback", ok: (v) => ["full", "photo", "none"].includes(v as string) },
@@ -138,7 +139,8 @@ Deno.serve(async (req) => {
     const update: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(body.set_settings)) {
       const rule = SETTABLE[key];
-      if (rule && allowed(rule.control) && rule.ok(value)) update[key] = value;
+      const permitted = rule && (Array.isArray(rule.control) ? rule.control.some(allowed) : allowed(rule.control));
+      if (rule && permitted && rule.ok(value)) update[key] = value;
     }
     if (Object.keys(update).length > 0) {
       await supabase.from("frames").update(update).eq("id", claims.frame_id);

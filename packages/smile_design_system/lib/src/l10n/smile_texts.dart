@@ -3287,7 +3287,7 @@ abstract class SmileTexts {
   /// No description provided for @level3Hint.
   ///
   /// In de, this message translates to:
-  /// **'Zurück, Pause, Weiter und Neueste Fotos.'**
+  /// **'Zurück, Pause, Weiter, Neueste Fotos und Ton für alle Videos.'**
   String get level3Hint;
 
   /// No description provided for @level4.
@@ -6774,6 +6774,78 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Gewechselt. Die neue Stufe gilt ab sofort, der neue Preis ab der nächsten Zahlung.'**
   String get planSwitched;
+
+  /// No description provided for @allowSoundAll.
+  ///
+  /// In de, this message translates to:
+  /// **'Ton für alle Videos ein- oder ausschalten'**
+  String get allowSoundAll;
+
+  /// No description provided for @soundAskOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Ton aus …'**
+  String get soundAskOff;
+
+  /// No description provided for @soundAskOn.
+  ///
+  /// In de, this message translates to:
+  /// **'Ton an …'**
+  String get soundAskOn;
+
+  /// No description provided for @soundOnlyThis.
+  ///
+  /// In de, this message translates to:
+  /// **'Nur bei diesem Video'**
+  String get soundOnlyThis;
+
+  /// No description provided for @soundForAll.
+  ///
+  /// In de, this message translates to:
+  /// **'Bei allen Videos'**
+  String get soundForAll;
+
+  /// No description provided for @soundAllOn.
+  ///
+  /// In de, this message translates to:
+  /// **'Ab jetzt alle Videos mit Ton'**
+  String get soundAllOn;
+
+  /// No description provided for @soundAllOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Ab jetzt alle Videos ohne Ton'**
+  String get soundAllOff;
+
+  /// No description provided for @soundOneOn.
+  ///
+  /// In de, this message translates to:
+  /// **'Ton an, nur bei diesem Video'**
+  String get soundOneOn;
+
+  /// No description provided for @soundOneOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Ton aus, nur bei diesem Video'**
+  String get soundOneOff;
+
+  /// No description provided for @liveFrameSound.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Frame: mit Ton'**
+  String get liveFrameSound;
+
+  /// No description provided for @liveFrameMuted.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Frame: ohne Ton'**
+  String get liveFrameMuted;
+
+  /// No description provided for @liveSoundApp.
+  ///
+  /// In de, this message translates to:
+  /// **'Ton in der App'**
+  String get liveSoundApp;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

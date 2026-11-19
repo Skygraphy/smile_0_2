@@ -6,7 +6,7 @@ class FrameControlLevels {
 
   /// In the order the app lists them.
   static const keys = [
-    'easy_stop', 'next', 'back', 'pause', 'newest', 'favorite', 'favorites', 'overview', 'album', 'duration', 'captions', 'playback', //
+    'easy_stop', 'next', 'back', 'pause', 'newest', 'favorite', 'favorites', 'overview', 'album', 'duration', 'sound_all', 'captions', 'playback', //
   ];
 
   static const _onFrom = {
@@ -19,6 +19,8 @@ class FrameControlLevels {
     // Lieblingsbilder (migrations/0076).
     'favorite': 3,
     'favorites': 3,
+    // Ton for all videos from the Frame's sound button (2026-11-19, migrations/0108).
+    'sound_all': 3,
     'overview': 4,
     'album': 4,
     'duration': 4,

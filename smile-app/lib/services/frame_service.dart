@@ -559,8 +559,8 @@ class FrameService {
   /// Looking at the Frame's screen live (frame-live, 2026-11-18): "start",
   /// "get" (every few seconds, keeps it going) or "stop".
   /// [since]: the picture already shown, so only a new one comes along.
-  Future<Map<String, dynamic>> live(String frameId, String action, {String? since}) async {
-    final r = await invokeEdge('frame-live', body: {'action': action, 'frame_id': frameId, 'since': ?since});
+  Future<Map<String, dynamic>> live(String frameId, String action, {String? since, String? videoHave}) async {
+    final r = await invokeEdge('frame-live', body: {'action': action, 'frame_id': frameId, 'since': ?since, 'video_have': ?videoHave});
     final data = r.data;
     return data is Map ? data.cast<String, dynamic>() : const {};
   }
