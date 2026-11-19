@@ -54,6 +54,7 @@ Deno.serve(async (req) => {
   if (new Date(invite.expires_at) < new Date()) return jsonResponse({ error: "expired_code" }, 410);
 
   if (invite.kind === "space_co_owner") return await coOwner(admin, invite.target_id, userId, body.via);
+  if (invite.kind === "album_creator") return await albumCreator(admin, invite.target_id, userId, body.via);
   if (invite.kind === "frame_admin") return await frameAdmin(admin, invite.target_id, userId, body.via);
   const { data: channel } = await admin
     .from("channels")
@@ -278,6 +279,44 @@ async function coOwner(admin: Admin, spaceId: string, userId: string, via: strin
     .from("space_co_owner_invites")
     .update({ status: "accepted", decided_at: now() })
     .eq("id", id);
+  if (error) return jsonResponse({ error: "redeem_failed", detail: error.message }, 500);
+  return jsonResponse({ status: "joined", ...result });
+}
+
+/** "Darf Alben anlegen" (migrations/0110): in person (QR) only, like Co-Admin. */
+async function albumCreator(admin: Admin, spaceId: string, userId: string, via: string): Promise<Response> {
+  if (via !== "qr") return jsonResponse({ error: "qr_only" }, 403);
+  const { data: space } = await admin.from("spaces").select("id, name, deleted_at").eq("id", spaceId).maybeSingle();
+  if (!space || space.deleted_at) return jsonResponse({ error: "invalid_code" }, 404);
+  const result = { kind: "album_creator", space_id: space.id, space_name: space.name };
+  const { data: manages } = await admin.rpc("access_manages_space", { p_user: userId, p_space: space.id });
+  const { data: already } = await admin
+    .from("space_album_creators")
+    .select("user_id")
+    .eq("space_id", space.id)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (already || manages === true) return jsonResponse({ status: "already_album_creator", ...result });
+  const { data: code } = await admin.from("invite_codes").select("created_by").eq("kind", "album_creator").eq("target_id", space.id)
+    .order("created_at", { ascending: false }).limit(1).maybeSingle();
+  const { data: pending } = await admin
+    .from("space_album_creator_invites")
+    .select("id")
+    .eq("space_id", space.id)
+    .eq("invitee_user_id", userId)
+    .eq("status", "pending")
+    .maybeSingle();
+  let id = pending?.id;
+  if (!id) {
+    const { data: created, error } = await admin
+      .from("space_album_creator_invites")
+      .insert({ space_id: space.id, invitee_user_id: userId, invited_by: code?.created_by ?? null })
+      .select("id")
+      .single();
+    if (error) return jsonResponse({ error: "redeem_failed", detail: error.message }, 500);
+    id = created.id;
+  }
+  const { error } = await admin.from("space_album_creator_invites").update({ status: "accepted", decided_at: now() }).eq("id", id);
   if (error) return jsonResponse({ error: "redeem_failed", detail: error.message }, 500);
   return jsonResponse({ status: "joined", ...result });
 }

@@ -117,6 +117,17 @@ const de = {
       ? `${p.actor ?? de.someone} hat dir erlaubt, in ${p.space} Alben anzulegen.`
       : `Du kannst in ${p.space} keine neuen Alben mehr anlegen. Deine Alben bleiben.`,
   }),
+  // "Darf Alben anlegen" by invitation (migrations/0110).
+  albumCreatorInvite: (p: { actor: Who; space: string }): Notice => ({
+    title: "Einladung",
+    body: `${p.actor ?? de.someone} lädt dich ein, in ${p.space} Alben anzulegen.`,
+  }),
+  albumCreatorDecided: (p: { person: Who; space: string; accepted: boolean }): Notice => ({
+    title: p.accepted ? "Einladung angenommen" : "Einladung abgelehnt",
+    body: p.accepted
+      ? `${p.person ?? de.someone} kann jetzt in ${p.space} Alben anlegen.`
+      : `${p.person ?? de.someone} möchte in ${p.space} keine Alben anlegen.`,
+  }),
   albumRenamed: (p: { actor: Who; oldName: string; newName: string }): Notice => ({
     title: "Album umbenannt",
     body: `${p.actor ?? de.someone} hat das Album ${p.oldName} in ${p.newName} umbenannt.`,

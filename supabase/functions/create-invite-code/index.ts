@@ -13,7 +13,7 @@ import { resolveSpaceAccess } from "../_shared/space-access.ts";
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-const KINDS = ["album_member", "album_share", "space_co_owner", "frame_admin"] as const;
+const KINDS = ["album_member", "album_share", "space_co_owner", "frame_admin", "album_creator"] as const;
 type Kind = (typeof KINDS)[number];
 // No look-alikes: no 0/O, 1/I/L.
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -58,6 +58,13 @@ Deno.serve(async (req) => {
     const access = await resolveSpaceAccess(admin, frame.space_id, userId);
     if (!access.manages && !access.isStaff) return jsonResponse({ error: "not_space_manager" }, 403);
     targetName = frame.name;
+  } else if (body.kind === "album_creator") {
+    // "Darf Alben anlegen" (migrations/0110): the Space's Admin or a Co-Admin.
+    const { data: space } = await admin.from("spaces").select("id, name, deleted_at").eq("id", body.target_id).maybeSingle();
+    if (!space || space.deleted_at) return jsonResponse({ error: "space_not_found" }, 404);
+    const access = await resolveSpaceAccess(admin, space.id, userId);
+    if (!access.manages && !access.isStaff) return jsonResponse({ error: "not_space_manager" }, 403);
+    targetName = space.name;
   } else if (body.kind === "space_co_owner") {
     const { data: space } = await admin.from("spaces").select("id, name, deleted_at").eq("id", body.target_id).maybeSingle();
     if (!space || space.deleted_at) return jsonResponse({ error: "space_not_found" }, 404);

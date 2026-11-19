@@ -42,7 +42,9 @@ enum InviteKind {
   albumMember('album_member'),
   albumShare('album_share'),
   spaceCoOwner('space_co_owner'),
-  frameAdmin('frame_admin');
+  frameAdmin('frame_admin'),
+  // "Darf Alben anlegen" (migrations/0110).
+  albumCreator('album_creator');
 
   const InviteKind(this.wire);
   final String wire;

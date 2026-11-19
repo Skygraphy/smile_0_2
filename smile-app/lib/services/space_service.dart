@@ -117,41 +117,92 @@ class MyCoOwnerInvite {
 /// founder's account being deleted outright, not a voluntary handover) is
 /// handled automatically by a DB trigger, not from here -- see the
 /// migration's `handle_space_owner_removal`.
-/// A person of a Space -- in one of its albums, not managing it -- and
-/// whether they may create albums there (migrations/0109).
-class SpacePerson {
-  SpacePerson({required this.userId, required this.displayName, required this.avatarPath, required this.createsAlbums});
+/// Who may create albums in a Space, or is invited to (migrations/0110).
+class AlbumCreatorEntry {
+  AlbumCreatorEntry({required this.userId, required this.displayName, required this.avatarPath, required this.pending, this.inviteId});
 
   final String userId;
   final String? displayName;
   final String? avatarPath;
-  final bool createsAlbums;
+  final bool pending;
+  final String? inviteId;
 
-  factory SpacePerson.fromJson(Map<String, dynamic> json) => SpacePerson(
+  factory AlbumCreatorEntry.fromJson(Map<String, dynamic> json) => AlbumCreatorEntry(
         userId: json['user_id'] as String,
         displayName: json['display_name'] as String?,
         avatarPath: json['avatar_path'] as String?,
-        createsAlbums: json['creates_albums'] as bool? ?? false,
+        pending: json['status'] == 'pending',
+        inviteId: json['invite_id'] as String?,
+      );
+}
+
+/// An invitation to me: "in [Space] Alben anlegen" (migrations/0110).
+class MyAlbumCreatorInvite {
+  MyAlbumCreatorInvite({required this.id, required this.spaceId, required this.spaceName, this.inviterName, this.inviterAvatarPath});
+
+  final String id;
+  final String spaceId;
+  final String spaceName;
+  final String? inviterName;
+  final String? inviterAvatarPath;
+
+  factory MyAlbumCreatorInvite.fromJson(Map<String, dynamic> json) => MyAlbumCreatorInvite(
+        id: json['id'] as String,
+        spaceId: json['space_id'] as String,
+        spaceName: json['space_name'] as String? ?? '',
+        inviterName: json['inviter_name'] as String?,
+        inviterAvatarPath: json['inviter_avatar_path'] as String?,
       );
 }
 
 class SpaceService {
-  /// The people of a Space with their "Darf Alben anlegen" (managers only).
-  Future<List<SpacePerson>> listPeople(String spaceId) async {
-    final rows = await supabase.rpc('space_people', params: {'p_space': spaceId});
-    return (rows as List).cast<Map<String, dynamic>>().map(SpacePerson.fromJson).toList();
+  // --- "Darf Alben anlegen" by invitation (migrations/0110) ---------------
+
+  /// Who has the right and who is invited (the Space's managers only).
+  Future<List<AlbumCreatorEntry>> listAlbumCreators(String spaceId) async {
+    final rows = await supabase.rpc('album_creator_roster', params: {'p_space': spaceId});
+    return (rows as List).cast<Map<String, dynamic>>().map(AlbumCreatorEntry.fromJson).toList();
   }
 
-  /// Gives or takes "Darf Alben anlegen" (RLS: managers, people of the Space).
-  Future<void> setAlbumCreator({required String spaceId, required String userId, required bool on}) async {
-    if (on) {
-      await supabase.from('space_album_creators').upsert({'space_id': spaceId, 'user_id': userId}, ignoreDuplicates: true);
-    } else {
-      await supabase.from('space_album_creators').delete().eq('space_id', spaceId).eq('user_id', userId);
+  Future<void> inviteAlbumCreatorByEmail({required String spaceId, required String email}) =>
+      _inviteAlbumCreator({'space_id': spaceId, 'email': email}, spaceId);
+
+  Future<void> inviteAlbumCreator({required String spaceId, required String userId}) =>
+      _inviteAlbumCreator({'space_id': spaceId, 'user_id': userId}, spaceId);
+
+  Future<void> _inviteAlbumCreator(Map<String, dynamic> body, String spaceId) async {
+    final response = await invokeEdge('invite-album-creator', body: body);
+    final data = response.data as Map<String, dynamic>?;
+    final status = data?['status'] as String?;
+    if (status != 'invited' && status != 'already_album_creator') {
+      throw SpaceServiceException(data?['error'] as String? ?? 'unknown_error');
     }
+    LocalChanges.saved(tablesChanged({'space_album_creator_invites'}, spaceIds: {spaceId}));
   }
 
-  /// Admin and Co-Admins (RLS spaces_update since migrations/0047).
+  Future<void> withdrawAlbumCreatorInvite(String inviteId) async {
+    await supabase.from('space_album_creator_invites').delete().eq('id', inviteId);
+  }
+
+  /// Taken away by a manager, or given back by the person.
+  Future<void> removeAlbumCreator({required String spaceId, required String userId}) async {
+    await supabase.from('space_album_creators').delete().eq('space_id', spaceId).eq('user_id', userId);
+    LocalChanges.saved(tablesChanged({'space_album_creators'}, spaceIds: {spaceId}));
+  }
+
+  Future<List<MyAlbumCreatorInvite>> listMyAlbumCreatorInvites() async {
+    final rows = await supabase.rpc('my_album_creator_invites');
+    return (rows as List).cast<Map<String, dynamic>>().map(MyAlbumCreatorInvite.fromJson).toList();
+  }
+
+  Future<void> decideAlbumCreatorInvite(String inviteId, {required bool accept}) async {
+    await supabase.from('space_album_creator_invites').update({
+      'status': accept ? 'accepted' : 'declined',
+      'decided_at': DateTime.now().toUtc().toIso8601String(),
+    }).eq('id', inviteId);
+    LocalChanges.saved(tablesChanged({'space_album_creator_invites', 'space_album_creators'}));
+  }
+
   Future<void> renameSpace({required String spaceId, required String name}) async {
     await supabase.from('spaces').update({'name': name}).eq('id', spaceId);
   }

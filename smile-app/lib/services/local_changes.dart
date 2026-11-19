@@ -65,8 +65,6 @@ class LocalChanges extends ChangeNotifier {
   static String frameName(String id) => 'frame.name:$id';
   static String framePicture(String id) => 'frame.picture:$id';
   static String frameAlbum(String id) => 'frame.album:$id';
-  /// "Darf Alben anlegen" switched, before the server says so (migrations/0109).
-  static String albumCreator(String spaceId, String userId) => 'space.albumcreator:$spaceId:$userId';
   static String frameAlbumRemoved(String frameId, String channelId) => 'frame.removed:$frameId:$channelId';
   static String mediaGone(String id) => 'media.gone:$id';
   static const profileName = 'profile.name';

@@ -4169,19 +4169,14 @@ class SmileTextsEn extends SmileTexts {
   String get liveSoundApp => 'Sound in the app';
 
   @override
-  String albumCreatorsTitle(String space) {
-    return 'People in $space · may create albums';
-  }
+  String get albumCreatorsTitle => 'May create albums';
 
   @override
-  String get albumCreatorOn => 'May create albums';
-
-  @override
-  String get albumCreatorOff => 'Sends to albums';
+  String get albumCreatorOn => 'Creates own albums';
 
   @override
   String get albumCreatorsHint =>
-      'Whoever is switched on here can create albums in this Space and manages their own albums. All other albums and the Frames stay managed by you and the co-admins. A new album does not go onto a Frame by itself, you are asked.';
+      'Nobody yet. Whoever you invite can create and manage their own albums here. Other albums, the Frames and the Space stay managed by you and the co-admins.';
 
   @override
   String get offerFramesTitle => 'Show on which Frame?';
@@ -4196,5 +4191,41 @@ class SmileTextsEn extends SmileTexts {
   @override
   String offerFramesDone(String album, String frames) {
     return '$album is now on $frames.';
+  }
+
+  @override
+  String get albumCreatorInvite => 'Invite someone';
+
+  @override
+  String get albumCreatorRemove => 'Take away the right';
+
+  @override
+  String get albumCreatorAlready => 'May already create albums';
+
+  @override
+  String albumCreatorFor(String space) {
+    return 'Create albums in $space';
+  }
+
+  @override
+  String get qrScanHintAlbumCreator =>
+      'The person scans the code with Smile (News, scan icon at the top). Then they can create albums in this Space.';
+
+  @override
+  String inviteAlbumCreatorFrom(String name) {
+    return '$name invites you to create your own albums here. Albums and Frames of the others stay with them.';
+  }
+
+  @override
+  String acceptedAlbumCreator(String space) {
+    return 'You can now create albums in $space.';
+  }
+
+  @override
+  String get albumRightGiveBack => 'Give back creating albums';
+
+  @override
+  String albumRightGiveBackMessage(String space) {
+    return 'You will no longer be able to create new albums in $space. Your albums stay and are then managed by the admin.';
   }
 }

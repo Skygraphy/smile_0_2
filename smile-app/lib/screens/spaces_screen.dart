@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/tips.dart';
@@ -39,6 +40,8 @@ class _SpaceRow {
 
 class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
   List<_SpaceRow>? _spaces;
+  /// Spaces I may create albums in without managing them (migrations/0110).
+  List<Map<String, dynamic>> _creatorSpaces = const [];
   String? _errorMessage;
 
   @override
@@ -55,6 +58,9 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
   Future<void> onSync() => _load();
 
   Future<void> _load() async {
+    unawaited(supabase.rpc('album_creator_spaces').then((rows) {
+      if (mounted) setState(() => _creatorSpaces = List<Map<String, dynamic>>.from(rows as List));
+    }, onError: (Object _) {}));
     try {
       final results = await Future.wait<dynamic>([
         supabase.from('spaces').select('id, name, owner_id, avatar_path').order('created_at'),
@@ -111,6 +117,30 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
     }
   }
 
+  /// "Alben anlegen zurückgeben" (migrations/0110): the person's own way out.
+  Future<void> _giveBack(Map<String, dynamic> space) async {
+    final t = SmileTexts.of(context);
+    final name = space['name'] as String;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.albumRightGiveBack),
+        content: SmileNamedText(t.albumRightGiveBackMessage(name), names: [name]),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.actionCancel)),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.albumRightGiveBack)),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await widget.spaceService.removeAlbumCreator(spaceId: space['id'] as String, userId: supabase.auth.currentUser!.id);
+      await _load();
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
+    }
+  }
+
   Future<void> _open(_SpaceRow space) async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: space.id, spaceName: space.name)),
@@ -142,7 +172,7 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
                       padding: const EdgeInsets.all(16),
                       child: Text(_errorMessage!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                     ),
-                  if (spaces.isEmpty)
+                  if (spaces.isEmpty && _creatorSpaces.isEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 120),
                       child: SmileEmptyState(
@@ -170,6 +200,19 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
                       ].join(' · '),
                       trailing: Icon(SmileIcons.chevron, size: 16, color: muted),
                       onTap: () => _open(space),
+                    ),
+                  // Spaces I only create albums in: no settings, just the way out.
+                  for (final space in _creatorSpaces)
+                    SmileObjectTile(
+                      leading: objectPicture(
+                        key: LocalChanges.spacePicture(space['id'] as String),
+                        name: space['name'] as String,
+                        serverUrl: avatarPathToUrl(space['avatar_path'] as String?),
+                      ),
+                      title: space['name'] as String,
+                      subtitleIcon: SmileIcons.album,
+                      subtitle: t.albumCreatorOn,
+                      onTap: () => _giveBack(space),
                     ),
                 ],
               ),

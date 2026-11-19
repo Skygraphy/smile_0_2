@@ -206,6 +206,10 @@ class _ScanCodeScreenState extends State<ScanCodeScreen> {
       case 'frame_admin':
         say(result.status == 'joined' ? t.redeemJoinedFrameAdmin(result.frameName ?? '') : t.redeemAlready);
         navigator.pop();
+      // "Darf Alben anlegen" (migrations/0110).
+      case 'album_creator':
+        say(result.status == 'joined' ? t.acceptedAlbumCreator(result.spaceName ?? '') : t.redeemAlready);
+        navigator.pop();
       default:
         say(result.status == 'joined' ? t.redeemJoinedCoAdmin(result.spaceName ?? '') : t.redeemAlready);
         navigator.pop();

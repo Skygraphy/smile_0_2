@@ -8,6 +8,7 @@ import '../widgets/friendly_error.dart';
 import '../main.dart';
 import '../services/frame_service.dart';
 import '../services/membership_service.dart';
+import '../services/avatar_upload.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../services/tips.dart';
@@ -46,6 +47,8 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
   MyInvitesInbox? _inbox;
   List<MyCoOwnerInvite> _coAdminInvites = const [];
   List<MyFrameAdminInvite> _frameAdminInvites = const [];
+  /// "In 'Space' Alben anlegen" (migrations/0110).
+  List<MyAlbumCreatorInvite> _albumCreatorInvites = const [];
   List<Map<String, dynamic>> _mySpaces = const [];
   List<TrashItem> _trash = const [];
   List<Map<String, dynamic>> _history = const [];
@@ -78,6 +81,9 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
     unawaited(loadAlbumCovers().then((c) {
       if (mounted) setState(() => _covers = c);
     }));
+    unawaited(widget.spaceService.listMyAlbumCreatorInvites().then((i) {
+      if (mounted) setState(() => _albumCreatorInvites = i);
+    }, onError: (Object _) {}));
     try {
       final results = await Future.wait<dynamic>([
         widget.membershipService.listMyInvites(includeManaged: true),
@@ -221,6 +227,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
     final nothing =
         albumInvites.isEmpty &&
         _coAdminInvites.isEmpty &&
+        _albumCreatorInvites.isEmpty &&
         managed.isEmpty &&
         mySent.isEmpty &&
         _trash.isEmpty &&
@@ -240,10 +247,30 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
           ),
 
         // --- Einladungen (to me) -----------------------------------------
-        if (_coAdminInvites.isNotEmpty || albumInvites.isNotEmpty || _frameAdminInvites.isNotEmpty)
+        if (_coAdminInvites.isNotEmpty || albumInvites.isNotEmpty || _frameAdminInvites.isNotEmpty || _albumCreatorInvites.isNotEmpty)
           SmileInfoSection(
             title: t.invitations,
             children: [
+              for (final invite in _albumCreatorInvites)
+                SmileObjectTile(
+                  leading: SmileAvatar(
+                    name: invite.inviterName ?? invite.spaceName,
+                    avatarUrl: avatarPathToUrl(invite.inviterAvatarPath),
+                    size: 40,
+                  ),
+                  title: invite.spaceName,
+                  subtitleIcon: SmileIcons.album,
+                  subtitle: t.inviteAlbumCreatorFrom(invite.inviterName ?? t.someone),
+                  subtitleMaxLines: 4,
+                  trailing: _decide(
+                    onAccept: () => _run(
+                      () => widget.spaceService.decideAlbumCreatorInvite(invite.id, accept: true),
+                      success: t.acceptedAlbumCreator(invite.spaceName),
+                      names: [invite.spaceName],
+                    ),
+                    onDecline: () => _run(() => widget.spaceService.decideAlbumCreatorInvite(invite.id, accept: false)),
+                  ),
+                ),
               for (final invite in _frameAdminInvites)
                 SmileObjectTile(
                   leading: SmileAvatar(name: invite.inviterName ?? invite.frameName, avatarUrl: invite.inviterAvatarUrl, size: 40),

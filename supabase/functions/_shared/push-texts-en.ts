@@ -85,6 +85,16 @@ export const en: PushTexts = {
       ? `${p.actor ?? en.someone} allowed you to create albums in ${p.space}.`
       : `You can no longer create new albums in ${p.space}. Your albums stay.`,
   }),
+  albumCreatorInvite: (p) => ({
+    title: "Invitation",
+    body: `${p.actor ?? en.someone} invites you to create albums in ${p.space}.`,
+  }),
+  albumCreatorDecided: (p) => ({
+    title: p.accepted ? "Invitation accepted" : "Invitation declined",
+    body: p.accepted
+      ? `${p.person ?? en.someone} can now create albums in ${p.space}.`
+      : `${p.person ?? en.someone} does not want to create albums in ${p.space}.`,
+  }),
   albumRenamed: (p) => ({ title: "Album renamed", body: `${p.actor ?? en.someone} renamed the album ${p.oldName} to ${p.newName}.` }),
   albumCoverAutomatic: (p) => ({
     title: "Automatic cover",

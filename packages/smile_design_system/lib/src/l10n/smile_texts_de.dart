@@ -4202,19 +4202,14 @@ class SmileTextsDe extends SmileTexts {
   String get liveSoundApp => 'Ton in der App';
 
   @override
-  String albumCreatorsTitle(String space) {
-    return 'Leute in $space · dürfen Alben anlegen';
-  }
+  String get albumCreatorsTitle => 'Dürfen Alben anlegen';
 
   @override
-  String get albumCreatorOn => 'Darf Alben anlegen';
-
-  @override
-  String get albumCreatorOff => 'Sendet in Alben';
+  String get albumCreatorOn => 'Legt eigene Alben an';
 
   @override
   String get albumCreatorsHint =>
-      'Wer hier eingeschaltet ist, kann in diesem Space Alben anlegen und verwaltet seine eigenen Alben. Alle anderen Alben und die Frames verwaltest weiter nur du und die Co-Administratoren. Ein neues Album kommt nicht von selbst auf einen Frame, du wirst gefragt.';
+      'Noch niemand. Wen du einlädst, kann hier eigene Alben anlegen und verwalten. Andere Alben, die Frames und den Space verwaltest weiter nur du und die Co-Administratoren.';
 
   @override
   String get offerFramesTitle => 'Auf welchem Frame zeigen?';
@@ -4229,5 +4224,41 @@ class SmileTextsDe extends SmileTexts {
   @override
   String offerFramesDone(String album, String frames) {
     return '$album ist jetzt auf $frames.';
+  }
+
+  @override
+  String get albumCreatorInvite => 'Jemanden einladen';
+
+  @override
+  String get albumCreatorRemove => 'Recht wegnehmen';
+
+  @override
+  String get albumCreatorAlready => 'Darf schon Alben anlegen';
+
+  @override
+  String albumCreatorFor(String space) {
+    return 'Alben anlegen in $space';
+  }
+
+  @override
+  String get qrScanHintAlbumCreator =>
+      'Die Person scannt den Code mit Smile (Neuigkeiten, Scan-Symbol oben). Danach kann sie in diesem Space Alben anlegen.';
+
+  @override
+  String inviteAlbumCreatorFrom(String name) {
+    return '$name lädt dich ein, hier eigene Alben anzulegen. Alben und Frames der anderen bleiben bei ihnen.';
+  }
+
+  @override
+  String acceptedAlbumCreator(String space) {
+    return 'Du kannst jetzt in $space Alben anlegen.';
+  }
+
+  @override
+  String get albumRightGiveBack => 'Alben anlegen zurückgeben';
+
+  @override
+  String albumRightGiveBackMessage(String space) {
+    return 'Du kannst dann in $space keine neuen Alben mehr anlegen. Deine Alben bleiben, verwaltet werden sie dann vom Administrator.';
   }
 }

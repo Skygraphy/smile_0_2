@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
 
   const [{ data: profile }, target] = await Promise.all([
     supabase.from("profiles").select("display_name").eq("user_id", invite.created_by).maybeSingle(),
-    invite.kind === "space_co_owner"
+    invite.kind === "space_co_owner" || invite.kind === "album_creator"
       ? supabase.from("spaces").select("name").eq("id", invite.target_id).maybeSingle()
       : supabase.from("channels").select("name").eq("id", invite.target_id).maybeSingle(),
   ]);

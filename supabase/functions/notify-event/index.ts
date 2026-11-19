@@ -82,6 +82,8 @@ Deno.serve(async (req) => {
       await albumCreated(supabaseAdmin, body.payload.channel_id!, body.payload.actor_id ?? null);
     } else if (body.kind === "album_right_changed") {
       await albumRightChanged(supabaseAdmin, body.payload);
+    } else if (body.kind === "album_creator_decided") {
+      await albumCreatorDecided(supabaseAdmin, body.payload);
     } else if (body.kind === "album_renamed") {
       await albumRenamed(supabaseAdmin, body.payload);
     } else if (body.kind === "space_renamed") {
@@ -421,7 +423,23 @@ async function albumCreated(supabaseAdmin: Admin, channelId: string, actorId: st
   );
 }
 
-/** "Darf Alben anlegen" given or taken (migrations/0109): the person hears it. */
+/** An invitation to "Darf Alben anlegen" answered (migrations/0110): the inviter hears it. */
+// deno-lint-ignore no-explicit-any
+async function albumCreatorDecided(supabaseAdmin: Admin, p: Record<string, any>) {
+  const { data: space } = await supabaseAdmin.from("spaces").select("name").eq("id", p.space_id).maybeSingle();
+  if (!space) return;
+  // A QR code has no inviter of its own: then the Space's managers.
+  const recipients = p.inviter_id ? [p.inviter_id as string] : await spaceManagerIds(supabaseAdmin, p.space_id as string);
+  const person = await displayName(supabaseAdmin, p.user_id as string);
+  await pushNotificationToUsers(
+    supabaseAdmin,
+    recipients.filter((u) => u !== p.user_id),
+    (t) => t.albumCreatorDecided({ person, space: space.name as string, accepted: p.accepted === true }),
+    { type: "album_creator_decided", space_id: p.space_id as string, space_name: space.name as string },
+  );
+}
+
+/** "Darf Alben anlegen" taken away (migrations/0109/0110): the person hears it. */
 // deno-lint-ignore no-explicit-any
 async function albumRightChanged(supabaseAdmin: Admin, p: Record<string, any>) {
   const { data: space } = await supabaseAdmin.from("spaces").select("name").eq("id", p.space_id).maybeSingle();

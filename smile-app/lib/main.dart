@@ -233,6 +233,8 @@ void openNotificationTarget(Map<String, dynamic> data) {
     case 'channel_share_invite':
     case 'space_co_owner_invite':
     case 'frame_admin_invite':
+    // "Darf Alben anlegen" by invitation (migrations/0110).
+    case 'album_creator_invite':
     // migrations/0057: someone asks to join / see an album -- decided there.
     case 'request_created':
       // The recipient isn't a channel member (or hasn't linked their Space,
@@ -277,6 +279,7 @@ void openNotificationTarget(Map<String, dynamic> data) {
       if (spaceId == null) return;
       navigator.push(MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: spaceId, spaceName: spaceName)));
     case 'space_co_owner_invite_decided':
+    case 'album_creator_decided':
     case 'co_admin_stepped_down':
     case 'frame_changed':
     case 'frame_deleted':

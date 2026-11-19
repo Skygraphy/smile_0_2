@@ -81,8 +81,8 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
   Map<String, String> _homes = const {};
   List<SmileFrame> _frames = const [];
   SpaceCoOwnership? _admins;
-  /// People of the Space and their "Darf Alben anlegen" (migrations/0109).
-  List<SpacePerson> _people = const [];
+  /// Who may create albums here, or is invited to (migrations/0110).
+  List<AlbumCreatorEntry> _albumCreators = const [];
   Map<String, ChannelWithActivity> _covers = const {};
   String? _errorMessage;
 
@@ -234,8 +234,8 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     unawaited(widget.membershipService.sharedInHomeSpaces(widget.spaceId).then((h) {
       if (mounted) setState(() => _homes = h);
     }, onError: (_) {}));
-    unawaited(widget.spaceService.listPeople(widget.spaceId).then((p) {
-      if (mounted) setState(() => _people = p);
+    unawaited(widget.spaceService.listAlbumCreators(widget.spaceId).then((p) {
+      if (mounted) setState(() => _albumCreators = p);
     }, onError: (_) {}));
     try {
       final results = await Future.wait<dynamic>([
@@ -266,13 +266,43 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     }
   }
 
-  /// "Darf Alben anlegen" on or off -- shown at once, the server follows.
-  Future<void> _setAlbumCreator(SpacePerson person, bool on) async {
-    await LocalChanges.instance.run(
-      overrides: {LocalChanges.albumCreator(widget.spaceId, person.userId): on},
-      commit: () => widget.spaceService.setAlbumCreator(spaceId: widget.spaceId, userId: person.userId, on: on),
-      affects: tablesChanged({'space_album_creators'}, spaceIds: {widget.spaceId}),
+  /// "Darf Alben anlegen" by invitation (migrations/0110): by name or QR,
+  /// like a Co-Admin -- the person accepts. Being in an album never gives it.
+  Future<void> _inviteAlbumCreator() async {
+    final t = SmileTexts.of(context);
+    final admins = _admins;
+    final managers = {
+      if (admins != null) admins.founderUserId,
+      for (final c in admins?.coOwners ?? const <SpaceCoOwner>[]) c.userId,
+    };
+    final already = {for (final e in _albumCreators) e.userId};
+    String? whyNot(KnownPerson p) => managers.contains(p.userId)
+        ? t.alreadyAdmin
+        : already.contains(p.userId)
+            ? t.albumCreatorAlready
+            : null;
+    await showInviteSheet(
+      context,
+      title: t.albumCreatorFor(_shownName),
+      people: InviteService().knownPeople(),
+      whyNot: whyNot,
+      onPerson: (person) => _invitePerson(
+        person,
+        () => widget.spaceService.inviteAlbumCreator(spaceId: widget.spaceId, userId: person.userId),
+      ),
+      onShowQr: () => _showCode(InviteKind.albumCreator, t.albumCreatorFor(_shownName), t.qrScanHintAlbumCreator),
+      onEmail: _inviteAlbumCreatorByEmail,
     );
+  }
+
+  Future<void> _inviteAlbumCreatorByEmail() async {
+    final t = SmileTexts.of(context);
+    final email = await showDialog<String>(
+      context: context,
+      builder: (context) => EmailDialog(title: t.albumCreatorInvite, explanation: t.albumCreatorsHint, confirmLabel: t.actionInvite),
+    );
+    if (email == null || email.trim().isEmpty) return;
+    await _run(() => widget.spaceService.inviteAlbumCreatorByEmail(spaceId: widget.spaceId, email: email.trim()));
   }
 
   Future<void> _run(Future<void> Function() action) async {
@@ -769,30 +799,49 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
             ],
           ),
 
-        // --- Who may create albums (2026-11-19, migrations/0109) ----------
-        if (_people.isNotEmpty)
-          ListenableBuilder(
-            listenable: LocalChanges.instance,
-            builder: (context, _) => SmileInfoSection(
-              title: t.albumCreatorsTitle(_shownName),
-              children: [
-                for (final person in _people)
-                  Builder(builder: (context) {
-                    final on = LocalChanges.instance.value<bool>(LocalChanges.albumCreator(widget.spaceId, person.userId)) ??
-                        person.createsAlbums;
-                    final name = (person.displayName ?? '').trim().isEmpty ? t.someone : person.displayName!;
-                    return SmileObjectTile(
-                      leading: SmileAvatar(name: name, avatarUrl: avatarPathToUrl(person.avatarPath), size: 40),
-                      title: name,
-                      subtitle: on ? t.albumCreatorOn : t.albumCreatorOff,
-                      trailing: Switch(value: on, onChanged: (v) => _setAlbumCreator(person, v)),
-                      onTap: () => _setAlbumCreator(person, !on),
-                    );
-                  }),
-                SmileSectionHint(icon: SmileIcons.album, text: t.albumCreatorsHint),
-              ],
-            ),
-          ),
+        // --- Who may create albums: by invitation only (migrations/0110) --
+        SmileInfoSection(
+          title: t.albumCreatorsTitle,
+          children: [
+            if (_albumCreators.isEmpty) SmileSectionHint(icon: SmileIcons.album, text: t.albumCreatorsHint),
+            for (final entry in _albumCreators)
+              Builder(builder: (context) {
+                final name = (entry.displayName ?? '').trim().isEmpty ? t.someone : entry.displayName!;
+                final avatar = SmileAvatar(name: name, avatarUrl: avatarPathToUrl(entry.avatarPath), size: 40);
+                if (entry.pending) {
+                  return SmileObjectTile(
+                    leading: avatar,
+                    title: name,
+                    subtitleIcon: SmileIcons.pending,
+                    subtitle: t.invitedWaiting,
+                    subtitleMaxLines: 2,
+                    trailing: IconButton(
+                      icon: Icon(SmileIcons.close, color: muted),
+                      tooltip: t.actionWithdraw,
+                      onPressed: () => _run(() => widget.spaceService.withdrawAlbumCreatorInvite(entry.inviteId!)),
+                    ),
+                  );
+                }
+                return SmileObjectTile(
+                  leading: avatar,
+                  title: name,
+                  subtitle: t.albumCreatorOn,
+                  onTap: () => _sheet(
+                    header: ListTile(leading: SmileAvatar(name: name, avatarUrl: avatarPathToUrl(entry.avatarPath), size: 36), title: Text(name)),
+                    actions: [
+                      SmileActionRow(
+                        icon: SmileIcons.remove,
+                        label: t.albumCreatorRemove,
+                        destructive: true,
+                        onTap: () => _run(() => widget.spaceService.removeAlbumCreator(spaceId: widget.spaceId, userId: entry.userId)),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            SmileActionRow(icon: SmileIcons.invite, label: t.albumCreatorInvite, onTap: _inviteAlbumCreator),
+          ],
+        ),
 
         // --- Papierkorb / hand over / delete -----------------------------
         SmileInfoSection(

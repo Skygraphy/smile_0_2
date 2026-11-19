@@ -6850,25 +6850,19 @@ abstract class SmileTexts {
   /// No description provided for @albumCreatorsTitle.
   ///
   /// In de, this message translates to:
-  /// **'Leute in {space} · dürfen Alben anlegen'**
-  String albumCreatorsTitle(String space);
+  /// **'Dürfen Alben anlegen'**
+  String get albumCreatorsTitle;
 
   /// No description provided for @albumCreatorOn.
   ///
   /// In de, this message translates to:
-  /// **'Darf Alben anlegen'**
+  /// **'Legt eigene Alben an'**
   String get albumCreatorOn;
-
-  /// No description provided for @albumCreatorOff.
-  ///
-  /// In de, this message translates to:
-  /// **'Sendet in Alben'**
-  String get albumCreatorOff;
 
   /// No description provided for @albumCreatorsHint.
   ///
   /// In de, this message translates to:
-  /// **'Wer hier eingeschaltet ist, kann in diesem Space Alben anlegen und verwaltet seine eigenen Alben. Alle anderen Alben und die Frames verwaltest weiter nur du und die Co-Administratoren. Ein neues Album kommt nicht von selbst auf einen Frame, du wirst gefragt.'**
+  /// **'Noch niemand. Wen du einlädst, kann hier eigene Alben anlegen und verwalten. Andere Alben, die Frames und den Space verwaltest weiter nur du und die Co-Administratoren.'**
   String get albumCreatorsHint;
 
   /// No description provided for @offerFramesTitle.
@@ -6894,6 +6888,60 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'{album} ist jetzt auf {frames}.'**
   String offerFramesDone(String album, String frames);
+
+  /// No description provided for @albumCreatorInvite.
+  ///
+  /// In de, this message translates to:
+  /// **'Jemanden einladen'**
+  String get albumCreatorInvite;
+
+  /// No description provided for @albumCreatorRemove.
+  ///
+  /// In de, this message translates to:
+  /// **'Recht wegnehmen'**
+  String get albumCreatorRemove;
+
+  /// No description provided for @albumCreatorAlready.
+  ///
+  /// In de, this message translates to:
+  /// **'Darf schon Alben anlegen'**
+  String get albumCreatorAlready;
+
+  /// No description provided for @albumCreatorFor.
+  ///
+  /// In de, this message translates to:
+  /// **'Alben anlegen in {space}'**
+  String albumCreatorFor(String space);
+
+  /// No description provided for @qrScanHintAlbumCreator.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Person scannt den Code mit Smile (Neuigkeiten, Scan-Symbol oben). Danach kann sie in diesem Space Alben anlegen.'**
+  String get qrScanHintAlbumCreator;
+
+  /// No description provided for @inviteAlbumCreatorFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} lädt dich ein, hier eigene Alben anzulegen. Alben und Frames der anderen bleiben bei ihnen.'**
+  String inviteAlbumCreatorFrom(String name);
+
+  /// No description provided for @acceptedAlbumCreator.
+  ///
+  /// In de, this message translates to:
+  /// **'Du kannst jetzt in {space} Alben anlegen.'**
+  String acceptedAlbumCreator(String space);
+
+  /// No description provided for @albumRightGiveBack.
+  ///
+  /// In de, this message translates to:
+  /// **'Alben anlegen zurückgeben'**
+  String get albumRightGiveBack;
+
+  /// No description provided for @albumRightGiveBackMessage.
+  ///
+  /// In de, this message translates to:
+  /// **'Du kannst dann in {space} keine neuen Alben mehr anlegen. Deine Alben bleiben, verwaltet werden sie dann vom Administrator.'**
+  String albumRightGiveBackMessage(String space);
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {
