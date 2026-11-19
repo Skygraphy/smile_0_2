@@ -105,6 +105,18 @@ const de = {
     title: "Neues Album",
     body: `${p.actor ?? de.someone} hat das Album ${p.album} in ${p.space} angelegt.`,
   }),
+  // Made by someone with the right to create albums (migrations/0109): the
+  // managers decide whether it goes onto a Frame.
+  albumCreatedAsk: (p: { actor: Who; album: string; frame: string | null }): Notice => ({
+    title: "Neues Album",
+    body: `${p.actor ?? de.someone} hat das Album ${p.album} angelegt. Soll es ${p.frame ? `auf ${p.frame}` : "auf einem Frame"} laufen?`,
+  }),
+  albumRight: (p: { actor: Who; space: string; granted: boolean }): Notice => ({
+    title: p.granted ? "Alben anlegen" : "Keine neuen Alben mehr",
+    body: p.granted
+      ? `${p.actor ?? de.someone} hat dir erlaubt, in ${p.space} Alben anzulegen.`
+      : `Du kannst in ${p.space} keine neuen Alben mehr anlegen. Deine Alben bleiben.`,
+  }),
   albumRenamed: (p: { actor: Who; oldName: string; newName: string }): Notice => ({
     title: "Album umbenannt",
     body: `${p.actor ?? de.someone} hat das Album ${p.oldName} in ${p.newName} umbenannt.`,

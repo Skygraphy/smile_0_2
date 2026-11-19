@@ -1812,5 +1812,15 @@
   "soundOneOff": "Ton aus, nur bei diesem Video",
   "liveFrameSound": "Am Frame: mit Ton",
   "liveFrameMuted": "Am Frame: ohne Ton",
-  "liveSoundApp": "Ton in der App"
+  "liveSoundApp": "Ton in der App",
+  "albumCreatorsTitle": "Leute in {space} · dürfen Alben anlegen",
+  "@albumCreatorsTitle": {"placeholders":{"space":{"type":"String"}}},
+  "albumCreatorOn": "Darf Alben anlegen",
+  "albumCreatorOff": "Sendet in Alben",
+  "albumCreatorsHint": "Wer hier eingeschaltet ist, kann in diesem Space Alben anlegen und verwaltet seine eigenen Alben. Alle anderen Alben und die Frames verwaltest weiter nur du und die Co-Administratoren. Ein neues Album kommt nicht von selbst auf einen Frame, du wirst gefragt.",
+  "offerFramesTitle": "Auf welchem Frame zeigen?",
+  "offerFramesHint": "Das Album kommt dazu, die anderen bleiben. Was gerade läuft, ändert sich nicht.",
+  "offerFramesAction": "Auf Frame zeigen",
+  "offerFramesDone": "{album} ist jetzt auf {frames}.",
+  "@offerFramesDone": {"placeholders":{"album":{"type":"String"},"frames":{"type":"String"}}}
 }

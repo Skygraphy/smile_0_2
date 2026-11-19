@@ -80,6 +80,8 @@ Deno.serve(async (req) => {
       await frameAlbumRemoved(supabaseAdmin, body.payload.frame_id!, body.payload.channel_id!, body.payload.actor_id ?? null);
     } else if (body.kind === "album_created") {
       await albumCreated(supabaseAdmin, body.payload.channel_id!, body.payload.actor_id ?? null);
+    } else if (body.kind === "album_right_changed") {
+      await albumRightChanged(supabaseAdmin, body.payload);
     } else if (body.kind === "album_renamed") {
       await albumRenamed(supabaseAdmin, body.payload);
     } else if (body.kind === "space_renamed") {
@@ -397,12 +399,39 @@ async function albumCreated(supabaseAdmin: Admin, channelId: string, actorId: st
   if (!channel) return;
   const { data: space } = await supabaseAdmin.from("spaces").select("name").eq("id", channel.space_id).maybeSingle();
   const actor = actorId ? await displayName(supabaseAdmin, actorId) : null;
-  const recipients = (await spaceManagerIds(supabaseAdmin, channel.space_id as string)).filter((u) => u !== actorId);
+  const managers = await spaceManagerIds(supabaseAdmin, channel.space_id as string);
+  const recipients = managers.filter((u) => u !== actorId);
+  // Made by someone with the right to create albums (migrations/0109), not
+  // a manager: nothing goes onto a Frame by itself -- the managers are asked.
+  const byManager = !actorId || managers.includes(actorId);
+  let frames: { name: string }[] = [];
+  if (!byManager) {
+    const { data } = await supabaseAdmin.from("frames").select("name").eq("space_id", channel.space_id).eq("lifecycle_state", "active");
+    frames = (data ?? []) as { name: string }[];
+  }
+  const ask = frames.length > 0;
   await pushNotificationToUsers(
     supabaseAdmin,
     recipients,
-    (t) => t.albumCreated({ actor, album: channel.name, space: space?.name ?? "" }),
-    { type: "album_created", channel_id: channelId, channel_name: channel.name as string },
+    (t) =>
+      ask
+        ? t.albumCreatedAsk({ actor, album: channel.name, frame: frames.length === 1 ? frames[0].name : null })
+        : t.albumCreated({ actor, album: channel.name, space: space?.name ?? "" }),
+    { type: "album_created", channel_id: channelId, channel_name: channel.name as string, ...(ask ? { offer_frames: "1" } : {}) },
+  );
+}
+
+/** "Darf Alben anlegen" given or taken (migrations/0109): the person hears it. */
+// deno-lint-ignore no-explicit-any
+async function albumRightChanged(supabaseAdmin: Admin, p: Record<string, any>) {
+  const { data: space } = await supabaseAdmin.from("spaces").select("name").eq("id", p.space_id).maybeSingle();
+  if (!space) return;
+  const actor = p.actor_id ? await displayName(supabaseAdmin, p.actor_id) : null;
+  await pushNotificationToUsers(
+    supabaseAdmin,
+    [p.user_id as string],
+    (t) => t.albumRight({ actor, space: space.name as string, granted: p.granted === true }),
+    { type: "album_right_changed", space_id: p.space_id as string, space_name: space.name as string },
   );
 }
 

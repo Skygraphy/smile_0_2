@@ -75,6 +75,16 @@ export const en: PushTexts = {
 
   // --- albums ---
   albumCreated: (p) => ({ title: "New album", body: `${p.actor ?? en.someone} created the album ${p.album} in ${p.space}.` }),
+  albumCreatedAsk: (p) => ({
+    title: "New album",
+    body: `${p.actor ?? en.someone} created the album ${p.album}. Should it play on ${p.frame ?? "a Frame"}?`,
+  }),
+  albumRight: (p) => ({
+    title: p.granted ? "Create albums" : "No more new albums",
+    body: p.granted
+      ? `${p.actor ?? en.someone} allowed you to create albums in ${p.space}.`
+      : `You can no longer create new albums in ${p.space}. Your albums stay.`,
+  }),
   albumRenamed: (p) => ({ title: "Album renamed", body: `${p.actor ?? en.someone} renamed the album ${p.oldName} to ${p.newName}.` }),
   albumCoverAutomatic: (p) => ({
     title: "Automatic cover",

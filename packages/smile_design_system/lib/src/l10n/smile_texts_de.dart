@@ -4200,4 +4200,34 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get liveSoundApp => 'Ton in der App';
+
+  @override
+  String albumCreatorsTitle(String space) {
+    return 'Leute in $space · dürfen Alben anlegen';
+  }
+
+  @override
+  String get albumCreatorOn => 'Darf Alben anlegen';
+
+  @override
+  String get albumCreatorOff => 'Sendet in Alben';
+
+  @override
+  String get albumCreatorsHint =>
+      'Wer hier eingeschaltet ist, kann in diesem Space Alben anlegen und verwaltet seine eigenen Alben. Alle anderen Alben und die Frames verwaltest weiter nur du und die Co-Administratoren. Ein neues Album kommt nicht von selbst auf einen Frame, du wirst gefragt.';
+
+  @override
+  String get offerFramesTitle => 'Auf welchem Frame zeigen?';
+
+  @override
+  String get offerFramesHint =>
+      'Das Album kommt dazu, die anderen bleiben. Was gerade läuft, ändert sich nicht.';
+
+  @override
+  String get offerFramesAction => 'Auf Frame zeigen';
+
+  @override
+  String offerFramesDone(String album, String frames) {
+    return '$album ist jetzt auf $frames.';
+  }
 }

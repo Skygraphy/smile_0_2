@@ -46,6 +46,7 @@ class AlbumInfoScreen extends StatefulWidget {
     required this.channelId,
     required this.channelName,
     this.onRenamed,
+    this.offerFrames = false,
     MembershipService? membershipService,
     ChannelService? channelService,
   })  : membershipService = membershipService ?? MembershipService(),
@@ -54,6 +55,10 @@ class AlbumInfoScreen extends StatefulWidget {
   final String channelId;
   final String channelName;
   final ValueChanged<String>? onRenamed;
+
+  /// Opened from "X hat ein Album angelegt" (migrations/0109): ask at once
+  /// which Frame(s) it should go on.
+  final bool offerFrames;
   final MembershipService membershipService;
   final ChannelService channelService;
 
@@ -132,6 +137,12 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         if (row != null) _name = row['name'] as String;
         _errorMessage = null;
       });
+      if (widget.offerFrames && !_framesOffered && _addableFrames.isNotEmpty) {
+        _framesOffered = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) unawaited(_offerFrames());
+        });
+      }
     } catch (e) {
       if (CacheMissException.isIn(e)) return;
       if (!mounted) return;
@@ -235,6 +246,77 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   List<({String frameId, String frameName, String? avatarPath, String spaceName})> get _addableFrames {
     final on = _visibleFrames.map((f) => f.frameId).toSet();
     return _possibleFrames.where((f) => !on.contains(f.frameId)).toList();
+  }
+
+  bool _framesOffered = false;
+
+  /// "Auf welchem Frame zeigen?" (2026-11-19): after someone with "Darf
+  /// Alben anlegen" made this album, the manager ticks the Frame(s). It is
+  /// only added -- what a Frame shows right now does not change.
+  Future<void> _offerFrames() async {
+    final t = SmileTexts.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final frames = _addableFrames;
+    final picked = <String>{for (final f in frames) f.frameId};
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheet) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(SmileSpacing.l, 0, SmileSpacing.l, SmileSpacing.l),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(t.offerFramesTitle, style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: SmileSpacing.s),
+                for (final f in frames)
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: picked.contains(f.frameId),
+                    onChanged: (v) => setSheet(() => v == true ? picked.add(f.frameId) : picked.remove(f.frameId)),
+                    title: Text(frameNameOf(f.frameId, f.frameName)),
+                    subtitle: Text(f.spaceName),
+                    secondary: objectPicture(
+                      key: LocalChanges.framePicture(f.frameId),
+                      name: frameNameOf(f.frameId, f.frameName),
+                      serverUrl: avatarPathToUrl(f.avatarPath),
+                      size: 36,
+                    ),
+                  ),
+                const SizedBox(height: SmileSpacing.s),
+                Text(t.offerFramesHint, style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: SmileSpacing.m),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(t.notNow)),
+                    const SizedBox(width: SmileSpacing.s),
+                    FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(t.offerFramesAction)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (ok != true || picked.isEmpty) return;
+    final saved = await LocalChanges.instance.run(
+      overrides: const {},
+      commit: () async {
+        for (final id in picked) {
+          await FrameService().assignChannel(frameId: id, channelId: widget.channelId);
+        }
+      },
+      affects: tablesChanged({'frames', 'frame_channels'}, channelIds: {widget.channelId}),
+    );
+    if (saved) {
+      final names = [for (final f in frames) if (picked.contains(f.frameId)) frameNameOf(f.frameId, f.frameName)];
+      messenger.showSnackBar(SnackBar(content: Text(t.offerFramesDone(_shownName, names.join(', ')))));
+      if (mounted) await _load();
+    }
   }
 
   /// "Auf Frame zeigen" at the top (2026-10-14): one tap and the album runs

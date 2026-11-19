@@ -81,6 +81,8 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
   Map<String, String> _homes = const {};
   List<SmileFrame> _frames = const [];
   SpaceCoOwnership? _admins;
+  /// People of the Space and their "Darf Alben anlegen" (migrations/0109).
+  List<SpacePerson> _people = const [];
   Map<String, ChannelWithActivity> _covers = const {};
   String? _errorMessage;
 
@@ -232,6 +234,9 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     unawaited(widget.membershipService.sharedInHomeSpaces(widget.spaceId).then((h) {
       if (mounted) setState(() => _homes = h);
     }, onError: (_) {}));
+    unawaited(widget.spaceService.listPeople(widget.spaceId).then((p) {
+      if (mounted) setState(() => _people = p);
+    }, onError: (_) {}));
     try {
       final results = await Future.wait<dynamic>([
         supabase.from('spaces').select('name, avatar_path').eq('id', widget.spaceId).maybeSingle(),
@@ -259,6 +264,15 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
         _errorMessage = SmileTexts.of(context).spaceInfoLoadError(errorReason(context, e));
       });
     }
+  }
+
+  /// "Darf Alben anlegen" on or off -- shown at once, the server follows.
+  Future<void> _setAlbumCreator(SpacePerson person, bool on) async {
+    await LocalChanges.instance.run(
+      overrides: {LocalChanges.albumCreator(widget.spaceId, person.userId): on},
+      commit: () => widget.spaceService.setAlbumCreator(spaceId: widget.spaceId, userId: person.userId, on: on),
+      affects: tablesChanged({'space_album_creators'}, spaceIds: {widget.spaceId}),
+    );
   }
 
   Future<void> _run(Future<void> Function() action) async {
@@ -753,6 +767,31 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
                 ),
               if (isAdmin) SmileActionRow(icon: SmileIcons.invite, label: t.inviteCoAdmin, onTap: _inviteCoAdmin),
             ],
+          ),
+
+        // --- Who may create albums (2026-11-19, migrations/0109) ----------
+        if (_people.isNotEmpty)
+          ListenableBuilder(
+            listenable: LocalChanges.instance,
+            builder: (context, _) => SmileInfoSection(
+              title: t.albumCreatorsTitle(_shownName),
+              children: [
+                for (final person in _people)
+                  Builder(builder: (context) {
+                    final on = LocalChanges.instance.value<bool>(LocalChanges.albumCreator(widget.spaceId, person.userId)) ??
+                        person.createsAlbums;
+                    final name = (person.displayName ?? '').trim().isEmpty ? t.someone : person.displayName!;
+                    return SmileObjectTile(
+                      leading: SmileAvatar(name: name, avatarUrl: avatarPathToUrl(person.avatarPath), size: 40),
+                      title: name,
+                      subtitle: on ? t.albumCreatorOn : t.albumCreatorOff,
+                      trailing: Switch(value: on, onChanged: (v) => _setAlbumCreator(person, v)),
+                      onTap: () => _setAlbumCreator(person, !on),
+                    );
+                  }),
+                SmileSectionHint(icon: SmileIcons.album, text: t.albumCreatorsHint),
+              ],
+            ),
           ),
 
         // --- Papierkorb / hand over / delete -----------------------------

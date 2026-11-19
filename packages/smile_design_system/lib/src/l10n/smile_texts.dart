@@ -6846,6 +6846,54 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Ton in der App'**
   String get liveSoundApp;
+
+  /// No description provided for @albumCreatorsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Leute in {space} · dürfen Alben anlegen'**
+  String albumCreatorsTitle(String space);
+
+  /// No description provided for @albumCreatorOn.
+  ///
+  /// In de, this message translates to:
+  /// **'Darf Alben anlegen'**
+  String get albumCreatorOn;
+
+  /// No description provided for @albumCreatorOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Sendet in Alben'**
+  String get albumCreatorOff;
+
+  /// No description provided for @albumCreatorsHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Wer hier eingeschaltet ist, kann in diesem Space Alben anlegen und verwaltet seine eigenen Alben. Alle anderen Alben und die Frames verwaltest weiter nur du und die Co-Administratoren. Ein neues Album kommt nicht von selbst auf einen Frame, du wirst gefragt.'**
+  String get albumCreatorsHint;
+
+  /// No description provided for @offerFramesTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Auf welchem Frame zeigen?'**
+  String get offerFramesTitle;
+
+  /// No description provided for @offerFramesHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Album kommt dazu, die anderen bleiben. Was gerade läuft, ändert sich nicht.'**
+  String get offerFramesHint;
+
+  /// No description provided for @offerFramesAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Auf Frame zeigen'**
+  String get offerFramesAction;
+
+  /// No description provided for @offerFramesDone.
+  ///
+  /// In de, this message translates to:
+  /// **'{album} ist jetzt auf {frames}.'**
+  String offerFramesDone(String album, String frames);
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

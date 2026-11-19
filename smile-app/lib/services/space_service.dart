@@ -117,7 +117,40 @@ class MyCoOwnerInvite {
 /// founder's account being deleted outright, not a voluntary handover) is
 /// handled automatically by a DB trigger, not from here -- see the
 /// migration's `handle_space_owner_removal`.
+/// A person of a Space -- in one of its albums, not managing it -- and
+/// whether they may create albums there (migrations/0109).
+class SpacePerson {
+  SpacePerson({required this.userId, required this.displayName, required this.avatarPath, required this.createsAlbums});
+
+  final String userId;
+  final String? displayName;
+  final String? avatarPath;
+  final bool createsAlbums;
+
+  factory SpacePerson.fromJson(Map<String, dynamic> json) => SpacePerson(
+        userId: json['user_id'] as String,
+        displayName: json['display_name'] as String?,
+        avatarPath: json['avatar_path'] as String?,
+        createsAlbums: json['creates_albums'] as bool? ?? false,
+      );
+}
+
 class SpaceService {
+  /// The people of a Space with their "Darf Alben anlegen" (managers only).
+  Future<List<SpacePerson>> listPeople(String spaceId) async {
+    final rows = await supabase.rpc('space_people', params: {'p_space': spaceId});
+    return (rows as List).cast<Map<String, dynamic>>().map(SpacePerson.fromJson).toList();
+  }
+
+  /// Gives or takes "Darf Alben anlegen" (RLS: managers, people of the Space).
+  Future<void> setAlbumCreator({required String spaceId, required String userId, required bool on}) async {
+    if (on) {
+      await supabase.from('space_album_creators').upsert({'space_id': spaceId, 'user_id': userId}, ignoreDuplicates: true);
+    } else {
+      await supabase.from('space_album_creators').delete().eq('space_id', spaceId).eq('user_id', userId);
+    }
+  }
+
   /// Admin and Co-Admins (RLS spaces_update since migrations/0047).
   Future<void> renameSpace({required String spaceId, required String name}) async {
     await supabase.from('spaces').update({'name': name}).eq('id', spaceId);

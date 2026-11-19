@@ -128,6 +128,9 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
         supabase.from('spaces').select('id, name, avatar_path').order('created_at'),
         supabase.from('channels').select('space_id'),
         supabase.from('frames').select('space_id'),
+        // Spaces this person may create albums in without managing them
+        // ("Darf Alben anlegen", migrations/0109).
+        supabase.rpc('album_creator_spaces').then((r) => r as List, onError: (Object _) => const <dynamic>[]),
       ]);
       Map<String, int> countBySpace(List rows) {
         final counts = <String, int>{};
@@ -149,6 +152,14 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
               name: row['name'] as String,
               albums: albums[row['id']] ?? 0,
               frames: frames[row['id']] ?? 0,
+              avatarPath: row['avatar_path'] as String?,
+            ),
+          for (final row in (results[3] as List).cast<Map<String, dynamic>>())
+            _ManagedSpace(
+              id: row['id'] as String,
+              name: row['name'] as String,
+              albums: row['albums'] as int? ?? 0,
+              frames: row['frames'] as int? ?? 0,
               avatarPath: row['avatar_path'] as String?,
             ),
         ];

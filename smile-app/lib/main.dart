@@ -256,6 +256,13 @@ void openNotificationTarget(Map<String, dynamic> data) {
     // the owner can end the share if they don't want that.
     case 'share_audience_changed':
     case 'share_ended_for_owner':
+    // Made by someone with "Darf Alben anlegen" (migrations/0109): the
+    // managers are asked which Frame it should go on.
+    case 'album_created' when data['offer_frames'] == '1':
+      if (channelId == null) return;
+      navigator.push(
+        MaterialPageRoute(builder: (_) => AlbumInfoScreen(channelId: channelId, channelName: channelName, offerFrames: true)),
+      );
     case 'member_left':
     case 'album_created':
     case 'album_renamed':
