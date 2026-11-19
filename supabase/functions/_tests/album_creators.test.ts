@@ -148,6 +148,18 @@ Deno.test("album creators: family directly, strangers only through the managers"
     });
     assertEquals(byErnst.body.length, 1);
 
+    // Peter came in only through Ines' album: for her next album he is
+    // proposed again (migrations/0112).
+    const peterToken = (await accessTokenFor(peter.email)).accessToken;
+    const peterInvite = (await svc(`channel_membership_requests?channel_id=eq.${winter}&user_id=eq.${peter.id}&status=eq.pending&select=id`)).body[0].id;
+    await asUser(`channel_membership_requests?id=eq.${peterInvite}`, peterToken, {
+      method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ status: "accepted" }),
+    });
+    const second = await asUser("channels", inesToken, {
+      method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify({ space_id: space, name: "AC2 Sommer" }),
+    });
+    assertEquals((await invoke("invite-channel-member", inesToken, { channel_id: second.body[0].id, user_id: peter.id })).body.status, "proposed");
+
     // Sharing with another Space: not for Ines.
     assertEquals((await invoke("create-invite-code", inesToken, { kind: "album_share", target_id: winter })).status, 403);
   } finally {
