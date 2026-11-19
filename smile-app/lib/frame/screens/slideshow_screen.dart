@@ -1219,18 +1219,14 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
             children: [
               Text(t.durationQuestion, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
               const SizedBox(height: 20),
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                children: [
-                  for (final seconds in const [5, 10, 20, 60])
-                    _BigChoice(
-                      label: seconds == 60 ? t.oneMinute : t.secondsValue(seconds),
-                      selected: seconds == current,
-                      onTap: () => Navigator.of(context).pop(seconds),
-                    ),
-                ],
-              ),
+              _ChoiceBar(parts: [
+                for (final seconds in const [5, 10, 20, 60])
+                  (
+                    seconds == 60 ? t.oneMinute : t.secondsValue(seconds),
+                    seconds == current,
+                    () => Navigator.of(context).pop(seconds),
+                  ),
+              ]),
             ],
           ),
         ),
@@ -1262,11 +1258,16 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     var quietFrom = hhmm(s?.quietFrom);
     var quietTo = hhmm(s?.quietTo);
     final seconds = s?.slideshowIntervalSeconds ?? 10;
+    // Design A "Leisten" (Ernst 2026-11-19): every question one bar, the
+    // chosen part filled with a check; on/off settings are real switches in
+    // their own column. Everything fits the width -- nothing scrolls sideways.
+    final screen = MediaQuery.sizeOf(context);
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.9),
+      backgroundColor: const Color(0xFF1C1E22),
+      constraints: BoxConstraints(maxHeight: screen.height * 0.92, maxWidth: screen.width * 0.96),
       builder: (context) => StatefulBuilder(
         builder: (context, setSheet) {
           void set(String key, Object value, VoidCallback local) {
@@ -1274,114 +1275,118 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
             _changeSettings({key: value});
           }
 
-          Widget section(String title, List<Widget> choices) => Padding(
-                padding: const EdgeInsets.only(bottom: 20),
+          Widget label(String text) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text(text.toUpperCase(),
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 1.1, color: Color(0xFF9AA1AA))),
+              );
+
+          Widget bar(String title, List<(String, bool, VoidCallback)> parts) => Padding(
+                padding: const EdgeInsets.only(bottom: 22),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (title.isNotEmpty) ...[
-                      Text(title, style: const TextStyle(fontSize: 18, color: Colors.white70)),
-                      const SizedBox(height: 10),
-                    ],
-                    Wrap(spacing: 12, runSpacing: 12, children: choices),
-                  ],
+                  children: [label(title), _ChoiceBar(parts: parts)],
                 ),
               );
 
-          return SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(t.playbackTitle, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 20),
-                  section(t.whatPlays, [
-                    for (final (value, label) in [('album', t.contentAlbum), ('rotate', t.contentRotate), ('recent', t.contentRecent)])
-                      _BigChoice(label: label, selected: content == value, onTap: () => set('content_mode', value, () => content = value)),
-                  ]),
-                  // 2026-10-17: only with "Aktuelles".
-                  if (content == 'recent')
-                    section(t.recentCountLabel, [
-                      for (final n in {10, 20, 50, 100, recent}.toList()..sort())
-                        _BigChoice(label: '$n', selected: recent == n, onTap: () => set('recent_count', n, () => recent = n)),
-                    ]),
-                  section(t.playOrder, [
-                    for (final (value, label) in [('newest', t.orderNewest), ('oldest', t.orderOldest), ('shuffle', t.orderShuffle)])
-                      _BigChoice(label: label, selected: order == value, onTap: () => set('play_order', value, () => order = value)),
-                  ]),
-                  section(t.atEnd, [
-                    for (final (value, label) in [('loop', t.endLoop), ('overview', t.endOverview)])
-                      _BigChoice(label: label, selected: end == value, onTap: () => set('end_behavior', value, () => end = value)),
-                  ]),
-                  section(t.quietTime, [
-                    _BigChoice(
-                      label: t.quietOff,
-                      selected: quietFrom == null,
-                      onTap: () {
-                        setSheet(() => quietFrom = quietTo = null);
-                        _changeSettings({'quiet_from': null, 'quiet_to': null});
-                      },
-                    ),
-                    for (final (from, to) in {
-                      ('21:00', '07:00'),
-                      ('22:00', '07:00'),
-                      ('23:00', '07:00'),
-                      // A time set in the app shows as its own choice.
-                      if (quietFrom != null && quietTo != null) (quietFrom!, quietTo!),
-                    })
-                      _BigChoice(
-                        label: t.quietPreset(
-                          from.endsWith(':00') ? '${int.parse(from.substring(0, 2))}' : from,
-                          to.endsWith(':00') ? '${int.parse(to.substring(0, 2))}' : to,
-                        ),
-                        selected: quietFrom == from && quietTo == to,
-                        onTap: () {
-                          setSheet(() {
-                            quietFrom = from;
-                            quietTo = to;
-                          });
-                          _changeSettings({'quiet_from': from, 'quiet_to': to});
-                        },
-                      ),
-                  ]),
-                  section(t.videoLengthLabel, [
-                    for (final (value, label) in [('full', t.videoFull), ('photo', t.videoAsPhoto(seconds)), ('none', t.videoNone)])
-                      _BigChoice(label: label, selected: videoLength == value, onTap: () => set('video_length', value, () => videoLength = value)),
-                  ]),
-                  section(t.fillLabel, [
-                    for (final (value, label) in [('fit', t.fillNever), ('auto', t.fillAuto), ('fill', t.fillAlways)])
-                      _BigChoice(label: label, selected: fill == value, onTap: () => set('fill_mode', value, () => fill = value)),
-                  ]),
-                  section('', [
-                    _BigChoice(label: t.slowZoom, selected: zoom, onTap: () => set('slow_zoom', !zoom, () => zoom = !zoom)),
-                    _BigChoice(label: t.videoSound, selected: sound, onTap: () => set('video_sound', !sound, () => sound = !sound)),
-                    _BigChoice(label: t.bigClock, selected: clock, onTap: () => set('show_clock', !clock, () => clock = !clock)),
-                    _BigChoice(
-                      label: t.showSenderCaption,
-                      selected: sender,
-                      onTap: () => set('show_sender', !sender, () => sender = !sender),
-                    ),
-                    _BigChoice(
-                      label: t.showCaptions,
-                      selected: captions,
-                      onTap: () => set('show_captions', !captions, () => captions = !captions),
-                    ),
-                  ]),
-                  section(t.alsoLabel, [
-                    _BigChoice(
-                      label: t.showNewNow,
-                      selected: showNew,
-                      onTap: () => set('show_new_immediately', !showNew, () => showNew = !showNew),
-                    ),
-                    _BigChoice(
-                      label: t.rotateShort,
-                      selected: rotate,
-                      onTap: () => set('rotate_with_device', !rotate, () => rotate = !rotate),
-                    ),
-                  ]),
-                ],
+          String hour(String v) => v.endsWith(':00') ? '${int.parse(v.substring(0, 2))}' : v;
+
+          final choices = <Widget>[
+            bar(t.whatPlays, [
+              for (final (value, text) in [('album', t.contentAlbum), ('rotate', t.contentRotate), ('recent', t.contentRecent)])
+                (text, content == value, () => set('content_mode', value, () => content = value)),
+            ]),
+            // 2026-10-17: only with "Aktuelles".
+            if (content == 'recent')
+              bar(t.recentCountLabel, [
+                for (final n in {10, 20, 50, 100, recent}.toList()..sort())
+                  ('$n', recent == n, () => set('recent_count', n, () => recent = n)),
+              ]),
+            bar(t.playOrder, [
+              for (final (value, text) in [('newest', t.orderNewest), ('oldest', t.orderOldest), ('shuffle', t.orderShuffle)])
+                (text, order == value, () => set('play_order', value, () => order = value)),
+            ]),
+            bar(t.atEnd, [
+              for (final (value, text) in [('loop', t.endLoop), ('overview', t.endOverview)])
+                (text, end == value, () => set('end_behavior', value, () => end = value)),
+            ]),
+            bar(t.quietTime, [
+              (
+                t.quietOff,
+                quietFrom == null,
+                () {
+                  setSheet(() => quietFrom = quietTo = null);
+                  _changeSettings({'quiet_from': null, 'quiet_to': null});
+                },
               ),
+              for (final (from, to) in {
+                ('21:00', '07:00'),
+                ('22:00', '07:00'),
+                ('23:00', '07:00'),
+                // A time set in the app shows as its own choice.
+                if (quietFrom != null && quietTo != null) (quietFrom!, quietTo!),
+              })
+                (
+                  t.quietPreset(hour(from), hour(to)),
+                  quietFrom == from && quietTo == to,
+                  () {
+                    setSheet(() {
+                      quietFrom = from;
+                      quietTo = to;
+                    });
+                    _changeSettings({'quiet_from': from, 'quiet_to': to});
+                  },
+                ),
+            ]),
+            bar(t.videoLengthLabel, [
+              for (final (value, text) in [('full', t.videoFull), ('photo', t.videoAsPhoto(seconds)), ('none', t.videoNone)])
+                (text, videoLength == value, () => set('video_length', value, () => videoLength = value)),
+            ]),
+            bar(t.fillLabel, [
+              for (final (value, text) in [('fit', t.fillNever), ('auto', t.fillAuto), ('fill', t.fillAlways)])
+                (text, fill == value, () => set('fill_mode', value, () => fill = value)),
+            ]),
+          ];
+
+          final switches = <Widget>[
+            label(t.alsoLabel),
+            _SwitchRow(icon: SmileIcons.soundOn, label: t.videoSound, value: sound, onTap: () => set('video_sound', !sound, () => sound = !sound)),
+            _SwitchRow(icon: SmileIcons.timer, label: t.bigClock, value: clock, onTap: () => set('show_clock', !clock, () => clock = !clock)),
+            _SwitchRow(icon: SmileIcons.picture, label: t.slowZoom, value: zoom, onTap: () => set('slow_zoom', !zoom, () => zoom = !zoom)),
+            _SwitchRow(icon: SmileIcons.person, label: t.showSenderCaption, value: sender, onTap: () => set('show_sender', !sender, () => sender = !sender)),
+            _SwitchRow(icon: SmileIcons.caption, label: t.showCaptions, value: captions, onTap: () => set('show_captions', !captions, () => captions = !captions)),
+            _SwitchRow(icon: SmileIcons.newest, label: t.showNewNow, value: showNew, onTap: () => set('show_new_immediately', !showNew, () => showNew = !showNew)),
+            _SwitchRow(icon: SmileIcons.rotate, label: t.rotateShort, value: rotate, onTap: () => set('rotate_with_device', !rotate, () => rotate = !rotate)),
+          ];
+
+          return SafeArea(
+            child: LayoutBuilder(
+              builder: (context, box) {
+                final wide = box.maxWidth >= 900;
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(32, 0, 32, 28),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(t.playbackTitle, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Colors.white)),
+                      const SizedBox(height: 22),
+                      if (wide)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: choices)),
+                            const SizedBox(width: 40),
+                            Expanded(flex: 2, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: switches)),
+                          ],
+                        )
+                      else ...[
+                        ...choices,
+                        ...switches,
+                      ],
+                    ],
+                  ),
+                );
+              },
             ),
           );
         },
@@ -2448,26 +2453,113 @@ class _BigButton extends StatelessWidget {
 }
 
 /// One big choice in the Frame's sheets (display time, playback).
-class _BigChoice extends StatelessWidget {
-  const _BigChoice({required this.label, required this.selected, required this.onTap});
+/// One question as one bar (design A, Ernst 2026-11-19): the parts share
+/// the width -- never wider than the screen -- and the chosen one is filled
+/// with a check. A long label wraps onto a second line instead of scrolling.
+class _ChoiceBar extends StatelessWidget {
+  const _ChoiceBar({required this.parts});
 
+  final List<(String, bool, VoidCallback)> parts;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(color: const Color(0xFF2A2D33), borderRadius: BorderRadius.circular(20)),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final (i, (label, selected, onTap)) in parts.indexed) ...[
+              if (i > 0) const SizedBox(width: 5),
+              Expanded(
+                child: Material(
+                  color: selected ? SmileTheme.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(15),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(15),
+                    onTap: onTap,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (selected) ...[
+                            const Icon(SmileIcons.check, size: 22, color: Color(0xFF1A0F0E)),
+                            const SizedBox(width: 8),
+                          ],
+                          Flexible(
+                            child: Text(
+                              label,
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 20,
+                                height: 1.2,
+                                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                                color: selected ? const Color(0xFF1A0F0E) : const Color(0xFFD6D9DE),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// An on/off setting as a real switch (design A): the whole row is the
+/// tap target, the icon lights up while on.
+class _SwitchRow extends StatelessWidget {
+  const _SwitchRow({required this.icon, required this.label, required this.value, required this.onTap});
+
+  final IconData icon;
   final String label;
-  final bool selected;
+  final bool value;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: selected ? SmileTheme.primary : const Color(0xFF2A2626),
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: const Color(0xFF2A2D33),
         borderRadius: BorderRadius.circular(18),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
-          child: Text(
-            label,
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: selected ? const Color(0xFF1A0F0E) : Colors.white),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 12, 14, 12),
+            child: Row(
+              children: [
+                Icon(icon, size: 26, color: value ? SmileTheme.primary : const Color(0xFF9AA1AA)),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(label, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white)),
+                ),
+                const SizedBox(width: 10),
+                Transform.scale(
+                  scale: 1.2,
+                  child: Switch(
+                    value: value,
+                    onChanged: (_) => onTap(),
+                    activeThumbColor: Colors.white,
+                    activeTrackColor: SmileTheme.primary,
+                    inactiveThumbColor: const Color(0xFFCFD3D8),
+                    inactiveTrackColor: const Color(0xFF4A4F57),
+                    trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
