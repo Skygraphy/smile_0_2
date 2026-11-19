@@ -235,6 +235,8 @@ void openNotificationTarget(Map<String, dynamic> data) {
     case 'frame_admin_invite':
     // "Darf Alben anlegen" by invitation (migrations/0110).
     case 'album_creator_invite':
+    // An album creator suggests someone new (migrations/0111): decided there.
+    case 'invite_proposal':
     // migrations/0057: someone asks to join / see an album -- decided there.
     case 'request_created':
       // The recipient isn't a channel member (or hasn't linked their Space,
@@ -266,6 +268,7 @@ void openNotificationTarget(Map<String, dynamic> data) {
         MaterialPageRoute(builder: (_) => AlbumInfoScreen(channelId: channelId, channelName: channelName, offerFrames: true)),
       );
     case 'member_left':
+    case 'proposal_decided':
     case 'album_created':
     case 'album_renamed':
     case 'request_expired':

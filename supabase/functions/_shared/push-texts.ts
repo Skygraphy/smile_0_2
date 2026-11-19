@@ -117,6 +117,17 @@ const de = {
       ? `${p.actor ?? de.someone} hat dir erlaubt, in ${p.space} Alben anzulegen.`
       : `Du kannst in ${p.space} keine neuen Alben mehr anlegen. Deine Alben bleiben.`,
   }),
+  // An album creator suggests someone new (migrations/0111): the managers decide.
+  inviteProposal: (p: { actor: Who; person: Who; album: string }): Notice => ({
+    title: "Vorschlag",
+    body: `${p.actor ?? de.someone} möchte ${p.person ?? de.someone} in ${p.album} einladen.`,
+  }),
+  proposalDecided: (p: { person: Who; album: string; approved: boolean }): Notice => ({
+    title: p.approved ? "Vorschlag angenommen" : "Vorschlag abgelehnt",
+    body: p.approved
+      ? `${p.person ?? de.someone} wurde in ${p.album} eingeladen.`
+      : `${p.person ?? de.someone} wird nicht in ${p.album} eingeladen.`,
+  }),
   // "Darf Alben anlegen" by invitation (migrations/0110).
   albumCreatorInvite: (p: { actor: Who; space: string }): Notice => ({
     title: "Einladung",

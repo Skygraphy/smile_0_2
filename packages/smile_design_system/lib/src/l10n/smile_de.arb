@@ -1833,5 +1833,13 @@
   "@acceptedAlbumCreator": {"placeholders":{"space":{"type":"String"}}},
   "albumRightGiveBack": "Alben anlegen zurückgeben",
   "albumRightGiveBackMessage": "Du kannst dann in {space} keine neuen Alben mehr anlegen. Deine Alben bleiben, verwaltet werden sie dann vom Administrator.",
-  "@albumRightGiveBackMessage": {"placeholders":{"space":{"type":"String"}}}
+  "@albumRightGiveBackMessage": {"placeholders":{"space":{"type":"String"}}},
+  "proposeOnlyHint": "Noch nicht im Space · wird vorgeschlagen, der Admin entscheidet",
+  "proposedTo": "Vorgeschlagen: {name}. Der Admin entscheidet.",
+  "@proposedTo": {"placeholders":{"name":{"type":"String"}}},
+  "proposalsTitle": "Vorschläge",
+  "proposalFrom": "Vorschlag von {name} für {album}",
+  "@proposalFrom": {"placeholders":{"name":{"type":"String"},"album":{"type":"String"}}},
+  "proposalApproved": "{name} ist eingeladen.",
+  "@proposalApproved": {"placeholders":{"name":{"type":"String"}}}
 }

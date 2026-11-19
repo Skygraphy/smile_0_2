@@ -94,6 +94,9 @@ Deno.serve(async (req) => {
     members,
     shared_spaces: sharedSpaces.map((s, i) => ({ ...s, caller_manages: managed[i].data === true })),
     caller_is_sco: access.isSco,
+    // Admin / Co-Admin of the home Space -- not only this album's creator
+    // (migrations/0109-0111): sharing with other Spaces, Frames.
+    caller_manages_space: access.managesSpace,
     administrator_user_id: homeSpace?.owner_id ?? null,
     home_space_name: homeSpace?.name ?? null,
     administrator_name: ownerProfile?.display_name ?? null,

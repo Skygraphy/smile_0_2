@@ -49,15 +49,21 @@ class ChannelRoster {
     required this.members,
     required this.sharedSpaces,
     required this.callerIsSco,
+    bool? callerManagesSpace,
     this.administratorUserId,
     this.homeSpaceName,
     this.administratorName,
     this.coAdminUserIds = const {},
-  });
+  }) : callerManagesSpace = callerManagesSpace ?? callerIsSco;
 
   final List<ChannelMember> members;
   final List<SharedSpaceRef> sharedSpaces;
   final bool callerIsSco;
+
+  /// Admin / Co-Admin of the home Space -- false for an album creator who
+  /// manages only this album (migrations/0109-0111): no sharing with other
+  /// Spaces, new people only as a proposal.
+  final bool callerManagesSpace;
 
   /// The home Space's Administrator -- shown as such, and never removable
   /// by anyone else (a co-owner included).
@@ -183,6 +189,7 @@ class MembershipService {
       members: members.map(ChannelMember.fromJson).toList(),
       sharedSpaces: sharedSpaces.map(SharedSpaceRef.fromJson).toList(),
       callerIsSco: data['caller_is_sco'] as bool,
+      callerManagesSpace: data['caller_manages_space'] as bool?,
       administratorUserId: data['administrator_user_id'] as String?,
       homeSpaceName: data['home_space_name'] as String?,
       administratorName: data['administrator_name'] as String?,
@@ -205,7 +212,9 @@ class MembershipService {
 
   /// SCO invites a person to become a posting member -- by email, or by
   /// name ([userId] of someone from known_people, 2026-10-11).
-  Future<void> inviteMember({required String channelId, String? email, String? userId}) async {
+  /// Returns 'proposed' when an album creator suggested someone new -- the
+  /// Space's managers decide (migrations/0111).
+  Future<String> inviteMember({required String channelId, String? email, String? userId}) async {
     final response = await invokeEdge('invite-channel-member', body: {
       'channel_id': channelId,
       'email': ?email,
@@ -213,10 +222,29 @@ class MembershipService {
     });
     final data = response.data as Map<String, dynamic>?;
     final status = data?['status'] as String?;
-    if (status != 'invited' && status != 'already_member') {
+    if (status != 'invited' && status != 'already_member' && status != 'proposed') {
       throw ChannelRequestException(data?['error'] as String? ?? 'unknown_error');
     }
     LocalChanges.saved(tablesChanged({'channel_membership_requests'}, channelIds: {channelId}));
+    return status!;
+  }
+
+  /// People already in this album's Space (migrations/0111): an album
+  /// creator invites them directly, anyone else only as a proposal.
+  Future<Set<String>> anchoredPeople(String channelId) async {
+    final rows = await supabase.rpc('album_anchored_people', params: {'p_channel': channelId});
+    return (rows as List).map((r) => r is Map ? r.values.first as String : r as String).toSet();
+  }
+
+  /// Open proposals in the Spaces I manage (Neuigkeiten).
+  Future<List<Map<String, dynamic>>> myInviteProposals() async {
+    final rows = await supabase.rpc('my_invite_proposals');
+    return List<Map<String, dynamic>>.from(rows as List);
+  }
+
+  Future<void> decideInviteProposal(String proposalId, {required bool approve}) async {
+    await supabase.from('channel_invite_proposals').update({'status': approve ? 'approved' : 'declined'}).eq('id', proposalId);
+    LocalChanges.saved(tablesChanged({'channel_invite_proposals', 'channel_membership_requests'}));
   }
 
   /// SCO invites a known person (by email) to view-share this channel with

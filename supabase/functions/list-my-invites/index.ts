@@ -19,7 +19,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { fetchProfilesByUserId } from "../_shared/profiles.ts";
-import { isSpaceOwnerOrCoOwner, isStaff as checkStaff } from "../_shared/space-access.ts";
+import { isStaff as checkStaff } from "../_shared/space-access.ts";
+import { resolveChannelAccess } from "../_shared/channel-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -80,7 +81,8 @@ Deno.serve(async (req) => {
   if (body.channel_id) {
     const { data: channel } = await supabaseAdmin.from("channels").select("space_id").eq("id", body.channel_id).maybeSingle();
     if (!channel) return jsonResponse({ error: "channel_not_found" }, 404);
-    if (!isStaff && !(await isSpaceOwnerOrCoOwner(supabaseAdmin, channel.space_id, userId))) {
+    // Its managers, the album creator included (migrations/0109).
+    if (!isStaff && !(await resolveChannelAccess(supabaseAdmin, body.channel_id, userId)).isSco) {
       return jsonResponse({ error: "not_channel_sco" }, 403);
     }
 

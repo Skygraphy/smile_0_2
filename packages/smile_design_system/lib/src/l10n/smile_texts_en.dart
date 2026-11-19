@@ -4228,4 +4228,26 @@ class SmileTextsEn extends SmileTexts {
   String albumRightGiveBackMessage(String space) {
     return 'You will no longer be able to create new albums in $space. Your albums stay and are then managed by the admin.';
   }
+
+  @override
+  String get proposeOnlyHint =>
+      'Not in the Space yet · will be suggested, the admin decides';
+
+  @override
+  String proposedTo(String name) {
+    return 'Suggested: $name. The admin decides.';
+  }
+
+  @override
+  String get proposalsTitle => 'Suggestions';
+
+  @override
+  String proposalFrom(String name, String album) {
+    return 'Suggested by $name for $album';
+  }
+
+  @override
+  String proposalApproved(String name) {
+    return '$name has been invited.';
+  }
 }

@@ -8,7 +8,7 @@ export async function resolveChannelAccess(supabaseAdmin: any, channelId: string
   const { data, error } = await supabaseAdmin.rpc("access_channel", { p_user: userId, p_channel: channelId });
   if (error) throw new Error(`access_channel failed: ${error.message}`);
   if (!data?.exists) {
-    return { exists: false, active: false, canView: false, isMember: false, isSco: false, isAdmin: false, isStaff: false, homeSpaceId: null as string | null };
+    return { exists: false, active: false, canView: false, isMember: false, isSco: false, managesSpace: false, isAdmin: false, isStaff: false, homeSpaceId: null as string | null };
   }
   return {
     exists: true,
@@ -20,6 +20,9 @@ export async function resolveChannelAccess(supabaseAdmin: any, channelId: string
     isMember: data.is_member as boolean,
     // "SCO" = manages the home Space (Administrator or co-owner).
     isSco: data.manages as boolean,
+    // The whole Space (Admin / Co-Admin) -- not only this album as its
+    // creator with "Darf Alben anlegen" (migrations/0109-0111).
+    managesSpace: (data.manages_space ?? data.manages) as boolean,
     isAdmin: data.is_admin as boolean,
     isStaff: data.is_staff as boolean,
     homeSpaceId: data.home_space_id as string,

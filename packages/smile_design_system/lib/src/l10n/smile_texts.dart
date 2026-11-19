@@ -6942,6 +6942,36 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Du kannst dann in {space} keine neuen Alben mehr anlegen. Deine Alben bleiben, verwaltet werden sie dann vom Administrator.'**
   String albumRightGiveBackMessage(String space);
+
+  /// No description provided for @proposeOnlyHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch nicht im Space · wird vorgeschlagen, der Admin entscheidet'**
+  String get proposeOnlyHint;
+
+  /// No description provided for @proposedTo.
+  ///
+  /// In de, this message translates to:
+  /// **'Vorgeschlagen: {name}. Der Admin entscheidet.'**
+  String proposedTo(String name);
+
+  /// No description provided for @proposalsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Vorschläge'**
+  String get proposalsTitle;
+
+  /// No description provided for @proposalFrom.
+  ///
+  /// In de, this message translates to:
+  /// **'Vorschlag von {name} für {album}'**
+  String proposalFrom(String name, String album);
+
+  /// No description provided for @proposalApproved.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} ist eingeladen.'**
+  String proposalApproved(String name);
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

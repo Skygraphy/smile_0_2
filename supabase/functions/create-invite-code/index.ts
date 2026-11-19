@@ -9,6 +9,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { resolveSpaceAccess } from "../_shared/space-access.ts";
+import { resolveChannelAccess } from "../_shared/channel-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -78,8 +79,12 @@ Deno.serve(async (req) => {
       .eq("id", body.target_id)
       .maybeSingle();
     if (!channel || channel.deleted_at) return jsonResponse({ error: "channel_not_found" }, 404);
-    const access = await resolveSpaceAccess(admin, channel.space_id, userId);
-    if (!access.manages && !access.isStaff) return jsonResponse({ error: "not_channel_sco" }, 403);
+    // Joining an album: its managers, the album's creator included (whose
+    // code lets in only people already in the Space -- redeem-invite-code,
+    // migrations/0111). Sharing with another Space: the Space's managers only.
+    const access = await resolveChannelAccess(admin, channel.id, userId);
+    const allowed = body.kind === "album_member" ? access.isSco : access.managesSpace;
+    if (!allowed && !access.isStaff) return jsonResponse({ error: "not_channel_sco" }, 403);
     targetName = channel.name;
   }
 

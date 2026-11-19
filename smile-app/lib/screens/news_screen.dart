@@ -49,6 +49,8 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
   List<MyFrameAdminInvite> _frameAdminInvites = const [];
   /// "In 'Space' Alben anlegen" (migrations/0110).
   List<MyAlbumCreatorInvite> _albumCreatorInvites = const [];
+  /// An album creator suggests someone new; I manage the Space (0111).
+  List<Map<String, dynamic>> _proposals = const [];
   List<Map<String, dynamic>> _mySpaces = const [];
   List<TrashItem> _trash = const [];
   List<Map<String, dynamic>> _history = const [];
@@ -83,6 +85,9 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
     }));
     unawaited(widget.spaceService.listMyAlbumCreatorInvites().then((i) {
       if (mounted) setState(() => _albumCreatorInvites = i);
+    }, onError: (Object _) {}));
+    unawaited(widget.membershipService.myInviteProposals().then((p) {
+      if (mounted) setState(() => _proposals = p);
     }, onError: (Object _) {}));
     try {
       final results = await Future.wait<dynamic>([
@@ -228,6 +233,7 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
         albumInvites.isEmpty &&
         _coAdminInvites.isEmpty &&
         _albumCreatorInvites.isEmpty &&
+        _proposals.isEmpty &&
         managed.isEmpty &&
         mySent.isEmpty &&
         _trash.isEmpty &&
@@ -329,6 +335,33 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                           ? widget.membershipService.decideMembershipRequest(request.id, accept: false)
                           : widget.membershipService.decideShareRequest(request.id, accept: false),
                     ),
+                  ),
+                ),
+            ],
+          ),
+
+        // --- Vorschläge: someone new for an album creator's album (0111) --
+        if (_proposals.isNotEmpty)
+          SmileInfoSection(
+            title: t.proposalsTitle,
+            children: [
+              for (final p in _proposals)
+                SmileObjectTile(
+                  leading: SmileAvatar(
+                    name: p['invitee_name'] as String? ?? t.someone,
+                    avatarUrl: avatarPathToUrl(p['invitee_avatar_path'] as String?),
+                    size: 40,
+                  ),
+                  title: p['invitee_name'] as String? ?? t.someone,
+                  subtitleIcon: SmileIcons.member,
+                  subtitle: t.proposalFrom(p['proposer_name'] as String? ?? t.someone, p['channel_name'] as String? ?? ''),
+                  subtitleMaxLines: 3,
+                  trailing: _decide(
+                    onAccept: () => _run(
+                      () => widget.membershipService.decideInviteProposal(p['id'] as String, approve: true),
+                      success: t.proposalApproved(p['invitee_name'] as String? ?? ''),
+                    ),
+                    onDecline: () => _run(() => widget.membershipService.decideInviteProposal(p['id'] as String, approve: false)),
                   ),
                 ),
             ],

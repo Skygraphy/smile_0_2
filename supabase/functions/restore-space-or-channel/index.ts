@@ -8,6 +8,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { resolveSpaceAccess } from "../_shared/space-access.ts";
+import { resolveChannelAccess } from "../_shared/channel-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -40,7 +41,8 @@ Deno.serve(async (req) => {
     if (!channel || !channel.deleted_at) return jsonResponse({ error: "not_in_trash" }, 404);
     const space = await resolveSpaceAccess(supabaseAdmin, channel.space_id as string, userId);
     if (!space.active) return jsonResponse({ error: "space_in_trash" }, 409);
-    if (!space.manages) return jsonResponse({ error: "forbidden" }, 403);
+    // Its managers, the album creator included (migrations/0109).
+    if (!space.manages && !(await resolveChannelAccess(supabaseAdmin, body.id, userId)).isSco) return jsonResponse({ error: "forbidden" }, 403);
   } else {
     const space = await resolveSpaceAccess(supabaseAdmin, body.id, userId);
     if (!space.exists || space.active) return jsonResponse({ error: "not_in_trash" }, 404);

@@ -85,6 +85,16 @@ export const en: PushTexts = {
       ? `${p.actor ?? en.someone} allowed you to create albums in ${p.space}.`
       : `You can no longer create new albums in ${p.space}. Your albums stay.`,
   }),
+  inviteProposal: (p) => ({
+    title: "Suggestion",
+    body: `${p.actor ?? en.someone} would like to invite ${p.person ?? en.someone} to ${p.album}.`,
+  }),
+  proposalDecided: (p) => ({
+    title: p.approved ? "Suggestion accepted" : "Suggestion declined",
+    body: p.approved
+      ? `${p.person ?? en.someone} has been invited to ${p.album}.`
+      : `${p.person ?? en.someone} will not be invited to ${p.album}.`,
+  }),
   albumCreatorInvite: (p) => ({
     title: "Invitation",
     body: `${p.actor ?? en.someone} invites you to create albums in ${p.space}.`,

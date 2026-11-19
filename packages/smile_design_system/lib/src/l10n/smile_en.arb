@@ -1144,5 +1144,13 @@
   "@acceptedAlbumCreator": {"placeholders":{"space":{"type":"String"}}},
   "albumRightGiveBack": "Give back creating albums",
   "albumRightGiveBackMessage": "You will no longer be able to create new albums in {space}. Your albums stay and are then managed by the admin.",
-  "@albumRightGiveBackMessage": {"placeholders":{"space":{"type":"String"}}}
+  "@albumRightGiveBackMessage": {"placeholders":{"space":{"type":"String"}}},
+  "proposeOnlyHint": "Not in the Space yet · will be suggested, the admin decides",
+  "proposedTo": "Suggested: {name}. The admin decides.",
+  "@proposedTo": {"placeholders":{"name":{"type":"String"}}},
+  "proposalsTitle": "Suggestions",
+  "proposalFrom": "Suggested by {name} for {album}",
+  "@proposalFrom": {"placeholders":{"name":{"type":"String"},"album":{"type":"String"}}},
+  "proposalApproved": "{name} has been invited.",
+  "@proposalApproved": {"placeholders":{"name":{"type":"String"}}}
 }

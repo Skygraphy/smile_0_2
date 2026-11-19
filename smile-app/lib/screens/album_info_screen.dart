@@ -73,6 +73,10 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   /// Frames it could be put on ("Auf Frame zeigen", 2026-10-11).
   List<({String frameId, String frameName, String? avatarPath, String spaceName})> _possibleFrames = const [];
   bool _managesFrames = false;
+
+  /// For an album creator (not Admin / Co-Admin): who is already in the
+  /// Space -- everyone else can only be proposed (migrations/0111).
+  Set<String>? _anchored;
   Map<String, ChannelWithActivity> _covers = const {};
   late String _name = widget.channelName;
   String? _errorMessage;
@@ -109,6 +113,11 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     }));
     try {
       final roster = await widget.membershipService.listChannelMembers(widget.channelId);
+      if (roster.callerIsSco && !roster.callerManagesSpace) {
+        unawaited(widget.membershipService.anchoredPeople(widget.channelId).then((a) {
+          if (mounted) setState(() => _anchored = a);
+        }, onError: (Object _) {}));
+      }
       // Only a manager may list this album's requests (list-my-invites
       // rejects anyone else) -- skip the call instead of surfacing an
       // expected 403 as an error.
@@ -440,7 +449,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       if (isManager) item(SmileIcons.member, t.renameAlbum, _rename),
       if (isManager) item(SmileIcons.picture, t.changeObjectPicture, _changePicture),
       if (isManager) item(SmileIcons.invite, t.inviteToAlbum, _inviteMember),
-      if (isManager) item(SmileIcons.share, t.shareWithSpace, _inviteShare),
+      if (isManager && roster.callerManagesSpace) item(SmileIcons.share, t.shareWithSpace, _inviteShare),
       if (onFrame) item(SmileIcons.frame, t.showOnFrame, () => _quickShowOnFrame(roster.homeSpaceName)),
     ];
     if (items.isEmpty) return const SizedBox.shrink();
@@ -473,11 +482,14 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
     unawaited(Tips.markUsed(TipId.inviteWays));
     final t = SmileTexts.of(context);
     final inAlbum = {for (final m in _roster?.members ?? const <ChannelMember>[]) m.userId};
+    final anchored = _anchored;
     await showInviteSheet(
       context,
       title: t.inviteToNamed(_shownName),
       people: InviteService().knownPeople(),
       whyNot: (p) => inAlbum.contains(p.userId) ? t.alreadyInAlbum : null,
+      // Album creator: someone not yet in the Space is only proposed.
+      subtitle: anchored == null ? null : (p) => anchored.contains(p.userId) ? null : t.proposeOnlyHint,
       onPerson: (person) => _invitePerson(
         person,
         () => widget.membershipService.inviteMember(channelId: widget.channelId, userId: person.userId),
@@ -555,12 +567,15 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   }
 
   /// By name: the invite goes out, a short note says so.
-  Future<void> _invitePerson(KnownPerson person, Future<void> Function() invite) async {
+  Future<void> _invitePerson(KnownPerson person, Future<Object?> Function() invite) async {
     final t = SmileTexts.of(context);
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await invite();
-      messenger.showSnackBar(SnackBar(content: Text(t.inviteSentTo(person.name))));
+      final status = await invite();
+      // Album creator, someone new: the Space's managers decide (0111).
+      messenger.showSnackBar(SnackBar(
+        content: Text(status == 'proposed' ? t.proposedTo(person.name) : t.inviteSentTo(person.name)),
+      ));
       await _load();
     } catch (e) {
       if (!mounted) return;
@@ -579,7 +594,12 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
       ),
     );
     if (email == null || email.trim().isEmpty) return;
-    await _run(() => widget.membershipService.inviteMember(channelId: widget.channelId, email: email.trim()));
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    await _run(() async {
+      final status = await widget.membershipService.inviteMember(channelId: widget.channelId, email: email.trim());
+      if (status == 'proposed') messenger.showSnackBar(SnackBar(content: Text(t.proposedTo(email.trim()))));
+    });
   }
 
   Future<void> _inviteShareByEmail() async {
@@ -866,7 +886,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         if (isManager)
           SmileQuickActions(actions: [
             SmileQuickAction(icon: SmileIcons.invite, label: t.actionInvite, onTap: _inviteMember),
-            SmileQuickAction(icon: SmileIcons.share, label: t.actionShare, onTap: _inviteShare),
+            if (roster.callerManagesSpace) SmileQuickAction(icon: SmileIcons.share, label: t.actionShare, onTap: _inviteShare),
           ]),
         // One tap onto a Frame (2026-10-14).
         if (_visibleFrames.isNotEmpty || _addableFrames.isNotEmpty || _managesFrames)
@@ -977,7 +997,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
                     onPressed: () => _run(() => widget.membershipService.withdrawShareRequest(request.id)),
                   ),
                 ),
-              if (isManager) SmileActionRow(icon: SmileIcons.share, label: t.shareWithSpace, onTap: _inviteShare),
+              if (isManager && roster.callerManagesSpace) SmileActionRow(icon: SmileIcons.share, label: t.shareWithSpace, onTap: _inviteShare),
             ],
           ),
 

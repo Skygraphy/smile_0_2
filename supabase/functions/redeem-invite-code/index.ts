@@ -62,12 +62,12 @@ Deno.serve(async (req) => {
     .eq("id", invite.target_id)
     .maybeSingle();
   if (!channel || channel.deleted_at) return jsonResponse({ error: "invalid_code" }, 404);
-  if (invite.kind === "album_member") return await albumMember(admin, channel, userId, body.via);
+  if (invite.kind === "album_member") return await albumMember(admin, channel, userId, body.via, invite.created_by);
   return await albumShare(admin, channel, userId, body.via, body.space_id);
 });
 
 // deno-lint-ignore no-explicit-any
-async function albumMember(admin: Admin, channel: any, userId: string, via: string): Promise<Response> {
+async function albumMember(admin: Admin, channel: any, userId: string, via: string, codeBy: string | null): Promise<Response> {
   const result = { kind: "album_member", channel_id: channel.id, channel_name: channel.name };
   const { data: member } = await admin
     .from("channel_members")
@@ -92,8 +92,20 @@ async function albumMember(admin: Admin, channel: any, userId: string, via: stri
     .eq("status", "pending")
     .maybeSingle();
 
+  // A code from an album creator (not managing the Space) lets in at once
+  // only people already in the Space; anyone else asks the managers
+  // (migrations/0111).
+  let scanIsEnough = via === "qr";
+  if (scanIsEnough && pending?.direction !== "invite" && codeBy) {
+    const [{ data: byManager }, { data: anchored }] = await Promise.all([
+      admin.rpc("access_manages_space", { p_user: codeBy, p_space: channel.space_id }),
+      admin.rpc("access_is_anchored", { p_user: userId, p_space: channel.space_id }),
+    ]);
+    scanIsEnough = byManager === true || anchored === true;
+  }
+
   // Already invited (e.g. by name): the code counts as saying yes.
-  if (via === "qr" || pending?.direction === "invite") {
+  if (scanIsEnough || pending?.direction === "invite") {
     let id = pending?.id;
     if (!id) {
       const { data: created, error } = await admin

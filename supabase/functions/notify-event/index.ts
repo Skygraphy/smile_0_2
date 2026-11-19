@@ -82,6 +82,8 @@ Deno.serve(async (req) => {
       await albumCreated(supabaseAdmin, body.payload.channel_id!, body.payload.actor_id ?? null);
     } else if (body.kind === "album_right_changed") {
       await albumRightChanged(supabaseAdmin, body.payload);
+    } else if (body.kind === "proposal_decided") {
+      await proposalDecided(supabaseAdmin, body.payload);
     } else if (body.kind === "album_creator_decided") {
       await albumCreatorDecided(supabaseAdmin, body.payload);
     } else if (body.kind === "album_renamed") {
@@ -421,6 +423,31 @@ async function albumCreated(supabaseAdmin: Admin, channelId: string, actorId: st
         : t.albumCreated({ actor, album: channel.name, space: space?.name ?? "" }),
     { type: "album_created", channel_id: channelId, channel_name: channel.name as string, ...(ask ? { offer_frames: "1" } : {}) },
   );
+}
+
+/** A proposal decided by a manager (migrations/0111): the proposer hears
+ * it; approved, the person gets the usual album invitation. */
+// deno-lint-ignore no-explicit-any
+async function proposalDecided(supabaseAdmin: Admin, p: Record<string, any>) {
+  const { data: channel } = await supabaseAdmin.from("channels").select("name").eq("id", p.channel_id).maybeSingle();
+  if (!channel) return;
+  const person = await displayName(supabaseAdmin, p.invitee_id as string);
+  if (p.proposer_id) {
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      [p.proposer_id as string],
+      (t) => t.proposalDecided({ person, album: channel.name as string, approved: p.approved === true }),
+      { type: "proposal_decided", channel_id: p.channel_id as string, channel_name: channel.name as string },
+    );
+  }
+  if (p.approved === true) {
+    await pushNotificationToUsers(
+      supabaseAdmin,
+      [p.invitee_id as string],
+      (t) => t.memberInvite({ album: channel.name as string }),
+      { type: "channel_membership_invite", channel_id: p.channel_id as string, channel_name: channel.name as string },
+    );
+  }
 }
 
 /** An invitation to "Darf Alben anlegen" answered (migrations/0110): the inviter hears it. */

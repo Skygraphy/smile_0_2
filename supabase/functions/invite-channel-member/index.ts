@@ -10,7 +10,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { findUserIdByEmail } from "../_shared/find-user.ts";
 import { pushNotificationToUsers } from "../_shared/push-users.ts";
-import { isSpaceOwnerOrCoOwner, isStaff as checkStaff } from "../_shared/space-access.ts";
+import { isStaff as checkStaff } from "../_shared/space-access.ts";
+import { resolveChannelAccess } from "../_shared/channel-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -51,7 +52,9 @@ Deno.serve(async (req) => {
   const { data: channel } = await supabaseAdmin.from("channels").select("id, name, space_id").eq("id", body.channel_id).maybeSingle();
   if (!channel) return jsonResponse({ error: "channel_not_found" }, 404);
 
-  if (!isStaff && !(await isSpaceOwnerOrCoOwner(supabaseAdmin, channel.space_id, userId))) {
+  // The Space's managers, or the album's creator (migrations/0109).
+  const access = await resolveChannelAccess(supabaseAdmin, channel.id, userId);
+  if (!isStaff && !access.isSco) {
     return jsonResponse({ error: "not_channel_sco" }, 403);
   }
 
@@ -65,6 +68,36 @@ Deno.serve(async (req) => {
     .eq("user_id", inviteeId)
     .maybeSingle();
   if (existingMembership) return jsonResponse({ status: "already_member" });
+
+  // An album creator brings in only people already in the Space; anyone
+  // else becomes a proposal the managers decide (migrations/0111).
+  if (!isStaff && !access.managesSpace) {
+    const { data: anchored } = await supabaseAdmin.rpc("access_is_anchored", { p_user: inviteeId, p_space: channel.space_id });
+    if (anchored !== true) {
+      const { error: proposeError } = await supabaseAdmin
+        .from("channel_invite_proposals")
+        .insert({ channel_id: channel.id, invitee_user_id: inviteeId, proposed_by: userId });
+      if (proposeError && !proposeError.message.includes("uq_invite_proposals_pending")) {
+        return jsonResponse({ error: "invite_failed", detail: proposeError.message }, 500);
+      }
+      if (!proposeError) {
+        const [{ data: me }, { data: person }] = await Promise.all([
+          supabaseAdmin.from("profiles").select("display_name").eq("user_id", userId).maybeSingle(),
+          supabaseAdmin.from("profiles").select("display_name").eq("user_id", inviteeId).maybeSingle(),
+        ]);
+        const { data: space } = await supabaseAdmin.from("spaces").select("owner_id").eq("id", channel.space_id).maybeSingle();
+        const { data: coOwners } = await supabaseAdmin.from("space_co_owners").select("user_id").eq("space_id", channel.space_id);
+        const managers = [space?.owner_id, ...(coOwners ?? []).map((c: { user_id: string }) => c.user_id)].filter(Boolean) as string[];
+        await pushNotificationToUsers(
+          supabaseAdmin,
+          managers,
+          (t) => t.inviteProposal({ actor: me?.display_name ?? null, person: person?.display_name ?? null, album: channel.name }),
+          { type: "invite_proposal", channel_id: channel.id, channel_name: channel.name },
+        );
+      }
+      return jsonResponse({ status: "proposed" });
+    }
+  }
 
   const { data: request, error: insertError } = await supabaseAdmin
     .from("channel_membership_requests")
