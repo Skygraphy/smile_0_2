@@ -17,6 +17,8 @@ import 'screens/album_info_screen.dart';
 import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
 import 'screens/news_screen.dart';
+import 'screens/feedback_inbox_screen.dart';
+import 'services/feedback_service.dart';
 import 'screens/intro_screen.dart';
 import 'screens/profile_setup_screen.dart';
 import 'screens/space_info_screen.dart';
@@ -118,6 +120,7 @@ Future<void> main() async {
     onResume: () {
       SyncBus.emit(const SyncEvent.everything());
       unawaited(UploadQueue.instance.process());
+      unawaited(FeedbackService.instance.flushPending());
       unawaited(ForegroundNotifications.clearAll());
     },
   );
@@ -130,6 +133,8 @@ Future<void> main() async {
   VideoPrefetcher.start();
   // Photos/videos still waiting to be sent go out (2026-10-11).
   unawaited(UploadQueue.instance.start());
+  // Hilfe & Feedback sent without internet (2026-11-20).
+  unawaited(FeedbackService.instance.flushPending());
   // Invites as links (smileapp.app/i/…), also brought along by the store
   // (2026-10-17) -- taken by HomeShell once someone is signed in.
   unawaited(InviteLinks.start());
@@ -278,6 +283,9 @@ void openNotificationTarget(Map<String, dynamic> data) {
       navigator.push(
         MaterialPageRoute(builder: (_) => AlbumInfoScreen(channelId: channelId, channelName: channelName)),
       );
+    // Hilfe & Feedback (migrations/0113): to the operator.
+    case 'feedback':
+      navigator.push(MaterialPageRoute(builder: (_) => FeedbackInboxScreen(openReportId: data['report_id'] as String?)));
     case 'space_ownership_transferred':
       if (spaceId == null) return;
       navigator.push(MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: spaceId, spaceName: spaceName)));

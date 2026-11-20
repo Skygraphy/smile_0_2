@@ -4294,4 +4294,120 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get emptyAlbumShowAnyway => 'Trotzdem zeigen';
+
+  @override
+  String get helpSection => 'Hilfe';
+
+  @override
+  String get helpFeedback => 'Hilfe & Feedback';
+
+  @override
+  String get helpFeedbackHint => 'Problem melden, Idee schicken';
+
+  @override
+  String get feedbackKindProblem => 'Etwas geht nicht';
+
+  @override
+  String get feedbackKindIdea => 'Idee oder Wunsch';
+
+  @override
+  String get feedbackKindQuestion => 'Frage';
+
+  @override
+  String get feedbackMessageHint =>
+      'Was ist passiert? Je genauer, desto besser.';
+
+  @override
+  String get feedbackImages => 'Bilder (optional, bis zu 3)';
+
+  @override
+  String get feedbackFrame => 'Betrifft einen Frame?';
+
+  @override
+  String get feedbackFrameNone => 'Nein';
+
+  @override
+  String feedbackSentAlong(String info) {
+    return 'Wird mitgeschickt: $info';
+  }
+
+  @override
+  String get feedbackFrameAlong =>
+      'beim Frame auch Version, Akku und wann er zuletzt online war';
+
+  @override
+  String feedbackReplyTo(String email) {
+    return 'Antwort kommt an $email';
+  }
+
+  @override
+  String get feedbackSend => 'Senden';
+
+  @override
+  String get feedbackThanksTitle => 'Danke, ist angekommen!';
+
+  @override
+  String get feedbackThanksText =>
+      'Wir schauen es uns an und melden uns per E-Mail, wenn wir Fragen haben oder es behoben ist.';
+
+  @override
+  String get feedbackQueuedTitle => 'Danke!';
+
+  @override
+  String get feedbackQueuedText =>
+      'Gerade ist kein Internet da. Deine Nachricht geht von selbst raus, sobald es wieder klappt.';
+
+  @override
+  String get feedbackInbox => 'Meldungen';
+
+  @override
+  String get feedbackInboxHint => 'Was über Hilfe & Feedback hereinkommt';
+
+  @override
+  String get feedbackInboxEmpty => 'Noch keine Meldungen.';
+
+  @override
+  String get feedbackLoadFailed =>
+      'Die Meldungen konnten gerade nicht geladen werden.';
+
+  @override
+  String get feedbackMarkDone => 'Erledigt';
+
+  @override
+  String get feedbackReopen => 'Wieder offen';
+
+  @override
+  String get feedbackReplyMail => 'Per E-Mail antworten';
+
+  @override
+  String get feedbackDoneTag => 'erledigt';
+
+  @override
+  String feedbackImageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Bilder',
+      one: '1 Bild',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get feedbackDevice => 'Gerät';
+
+  @override
+  String feedbackBattery(String pct) {
+    return 'Akku $pct %';
+  }
+
+  @override
+  String feedbackLastSeen(String when) {
+    return 'Zuletzt online $when';
+  }
+
+  @override
+  String feedbackLevel(String level) {
+    return 'Bedienstufe $level';
+  }
 }

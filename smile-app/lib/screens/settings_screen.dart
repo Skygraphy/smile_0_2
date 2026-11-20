@@ -29,6 +29,9 @@ import 'my_card_screen.dart';
 import '../services/frame_service.dart';
 import '../services/preferred_frame.dart';
 import '../services/play_billing.dart';
+import '../services/feedback_service.dart';
+import 'feedback_screen.dart';
+import 'feedback_inbox_screen.dart';
 
 /// WhatsApp's own Settings screen layout: avatar with a small camera badge
 /// overlapping its bottom-right corner, name underneath. Three separate
@@ -107,8 +110,14 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
     if (mounted) setState(() => _preferredFrameId = picked.isEmpty ? null : picked);
   }
 
+  /// Gets the Hilfe & Feedback reports (the operator) -- shows "Meldungen".
+  bool _amOps = false;
+
   Future<void> _load() async {
     unawaited(_loadFrames());
+    unawaited(FeedbackService.instance.amOps().then((ops) {
+      if (mounted && ops != _amOps) setState(() => _amOps = ops);
+    }));
     try {
       final profile = await widget.profileService.getMyProfile();
       if (!mounted) return;
@@ -525,6 +534,28 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                         messenger.showSnackBar(SnackBar(content: Text(done)));
                       },
                     ),
+                  ],
+                ),
+                // "Hilfe & Feedback" (2026-11-20); "Meldungen" only for the
+                // operator who receives them.
+                SmileInfoSection(
+                  title: t.helpSection,
+                  children: [
+                    SmileObjectTile(
+                      leading: Icon(SmileIcons.help, color: scheme.onSurfaceVariant),
+                      title: t.helpFeedback,
+                      subtitle: t.helpFeedbackHint,
+                      trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FeedbackScreen())),
+                    ),
+                    if (_amOps)
+                      SmileObjectTile(
+                        leading: Icon(SmileIcons.news, color: scheme.onSurfaceVariant),
+                        title: t.feedbackInbox,
+                        subtitle: t.feedbackInboxHint,
+                        trailing: Icon(SmileIcons.chevron, size: 16, color: scheme.onSurfaceVariant),
+                        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FeedbackInboxScreen())),
+                      ),
                   ],
                 ),
                 // "Über Smile" (2026-11-10): Impressum, Datenschutz, Lizenzen.

@@ -6990,6 +6990,192 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Trotzdem zeigen'**
   String get emptyAlbumShowAnyway;
+
+  /// No description provided for @helpSection.
+  ///
+  /// In de, this message translates to:
+  /// **'Hilfe'**
+  String get helpSection;
+
+  /// No description provided for @helpFeedback.
+  ///
+  /// In de, this message translates to:
+  /// **'Hilfe & Feedback'**
+  String get helpFeedback;
+
+  /// No description provided for @helpFeedbackHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Problem melden, Idee schicken'**
+  String get helpFeedbackHint;
+
+  /// No description provided for @feedbackKindProblem.
+  ///
+  /// In de, this message translates to:
+  /// **'Etwas geht nicht'**
+  String get feedbackKindProblem;
+
+  /// No description provided for @feedbackKindIdea.
+  ///
+  /// In de, this message translates to:
+  /// **'Idee oder Wunsch'**
+  String get feedbackKindIdea;
+
+  /// No description provided for @feedbackKindQuestion.
+  ///
+  /// In de, this message translates to:
+  /// **'Frage'**
+  String get feedbackKindQuestion;
+
+  /// No description provided for @feedbackMessageHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Was ist passiert? Je genauer, desto besser.'**
+  String get feedbackMessageHint;
+
+  /// No description provided for @feedbackImages.
+  ///
+  /// In de, this message translates to:
+  /// **'Bilder (optional, bis zu 3)'**
+  String get feedbackImages;
+
+  /// No description provided for @feedbackFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Betrifft einen Frame?'**
+  String get feedbackFrame;
+
+  /// No description provided for @feedbackFrameNone.
+  ///
+  /// In de, this message translates to:
+  /// **'Nein'**
+  String get feedbackFrameNone;
+
+  /// No description provided for @feedbackSentAlong.
+  ///
+  /// In de, this message translates to:
+  /// **'Wird mitgeschickt: {info}'**
+  String feedbackSentAlong(String info);
+
+  /// No description provided for @feedbackFrameAlong.
+  ///
+  /// In de, this message translates to:
+  /// **'beim Frame auch Version, Akku und wann er zuletzt online war'**
+  String get feedbackFrameAlong;
+
+  /// No description provided for @feedbackReplyTo.
+  ///
+  /// In de, this message translates to:
+  /// **'Antwort kommt an {email}'**
+  String feedbackReplyTo(String email);
+
+  /// No description provided for @feedbackSend.
+  ///
+  /// In de, this message translates to:
+  /// **'Senden'**
+  String get feedbackSend;
+
+  /// No description provided for @feedbackThanksTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Danke, ist angekommen!'**
+  String get feedbackThanksTitle;
+
+  /// No description provided for @feedbackThanksText.
+  ///
+  /// In de, this message translates to:
+  /// **'Wir schauen es uns an und melden uns per E-Mail, wenn wir Fragen haben oder es behoben ist.'**
+  String get feedbackThanksText;
+
+  /// No description provided for @feedbackQueuedTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Danke!'**
+  String get feedbackQueuedTitle;
+
+  /// No description provided for @feedbackQueuedText.
+  ///
+  /// In de, this message translates to:
+  /// **'Gerade ist kein Internet da. Deine Nachricht geht von selbst raus, sobald es wieder klappt.'**
+  String get feedbackQueuedText;
+
+  /// No description provided for @feedbackInbox.
+  ///
+  /// In de, this message translates to:
+  /// **'Meldungen'**
+  String get feedbackInbox;
+
+  /// No description provided for @feedbackInboxHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Was über Hilfe & Feedback hereinkommt'**
+  String get feedbackInboxHint;
+
+  /// No description provided for @feedbackInboxEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Meldungen.'**
+  String get feedbackInboxEmpty;
+
+  /// No description provided for @feedbackLoadFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Meldungen konnten gerade nicht geladen werden.'**
+  String get feedbackLoadFailed;
+
+  /// No description provided for @feedbackMarkDone.
+  ///
+  /// In de, this message translates to:
+  /// **'Erledigt'**
+  String get feedbackMarkDone;
+
+  /// No description provided for @feedbackReopen.
+  ///
+  /// In de, this message translates to:
+  /// **'Wieder offen'**
+  String get feedbackReopen;
+
+  /// No description provided for @feedbackReplyMail.
+  ///
+  /// In de, this message translates to:
+  /// **'Per E-Mail antworten'**
+  String get feedbackReplyMail;
+
+  /// No description provided for @feedbackDoneTag.
+  ///
+  /// In de, this message translates to:
+  /// **'erledigt'**
+  String get feedbackDoneTag;
+
+  /// No description provided for @feedbackImageCount.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 Bild} other{{count} Bilder}}'**
+  String feedbackImageCount(int count);
+
+  /// No description provided for @feedbackDevice.
+  ///
+  /// In de, this message translates to:
+  /// **'Gerät'**
+  String get feedbackDevice;
+
+  /// No description provided for @feedbackBattery.
+  ///
+  /// In de, this message translates to:
+  /// **'Akku {pct} %'**
+  String feedbackBattery(String pct);
+
+  /// No description provided for @feedbackLastSeen.
+  ///
+  /// In de, this message translates to:
+  /// **'Zuletzt online {when}'**
+  String feedbackLastSeen(String when);
+
+  /// No description provided for @feedbackLevel.
+  ///
+  /// In de, this message translates to:
+  /// **'Bedienstufe {level}'**
+  String feedbackLevel(String level);
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

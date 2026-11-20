@@ -4261,4 +4261,119 @@ class SmileTextsEn extends SmileTexts {
 
   @override
   String get emptyAlbumShowAnyway => 'Show anyway';
+
+  @override
+  String get helpSection => 'Help';
+
+  @override
+  String get helpFeedback => 'Help & feedback';
+
+  @override
+  String get helpFeedbackHint => 'Report a problem, send an idea';
+
+  @override
+  String get feedbackKindProblem => 'Something isn\'t working';
+
+  @override
+  String get feedbackKindIdea => 'Idea or wish';
+
+  @override
+  String get feedbackKindQuestion => 'Question';
+
+  @override
+  String get feedbackMessageHint =>
+      'What happened? The more detail, the better.';
+
+  @override
+  String get feedbackImages => 'Pictures (optional, up to 3)';
+
+  @override
+  String get feedbackFrame => 'About a Frame?';
+
+  @override
+  String get feedbackFrameNone => 'No';
+
+  @override
+  String feedbackSentAlong(String info) {
+    return 'Sent along: $info';
+  }
+
+  @override
+  String get feedbackFrameAlong =>
+      'for a Frame also its version, battery and when it was last online';
+
+  @override
+  String feedbackReplyTo(String email) {
+    return 'The reply goes to $email';
+  }
+
+  @override
+  String get feedbackSend => 'Send';
+
+  @override
+  String get feedbackThanksTitle => 'Thanks, it arrived!';
+
+  @override
+  String get feedbackThanksText =>
+      'We\'ll look into it and get back to you by e-mail if we have questions or once it\'s fixed.';
+
+  @override
+  String get feedbackQueuedTitle => 'Thanks!';
+
+  @override
+  String get feedbackQueuedText =>
+      'There\'s no internet right now. Your message goes out by itself as soon as it works again.';
+
+  @override
+  String get feedbackInbox => 'Reports';
+
+  @override
+  String get feedbackInboxHint => 'What comes in through Help & feedback';
+
+  @override
+  String get feedbackInboxEmpty => 'No reports yet.';
+
+  @override
+  String get feedbackLoadFailed => 'The reports couldn\'t be loaded right now.';
+
+  @override
+  String get feedbackMarkDone => 'Done';
+
+  @override
+  String get feedbackReopen => 'Reopen';
+
+  @override
+  String get feedbackReplyMail => 'Reply by e-mail';
+
+  @override
+  String get feedbackDoneTag => 'done';
+
+  @override
+  String feedbackImageCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pictures',
+      one: '1 picture',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get feedbackDevice => 'Device';
+
+  @override
+  String feedbackBattery(String pct) {
+    return 'Battery $pct %';
+  }
+
+  @override
+  String feedbackLastSeen(String when) {
+    return 'Last online $when';
+  }
+
+  @override
+  String feedbackLevel(String level) {
+    return 'Control level $level';
+  }
 }

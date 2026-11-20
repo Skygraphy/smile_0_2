@@ -65,6 +65,16 @@ Deno.serve(async (req) => {
     if (error) return jsonResponse({ error: "space_delete_failed", detail: error.message }, 500);
   }
 
+  // Hilfe & Feedback (migrations/0113): the rows go with the account
+  // (cascade), their pictures here. Best-effort.
+  try {
+    const { data: reports } = await supabaseAdmin.from("feedback_reports").select("image_paths").eq("user_id", userId);
+    const paths = (reports ?? []).flatMap((r) => (r.image_paths as string[] | null) ?? []);
+    if (paths.length > 0) await supabaseAdmin.storage.from("feedback").remove(paths);
+  } catch {
+    // ignore
+  }
+
   const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
   if (deleteError) return jsonResponse({ error: "account_delete_failed", detail: deleteError.message }, 500);
 

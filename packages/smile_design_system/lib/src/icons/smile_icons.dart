@@ -98,6 +98,8 @@ class SmileIcons {
   /// "Shared with".
   static const IconData web = IconData(0xe288, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData email = IconData(0xe218, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
+  /// Phosphor `question`: Hilfe & Feedback (2026-11-20).
+  static const IconData help = IconData(0xe3e8, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
   static const IconData close = IconData(0xe4f6, fontFamily: 'PhosphorRegular', fontPackage: _pkg);
 
   /// Accept a request / invitation.
