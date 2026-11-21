@@ -151,7 +151,7 @@ Future<void> main() async {
   // report it; never on a Frame.
   if (frame.FrameMode.active.value != true) {
     ScreenReport.start(
-      messenger: scaffoldMessengerKey,
+      navigator: navigatorKey,
       open: (picture, screen) => navigatorKey.currentState?.push(
         MaterialPageRoute(builder: (_) => FeedbackScreen(initialImages: [picture], screen: screen)),
       ),

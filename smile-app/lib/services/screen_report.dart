@@ -30,9 +30,12 @@ class ScreenReport {
   static bool _started = false;
   static bool _busy = false;
 
+  static OverlayEntry? _hint;
+  static Timer? _hintTimer;
+
   /// [open] shows the form: (picture, where it happened).
   static void start({
-    required GlobalKey<ScaffoldMessengerState> messenger,
+    required GlobalKey<NavigatorState> navigator,
     required void Function(Uint8List picture, String? screen) open,
   }) {
     if (_started) return;
@@ -45,41 +48,46 @@ class ScreenReport {
       _busy = true;
       try {
         final picture = await capture();
-        if (picture == null) return;
-        final state = messenger.currentState;
-        final context = messenger.currentContext;
-        if (state == null || context == null || !context.mounted) return;
-        final t = SmileTexts.of(context);
-        state.hideCurrentSnackBar();
-        state.showSnackBar(SnackBar(
-          duration: const Duration(seconds: 8),
-          content: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: Image.memory(picture, width: 26, height: 44, fit: BoxFit.cover),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(t.screenshotTaken, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    Text(t.screenshotAsk),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          action: SnackBarAction(label: t.screenshotReport, onPressed: () => open(picture, screen)),
-        ));
+        final overlay = navigator.currentState?.overlay;
+        if (picture == null || overlay == null || !overlay.mounted) return;
+        _showHint(overlay, picture, () {
+          _hideHint();
+          open(picture, screen);
+        });
       } catch (e) {
         debugPrint('ScreenReport: $e');
       } finally {
         _busy = false;
       }
     });
+  }
+
+  /// At the top: the bottom is taken by the phone's own screenshot bar
+  /// and Smile's tip cards. Goes away by itself after 12 seconds (Samsung's
+  /// own screenshot bar takes the touches for the first ~4).
+  static void _showHint(
+    OverlayState overlay,
+    Uint8List picture,
+    VoidCallback report,
+  ) {
+    _hideHint();
+    final entry = OverlayEntry(
+      builder: (context) => _ScreenshotHint(
+        picture: picture,
+        onReport: report,
+        onClose: _hideHint,
+      ),
+    );
+    _hint = entry;
+    overlay.insert(entry);
+    _hintTimer = Timer(const Duration(seconds: 12), _hideHint);
+  }
+
+  static void _hideHint() {
+    _hintTimer?.cancel();
+    _hintTimer = null;
+    _hint?.remove();
+    _hint = null;
   }
 
   /// Smile's own screen right now as a JPEG (at most ~1080 px wide).
@@ -92,7 +100,11 @@ class ScreenReport {
     try {
       final png = await image.toByteData(format: ui.ImageByteFormat.png);
       if (png == null) return null;
-      return await FlutterImageCompress.compressWithList(png.buffer.asUint8List(), format: CompressFormat.jpeg, quality: 80);
+      return await FlutterImageCompress.compressWithList(
+        png.buffer.asUint8List(),
+        format: CompressFormat.jpeg,
+        quality: 80,
+      );
     } finally {
       image.dispose();
     }
@@ -131,6 +143,106 @@ class ScreenReport {
   }
 }
 
+class _ScreenshotHint extends StatelessWidget {
+  const _ScreenshotHint({
+    required this.picture,
+    required this.onReport,
+    required this.onClose,
+  });
+
+  final Uint8List picture;
+  final VoidCallback onReport;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = SmileTexts.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    // The picture the way the screen is: wide on a tablet lying down.
+    final wide = MediaQuery.sizeOf(context).aspectRatio > 1;
+    return Positioned(
+      left: 12,
+      right: 12,
+      top: MediaQuery.paddingOf(context).top + 8,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 220),
+            builder: (context, v, child) => Opacity(
+              opacity: v,
+              child: Transform.translate(
+                offset: Offset(0, (1 - v) * -16),
+                child: child,
+              ),
+            ),
+            child: Material(
+              color: scheme.surfaceContainerHighest,
+              elevation: 8,
+              borderRadius: BorderRadius.circular(16),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: onReport,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: Image.memory(
+                          picture,
+                          width: wide ? 56 : 28,
+                          height: wide ? 33 : 48,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              t.screenshotTaken,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              t.screenshotAsk,
+                              style: TextStyle(color: scheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: onReport,
+                        child: Text(
+                          t.screenshotReport,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: onClose,
+                        icon: Icon(
+                          SmileIcons.close,
+                          size: 18,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// A screen that says better than its class name where someone is, e.g.
 /// Album „Urlaub Kroatien“ (goes to the Verwaltung only, in German).
 abstract interface class FeedbackScreenLabel {
@@ -143,13 +255,16 @@ class _TopRouteObserver extends NavigatorObserver {
   Route<dynamic>? get top => _stack.isEmpty ? null : _stack.last;
 
   @override
-  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) => _stack.add(route);
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _stack.add(route);
 
   @override
-  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) => _stack.remove(route);
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _stack.remove(route);
 
   @override
-  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) => _stack.remove(route);
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _stack.remove(route);
 
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
@@ -185,7 +300,8 @@ class ErrorTrail {
     final since = DateTime.now().subtract(_maxAge);
     return [
       for (final e in _entries.reversed)
-        if (e.at.isAfter(since)) {'at': e.at.toUtc().toIso8601String(), 'text': e.text},
+        if (e.at.isAfter(since))
+          {'at': e.at.toUtc().toIso8601String(), 'text': e.text},
     ];
   }
 }

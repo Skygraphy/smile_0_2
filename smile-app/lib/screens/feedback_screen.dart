@@ -217,7 +217,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(SmileRadius.s),
-                    child: Image.memory(_images[i], width: 72, height: 96, fit: BoxFit.cover),
+                    child: ColoredBox(color: Colors.black, child: Image.memory(_images[i], width: 72, height: 96, fit: BoxFit.contain)),
                   ),
                   Positioned(
                     top: -8,
