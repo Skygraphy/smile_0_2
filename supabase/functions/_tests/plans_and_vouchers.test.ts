@@ -105,7 +105,7 @@ Deno.test("trial, lapse, voucher redeem once, limits, partner view, extra Frames
 
     // Only voucher admins (0103) may create codes.
     assertEquals((await invoke("voucher-admin", accessToken, { action: "list" })).status, 403);
-    await svc("voucher_admins", { method: "POST", body: JSON.stringify({ user_id: owner.id }) });
+    await svc("admin_users", { method: "POST", body: JSON.stringify({ user_id: owner.id, role: "admin", can_vouchers: true }) });
     const until = new Date(Date.now() + 365 * DAY).toISOString();
     const made = await invoke("voucher-admin", accessToken, {
       action: "create",
@@ -201,7 +201,7 @@ Deno.test("trial, lapse, voucher redeem once, limits, partner view, extra Frames
     assertEquals(limited.status, 429);
   } finally {
     for (const id of batchIds) await svc(`voucher_batches?id=eq.${id}`, { method: "DELETE" });
-    await svc(`voucher_admins?user_id=eq.${owner.id}`, { method: "DELETE" });
+    await svc(`admin_users?user_id=eq.${owner.id}`, { method: "DELETE" });
     if (space) await deleteSpace(space);
     await deleteUser(owner.id);
     await deleteUser(other.id);

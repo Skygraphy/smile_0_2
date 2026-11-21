@@ -1865,22 +1865,5 @@
   "feedbackThanksTitle": "Danke, ist angekommen!",
   "feedbackThanksText": "Wir schauen es uns an und melden uns per E-Mail, wenn wir Fragen haben oder es behoben ist.",
   "feedbackQueuedTitle": "Danke!",
-  "feedbackQueuedText": "Gerade ist kein Internet da. Deine Nachricht geht von selbst raus, sobald es wieder klappt.",
-  "feedbackInbox": "Meldungen",
-  "feedbackInboxHint": "Was über Hilfe & Feedback hereinkommt",
-  "feedbackInboxEmpty": "Noch keine Meldungen.",
-  "feedbackLoadFailed": "Die Meldungen konnten gerade nicht geladen werden.",
-  "feedbackMarkDone": "Erledigt",
-  "feedbackReopen": "Wieder offen",
-  "feedbackReplyMail": "Per E-Mail antworten",
-  "feedbackDoneTag": "erledigt",
-  "feedbackImageCount": "{count, plural, =1{1 Bild} other{{count} Bilder}}",
-  "@feedbackImageCount": {"placeholders":{"count":{"type":"int"}}},
-  "feedbackDevice": "Gerät",
-  "feedbackBattery": "Akku {pct} %",
-  "@feedbackBattery": {"placeholders":{"pct":{"type":"String"}}},
-  "feedbackLastSeen": "Zuletzt online {when}",
-  "@feedbackLastSeen": {"placeholders":{"when":{"type":"String"}}},
-  "feedbackLevel": "Bedienstufe {level}",
-  "@feedbackLevel": {"placeholders":{"level":{"type":"String"}}}
+  "feedbackQueuedText": "Gerade ist kein Internet da. Deine Nachricht geht von selbst raus, sobald es wieder klappt."
 }

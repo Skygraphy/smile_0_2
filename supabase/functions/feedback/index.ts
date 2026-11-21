@@ -1,19 +1,23 @@
 // Hilfe & Feedback (migrations/0113, 2026-11-20).
 //
+// Worked on in the Verwaltung on smileapp.app (migrations/0114, 2026-11-21).
+//
 //   send       anyone signed in: a problem, an idea or a question, up to 3
 //              pictures (base64 JPEG), optionally about one of their Frames.
-//              Goes to the operator(s) as a push.
-//   am_ops     whether the caller gets the reports (shows "Meldungen").
-//   list       operator only: all reports, newest first, pictures signed.
-//   set_status operator only: open <-> done.
+//              Goes as a push to the Super-Admin and Admins with Meldungen.
+//   list       Verwaltung (Meldungen) only: all reports, newest first,
+//              pictures signed.
+//   set_status Verwaltung only: open / in_progress (taken by the caller) /
+//              done (closed by the caller).
+//   set_note   Verwaltung only: the internal note.
 //
-// The operator is whoever is in ops_alert_recipients (migrations/0065) --
-// the same people who get the health-check warnings.
+// Who is in the Verwaltung: admin_users (_shared/admin-access.ts).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { decodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { pushNotificationToUsers } from "../_shared/push-users.ts";
 import { avatarPublicUrl } from "../_shared/profiles.ts";
+import { adminAccess, feedbackAdminIds } from "../_shared/admin-access.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -33,7 +37,10 @@ interface Body {
   client_id?: string;
   id?: string;
   status?: string;
+  note?: string | null;
 }
+
+const STATUSES = ["open", "in_progress", "done"];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -54,28 +61,34 @@ Deno.serve(async (req) => {
   }
   const admin = createClient(supabaseUrl, serviceRoleKey);
 
-  const opsIds = async (): Promise<string[]> => {
-    const { data } = await admin.from("ops_alert_recipients").select("user_id");
-    return (data ?? []).map((r) => r.user_id as string);
-  };
+  const action = body.action ?? "send";
+  if (action === "send") return await send(admin, asUser, user.id, user.email ?? null, body);
 
-  switch (body.action ?? "send") {
-    case "send":
-      return await send(admin, asUser, user.id, user.email ?? null, body, opsIds);
-    case "am_ops":
-      return jsonResponse({ ops: (await opsIds()).includes(user.id) });
-    case "list": {
-      if (!(await opsIds()).includes(user.id)) return jsonResponse({ error: "forbidden" }, 403);
+  const access = await adminAccess(admin, user.id);
+  if (!access?.feedback) return jsonResponse({ error: "forbidden" }, 403);
+  switch (action) {
+    case "list":
       return await list(admin);
-    }
     case "set_status": {
-      if (!(await opsIds()).includes(user.id)) return jsonResponse({ error: "forbidden" }, 403);
-      if (!body.id || (body.status !== "open" && body.status !== "done")) return jsonResponse({ error: "invalid" }, 400);
-      const { error } = await admin
-        .from("feedback_reports")
-        .update({ status: body.status, done_at: body.status === "done" ? new Date().toISOString() : null })
-        .eq("id", body.id);
+      const status = body.status ?? "";
+      if (!body.id || !STATUSES.includes(status)) return jsonResponse({ error: "invalid" }, 400);
+      const now = new Date().toISOString();
+      const patch: Record<string, unknown> = { status };
+      if (status === "open") Object.assign(patch, { claimed_by: null, done_at: null, done_by: null });
+      if (status === "in_progress") Object.assign(patch, { claimed_by: user.id, done_at: null, done_by: null });
+      if (status === "done") Object.assign(patch, { done_at: now, done_by: user.id });
+      const { data, error } = await admin.from("feedback_reports").update(patch).eq("id", body.id).select("id");
       if (error) return jsonResponse({ error: "update_failed" }, 500);
+      if (!data?.length) return jsonResponse({ error: "not_found" }, 404);
+      return jsonResponse({ status: "ok" });
+    }
+    case "set_note": {
+      if (!body.id) return jsonResponse({ error: "invalid" }, 400);
+      const note = (body.note ?? "").trim();
+      if (note.length > 5000) return jsonResponse({ error: "invalid" }, 400);
+      const { data, error } = await admin.from("feedback_reports").update({ note: note || null }).eq("id", body.id).select("id");
+      if (error) return jsonResponse({ error: "update_failed" }, 500);
+      if (!data?.length) return jsonResponse({ error: "not_found" }, 404);
       return jsonResponse({ status: "ok" });
     }
     default:
@@ -92,7 +105,6 @@ async function send(
   userId: string,
   email: string | null,
   body: Body,
-  opsIds: () => Promise<string[]>,
 ): Promise<Response> {
   const kind = body.kind ?? "";
   const message = (body.message ?? "").trim();
@@ -179,7 +191,7 @@ async function send(
     return jsonResponse({ error: "insert_failed" }, 500);
   }
 
-  const ops = await opsIds();
+  const ops = await feedbackAdminIds(admin);
   const preview = message.length > 120 ? `${message.slice(0, 117)}…` : message;
   await pushNotificationToUsers(
     admin,
@@ -193,7 +205,7 @@ async function send(
 async function list(admin: Client): Promise<Response> {
   const { data: rows, error } = await admin
     .from("feedback_reports")
-    .select("id, user_id, sender_name, sender_email, kind, message, frame_info, device_info, image_paths, status, created_at, done_at")
+    .select("id, user_id, sender_name, sender_email, kind, message, frame_info, device_info, image_paths, status, created_at, done_at, claimed_by, done_by, note")
     .order("created_at", { ascending: false })
     .limit(300);
   if (error) return jsonResponse({ error: "list_failed" }, 500);
@@ -204,16 +216,24 @@ async function list(admin: Client): Promise<Response> {
     const { data } = await admin.storage.from("feedback").createSignedUrls(allPaths, 3600);
     for (const s of data ?? []) if (s.path && s.signedUrl) signed.set(s.path, s.signedUrl);
   }
-  const userIds = [...new Set((rows ?? []).map((r: { user_id: string }) => r.user_id))];
+  // deno-lint-ignore no-explicit-any
+  const all = (rows ?? []) as any[];
+  const userIds = [...new Set(all.flatMap((r) => [r.user_id, r.claimed_by, r.done_by]).filter(Boolean))];
   const avatars = new Map<string, string | null>();
+  const names = new Map<string, string | null>();
   if (userIds.length > 0) {
-    const { data } = await admin.from("profiles").select("user_id, avatar_path").in("user_id", userIds);
-    for (const p of data ?? []) avatars.set(p.user_id as string, avatarPublicUrl(p.avatar_path as string | null));
+    const { data } = await admin.from("profiles").select("user_id, display_name, avatar_path").in("user_id", userIds);
+    for (const p of data ?? []) {
+      avatars.set(p.user_id as string, avatarPublicUrl(p.avatar_path as string | null));
+      names.set(p.user_id as string, (p.display_name as string | null) ?? null);
+    }
   }
   return jsonResponse({
     reports: (rows ?? []).map((r: Record<string, unknown>) => ({
       ...r,
       avatar_url: avatars.get(r.user_id as string) ?? null,
+      claimed_by_name: r.claimed_by ? names.get(r.claimed_by as string) ?? null : null,
+      done_by_name: r.done_by ? names.get(r.done_by as string) ?? null : null,
       image_urls: ((r.image_paths as string[]) ?? []).map((p) => signed.get(p)).filter(Boolean),
     })),
   });

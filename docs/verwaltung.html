@@ -10,9 +10,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <style>
-/* Voucher administration for Smile staff (2026-11-11, migrations/0102).
-   Everything is checked on the server (voucher-admin: staff_members);
-   without staff rights this page shows nothing. */
+/* Smile Verwaltung: Meldungen (Hilfe & Feedback), Gutscheine, Admins
+   (2026-11-21, migrations/0114). Everything is checked on the server
+   (admin-users, feedback, voucher-admin read admin_users); without rights
+   this page shows nothing. */
 :root { color-scheme: dark; --bg: #0E0C0C; --surface: #1A1716; --surface2: #24201F; --line: #332D2B; --fg: #F2EEEC; --muted: #B5ACA9; --dim: #7D7472;
   --coral: #FF6F61; --coral-soft: rgba(255,111,97,.14); --green: #5BC48A; --green-soft: rgba(91,196,138,.14); --red: #FF8A80;
   --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
@@ -57,6 +58,52 @@ td.m { color: var(--muted); }
 .warn { background: var(--coral-soft); color: var(--fg); border-radius: 12px; padding: 10px 14px; font-size: 14px; }
 .small { font-size: 13px; color: var(--muted); }
 a { color: var(--coral); }
+
+/* Tabs */
+nav.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin: 0 0 20px; overflow-x: auto; }
+nav.tabs button { background: none; color: var(--muted); border-radius: 0; padding: 10px 14px; font-weight: 600; border-bottom: 2px solid transparent; white-space: nowrap; }
+nav.tabs button.on { color: var(--fg); border-bottom-color: var(--coral); }
+nav.tabs .cnt { background: var(--coral); color: #1a0f0e; border-radius: 99px; font-size: 11.5px; padding: 1px 7px; margin-left: 6px; }
+.role { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; background: var(--coral-soft); color: var(--coral); }
+.role.n { background: var(--surface2); color: var(--muted); }
+#who { display: inline-flex; gap: 8px; align-items: center; }
+
+/* Meldungen */
+.split { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 820px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.chips button { background: var(--surface2); color: var(--muted); border: 1px solid var(--line); padding: 5px 12px; font-size: 13px; font-weight: 600; }
+.chips button.on { background: var(--coral-soft); color: var(--coral); border-color: transparent; }
+.rlist { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.ritem { display: flex; gap: 12px; padding: 13px 14px; cursor: pointer; border-bottom: 1px solid var(--line); }
+.ritem:last-child { border-bottom: 0; }
+.ritem:hover, .ritem.sel { background: var(--surface2); } .ritem.sel { box-shadow: inset 3px 0 var(--coral); }
+.ritem.done { opacity: .55; }
+.av { flex: none; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 14px; color: #fff; object-fit: cover; }
+.ritem .body { min-width: 0; flex: 1; }
+.ritem .top { display: flex; gap: 8px; } .ritem .top b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ritem .when { color: var(--dim); font-size: 12px; font-variant-numeric: tabular-nums; }
+.ritem .text { color: var(--muted); font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ritem .tags { font-size: 12px; color: var(--dim); margin-top: 2px; } .ritem .tags.p { color: var(--coral); }
+.dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--coral); margin-top: 6px; }
+.empty { padding: 28px 16px; text-align: center; color: var(--muted); }
+.dhead { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.dhead .av { width: 46px; height: 46px; font-size: 16px; }
+@media (max-width: 560px) { .dhead .dstat { flex-basis: 100%; text-align: left !important; } }
+.dhead .who2 { flex: 1; min-width: 0; } .dhead .who2 b { display: block; font-size: 16px; } .dhead .who2 span { color: var(--muted); font-size: 13px; user-select: all; overflow-wrap: anywhere; }
+.dmsg { font-size: 15.5px; line-height: 1.6; margin: 18px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.imgs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.imgs a { display: block; width: 150px; max-width: 100%; } .imgs img { width: 100%; border-radius: 12px; border: 1px solid var(--line); display: block; }
+.info { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.info div { background: var(--surface2); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: var(--muted); white-space: pre-line; }
+.info b { color: var(--fg); display: block; margin-bottom: 4px; font-size: 13.5px; }
+textarea { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font: inherit; resize: vertical; }
+textarea:focus { outline: 2px solid var(--coral); outline-offset: -1px; }
+a.button { display: inline-block; text-decoration: none; font-weight: 700; border-radius: 99px; padding: 9px 16px; background: var(--coral); color: #fff; }
+.perm { display: inline-flex; gap: 6px; align-items: center; margin: 0 14px 0 0; font-size: 13.5px; color: var(--fg); white-space: nowrap; }
+.perm input { width: auto; accent-color: var(--coral); }
+.addrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; margin-top: 14px; align-items: center; }
+@media (max-width: 560px) { .addrow { grid-template-columns: minmax(0, 1fr); } }
 
 /* Print: only the cards, 2 x 4 per A4 page, cut along the thin lines. */
 #print { display: none; }
@@ -112,10 +159,52 @@ a { color: var(--coral); }
 
   <section id="denied" class="card narrow hidden">
     <h1>Kein Zugang</h1>
-    <p class="small">Dieses Konto hat keine Mitarbeiter-Rechte.</p>
+    <p class="small">Dieses Konto hat keine Rechte in der Verwaltung.</p>
   </section>
 
   <div id="app" class="hidden">
+  <nav class="tabs" id="tabs">
+    <button data-tab="m" class="hidden">Meldungen<span class="cnt hidden" id="open-cnt"></span></button>
+    <button data-tab="g" class="hidden">Gutscheine</button>
+    <button data-tab="a" class="hidden">Admins</button>
+  </nav>
+
+  <!-- Meldungen (Hilfe & Feedback from the app) -->
+  <div id="tab-m" class="hidden">
+    <div class="split">
+      <div>
+        <div class="chips" id="filters">
+          <button data-f="open" class="on">Offen</button><button data-f="in_progress">In Arbeit</button><button data-f="done">Erledigt</button><button data-f="all">Alle</button>
+        </div>
+        <div class="rlist" id="rlist"></div>
+        <div class="msg" id="m-msg"></div>
+      </div>
+      <section class="card" id="rdetail" style="margin:0"></section>
+    </div>
+  </div>
+
+  <!-- Admins: Super-Admin only -->
+  <div id="tab-a" class="hidden">
+    <section class="card">
+      <h2>Admins</h2>
+      <p class="small" style="margin:-4px 0 12px">Ein Admin braucht ein Smile-Konto und meldet sich hier mit dem E-Mail-Code an, wie in der App. Was er darf, legst du mit den Haken fest.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Person</th><th>Rolle</th><th>Darf</th><th></th></tr></thead>
+        <tbody id="admins"></tbody>
+      </table></div>
+      <div class="addrow">
+        <input id="a-mail" type="email" placeholder="E-Mail eines Smile-Kontos">
+        <button id="a-add">Als Admin hinzufügen</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label class="perm"><input type="checkbox" id="a-fb" checked> Meldungen</label>
+        <label class="perm"><input type="checkbox" id="a-vc"> Gutscheine</label>
+      </div>
+      <div class="msg" id="a-msg"></div>
+    </section>
+  </div>
+
+  <div id="tab-g" class="hidden">
     <h1>Gutschein-Pakete</h1>
     <div class="stats" id="stats"></div>
 
@@ -168,6 +257,7 @@ a { color: var(--coral); }
       </table></div>
     </section>
   </div>
+  </div>
 </main>
 <div id="print"></div>
 
@@ -178,17 +268,17 @@ a { color: var(--coral); }
   const PUBLISHABLE_KEY = 'sb_publishable_Bb9-3HDlRCWoyHZsweKbZw_scLAvNpV';
   const sb = supabase.createClient(SUPABASE_URL, PUBLISHABLE_KEY);
   const $ = (id) => document.getElementById(id);
-  const show = (id, on = true) => $(id).classList.toggle('hidden', !on);
+  const show = (id, on = true) => (typeof id === 'string' ? $(id) : id).classList.toggle('hidden', !on);
   const KIND = { gift: 'Geschenk', partner: 'Partner', promo: 'Aktion' };
   const date = (iso) => iso ? new Date(iso).toLocaleDateString('de-AT', { day: 'numeric', month: 'numeric', year: 'numeric' }) : '–';
   const ERR = {
-    not_staff: 'Dieses Konto hat keine Mitarbeiter-Rechte.', invalid_name: 'Bitte einen Namen eingeben.',
+    not_staff: 'Dieses Konto darf keine Gutscheine verwalten.', invalid_name: 'Bitte einen Namen eingeben.',
     invalid_count: 'Anzahl zwischen 1 und 500.', invalid_redeem_until: 'Das Datum muss in der Zukunft liegen.',
   };
   const say = (id, text, ok) => { const el = $(id); el.textContent = text || ''; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
 
-  async function call(body) {
-    const { data, error } = await sb.functions.invoke('voucher-admin', { body });
+  async function callFn(fn, body) {
+    const { data, error } = await sb.functions.invoke(fn, { body });
     if (error) {
       let code = 'failed';
       try { code = (await error.context.json()).error || code; } catch (_) {}
@@ -196,6 +286,7 @@ a { color: var(--coral); }
     }
     return data;
   }
+  const call = (body) => callFn('voucher-admin', body);
 
   // --- Login ---------------------------------------------------------------
   let mail = '';
@@ -248,20 +339,254 @@ a { color: var(--coral); }
   };
   $('logout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
 
+  // --- Who am I, which tabs ---------------------------------------------------
+  let me = null;
   async function start() {
     const { data: { session } } = await sb.auth.getSession();
     show('login', !session);
     if (!session) return;
-    $('who').textContent = session.user.email;
     show('logout');
     try {
-      await load();
-      show('app');
+      me = await callFn('admin-users', { action: 'me' });
     } catch (e) {
-      show(e.message === 'not_staff' ? 'denied' : 'login', true);
-      if (e.message !== 'not_staff') say('login-msg', 'Das hat nicht geklappt. Bitte neu anmelden.');
+      $('who').prepend(session.user.email + ' ');
+      if (e.message === 'not_admin') return show('denied');
+      show('login');
+      return say('login-msg', 'Das hat nicht geklappt. Bitte neu anmelden.');
+    }
+    const r = document.createElement('span');
+    r.className = 'role' + (me.role === 'super_admin' ? '' : ' n');
+    r.textContent = me.role === 'super_admin' ? 'Super-Admin' : 'Admin';
+    const n = document.createElement('span');
+    n.textContent = me.name || me.email;
+    $('who').prepend(r, n);
+    const allowed = { m: me.feedback, g: me.vouchers, a: me.manageAdmins };
+    for (const b of $('tabs').querySelectorAll('button')) show(b, allowed[b.dataset.tab]);
+    show('app');
+    // From the push: #meldung-<id> opens that report.
+    const want = (location.hash.match(/^#meldung-([\w-]+)/) || [])[1];
+    tab(allowed.m ? 'm' : allowed.g ? 'g' : 'a', want);
+  }
+
+  const loaded = {};
+  async function tab(t, openId) {
+    for (const b of $('tabs').querySelectorAll('button')) b.classList.toggle('on', b.dataset.tab === t);
+    for (const x of ['m', 'g', 'a']) show('tab-' + x, x === t);
+    try {
+      if (t === 'm') await loadReports(openId);
+      if (t === 'g' && !loaded.g) { await load(); loaded.g = true; }
+      if (t === 'a') await loadAdmins();
+    } catch (_) {
+      say(t === 'm' ? 'm-msg' : t === 'a' ? 'a-msg' : 'list-msg', 'Das hat nicht geklappt. Bitte die Seite neu laden.');
     }
   }
+  $('tabs').onclick = (e) => { const b = e.target.closest('button'); if (b) tab(b.dataset.tab); };
+
+  // --- Meldungen ---------------------------------------------------------------
+  const KINDS = { problem: 'Etwas geht nicht', idea: 'Idee oder Wunsch', question: 'Frage' };
+  const STATUS = { open: 'Offen', in_progress: 'In Arbeit', done: 'Erledigt' };
+  const COLORS = ['#C9624F', '#4F7DC9', '#6BA36B', '#B07CC6', '#C99A3F', '#4FA9A9'];
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const fullWhen = (iso) => { const d = new Date(iso); return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+  const shortWhen = (iso) => {
+    const d = new Date(iso);
+    return d.toDateString() === new Date().toDateString() ? `${pad2(d.getHours())}:${pad2(d.getMinutes())}` : `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`;
+  };
+  let reports = [], filter = 'open', selected = null;
+
+  function avatar(r) {
+    if (r.avatar_url) { const i = document.createElement('img'); i.className = 'av'; i.src = r.avatar_url; i.alt = ''; return i; }
+    const name = r.sender_name || r.sender_email || '?';
+    const d = document.createElement('div'); d.className = 'av';
+    d.style.background = COLORS[[...name].reduce((s, c) => s + c.charCodeAt(0), 0) % COLORS.length];
+    d.textContent = name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+    return d;
+  }
+
+  async function loadReports(openId) {
+    reports = (await callFn('feedback', { action: 'list' })).reports;
+    if (openId) {
+      const r = reports.find((x) => x.id === openId);
+      if (r) { selected = r.id; filter = r.status; }
+    }
+    renderReports();
+  }
+
+  function renderReports() {
+    const open = reports.filter((r) => r.status === 'open').length;
+    $('open-cnt').textContent = open; show('open-cnt', open > 0);
+    for (const b of $('filters').querySelectorAll('button')) {
+      const n = b.dataset.f === 'all' ? reports.length : reports.filter((r) => r.status === b.dataset.f).length;
+      b.textContent = `${b.dataset.f === 'all' ? 'Alle' : STATUS[b.dataset.f]} (${n})`;
+      b.classList.toggle('on', b.dataset.f === filter);
+    }
+    const shown = reports.filter((r) => filter === 'all' || r.status === filter);
+    const list = $('rlist'); list.innerHTML = '';
+    if (!shown.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'Keine Meldungen.'; list.append(e); }
+    for (const r of shown) {
+      const it = document.createElement('div');
+      it.className = 'ritem' + (r.id === selected ? ' sel' : '') + (r.status === 'done' ? ' done' : '');
+      it.onclick = () => { selected = r.id; renderReports(); if (innerWidth <= 820) $('rdetail').scrollIntoView({ behavior: 'smooth' }); };
+      const body = document.createElement('div'); body.className = 'body';
+      body.innerHTML = '<div class="top"><b></b><span class="when"></span></div><div class="text"></div><div class="tags"></div>';
+      body.querySelector('b').textContent = r.sender_name || r.sender_email || '?';
+      body.querySelector('.when').textContent = shortWhen(r.created_at);
+      body.querySelector('.text').textContent = r.message.split('\n')[0];
+      const pics = r.image_urls.length;
+      const tags = [KINDS[r.kind], r.frame_info?.name, pics ? `${pics} ${pics === 1 ? 'Bild' : 'Bilder'}` : '',
+        r.status === 'in_progress' ? 'In Arbeit' + (r.claimed_by_name ? ' · ' + r.claimed_by_name : '') : ''].filter(Boolean).join(' · ');
+      const tg = body.querySelector('.tags'); tg.textContent = tags;
+      if (r.kind === 'problem' && r.status === 'open') tg.classList.add('p');
+      it.append(avatar(r), body);
+      if (r.status === 'open') { const d = document.createElement('div'); d.className = 'dot'; it.append(d); }
+      list.append(it);
+    }
+    renderDetail();
+  }
+
+  function renderDetail() {
+    const el = $('rdetail'); el.innerHTML = '';
+    const r = reports.find((x) => x.id === selected);
+    if (!r) {
+      const p = document.createElement('p'); p.className = 'small'; p.style.margin = '0';
+      p.textContent = reports.length ? 'Links eine Meldung wählen.' : 'Noch keine Meldungen.';
+      el.append(p);
+      return;
+    }
+    const head = document.createElement('div'); head.className = 'dhead';
+    const who = document.createElement('div'); who.className = 'who2';
+    who.innerHTML = '<b></b><span></span>';
+    who.querySelector('b').textContent = r.sender_name || '?';
+    who.querySelector('span').textContent = r.sender_email || '';
+    const st = document.createElement('div'); st.className = 'dstat'; st.style.textAlign = 'right';
+    st.innerHTML = '<span class="pill"></span><div class="small" style="margin-top:4px"></div>';
+    st.querySelector('.pill').textContent = STATUS[r.status];
+    st.querySelector('.pill').className = 'pill ' + (r.status === 'done' ? 'ok' : 'off');
+    st.querySelector('div').textContent = `${KINDS[r.kind]} · ${fullWhen(r.created_at)}`;
+    head.append(avatar(r), who, st);
+    el.append(head);
+
+    const msg = document.createElement('div'); msg.className = 'dmsg'; msg.textContent = r.message; el.append(msg);
+
+    if (r.image_urls.length) {
+      const imgs = document.createElement('div'); imgs.className = 'imgs';
+      for (const u of r.image_urls) {
+        const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener';
+        const i = document.createElement('img'); i.src = u; i.alt = 'Bild zur Meldung';
+        a.append(i); imgs.append(a);
+      }
+      el.append(imgs);
+    }
+
+    const info = document.createElement('div'); info.className = 'info';
+    const box = (title, lines) => {
+      const d = document.createElement('div'); const b = document.createElement('b'); b.textContent = title;
+      d.append(b, lines.filter(Boolean).join('\n')); info.append(d);
+    };
+    const dv = r.device_info || {};
+    box('Handy', [
+      [dv.app_version && 'Smile ' + dv.app_version, dv.language && String(dv.language).toUpperCase()].filter(Boolean).join(' · '),
+      [dv.device, dv.os].filter(Boolean).join(' · '),
+    ]);
+    const f = r.frame_info;
+    if (f) {
+      box(`Frame: ${f.name || ''}${f.space ? ' (' + f.space + ')' : ''}`, [
+        [f.device_model, f.app_version && 'Smile ' + f.app_version].filter(Boolean).join(' · '),
+        [f.battery_level != null && `Akku ${f.battery_level} %`, f.control_level != null && `Bedienstufe ${f.control_level}`].filter(Boolean).join(' · '),
+        f.last_seen_at && 'Zuletzt online ' + fullWhen(f.last_seen_at),
+      ]);
+    }
+    el.append(info);
+
+    const line = r.status === 'in_progress' && r.claimed_by_name ? 'Übernommen von ' + r.claimed_by_name
+      : r.status === 'done' && r.done_at ? `Erledigt ${fullWhen(r.done_at)}${r.done_by_name ? ' von ' + r.done_by_name : ''}` : '';
+    if (line) { const p = document.createElement('p'); p.className = 'small'; p.style.margin = '0 0 14px'; p.textContent = line; el.append(p); }
+
+    const lab = document.createElement('label'); lab.textContent = 'Interne Notiz (sieht nur die Verwaltung)';
+    const ta = document.createElement('textarea'); ta.rows = 2; ta.placeholder = 'z. B. Ursache gefunden, kommt mit der nächsten Version'; ta.value = r.note || '';
+    const noteMsg = document.createElement('div'); noteMsg.className = 'msg';
+    ta.onblur = async () => {
+      const v = ta.value.trim();
+      if (v === (r.note || '')) return;
+      try {
+        await callFn('feedback', { action: 'set_note', id: r.id, note: v });
+        r.note = v; noteMsg.className = 'msg ok'; noteMsg.textContent = 'Notiz gespeichert.';
+      } catch (_) { noteMsg.className = 'msg err'; noteMsg.textContent = 'Die Notiz wurde nicht gespeichert.'; }
+    };
+    el.append(lab, ta, noteMsg);
+
+    const acts = document.createElement('div'); acts.className = 'row'; acts.style.marginTop = '14px';
+    if (r.sender_email) {
+      const quoted = r.message.split('\n').map((l) => '> ' + l).join('\n');
+      const a = document.createElement('a'); a.className = 'button';
+      a.href = `mailto:${r.sender_email}?subject=${encodeURIComponent('Deine Nachricht an Smile')}&body=${encodeURIComponent(`Hallo ${r.sender_name || ''},\n\n\n\n${quoted}`)}`;
+      a.textContent = 'Per E-Mail antworten';
+      acts.append(a);
+    }
+    const setStatus = (status) => async (ev) => {
+      ev.target.disabled = true;
+      try { await callFn('feedback', { action: 'set_status', id: r.id, status }); filter = status; await loadReports(); }
+      catch (_) { say('m-msg', 'Das hat nicht geklappt.'); ev.target.disabled = false; }
+    };
+    const btn = (label, fn) => { const b = document.createElement('button'); b.className = 'ghost'; b.textContent = label; b.onclick = fn; acts.append(b); };
+    if (r.status === 'open') btn('Übernehmen', setStatus('in_progress'));
+    if (r.status === 'done') btn('Wieder öffnen', setStatus('open'));
+    else btn('Erledigt', setStatus('done'));
+    el.append(acts);
+  }
+  $('filters').onclick = (e) => { const b = e.target.closest('button'); if (b) { filter = b.dataset.f; renderReports(); } };
+
+  // --- Admins (Super-Admin) -----------------------------------------------------
+  const AERR = {
+    no_account: 'Zu dieser Adresse gibt es noch kein Smile-Konto.',
+    already_admin: 'Diese Person ist schon in der Verwaltung.',
+    invalid_email: 'Bitte eine E-Mail-Adresse eingeben.',
+  };
+  async function loadAdmins() {
+    const { admins } = await callFn('admin-users', { action: 'list' });
+    const body = $('admins'); body.innerHTML = '';
+    for (const a of admins) {
+      const tr = document.createElement('tr');
+      const p = document.createElement('td'); p.innerHTML = '<b></b><div class="small"></div>';
+      p.querySelector('b').textContent = a.name || '–';
+      p.querySelector('div').textContent = a.email || '';
+      const r = document.createElement('td'); const rs = document.createElement('span');
+      rs.className = 'role' + (a.role === 'super_admin' ? '' : ' n');
+      rs.textContent = a.role === 'super_admin' ? 'Super-Admin' : 'Admin';
+      r.append(rs);
+      const perms = document.createElement('td');
+      const act = document.createElement('td'); act.style.textAlign = 'right';
+      if (a.role === 'super_admin') { perms.className = 'm'; perms.textContent = 'alles'; }
+      else {
+        for (const [key, label] of [['can_feedback', 'Meldungen'], ['can_vouchers', 'Gutscheine']]) {
+          const l = document.createElement('label'); l.className = 'perm';
+          const c = document.createElement('input'); c.type = 'checkbox'; c.checked = a[key];
+          c.onchange = async () => {
+            try { await callFn('admin-users', { action: 'update', user_id: a.user_id, [key]: c.checked }); say('a-msg', 'Gespeichert.', true); }
+            catch (_) { c.checked = !c.checked; say('a-msg', 'Das hat nicht geklappt.'); }
+          };
+          l.append(c, ' ' + label); perms.append(l);
+        }
+        const x = document.createElement('button'); x.className = 'ghost small'; x.textContent = 'Entfernen';
+        x.onclick = async () => {
+          if (x.dataset.sure !== '1') { x.dataset.sure = '1'; x.textContent = 'Wirklich entfernen?'; return; }
+          try { await callFn('admin-users', { action: 'remove', user_id: a.user_id }); say('a-msg', 'Entfernt.', true); await loadAdmins(); }
+          catch (_) { say('a-msg', 'Das hat nicht geklappt.'); }
+        };
+        act.append(x);
+      }
+      tr.append(p, r, perms, act); body.append(tr);
+    }
+  }
+  $('a-add').onclick = async () => {
+    $('a-add').disabled = true;
+    try {
+      await callFn('admin-users', { action: 'add', email: $('a-mail').value, can_feedback: $('a-fb').checked, can_vouchers: $('a-vc').checked });
+      $('a-mail').value = ''; say('a-msg', 'Hinzugefügt.', true); await loadAdmins();
+    } catch (e) { say('a-msg', AERR[e.message] || 'Das hat nicht geklappt.'); }
+    finally { $('a-add').disabled = false; }
+  };
+  $('a-mail').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('a-add').click(); });
 
   // --- Batches -------------------------------------------------------------
   let batches = [];

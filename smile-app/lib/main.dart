@@ -17,7 +17,7 @@ import 'screens/album_info_screen.dart';
 import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
 import 'screens/news_screen.dart';
-import 'screens/feedback_inbox_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'services/feedback_service.dart';
 import 'screens/intro_screen.dart';
 import 'screens/profile_setup_screen.dart';
@@ -283,9 +283,12 @@ void openNotificationTarget(Map<String, dynamic> data) {
       navigator.push(
         MaterialPageRoute(builder: (_) => AlbumInfoScreen(channelId: channelId, channelName: channelName)),
       );
-    // Hilfe & Feedback (migrations/0113): to the operator.
+    // Hilfe & Feedback (migrations/0114): worked on in the Verwaltung on
+    // smileapp.app -- the push opens that report there in the browser.
     case 'feedback':
-      navigator.push(MaterialPageRoute(builder: (_) => FeedbackInboxScreen(openReportId: data['report_id'] as String?)));
+      final id = data['report_id'] as String?;
+      final url = 'https://smileapp.app/verwaltung${id == null ? '' : '#meldung-$id'}';
+      unawaited(launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication));
     case 'space_ownership_transferred':
       if (spaceId == null) return;
       navigator.push(MaterialPageRoute(builder: (_) => SpaceInfoScreen(spaceId: spaceId, spaceName: spaceName)));

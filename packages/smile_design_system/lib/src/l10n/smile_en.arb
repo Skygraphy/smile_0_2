@@ -1176,22 +1176,5 @@
   "feedbackThanksTitle": "Thanks, it arrived!",
   "feedbackThanksText": "We'll look into it and get back to you by e-mail if we have questions or once it's fixed.",
   "feedbackQueuedTitle": "Thanks!",
-  "feedbackQueuedText": "There's no internet right now. Your message goes out by itself as soon as it works again.",
-  "feedbackInbox": "Reports",
-  "feedbackInboxHint": "What comes in through Help & feedback",
-  "feedbackInboxEmpty": "No reports yet.",
-  "feedbackLoadFailed": "The reports couldn't be loaded right now.",
-  "feedbackMarkDone": "Done",
-  "feedbackReopen": "Reopen",
-  "feedbackReplyMail": "Reply by e-mail",
-  "feedbackDoneTag": "done",
-  "feedbackImageCount": "{count, plural, =1{1 picture} other{{count} pictures}}",
-  "@feedbackImageCount": {"placeholders":{"count":{"type":"int"}}},
-  "feedbackDevice": "Device",
-  "feedbackBattery": "Battery {pct} %",
-  "@feedbackBattery": {"placeholders":{"pct":{"type":"String"}}},
-  "feedbackLastSeen": "Last online {when}",
-  "@feedbackLastSeen": {"placeholders":{"when":{"type":"String"}}},
-  "feedbackLevel": "Control level {level}",
-  "@feedbackLevel": {"placeholders":{"level":{"type":"String"}}}
+  "feedbackQueuedText": "There's no internet right now. Your message goes out by itself as soon as it works again."
 }

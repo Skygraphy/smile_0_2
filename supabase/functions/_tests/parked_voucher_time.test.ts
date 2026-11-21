@@ -79,7 +79,7 @@ Deno.test("voucher time is parked while a Play subscription renews and comes bac
     assertEquals(await reconcile(), { parked: 0, unparked: 0 });
 
     // A voucher redeemed while paying is parked at once.
-    await svc("voucher_admins", { method: "POST", body: JSON.stringify({ user_id: owner.id }) });
+    await svc("admin_users", { method: "POST", body: JSON.stringify({ user_id: owner.id, role: "admin", can_vouchers: true }) });
     const made = await invoke("voucher-admin", accessToken, {
       action: "create", name: "PK Test", kind: "partner", frames: 1, months: 3, count: 1,
       redeem_until: iso(now + 30 * DAY),
@@ -127,7 +127,7 @@ Deno.test("voucher time is parked while a Play subscription renews and comes bac
     if (space) await svc(`space_plans_parked?space_id=eq.${space}`, { method: "DELETE" });
     if (space) await svc(`space_plans?space_id=eq.${space}`, { method: "DELETE" });
     for (const id of batchIds) await svc(`voucher_batches?id=eq.${id}`, { method: "DELETE" });
-    await svc(`voucher_admins?user_id=eq.${owner.id}`, { method: "DELETE" });
+    await svc(`admin_users?user_id=eq.${owner.id}`, { method: "DELETE" });
     if (space) await deleteSpace(space);
     await deleteUser(owner.id);
   }

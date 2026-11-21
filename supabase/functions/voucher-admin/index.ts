@@ -1,5 +1,6 @@
 // Voucher administration for Smile staff (2026-11-11, migrations/0102),
-// used by smileapp.app/verwaltung. Every call checks voucher_admins (0103).
+// used by smileapp.app/verwaltung. Every call checks admin_users (0114):
+// the Super-Admin or an Admin with Gutscheine.
 //
 // actions:
 //   list                         -> batches with counts
@@ -10,6 +11,7 @@
 //   unblock {batch_id} | {code_id}
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { adminAccess } from "../_shared/admin-access.ts";
 import { codeHash, displayCode, newCode, newToken } from "../_shared/voucher-code.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -27,8 +29,8 @@ Deno.serve(async (req) => {
   if (userError || !userData.user) return jsonResponse({ error: "invalid_session" }, 401);
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
-  const { data: staff } = await supabaseAdmin.from("voucher_admins").select("user_id").eq("user_id", userData.user.id).maybeSingle();
-  if (!staff) return jsonResponse({ error: "not_staff" }, 403);
+  const access = await adminAccess(supabaseAdmin, userData.user.id);
+  if (!access?.vouchers) return jsonResponse({ error: "not_staff" }, 403);
 
   // deno-lint-ignore no-explicit-any
   let body: any;

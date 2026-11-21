@@ -12,35 +12,10 @@ import 'app_language.dart';
 import 'edge_functions.dart';
 
 /// "Hilfe & Feedback" (migrations/0113, 2026-11-20): a problem, an idea or
-/// a question goes to the operator (Edge Function `feedback`).
+/// a question goes to the Verwaltung on smileapp.app (Edge Function
+/// `feedback`, migrations/0114). The app only sends; reading and answering
+/// happens on the website.
 enum FeedbackKind { problem, idea, question }
-
-class FeedbackReport {
-  FeedbackReport.fromJson(Map<String, dynamic> j)
-      : id = j['id'] as String,
-        senderName = j['sender_name'] as String?,
-        senderEmail = j['sender_email'] as String?,
-        avatarUrl = j['avatar_url'] as String?,
-        kind = FeedbackKind.values.firstWhere((k) => k.name == j['kind'], orElse: () => FeedbackKind.problem),
-        message = j['message'] as String? ?? '',
-        frameInfo = (j['frame_info'] as Map?)?.cast<String, dynamic>(),
-        deviceInfo = ((j['device_info'] as Map?) ?? const {}).cast<String, dynamic>(),
-        imageUrls = ((j['image_urls'] as List?) ?? const []).cast<String>(),
-        done = j['status'] == 'done',
-        createdAt = DateTime.parse(j['created_at'] as String).toLocal();
-
-  final String id;
-  final String? senderName;
-  final String? senderEmail;
-  final String? avatarUrl;
-  final FeedbackKind kind;
-  final String message;
-  final Map<String, dynamic>? frameInfo;
-  final Map<String, dynamic> deviceInfo;
-  final List<String> imageUrls;
-  bool done;
-  final DateTime createdAt;
-}
 
 class FeedbackService {
   FeedbackService._();
@@ -133,31 +108,4 @@ class FeedbackService {
   }
 
   Future<File> _outboxFile(String clientId) async => File('${(await _outboxDir()).path}/$clientId.json');
-
-  /// Whether this person gets the reports (the operator).
-  Future<bool> amOps() async {
-    if (_amOps != null) return _amOps!;
-    try {
-      final res = await invokeEdge('feedback', body: {'action': 'am_ops'});
-      final ops = res.data is Map && res.data['ops'] == true;
-      _amOps = ops;
-      return ops;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  bool? _amOps;
-
-  Future<List<FeedbackReport>> list() async {
-    final res = await invokeEdge('feedback', body: {'action': 'list'});
-    final data = res.data;
-    if (data is! Map || data['reports'] is! List) throw Exception(data is Map ? data['error'] : 'list_failed');
-    return [for (final r in data['reports'] as List) FeedbackReport.fromJson(Map<String, dynamic>.from(r as Map))];
-  }
-
-  Future<void> setDone(String id, bool done) async {
-    final res = await invokeEdge('feedback', body: {'action': 'set_status', 'id': id, 'status': done ? 'done' : 'open'});
-    if (res.data is! Map || res.data['status'] != 'ok') throw Exception('set_status_failed');
-  }
 }
