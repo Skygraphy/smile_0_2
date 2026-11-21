@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/tips.dart';
+import '../services/screen_report.dart';
 import '../services/tip_cards.dart';
 import '../services/offline_http_client.dart';
 import '../widgets/friendly_error.dart';
@@ -46,7 +47,7 @@ import 'trash_screen.dart';
 /// are `space_co_owners`. Both manage everything; only the Admin invites
 /// Co-Admins, hands the Admin role over and deletes the Space -- RLS and
 /// the Edge Functions enforce the same, the UI only hides what can't work.
-class SpaceInfoScreen extends StatefulWidget {
+class SpaceInfoScreen extends StatefulWidget implements FeedbackScreenLabel {
   SpaceInfoScreen({
     super.key,
     required this.spaceId,
@@ -62,6 +63,11 @@ class SpaceInfoScreen extends StatefulWidget {
 
   final String spaceId;
   final String spaceName;
+
+  /// "Screenshot melden": where it happened (Verwaltung only).
+  @override
+  String get feedbackLabel => 'Space-Info „$spaceName“';
+
   final SpaceService spaceService;
   final ChannelService channelService;
   final FrameService frameService;

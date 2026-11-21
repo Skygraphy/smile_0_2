@@ -19,6 +19,8 @@ import 'screens/login_screen.dart';
 import 'screens/news_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'services/feedback_service.dart';
+import 'services/screen_report.dart';
+import 'screens/feedback_screen.dart';
 import 'screens/intro_screen.dart';
 import 'screens/profile_setup_screen.dart';
 import 'screens/space_info_screen.dart';
@@ -89,8 +91,12 @@ Future<void> main() async {
     if (smileTestMode) {
       unawaited(FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(false));
     } else {
-      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+      FlutterError.onError = (details) {
+        ErrorTrail.record(details.exception);
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      };
       PlatformDispatcher.instance.onError = (error, stack) {
+        ErrorTrail.record(error);
         FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
         return true;
       };
@@ -141,6 +147,16 @@ Future<void> main() async {
   // Photos and videos shared from other apps (2026-11-09) -- taken by
   // HomeShell once someone is signed in; never on a Frame.
   if (frame.FrameMode.active.value != true) unawaited(ShareIn.start());
+  // "Screenshot melden" (2026-11-21): a screenshot in Smile offers to
+  // report it; never on a Frame.
+  if (frame.FrameMode.active.value != true) {
+    ScreenReport.start(
+      messenger: scaffoldMessengerKey,
+      open: (picture, screen) => navigatorKey.currentState?.push(
+        MaterialPageRoute(builder: (_) => FeedbackScreen(initialImages: [picture], screen: screen)),
+      ),
+    );
+  }
   // Tips on or off (2026-10-18).
   unawaited(Tips.load());
   // "Töne im Album" on or off (2026-10-27).
@@ -325,7 +341,12 @@ class SmileApp extends StatelessWidget {
       localizationsDelegates: SmileTexts.localizationsDelegates,
       supportedLocales: SmileTexts.supportedLocales,
       // Offline: one quiet hint on every screen (2026-10-09).
-      builder: (context, child) => OfflineHintOverlay(child: child ?? const SizedBox.shrink()),
+      // The whole app inside one boundary: "Screenshot melden" pictures it.
+      builder: (context, child) => RepaintBoundary(
+        key: ScreenReport.boundaryKey,
+        child: OfflineHintOverlay(child: child ?? const SizedBox.shrink()),
+      ),
+      navigatorObservers: [ScreenReport.observer],
       home: AuthGate(),
       ),
     );

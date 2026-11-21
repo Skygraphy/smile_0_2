@@ -38,6 +38,23 @@ interface Body {
   id?: string;
   status?: string;
   note?: string | null;
+  app_context?: { screen?: unknown; errors?: unknown };
+}
+
+// Where in the app and the last errors (migrations/0115): only plain,
+// short strings are kept.
+function cleanAppContext(raw: Body["app_context"]): Record<string, unknown> | null {
+  if (!raw || typeof raw !== "object") return null;
+  const out: Record<string, unknown> = {};
+  if (typeof raw.screen === "string" && raw.screen.trim()) out.screen = raw.screen.trim().slice(0, 200);
+  if (Array.isArray(raw.errors)) {
+    out.errors = raw.errors
+      .filter((e): e is { at?: unknown; text?: unknown } => !!e && typeof e === "object")
+      .filter((e) => typeof e.text === "string" && e.text.trim())
+      .slice(0, 20)
+      .map((e) => ({ at: typeof e.at === "string" ? e.at.slice(0, 40) : null, text: (e.text as string).slice(0, 500) }));
+  }
+  return Object.keys(out).length ? out : null;
 }
 
 const STATUSES = ["open", "in_progress", "done"];
@@ -183,6 +200,7 @@ async function send(
     device_info: deviceInfo,
     image_paths: paths,
     client_id: body.client_id ?? null,
+    app_context: cleanAppContext(body.app_context),
   });
   if (error) {
     if (paths.length > 0) await admin.storage.from("feedback").remove(paths);
@@ -205,7 +223,7 @@ async function send(
 async function list(admin: Client): Promise<Response> {
   const { data: rows, error } = await admin
     .from("feedback_reports")
-    .select("id, user_id, sender_name, sender_email, kind, message, frame_info, device_info, image_paths, status, created_at, done_at, claimed_by, done_by, note")
+    .select("id, user_id, sender_name, sender_email, kind, message, frame_info, device_info, image_paths, status, created_at, done_at, claimed_by, done_by, note, app_context")
     .order("created_at", { ascending: false })
     .limit(300);
   if (error) return jsonResponse({ error: "list_failed" }, 500);

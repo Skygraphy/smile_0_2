@@ -60,6 +60,11 @@ Deno.test("feedback reaches only the operator, once per client_id", async () => 
       frame_id: foreignFrameId ?? null,
       device_info: { app_version: "0.0.19+1", device: "samsung SM-S942B", os: "Android 16", language: "de" },
       images: [TINY_JPEG],
+      app_context: {
+        screen: "Album „Urlaub“",
+        errors: [{ at: "2026-11-21T12:00:00Z", text: "thumbnail load: 403" }, { text: 42 }, "x"],
+        extra: "dropped",
+      },
     };
     const first = await invoke("feedback", s.accessToken, report);
     assertEquals(first.status, 200, JSON.stringify(first.body));
@@ -83,6 +88,7 @@ Deno.test("feedback reaches only the operator, once per client_id", async () => 
     assertEquals(mine[0].frame_info, null, "a foreign Frame is not attached");
     assertEquals(mine[0].image_urls.length, 1);
     assertEquals(mine[0].device_info.device, "samsung SM-S942B");
+    assertEquals(mine[0].app_context, { screen: "Album „Urlaub“", errors: [{ at: "2026-11-21T12:00:00Z", text: "thumbnail load: 403" }] });
 
     // The push (Verlauf) went to the operator only.
     const opsNotes = (await svc(`user_notifications?user_id=eq.${ops.id}&select=title,data`)).body as { title: string }[];

@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import '../main.dart';
 import 'app_language.dart';
 import 'edge_functions.dart';
+import 'screen_report.dart';
 
 /// "Hilfe & Feedback" (migrations/0113, 2026-11-20): a problem, an idea or
 /// a question goes to the Verwaltung on smileapp.app (Edge Function
@@ -45,6 +46,7 @@ class FeedbackService {
     required String message,
     String? frameId,
     List<Uint8List> images = const [],
+    String? screen,
   }) async {
     final report = {
       'action': 'send',
@@ -54,6 +56,9 @@ class FeedbackService {
       'frame_id': frameId,
       'device_info': await deviceInfo(),
       'images': [for (final i in images) base64Encode(i)],
+      // Where it happened and the app's last errors (2026-11-21): for the
+      // Verwaltung only, never shown to the person.
+      'app_context': {'screen': ?screen, 'errors': ErrorTrail.recent()},
     };
     final file = await _outboxFile(report['client_id'] as String);
     await file.writeAsString(jsonEncode(report));

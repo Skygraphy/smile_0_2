@@ -7098,6 +7098,48 @@ abstract class SmileTexts {
   /// In de, this message translates to:
   /// **'Gerade ist kein Internet da. Deine Nachricht geht von selbst raus, sobald es wieder klappt.'**
   String get feedbackQueuedText;
+
+  /// No description provided for @screenshotTaken.
+  ///
+  /// In de, this message translates to:
+  /// **'Screenshot gemacht'**
+  String get screenshotTaken;
+
+  /// No description provided for @screenshotAsk.
+  ///
+  /// In de, this message translates to:
+  /// **'Stimmt hier etwas nicht?'**
+  String get screenshotAsk;
+
+  /// No description provided for @screenshotReport.
+  ///
+  /// In de, this message translates to:
+  /// **'Melden'**
+  String get screenshotReport;
+
+  /// No description provided for @shareAsReport.
+  ///
+  /// In de, this message translates to:
+  /// **'Als Meldung senden'**
+  String get shareAsReport;
+
+  /// No description provided for @shareAsReportHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Für Fehler, Ideen und Fragen an Smile'**
+  String get shareAsReportHint;
+
+  /// No description provided for @feedbackScreenAlong.
+  ///
+  /// In de, this message translates to:
+  /// **'wo du gerade warst'**
+  String get feedbackScreenAlong;
+
+  /// No description provided for @feedbackErrorsAlong.
+  ///
+  /// In de, this message translates to:
+  /// **'die letzten Fehler der App (nur für uns)'**
+  String get feedbackErrorsAlong;
 }
 
 class _SmileTextsDelegate extends LocalizationsDelegate<SmileTexts> {

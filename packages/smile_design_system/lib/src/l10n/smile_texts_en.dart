@@ -4323,4 +4323,25 @@ class SmileTextsEn extends SmileTexts {
   @override
   String get feedbackQueuedText =>
       'There\'s no internet right now. Your message goes out by itself as soon as it works again.';
+
+  @override
+  String get screenshotTaken => 'Screenshot taken';
+
+  @override
+  String get screenshotAsk => 'Something wrong here?';
+
+  @override
+  String get screenshotReport => 'Report';
+
+  @override
+  String get shareAsReport => 'Send as a report';
+
+  @override
+  String get shareAsReportHint => 'For problems, ideas and questions to Smile';
+
+  @override
+  String get feedbackScreenAlong => 'where you just were';
+
+  @override
+  String get feedbackErrorsAlong => 'the app\'s last errors (only for us)';
 }

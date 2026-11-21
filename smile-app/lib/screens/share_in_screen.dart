@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/channel_picker_service.dart';
@@ -15,6 +15,7 @@ import '../widgets/album_covers.dart';
 import '../widgets/friendly_error.dart';
 import '../widgets/local_display.dart';
 import 'channel_feed_screen.dart';
+import 'feedback_screen.dart';
 import 'send_preview_screen.dart';
 
 /// Shared to Smile from another app (2026-11-09): which album? Then the
@@ -108,6 +109,22 @@ class _ShareInScreenState extends State<ShareInScreen> with SyncReload {
     ));
   }
 
+  /// "Als Meldung senden" (2026-11-21): up to 3 pictures (e.g. a
+  /// screenshot from the gallery) go to Hilfe & Feedback instead.
+  bool get _canReport => widget.files.isNotEmpty && widget.files.length <= 3 && !widget.files.any(_isVideo);
+
+  Future<void> _report() async {
+    final pictures = <Uint8List>[];
+    for (final f in widget.files) {
+      try {
+        final jpeg = await FlutterImageCompress.compressWithFile(f.path, minWidth: 1080, minHeight: 1080, quality: 80);
+        if (jpeg != null) pictures.add(jpeg);
+      } catch (_) {}
+    }
+    if (!mounted) return;
+    await Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => FeedbackScreen(initialImages: pictures)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
@@ -171,6 +188,13 @@ class _ShareInScreenState extends State<ShareInScreen> with SyncReload {
                     ? SmileEmptyState(icon: SmileIcons.album, title: t.sendToNoAlbum)
                     : ListView(
                         children: [
+                          if (_canReport)
+                            SmileObjectTile(
+                              leading: Icon(SmileIcons.help, color: Theme.of(context).colorScheme.primary),
+                              title: t.shareAsReport,
+                              subtitle: t.shareAsReportHint,
+                              onTap: _sending ? null : _report,
+                            ),
                           for (final channel in channels)
                             SmileObjectTile(
                               leading: albumCover(channel.channelId, channel.channelName, _covers),

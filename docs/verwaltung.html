@@ -106,6 +106,8 @@ nav.tabs .cnt { background: var(--coral); color: #1a0f0e; border-radius: 99px; f
 .info { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-bottom: 18px; }
 .info div { background: var(--bg); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: var(--muted); white-space: pre-line; }
 .info b { color: var(--fg); display: block; margin-bottom: 4px; font-size: 13.5px; }
+.info .errs { grid-column: 1 / -1; border: 1px solid rgba(255,111,97,.35); white-space: normal; }
+.info .errs code { display: block; font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #f3b1a9; overflow-wrap: anywhere; margin-top: 2px; }
 textarea { width: 100%; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font: inherit; resize: vertical; }
 textarea:focus { outline: 2px solid var(--coral); outline-offset: -1px; }
 a.button { display: inline-block; text-decoration: none; font-weight: 700; border-radius: 99px; padding: 9px 16px; background: var(--coral); color: #fff; }
@@ -515,6 +517,20 @@ a.button { display: inline-block; text-decoration: none; font-weight: 700; borde
         [f.battery_level != null && `Akku ${f.battery_level} %`, f.control_level != null && `Bedienstufe ${f.control_level}`].filter(Boolean).join(' · '),
         f.last_seen_at && 'Zuletzt online ' + fullWhen(f.last_seen_at),
       ]);
+    }
+    // "Screenshot melden" (0115): where in the app, and the app's last errors.
+    const ctx = r.app_context || {};
+    if (ctx.screen) box('Bildschirm', [ctx.screen]);
+    if (ctx.errors?.length) {
+      const d = document.createElement('div'); d.className = 'errs';
+      const b = document.createElement('b'); b.textContent = `Letzte Fehler (${ctx.errors.length})`; d.append(b);
+      for (const e of ctx.errors) {
+        const c = document.createElement('code');
+        const t = e.at ? new Date(e.at) : null;
+        c.textContent = (t && !isNaN(t) ? `${pad2(t.getHours())}:${pad2(t.getMinutes())} ` : '') + e.text;
+        d.append(c);
+      }
+      info.append(d);
     }
     el.append(info);
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import '../services/offline.dart';
+import '../services/screen_report.dart';
 
 /// No technical error texts for people (2026-10-11): without a connection
 /// a short, friendly note like WhatsApp's; the raw error only in the log.
@@ -33,6 +34,7 @@ String errorReason(BuildContext context, Object error) => errorReasonIn(SmileTex
 
 /// [errorReason] with the texts taken before an await.
 String errorReasonIn(SmileTexts t, Object error) {
+  ErrorTrail.record(error);
   if (Offline.isConnectionError(error)) {
     debugPrint('SmileError (offline): $error');
     return t.noConnectionReason;

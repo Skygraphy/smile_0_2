@@ -1865,5 +1865,12 @@
   "feedbackThanksTitle": "Danke, ist angekommen!",
   "feedbackThanksText": "Wir schauen es uns an und melden uns per E-Mail, wenn wir Fragen haben oder es behoben ist.",
   "feedbackQueuedTitle": "Danke!",
-  "feedbackQueuedText": "Gerade ist kein Internet da. Deine Nachricht geht von selbst raus, sobald es wieder klappt."
+  "feedbackQueuedText": "Gerade ist kein Internet da. Deine Nachricht geht von selbst raus, sobald es wieder klappt.",
+  "screenshotTaken": "Screenshot gemacht",
+  "screenshotAsk": "Stimmt hier etwas nicht?",
+  "screenshotReport": "Melden",
+  "shareAsReport": "Als Meldung senden",
+  "shareAsReportHint": "Für Fehler, Ideen und Fragen an Smile",
+  "feedbackScreenAlong": "wo du gerade warst",
+  "feedbackErrorsAlong": "die letzten Fehler der App (nur für uns)"
 }

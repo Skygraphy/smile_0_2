@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/perf.dart';
+import '../services/screen_report.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -49,7 +50,7 @@ import 'video_player_screen.dart';
 /// bottom(newest), other members' photos on the left with their avatar
 /// and name above the image, the caller's own on the right with neither
 /// (same convention WhatsApp uses for its own outgoing messages).
-class ChannelFeedScreen extends StatefulWidget {
+class ChannelFeedScreen extends StatefulWidget implements FeedbackScreenLabel {
   ChannelFeedScreen({
     super.key,
     required this.channelId,
@@ -61,6 +62,10 @@ class ChannelFeedScreen extends StatefulWidget {
 
   final String channelId;
   final String channelName;
+
+  /// "Screenshot melden": where it happened (Verwaltung only).
+  @override
+  String get feedbackLabel => 'Album „$channelName“';
   final MediaService mediaService;
   final MembershipService membershipService;
 

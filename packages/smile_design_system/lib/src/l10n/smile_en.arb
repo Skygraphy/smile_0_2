@@ -1176,5 +1176,12 @@
   "feedbackThanksTitle": "Thanks, it arrived!",
   "feedbackThanksText": "We'll look into it and get back to you by e-mail if we have questions or once it's fixed.",
   "feedbackQueuedTitle": "Thanks!",
-  "feedbackQueuedText": "There's no internet right now. Your message goes out by itself as soon as it works again."
+  "feedbackQueuedText": "There's no internet right now. Your message goes out by itself as soon as it works again.",
+  "screenshotTaken": "Screenshot taken",
+  "screenshotAsk": "Something wrong here?",
+  "screenshotReport": "Report",
+  "shareAsReport": "Send as a report",
+  "shareAsReportHint": "For problems, ideas and questions to Smile",
+  "feedbackScreenAlong": "where you just were",
+  "feedbackErrorsAlong": "the app's last errors (only for us)"
 }

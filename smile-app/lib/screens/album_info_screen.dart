@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../services/offline_http_client.dart';
+import '../services/screen_report.dart';
 import '../widgets/empty_album_guard.dart';
 import '../widgets/frame_status.dart';
 import '../widgets/friendly_error.dart';
@@ -41,7 +42,7 @@ import '../services/local_changes.dart';
 /// managers -- its home Space's Admin and Co-Admins ("SCO" in code) --
 /// may invite, remove, decide requests, rename or delete; RLS enforces
 /// the same server-side on every write, the UI only hides what can't work.
-class AlbumInfoScreen extends StatefulWidget {
+class AlbumInfoScreen extends StatefulWidget implements FeedbackScreenLabel {
   AlbumInfoScreen({
     super.key,
     required this.channelId,
@@ -55,6 +56,10 @@ class AlbumInfoScreen extends StatefulWidget {
 
   final String channelId;
   final String channelName;
+
+  /// "Screenshot melden": where it happened (Verwaltung only).
+  @override
+  String get feedbackLabel => 'Album-Info „$channelName“';
   final ValueChanged<String>? onRenamed;
 
   /// Opened from "X hat ein Album angelegt" (migrations/0109): ask at once

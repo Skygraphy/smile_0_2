@@ -8,13 +8,20 @@ import 'package:smile_design_system/smile_design_system.dart';
 import '../main.dart';
 import '../services/feedback_service.dart';
 import '../services/frame_service.dart';
+import '../services/screen_report.dart';
 import '../services/test_media.dart';
 
 /// "Hilfe & Feedback" (2026-11-20): a problem, an idea or a question for
 /// the operator, with up to 3 pictures and optionally one of the Frames.
 /// What goes along is shown openly before sending.
 class FeedbackScreen extends StatefulWidget {
-  const FeedbackScreen({super.key});
+  const FeedbackScreen({super.key, this.initialImages = const [], this.screen});
+
+  /// From "Screenshot melden" or shared from the gallery (2026-11-21).
+  final List<Uint8List> initialImages;
+
+  /// Where the screenshot was taken (goes along to the Verwaltung).
+  final String? screen;
 
   @override
   State<FeedbackScreen> createState() => _FeedbackScreenState();
@@ -32,10 +39,14 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   bool _sending = false;
   // null = writing; true = arrived; false = waits for the internet.
   bool? _sent;
+  // The app's last errors go along (named in the info box, not shown).
+  bool _hasErrors = false;
 
   @override
   void initState() {
     super.initState();
+    _images.addAll(widget.initialImages.take(_maxImages));
+    _hasErrors = ErrorTrail.recent().isNotEmpty;
     _text.addListener(() => setState(() {}));
     unawaited(_load());
   }
@@ -83,6 +94,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       message: _text.text.trim(),
       frameId: _frameId,
       images: List.of(_images),
+      screen: widget.screen,
     );
     if (!mounted) return;
     setState(() {
@@ -100,6 +112,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     ];
     var line = parts.join(' · ');
     if (_frames.isNotEmpty) line += ' · ${t.feedbackFrameAlong}';
+    if (widget.screen != null) line += ' · ${t.feedbackScreenAlong}';
+    if (_hasErrors) line += ' · ${t.feedbackErrorsAlong}';
     return line;
   }
 

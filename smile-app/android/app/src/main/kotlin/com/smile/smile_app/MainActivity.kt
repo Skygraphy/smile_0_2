@@ -1,5 +1,6 @@
 package com.smile.smile_app
 
+import android.app.Activity
 import android.content.ComponentName
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
@@ -20,6 +21,32 @@ class MainActivity : FlutterActivity() {
         if (isFrame(this)) setFrameWindow(true)
         // Shared from another app (2026-11-09) -- once, not after a rotation.
         if (savedInstanceState == null) ShareIn.handle(this, intent)
+    }
+
+    // "Screenshot melden" (2026-11-21): Android 14+ tells the app when
+    // someone takes a screenshot of it; Smile then offers to report it.
+    // The picture itself Smile makes of its own screen -- no gallery access.
+    // Never on a Frame.
+    private var screenCaptureChannel: MethodChannel? = null
+    private var screenCaptureCallback: Activity.ScreenCaptureCallback? = null
+
+    override fun onStart() {
+        super.onStart()
+        if (Build.VERSION.SDK_INT >= 34 && !isFrame(this)) {
+            val cb = Activity.ScreenCaptureCallback { screenCaptureChannel?.invokeMethod("captured", null) }
+            try {
+                registerScreenCaptureCallback(mainExecutor, cb)
+                screenCaptureCallback = cb
+            } catch (_: Exception) {}
+        }
+    }
+
+    override fun onStop() {
+        if (Build.VERSION.SDK_INT >= 34) {
+            screenCaptureCallback?.let { try { unregisterScreenCaptureCallback(it) } catch (_: Exception) {} }
+            screenCaptureCallback = null
+        }
+        super.onStop()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -162,6 +189,7 @@ class MainActivity : FlutterActivity() {
             if (call.method == "take") result.success(ShareIn.take()) else result.notImplemented()
         }
         ShareIn.channel = share
+        screenCaptureChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "smile/screen_capture")
         // The chime for new photos (FrameChime.kt): only on a Frame.
         val chime = FrameChime(applicationContext)
         frameChime = chime
@@ -178,6 +206,7 @@ class MainActivity : FlutterActivity() {
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
         queueChannel = null
         ShareIn.channel = null
+        screenCaptureChannel = null
         albumSounds?.release()
         albumSounds = null
         frameChime?.release()
