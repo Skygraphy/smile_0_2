@@ -508,9 +508,10 @@ class SyncService {
     if (refresh == _RefreshOutcome.frameNotFound) return _unpair();
     if (refresh == _RefreshOutcome.frameNotActive) return _deactivate();
 
-    final accessToken = await _credentialsStore.accessToken;
+    final storedToken = await _credentialsStore.accessToken;
     final local = await _cacheStore.readIndex();
-    if (accessToken == null) return _offlineFallback(local);
+    if (storedToken == null) return _offlineFallback(local);
+    var accessToken = storedToken;
 
     // A switch made on the Frame since the last sync (also an old build's
     // stored pick): reported once, then the server's choice applies.
@@ -527,6 +528,27 @@ class SyncService {
       favorite: favoriteToSend,
       round: roundPending ? (value: roundToSend,) : null,
     );
+    // The server says this access token is stale: the other sync (push in
+    // the background, its own isolate) has rotated meanwhile. A fresh one
+    // right away instead of showing only the cache for up to 45 minutes
+    // (2026-11-23).
+    if (page.failed && _lastFetchStale) {
+      final again = await _refreshIfNeeded(force: true);
+      if (again == _RefreshOutcome.frameNotFound) return _unpair();
+      if (again == _RefreshOutcome.frameNotActive) return _deactivate();
+      final fresh = await _credentialsStore.accessToken;
+      if (again == _RefreshOutcome.refreshed && fresh != null) {
+        accessToken = fresh;
+        page = await _fetchAllPages(
+          accessToken: fresh,
+          fcmToken: fcmToken,
+          selectChannelId: pickedChannelId,
+          setSettings: settingsToSend,
+          favorite: favoriteToSend,
+          round: roundPending ? (value: roundToSend,) : null,
+        );
+      }
+    }
     if (!page.failed && roundPending && _pendingRound == roundToSend) _roundPending = false;
     if (!page.failed && favoriteToSend != null) {
       if (_pendingFavorites[favoriteToSend.key] == favoriteToSend.value) _pendingFavorites.remove(favoriteToSend.key);
@@ -728,6 +750,7 @@ class SyncService {
     Map<String, dynamic>? firstPageData;
     final remoteItems = <RemoteMediaEntry>[];
     int? cursor;
+    _lastFetchStale = false;
     while (true) {
       http.Response response;
       try {
@@ -753,6 +776,12 @@ class SyncService {
       }
 
       if (response.statusCode == 200 && cursor == null) justBooted = false;
+      if (response.statusCode == 401) {
+        try {
+          final error = (jsonDecode(response.body) as Map<String, dynamic>?)?['error'];
+          _lastFetchStale = error == 'stale_credential_version' || error == 'invalid_or_expired_token';
+        } catch (_) {}
+      }
       if (response.statusCode == 403) {
         Map<String, dynamic>? data;
         try {
@@ -813,7 +842,11 @@ class SyncService {
     await _cacheStore.writeIndex(const []);
   }
 
-  Future<_RefreshOutcome> _refreshIfNeeded() async {
+  /// The last get-media-batch call was turned away for a stale or expired
+  /// access token.
+  bool _lastFetchStale = false;
+
+  Future<_RefreshOutcome> _refreshIfNeeded({bool force = false}) async {
     final expiresAt = await _credentialsStore.accessTokenExpiresAt;
     final frameId = await _credentialsStore.frameId;
     final refreshSecret = await _credentialsStore.refreshSecret;
@@ -821,7 +854,7 @@ class SyncService {
 
     const totalTtl = Duration(hours: 1); // matches the backend's access-token TTL
     final remaining = expiresAt.difference(DateTime.now());
-    if (remaining > Duration(milliseconds: (totalTtl.inMilliseconds * 0.25).round())) return _RefreshOutcome.skipped;
+    if (!force && remaining > Duration(milliseconds: (totalTtl.inMilliseconds * 0.25).round())) return _RefreshOutcome.skipped;
 
     try {
       final refreshed = await _pairingService.refreshToken(frameId: frameId, refreshSecret: refreshSecret);
@@ -842,10 +875,12 @@ class SyncService {
       // to the start, so it can be connected again -- but only if no other
       // sync (the background one) has rotated the secret meanwhile, and its
       // access is over anyway.
+      // The other isolate may be just about to save the secret it got
+      // (2026-11-23): a moment's wait before trusting "still the same".
       if ((e.code == 'invalid_refresh_secret' || e.code == 'no_credentials') &&
-          await _credentialsStore.refreshSecret == refreshSecret &&
           expiresAt.isBefore(DateTime.now())) {
-        return _RefreshOutcome.frameNotFound;
+        await Future<void>.delayed(const Duration(seconds: 5));
+        if (await _credentialsStore.refreshSecret == refreshSecret) return _RefreshOutcome.frameNotFound;
       }
       return _RefreshOutcome.failed;
     } catch (_) {
