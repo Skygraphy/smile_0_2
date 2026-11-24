@@ -296,7 +296,7 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   /// onEarlyResult): settings and album switches take effect right away.
   void _applyEarly(SyncResult early) {
     debugPrint('SmileFrameTiming: settings applied (early) captions=${early.settings?.showCaptions} interval=${early.settings?.slideshowIntervalSeconds}');
-    if (mounted) _apply(early);
+    if (mounted) _apply(early, early: true);
   }
 
   /// Only the settings, straight from a push -- photos and albums come with
@@ -317,10 +317,25 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
     _restartAdvanceTimer();
   }
 
-  void _apply(SyncResult result) {
+  /// Arrived during a sync that is still running (each download shows at
+  /// once): noticed together when it is through -- one chime and one hint,
+  /// not one per photo (2026-11-24).
+  final List<CachedMediaEntry> _heldArrived = [];
+
+  void _apply(SyncResult result, {bool early = false}) {
     final all = result.allEntries.isNotEmpty ? result.allEntries : result.entries;
     final known = _knownIds;
-    final arrived = known == null ? const <CachedMediaEntry>[] : all.where((e) => !known.contains(e.mediaItemId)).toList();
+    var arrived = known == null || result.firstFill
+        ? const <CachedMediaEntry>[]
+        : all.where((e) => !known.contains(e.mediaItemId)).toList();
+    if (early) {
+      _heldArrived.addAll(arrived);
+      arrived = const [];
+    } else if (_heldArrived.isNotEmpty) {
+      final present = {for (final e in all) e.mediaItemId};
+      arrived = [..._heldArrived.where((e) => present.contains(e.mediaItemId)), ...arrived];
+      _heldArrived.clear();
+    }
     // Another album (from the app or the Frame): it shows from its first
     // photo, and a running "Neueste" round ends (2026-10-14: the round kept
     // going and hid the switch).

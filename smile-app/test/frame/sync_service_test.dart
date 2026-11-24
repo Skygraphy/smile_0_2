@@ -55,6 +55,8 @@ void main() {
     when(() => credentialsStore.saveLastSyncOkAt(any())).thenAnswer((_) async {});
     when(() => credentialsStore.lastSyncMeta).thenAnswer((_) async => null);
     when(() => credentialsStore.saveLastSyncMeta(any())).thenAnswer((_) async {});
+    when(() => credentialsStore.backlog).thenAnswer((_) async => 'done');
+    when(() => credentialsStore.saveBacklog(any())).thenAnswer((_) async {});
 
     // Media downloads are streamed (videos of any length), posters are small gets.
     when(() => httpClient.send(any())).thenAnswer(
@@ -138,6 +140,39 @@ void main() {
     await service.sync();
 
     verify(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body'))).called(1);
+  });
+
+  // 2026-11-24: a just-connected Frame loads hundreds of photos -- that is
+  // its backlog, no "Ein neues Foto" for each; once through, it is done.
+  test('a just-connected Frame marks its first load as backlog, then done', () async {
+    String? backlog;
+    when(() => credentialsStore.backlog).thenAnswer((_) async => backlog);
+    when(() => credentialsStore.saveBacklog(any())).thenAnswer((inv) async => backlog = inv.positionalArguments[0] as String);
+    when(() => httpClient.post(any(), headers: any(named: 'headers'), body: any(named: 'body'))).thenAnswer(
+      (_) async => http.Response(
+        jsonEncode({
+          'channel_id': 'chan-1',
+          'items': [
+            {'media_item_id': 'm1', 'media_type': 'photo', 'sort_order': 1, 'display_url': 'https://example.com/m1.jpg'},
+          ],
+          'next_cursor': null,
+          'settings': null,
+          'assigned_channels': [],
+          'space_name': 'Test Space',
+        }),
+        200,
+      ),
+    );
+    final early = <bool>[];
+    service.onEarlyResult = (r) => early.add(r.firstFill);
+
+    final first = await service.sync();
+    expect(first.firstFill, isTrue);
+    expect(early, everyElement(isTrue));
+    expect(backlog, 'done');
+
+    final second = await service.sync();
+    expect(second.firstFill, isFalse);
   });
 
   // 2026-10-09: every album of the Frame is cached, the shown one is shown.

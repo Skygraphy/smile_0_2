@@ -251,6 +251,7 @@ class SyncResult {
     this.unpaired = false,
     this.offlineExpired = false,
     this.offline = false,
+    this.firstFill = false,
   });
 
   /// The server reports this Frame as revoked (frame_not_active) -- the
@@ -267,7 +268,8 @@ class SyncResult {
         deactivated = true,
         unpaired = false,
         offlineExpired = false,
-        offline = false;
+        offline = false,
+        firstFill = false;
 
   /// The Frame record no longer exists (its Space was deleted) -- cache AND
   /// credentials are gone; the app has to go back to pairing.
@@ -282,7 +284,8 @@ class SyncResult {
         deactivated = false,
         unpaired = true,
         offlineExpired = false,
-        offline = false;
+        offline = false,
+        firstFill = false;
 
   /// No successful sync for longer than SyncService.maxOffline -- the
   /// photos are wiped until the Frame reaches the server again.
@@ -297,7 +300,8 @@ class SyncResult {
         deactivated = false,
         unpaired = false,
         offlineExpired = true,
-        offline = false;
+        offline = false,
+        firstFill = false;
 
   final String? channelId;
   final List<CachedMediaEntry> entries;
@@ -320,6 +324,11 @@ class SyncResult {
   /// albums from the last successful sync. Switching albums needs the
   /// server, so it is off meanwhile.
   final bool offline;
+
+  /// The cache was empty when this sync began (just connected, or wiped):
+  /// everything downloaded is the Frame's backlog, not something new -- no
+  /// "Ein neues Foto von …" for each of hundreds (2026-11-24).
+  final bool firstFill;
 }
 
 /// Orchestrates one sync round: refresh the access token if it's close to
@@ -511,6 +520,15 @@ class SyncService {
     final storedToken = await _credentialsStore.accessToken;
     final local = await _cacheStore.readIndex();
     if (storedToken == null) return _offlineFallback(local);
+    // Still loading the backlog (also after a restart halfway through):
+    // nothing of it counts as new (2026-11-24).
+    var backlog = await _credentialsStore.backlog;
+    if (backlog == null) {
+      backlog = local.isEmpty ? 'filling' : 'done';
+      await _credentialsStore.saveBacklog(backlog);
+    }
+    final firstFill = backlog == 'filling';
+    var downloadFailed = false;
     var accessToken = storedToken;
 
     // A switch made on the Frame since the last sync (also an old build's
@@ -590,6 +608,7 @@ class SyncService {
       settings: _settingsFrom(data),
       assignedChannels: assignedChannels,
       spaceName: data['space_name'] as String?,
+      firstFill: firstFill,
     ));
 
     // Every other album of this Frame too, so it can switch between them
@@ -676,11 +695,13 @@ class SyncService {
             assignedChannels: assignedChannels,
             spaceName: data['space_name'] as String?,
             favorites: _favoritesFrom(data),
+            firstFill: firstFill,
           ));
         }
       } catch (_) {
         // Skip this item this round; it's retried on the next sync since
         // it stays in toDownload until it succeeds.
+        downloadFailed = true;
       }
     }
 
@@ -720,6 +741,7 @@ class SyncService {
       'favorites': data['favorites'],
     }));
 
+    if (firstFill && !downloadFailed) await _credentialsStore.saveBacklog('done');
     return SyncResult(
       channelId: currentChannelId,
       entries: finalEntries.where((e) => e.channelId == currentChannelId).toList(),
@@ -728,6 +750,7 @@ class SyncService {
       settings: settings,
       assignedChannels: assignedChannels,
       spaceName: data['space_name'] as String?,
+      firstFill: firstFill,
     );
   }
 
@@ -840,6 +863,8 @@ class SyncService {
       await _deleteEntryFiles(entry);
     }
     await _cacheStore.writeIndex(const []);
+    // Refilled later (reactivated): that is backlog again, not news.
+    await _credentialsStore.saveBacklog('filling');
   }
 
   /// The last get-media-batch call was turned away for a stale or expired

@@ -19,6 +19,7 @@ class FrameCredentialsStore {
   // exactly like before this existed.
   static const _keyPreferredChannelId = 'preferred_channel_id';
   static const _keyLastSyncOkAt = 'last_sync_ok_at';
+  static const _keyBacklog = 'backlog';
   // What the last successful sync said besides the photos (settings, the
   // albums, Space name, current album) -- kept for offline (2026-10-09).
   static const _keyLastSyncMeta = 'last_sync_meta';
@@ -89,6 +90,11 @@ class FrameCredentialsStore {
   }
 
   Future<void> saveLastSyncOkAt(DateTime at) => _storage.write(key: _keyLastSyncOkAt, value: at.toUtc().toIso8601String());
+
+  /// 'filling' while a just-connected (or wiped) Frame is still loading its
+  /// backlog, then 'done'; null on a Frame from before 2026-11-24.
+  Future<String?> get backlog => _storage.read(key: _keyBacklog);
+  Future<void> saveBacklog(String state) => _storage.write(key: _keyBacklog, value: state);
 
   Future<String?> get lastSyncMeta => _storage.read(key: _keyLastSyncMeta);
 
