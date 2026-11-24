@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 import '../main.dart';
 import '../services/invite_service.dart';
+import '../widgets/picture_sheet.dart';
 import '../widgets/empty_album_guard.dart';
 import '../widgets/email_dialog.dart';
 import '../widgets/invite_sheet.dart';
@@ -14,6 +15,7 @@ import '../services/offline_http_client.dart';
 import '../services/perf.dart';
 
 import '../services/avatar_upload.dart';
+import '../services/object_picture_service.dart';
 import '../services/channel_picker_service.dart';
 import '../services/frame_controls.dart';
 import '../services/tips.dart';
@@ -346,6 +348,19 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     if (mounted) await _load();
   }
 
+  Future<void> _changePicture() async {
+    final frame = _frame;
+    if (frame == null) return;
+    final changed = await changeObjectPicture(
+      context,
+      kind: ObjectKind.frame,
+      id: frame.id,
+      name: _shownName,
+      hasCustomPicture: frame.avatarPath != null,
+    );
+    if (changed && mounted) await _load();
+  }
+
   Future<void> _openSettings() async {
     final frame = _frame;
     final spaceId = _spaceId;
@@ -580,6 +595,7 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                   );
               return [
                 item(SmileIcons.settings, t.settingsAndDevice, _openSettings),
+                if (_managesSpace) item(SmileIcons.picture, t.changeObjectPicture, _changePicture),
                 item(SmileIcons.heart, t.favorites, _openFavorites),
                 item(SmileIcons.playback, t.playbackTitle, () {
                   unawaited(_openPage((f, spaceId) => FramePlaybackScreen(frame: f, spaceId: spaceId, frameService: _service)));
@@ -628,13 +644,18 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                 padding: EdgeInsets.fromLTRB(SmileSpacing.m, SmileSpacing.m, SmileSpacing.m, SmileSpacing.m + MediaQuery.paddingOf(context).bottom),
                 children: [
                   Center(
-                    child: SmileStatusDot(
-                      online: frame.isOnline,
-                      child: objectPicture(
-                        key: LocalChanges.framePicture(widget.frameId),
-                        name: _shownName,
-                        serverUrl: avatarPathToUrl(frame.avatarPath),
-                        size: 72,
+                    // Like an album's or a Space's picture (2026-11-24).
+                    child: SmileEditablePicture(
+                      tooltip: t.changeObjectPicture,
+                      onEdit: _managesSpace ? _changePicture : null,
+                      child: SmileStatusDot(
+                        online: frame.isOnline,
+                        child: objectPicture(
+                          key: LocalChanges.framePicture(widget.frameId),
+                          name: _shownName,
+                          serverUrl: avatarPathToUrl(frame.avatarPath),
+                          size: 72,
+                        ),
                       ),
                     ),
                   ),
