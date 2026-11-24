@@ -161,7 +161,13 @@ class _CreateFrameScreenState extends State<CreateFrameScreen> {
     return Scaffold(
       appBar: AppBar(
         title: SmileFitText(
-          _created == null ? t.setUpFrame : t.connectNamedFrame(_created!.name),
+          _created == null
+              ? t.setUpFrame
+              : widget.existingFrame == null
+                  ? t.connectNamedFrame(_created!.name)
+                  : widget.existingFrame!.isOnline
+                      ? t.connectOtherDevice
+                      : t.reconnectFrame,
         ),
       ),
       body: SafeArea(

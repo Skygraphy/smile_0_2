@@ -2921,8 +2921,26 @@ abstract class SmileTexts {
   /// No description provided for @reconnectHint.
   ///
   /// In de, this message translates to:
-  /// **'Auf dem neuen Gerät: Smile öffnen → Dieses Gerät als Frame verwenden → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.'**
+  /// **'Am Tablet: Zeigt es schon „Frame verbinden“, einfach den QR-Code scannen. Sonst: Smile öffnen → Dieses Gerät als Frame verwenden → QR-Code scannen.\n\nAlben und Einstellungen bleiben. Ein anderes Tablet, das bisher dieser Frame war, ist danach keiner mehr. Gilt 15 Minuten.'**
   String get reconnectHint;
+
+  /// No description provided for @reconnectFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Frame neu verbinden'**
+  String get reconnectFrame;
+
+  /// No description provided for @reconnectFrameSub.
+  ///
+  /// In de, this message translates to:
+  /// **'Zeigt das Tablet „Frame verbinden“? Oder kommt ein neues Tablet?'**
+  String get reconnectFrameSub;
+
+  /// No description provided for @connectOtherDeviceSub.
+  ///
+  /// In de, this message translates to:
+  /// **'Ein neues Tablet übernimmt diesen Frame'**
+  String get connectOtherDeviceSub;
 
   /// No description provided for @done.
   ///

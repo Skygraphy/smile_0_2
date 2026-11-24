@@ -587,7 +587,34 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                 item(SmileIcons.controls, t.controlsTitle, () {
                   unawaited(_openPage((f, spaceId) => FrameControlsScreen(frame: f, spaceId: spaceId, frameService: _service)));
                 }),
-                if (_managesSpace) item(SmileIcons.scan, t.connectOtherDevice, _connectOther),
+                // Offline (e.g. the tablet shows "Frame verbinden" again):
+                // the same or a new tablet -- "another device" misled
+                // (2026-11-24).
+                if (_managesSpace)
+                  PopupMenuItem(
+                    value: _connectOther,
+                    child: Row(
+                      children: [
+                        const Icon(SmileIcons.scan, size: 20),
+                        const SizedBox(width: SmileSpacing.m),
+                        Flexible(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(_frame?.isOnline ?? false ? t.connectOtherDevice : t.reconnectFrame),
+                              Text(
+                                _frame?.isOnline ?? false ? t.connectOtherDeviceSub : t.reconnectFrameSub,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ];
             },
           ),

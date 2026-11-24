@@ -1770,7 +1770,17 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get reconnectHint =>
-      'Auf dem neuen Gerät: Smile öffnen → Dieses Gerät als Frame verwenden → QR-Code scannen. Es übernimmt Alben und Einstellungen; das bisherige Gerät ist danach kein Frame mehr.';
+      'Am Tablet: Zeigt es schon „Frame verbinden“, einfach den QR-Code scannen. Sonst: Smile öffnen → Dieses Gerät als Frame verwenden → QR-Code scannen.\n\nAlben und Einstellungen bleiben. Ein anderes Tablet, das bisher dieser Frame war, ist danach keiner mehr. Gilt 15 Minuten.';
+
+  @override
+  String get reconnectFrame => 'Frame neu verbinden';
+
+  @override
+  String get reconnectFrameSub =>
+      'Zeigt das Tablet „Frame verbinden“? Oder kommt ein neues Tablet?';
+
+  @override
+  String get connectOtherDeviceSub => 'Ein neues Tablet übernimmt diesen Frame';
 
   @override
   String get done => 'Fertig';

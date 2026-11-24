@@ -466,7 +466,8 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
                       if (!_frame.isRevoked && _frame.pairingCode != null)
                         SmileActionRow(
                           icon: SmileIcons.inviteCode,
-                          label: t.connectOtherDevice,
+                          label: _frame.isOnline ? t.connectOtherDevice : t.reconnectFrame,
+                          hint: _frame.isOnline ? t.connectOtherDeviceSub : t.reconnectFrameSub,
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => CreateFrameScreen(spaceId: widget.spaceId, existingFrame: _frame),

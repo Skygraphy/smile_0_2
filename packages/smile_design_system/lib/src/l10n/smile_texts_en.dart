@@ -1762,7 +1762,17 @@ class SmileTextsEn extends SmileTexts {
 
   @override
   String get reconnectHint =>
-      'On the new device: open Smile → Use this device as a Frame → scan the QR code. It takes over the albums and settings; the old device is no longer a Frame afterwards.';
+      'On the tablet: if it already shows “Connect a Frame”, just scan the QR code. Otherwise: open Smile → Use this device as a Frame → scan the QR code.\n\nAlbums and settings stay. Another tablet that was this Frame until now no longer is one. Valid for 15 minutes.';
+
+  @override
+  String get reconnectFrame => 'Reconnect Frame';
+
+  @override
+  String get reconnectFrameSub =>
+      'Does the tablet show “Connect Frame”? Or is a new tablet coming?';
+
+  @override
+  String get connectOtherDeviceSub => 'A new tablet takes over this Frame';
 
   @override
   String get done => 'Done';
