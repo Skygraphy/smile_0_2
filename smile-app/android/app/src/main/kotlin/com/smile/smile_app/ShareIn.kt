@@ -78,9 +78,10 @@ object ShareIn {
     private val nameDate = Regex("""(?<!\d)((?:19|20)\d{2})(\d{2})(\d{2})(?:[_-]?(\d{2})(\d{2})(\d{2}))?(?!\d)""")
 
     /**
-     * The gallery's date for it: MediaStore's DATE_TAKEN, else a date in its
-     * name (IMG-20241125-WA0003.jpg, Screenshot_20241125_183012.jpg), the way
-     * the gallery dates a WhatsApp picture. Null when neither says.
+     * The gallery's date for it: MediaStore's DATE_TAKEN, else the file's
+     * DATE_MODIFIED (what the Samsung gallery shows for a WhatsApp
+     * picture), else a date in its name (IMG-20241125-WA0003.jpg) when the
+     * sharing app isn't the gallery. Null when none says.
      */
     private fun takenAtOf(context: Context, uri: Uri): Long? {
         var name: String? = null
@@ -89,6 +90,15 @@ object ShareIn {
                 if (c.moveToFirst()) {
                     val ti = c.getColumnIndex(MediaStore.MediaColumns.DATE_TAKEN)
                     if (ti >= 0 && !c.isNull(ti) && c.getLong(ti) > 0) return c.getLong(ti)
+                    // No date in it: the Samsung gallery shows the file's
+                    // date then, not the one in its name (2026-11-25: a
+                    // WhatsApp picture named ...20241124... it shows on
+                    // the 25th).
+                    val mi = c.getColumnIndex(MediaStore.MediaColumns.DATE_MODIFIED)
+                    if (mi >= 0 && !c.isNull(mi) && c.getLong(mi) > 0) {
+                        val ms = c.getLong(mi) * 1000L
+                        if (ms <= System.currentTimeMillis() + 86_400_000L) return ms
+                    }
                     val ni = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                     if (ni >= 0) name = c.getString(ni)
                 }
