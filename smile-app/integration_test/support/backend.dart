@@ -101,6 +101,11 @@ class TestBackend {
   /// Rows of a table (PostgREST query), e.g. select('profiles', 'select=handle&user_id=eq.x').
   static Future<List> select(String table, String query) async => await _send('GET', '/rest/v1/$table?$query') as List;
 
+  /// Changes rows as the server would (chapter 13: a Frame's last sign of
+  /// life set back, to see it offline).
+  static Future<List> patch(String table, String query, Map<String, Object?> body) async =>
+      await _send('PATCH', '/rest/v1/$table?$query', body: body, headers: {'Prefer': 'return=representation'}) as List;
+
   /// Size of a file in the avatars bucket (null: no such file).
   static Future<int?> avatarSize(String path) async {
     final res = await http.get(Uri.parse('$url/storage/v1/object/public/avatars/$path'));
@@ -154,7 +159,7 @@ class TestUser {
   /// Photos into an album the way the app sends them (migrations/0071):
   /// the files into the media buckets, then one insert as "ready", which
   /// raises the same "new photos" push. Returns the new ids.
-  Future<List<String>> sendPhotos(String channelId, List<Uint8List> photos) async {
+  Future<List<String>> sendPhotos(String channelId, List<Uint8List> photos, {DateTime? takenAt}) async {
     TestBackend._guard();
     final ids = [for (final _ in photos) _uuid()];
     for (var i = 0; i < photos.length; i++) {
@@ -178,6 +183,7 @@ class TestUser {
           'storage_path_thumbnail': '$channelId/${ids[i]}_thumb.jpg',
           'processing_status': 'ready',
           'file_size_bytes': photos[i].length,
+          if (takenAt != null) 'taken_at': takenAt.toUtc().toIso8601String(),
         },
     ]);
     return ids;

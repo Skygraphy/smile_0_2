@@ -12,6 +12,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smile_app/main.dart' as app;
+import 'package:smile_app/screens/album_slideshow_screen.dart';
 import 'package:smile_app/services/channel_service.dart';
 import 'package:smile_app/services/object_picture_service.dart';
 import 'package:smile_app/services/space_service.dart';
@@ -397,13 +398,98 @@ void main() {
       await c.settle(max: const Duration(seconds: 2));
       await c.snap();
 
-      c.step('Diashow: Einstellungen', 'Auf den Bildschirm tippen, dann auf das Zahnrad.',
+      Future<void> showChrome() async {
+        for (var i = 0; i < 2 && find.byTooltip('Zurück').hitTestable().evaluate().isEmpty; i++) {
+          await c.tapAt(tester.getCenter(find.byType(Scaffold).last), 'Bildschirm antippen');
+          await c.settle();
+        }
+      }
+
+      Future<void> closeSlideshow() async {
+        for (var i = 0; i < 3 && find.byType(AlbumSlideshowScreen).evaluate().isNotEmpty; i++) {
+          if (find.byTooltip('Zurück').hitTestable().evaluate().isEmpty) await showChrome();
+          await tester.tap(find.byTooltip('Zurück').last, warnIfMissed: false);
+          c.logTap('Zurück');
+          await c.settle();
+        }
+      }
+
+      // The bar comes with a tap on the picture (it hides again by itself).
+      Future<void> openMenu() async {
+        for (var i = 0; i < 3; i++) {
+          if (find.byTooltip('Weitere Optionen').hitTestable().evaluate().isEmpty) await showChrome();
+          await tester.tap(find.byTooltip('Weitere Optionen').last, warnIfMissed: false);
+          c.logTap('Weitere Optionen');
+          await c.settle();
+          if (await c.waitFor('Einstellungen …', seconds: 2)) break;
+        }
+        c.screen('Diashow-Menü');
+      }
+
+      Future<void> menuItem(String label) async {
+        await tester.tap(find.text(label).last, warnIfMissed: false);
+        c.logTap(label);
+        await c.settle();
+        c.screen('Diashow');
+      }
+
+      Future<Map<String, dynamic>> menuPrefs() async {
+        final p = await SharedPreferences.getInstance();
+        await p.reload();
+        final raw = p.getString('phone_slideshow');
+        return raw == null ? {} : (jsonDecode(raw) as Map).cast<String, dynamic>();
+      }
+
+      c.step('Diashow: Menü', 'Auf den Bildschirm tippen, dann oben rechts auf die drei Punkte.',
+          'Oben links Zurück, das Album und die Position; das Menü zeigt Anhalten, Videos mit Ton, Titel anzeigen und Einstellungen …',
+          explain: 'Seit 0.0.18 hat die Diashow am Handy eine Leiste wie andere Foto-Apps: Zurück links, drei Punkte rechts, direkt auf dem Foto.');
+      await openMenu();
+      await c.check('Menü mit Anhalten, Ton, Titel und Einstellungen', () async =>
+          await c.waitFor('Anhalten', seconds: 1) && await c.waitFor('Videos mit Ton', seconds: 1) &&
+          await c.waitFor('Titel anzeigen', seconds: 1));
+      await c.snap();
+
+      c.step('Diashow: Anhalten', 'Anhalten wählen, dann wieder die drei Punkte.',
+          'Die Diashow steht; im Menü steht jetzt Weiter abspielen statt Anhalten.', kind: 'Abzweigung',
+          explain: 'Angehalten bleibt das Foto stehen, bis man weiter abspielt.');
+      await menuItem('Anhalten');
+      await openMenu();
+      await c.check('Menü bietet Weiter abspielen', () => c.waitFor('Weiter abspielen', seconds: 2));
+      await c.snap();
+
+      c.step('Diashow: Weiter abspielen', 'Weiter abspielen wählen, dann wieder die drei Punkte.',
+          'Die Diashow läuft wieder; im Menü steht wieder Anhalten.', kind: 'Abzweigung', explain: 'Die Diashow läuft weiter.');
+      await menuItem('Weiter abspielen');
+      await openMenu();
+      await c.check('Menü bietet wieder Anhalten', () => c.waitFor('Anhalten', seconds: 2));
+      await c.snap();
+
+      c.step('Diashow: Ton und Titel im Menü', 'Videos mit Ton wählen, dann im Menü Titel anzeigen; danach beides noch einmal.',
+          'Jeder Haken springt um und wieder zurück.', kind: 'Abzweigung',
+          explain: 'Ton und Titel lassen sich direkt im Menü umschalten, ohne die Einstellungen zu öffnen. Die Testsuite liest die Wahl jedes Mal am Handy nach.');
+      final soundBefore = (await menuPrefs())['sound'] ?? true;
+      final captionsBefore = (await menuPrefs())['captions'] ?? true;
+      await menuItem('Videos mit Ton');
+      await c.check('Ton umgeschaltet', () async => ((await menuPrefs())['sound'] ?? true) != soundBefore);
+      await openMenu();
+      await menuItem('Titel anzeigen');
+      await c.check('Titel umgeschaltet', () async => ((await menuPrefs())['captions'] ?? true) != captionsBefore);
+      await openMenu();
+      await menuItem('Videos mit Ton');
+      await openMenu();
+      await menuItem('Titel anzeigen');
+      await c.check('Beides wieder wie vorher', () async {
+        final p = await menuPrefs();
+        return (p['sound'] ?? true) == soundBefore && (p['captions'] ?? true) == captionsBefore;
+      });
+      await c.snap();
+
+      c.step('Diashow: Einstellungen', 'Drei Punkte, dann Einstellungen …',
           'Die Einstellungen der Diashow: Anzeigedauer, Reihenfolge, Ausrichtung, Videos, Füllen und mehr.',
           explain: 'Dieselben Einstellungen wie beim Frame (Kapitel 7 prüft sie einzeln).');
-      // The buttons come with a tap on the picture (they hide again by themselves).
-      await c.tapAt(tester.getCenter(find.byType(Scaffold).last), 'Bildschirm antippen');
-      await tester.tap(find.byTooltip('Diashow-Einstellungen').first, warnIfMissed: false);
-      c.logTap('Diashow-Einstellungen');
+      await openMenu();
+      await tester.tap(find.text('Einstellungen …').last, warnIfMissed: false);
+      c.logTap('Einstellungen …');
       await c.settle();
       c.screen('Diashow-Einstellungen');
       await c.check('Einstellungen offen', () => c.waitFor('Gilt für die Diashow', seconds: 3));
@@ -497,14 +583,9 @@ void main() {
       await c.check('Einstellungen zu', () => c.gone('Gilt für die Diashow', seconds: 3));
       await c.snap();
 
-      c.step('Diashow beenden', 'Auf den Bildschirm tippen, dann oben rechts auf das Kreuz.', 'Wieder das Album.',
-          explain: 'Das Kreuz beendet die Diashow.');
-      // Tapping the picture hides the buttons, tapping again shows them.
-      await c.tapAt(tester.getCenter(find.byType(Scaffold).last), 'Bildschirm antippen');
-      await c.tapAt(tester.getCenter(find.byType(Scaffold).last), 'Bildschirm antippen');
-      await tester.tap(find.byIcon(SmileIcons.close).last, warnIfMissed: false);
-      c.logTap('Schließen');
-      await c.settle();
+      c.step('Diashow beenden', 'Auf den Bildschirm tippen, dann oben links auf Zurück.', 'Wieder das Album.',
+          explain: 'Zurück beendet die Diashow.');
+      await closeSlideshow();
       c.screen('Album');
       await c.check('Album', () => c.waitFor('Geburtstage', seconds: 5));
       await c.snap();
@@ -520,16 +601,6 @@ void main() {
       await c.snap();
 
       // ---------------------------------------------------------------- Diashow von der Startseite (2026-10-25)
-      Future<void> showChrome() async {
-        await c.tapAt(tester.getCenter(find.byType(Scaffold).last), 'Bildschirm antippen');
-        await c.settle();
-      }
-
-      Future<void> closeSlideshow() async {
-        await tester.tap(find.byIcon(SmileIcons.close).last, warnIfMissed: false);
-        c.logTap('Schließen');
-        await c.settle();
-      }
 
       Future<void> openHomeSlideshow() async {
         await c.tap('Diashow');
@@ -567,7 +638,7 @@ void main() {
       await c.snap();
 
       c.step('Startseite-Diashow: Aktuelles', 'Wieder das Diashow-Zeichen, 50 wählen, Diashow starten, dann auf den Bildschirm tippen.',
-          'Die Diashow läuft. Oben links steht Aktuelles · 1 von 6, unten das Album und wer das Foto geschickt hat.',
+          'Die Diashow läuft. Oben links steht Aktuelles, darunter zum Beispiel 1 von 6, unten das Album und wer das Foto geschickt hat.',
           explain: 'Die neuesten 50 Fotos und Videos aus allen Alben. Anna hat zusammen erst 6, also laufen alle 6.');
       await openHomeSlideshow();
       await c.tap('Aktuelles aus allen Alben');
@@ -576,28 +647,28 @@ void main() {
       await c.settle();
       await start();
       await showChrome();
-      await c.check('Aktuelles, 6 Fotos und Videos', () => c.waitFor('Aktuelles · 1 von 6', seconds: 3));
+      await c.check('Aktuelles, 6 Fotos und Videos', () => c.waitFor('Aktuelles', seconds: 3).then((ok) async => ok && await c.waitFor('~von 6', seconds: 1)));
       await c.snap();
 
-      c.step('Startseite-Diashow beenden', 'Oben rechts auf das Kreuz.', 'Wieder die Startseite.', kind: 'Abzweigung',
-          explain: 'Das Kreuz beendet die Diashow.');
+      c.step('Startseite-Diashow beenden', 'Oben links auf Zurück.', 'Wieder die Startseite.', kind: 'Abzweigung',
+          explain: 'Zurück beendet die Diashow.');
       await closeSlideshow();
       c.screen('Startseite');
       await c.check('Startseite', () => c.waitFor('Sommerurlaub 2026', seconds: 5));
       await c.snap();
 
       c.step('Startseite-Diashow: alle Alben im Wechsel', 'Diashow-Zeichen, Alle Alben im Wechsel, Diashow starten, auf den Bildschirm tippen.',
-          'Zuerst ist 50 noch gewählt, wie beim letzten Mal. Dann läuft die Diashow: oben links Alle Alben im Wechsel · 1 von 6.',
+          'Zuerst ist 50 noch gewählt, wie beim letzten Mal. Dann läuft die Diashow: oben links Alle Alben im Wechsel, darunter zum Beispiel 1 von 6.',
           explain: 'Alles, was Anna sehen kann, Album für Album. Smile merkt sich die letzte Wahl.');
       await openHomeSlideshow();
       await c.check('50 gemerkt', () => tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '50')).selected);
       await c.tap('Alle Alben im Wechsel');
       await start();
       await showChrome();
-      await c.check('Alle Alben im Wechsel', () => c.waitFor('Alle Alben im Wechsel · 1 von 6', seconds: 3));
+      await c.check('Alle Alben im Wechsel', () => c.waitFor('Alle Alben im Wechsel', seconds: 3).then((ok) async => ok && await c.waitFor('~von 6', seconds: 1)));
       await c.snap();
 
-      c.step('Startseite-Diashow: ein Album', 'Kreuz, dann Diashow-Zeichen, Ein Album, Diashow starten.',
+      c.step('Startseite-Diashow: ein Album', 'Zurück, dann Diashow-Zeichen, Ein Album, Diashow starten.',
           'Smile fragt: Welches Album? mit allen Alben.', explain: 'Wie die Diashow im Album, nur von der Startseite aus.');
       await closeSlideshow();
       c.screen('Startseite');

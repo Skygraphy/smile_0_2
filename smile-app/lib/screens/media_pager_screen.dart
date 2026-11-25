@@ -57,9 +57,19 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
     super.initState();
     // "Wusstest du?" (2026-10-29).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Tips.offerCard(context, TipPage.viewer);
+      if (!mounted) return;
+      Tips.offerCard(context, TipPage.viewer);
+      // The viewer's own tips, pointing at its buttons (they moved here with
+      // swiping, 2026-10-28; Fund 50: they never showed since).
+      Tips.offerFirst(context, [
+        if (widget.canEditCaption(_current)) (TipId.captionLater, _captionKey),
+        if (widget.onFavorite != null) (TipId.favoriteHeart, _heartKey),
+      ]);
     });
   }
+
+  final _captionKey = GlobalKey();
+  final _heartKey = GlobalKey();
 
   late final _controller = PageController(initialPage: widget.initialIndex);
   late final List<MediaItem> _items = List.of(widget.items);
@@ -129,6 +139,7 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
         actions: [
           if (widget.onFavorite != null)
             IconButton(
+              key: _heartKey,
               icon: Icon(favorite ? SmileIcons.heartFilled : SmileIcons.heart, color: favorite ? SmileTheme.primary : null),
               tooltip: t.favoriteFor,
               onPressed: () async {
@@ -141,6 +152,7 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
             IconButton(icon: const Icon(SmileIcons.frame), tooltip: t.showOnFrameNow, onPressed: () => widget.onShowOnFrame!(item)),
           if (widget.canEditCaption(item))
             IconButton(
+              key: _captionKey,
               icon: const Icon(SmileIcons.caption),
               tooltip: t.captionEdit,
               onPressed: () async {

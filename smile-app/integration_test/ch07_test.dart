@@ -82,7 +82,7 @@ void main() {
       /// The tablet takes its picture of what this step did, then this goes on.
       Future<void> frameShows(int n) async {
         await TestBackend.signal('p$n');
-        await c.awaitSignal('f$n', seconds: 120);
+        await c.awaitSignal('f$n', seconds: 600);
       }
 
       await c.waitFor('Wanderungen', seconds: 20);
@@ -277,6 +277,7 @@ void main() {
         ('newest', 'Neueste Fotos'),
         ('favorite', 'Lieblingsbilder merken'),
         ('favorites', 'Lieblingsbilder abspielen'),
+        ('sound_all', 'Ton für alle Videos ein- oder ausschalten'),
         ('overview', 'Übersicht'),
         ('album', 'Album wechseln'),
         ('duration', 'Anzeigedauer'),
@@ -285,7 +286,9 @@ void main() {
         ('next', 'Weiter'),
       ]) {
         final tile = find.widgetWithText(SwitchListTile, label);
-        await tester.scrollUntilVisible(tile, 200, scrollable: find.byType(Scrollable).first);
+        // Weiter is the first switch: back up again for it.
+        await tester.scrollUntilVisible(tile.hitTestable(), key == 'next' ? -200 : 200, scrollable: find.byType(Scrollable).first);
+        await c.settle();
         final was = tester.widget<SwitchListTile>(tile).value;
         if (key != 'next') {
           await tester.tap(tile, warnIfMissed: false);

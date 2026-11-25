@@ -80,14 +80,14 @@ void main() {
         await TestBackend.signal('f$n');
       }
 
-      /// Shows the button bar (a tap on the picture), until [expected] is there.
+      /// Shows the button bar (a long press on the picture; a tap only stops, Easy Stopping), until [expected] is there.
       Future<bool> bar(String expected) async {
         for (var i = 0; i < 20; i++) {
-          if (c.find_(expected).evaluate().isNotEmpty) return true;
-          await tester.tapAt(center);
+          if (c.find_(expected).hitTestable().evaluate().isNotEmpty) return true;
+          await tester.longPressAt(center);
           await c.letLoad(seconds: 1.5);
         }
-        return c.find_(expected).evaluate().isNotEmpty;
+        return c.find_(expected).hitTestable().evaluate().isNotEmpty;
       }
 
       /// A choice in the settings sheet (scrolled into sight first).
@@ -111,15 +111,15 @@ void main() {
       }
 
       Future<void> ownSettings() async {
-        await own('Am Tablet selbst: Einstellungen', 'Am Tablet auf den Bildschirm tippen, dann Einstellungen.',
+        await own('Am Tablet selbst: Einstellungen', 'Am Tablet lange auf den Bildschirm drücken, dann Einstellungen.',
             'Wiedergabe groß am Frame: Was läuft, Reihenfolge, Am Ende, Nachtruhe, Videos, Bildschirm füllen, die Schalter und Dazu.',
             'Mit Alles selbst kann Oma Hilde die Wiedergabe selbst einstellen.', () async {
           await bar('Einstellungen');
-          await tester.tap(c.find_('Einstellungen').last, warnIfMissed: false);
+          await tester.tap(c.find_('Einstellungen').hitTestable().evaluate().isEmpty ? c.find_('Einstellungen').last : c.find_('Einstellungen').hitTestable().last, warnIfMissed: false);
           c.logTap('Einstellungen');
           await c.settle();
           c.screen('Frame: Einstellungen');
-          await c.check('Was läuft', () => c.waitFor('Was läuft', seconds: 5));
+          await c.check('Was läuft', () => c.waitFor('WAS LÄUFT', seconds: 5));
         });
         await own('Am Tablet selbst: Was läuft', 'Am Tablet Alle Alben im Wechsel, Aktuelles, dann 50 und wieder Ein Album antippen.',
             'Bei Aktuelles erscheint Wie viele aktuelle Fotos mit 10, 20, 50 und 100; am Ende ist Ein Album gewählt.',
@@ -128,7 +128,7 @@ void main() {
           await c.check('Server: Wechsel', () => saved('content_mode', 'rotate'));
           await choose('Aktuelles');
           await c.check('Server: Aktuelles', () => saved('content_mode', 'recent'));
-          await c.check('Wie viele', () => c.waitFor('Wie viele aktuelle Fotos', seconds: 3));
+          await c.check('Wie viele', () => c.waitFor('WIE VIELE AKTUELLE FOTOS', seconds: 3));
           await choose('50');
           await c.check('Server: 50', () => saved('recent_count', 50));
           await choose('20');
@@ -196,7 +196,7 @@ void main() {
             'Die Einstellungen schließen sich.', () async {
           await c.tapAt(const Offset(40, 40), 'Schließen');
           c.screen('Frame: Diashow');
-          await c.check('Zu', () => c.gone('Was läuft', seconds: 5));
+          await c.check('Zu', () => c.gone('WAS LÄUFT', seconds: 5));
         }, kind: 'Abzweigung');
       }
 
@@ -229,7 +229,7 @@ void main() {
           checks: () => c.check('Widerrufen', () => eventually(() => c.find_('Dieser Frame wurde widerrufen').evaluate().isNotEmpty, seconds: 60)));
       await after(11, 'Am Tablet: wieder aktiv', 'Am Tablet hinschauen.', 'Die Diashow läuft wieder mit den Fotos von Geburtstage.',
           'Das Tablet lädt die Fotos neu.', checks: () => c.check('Geburtstage', () => shows('Geburtstage', seconds: 120)));
-      await after(12, 'Am Tablet: Alles selbst', 'Am Tablet auf den Bildschirm tippen.', 'Unten alle Knöpfe, ganz rechts Einstellungen.',
+      await after(12, 'Am Tablet: Alles selbst', 'Am Tablet lange auf den Bildschirm drücken.', 'Unten alle Knöpfe, ganz rechts Einstellungen.',
           'Jetzt kann Oma Hilde selbst einstellen.', checks: () => c.check('Einstellungen', () => bar('Einstellungen')), then: ownSettings);
 
       await c.finish(appVersion: version);

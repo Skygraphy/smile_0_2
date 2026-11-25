@@ -61,6 +61,27 @@ void main() {
         await c.settle();
       }
 
+      /// Text further down the Space page (below the Frame-Abo card since
+      /// 0.0.18): scrolled into sight first.
+      Future<bool> below(String text, {double seconds = 10}) async {
+        await c.waitFor('Familie Berger', seconds: seconds);
+        await c.letLoad(seconds: 1);
+        final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+        for (var i = 0; i < 12 && find.textContaining(text).hitTestable().evaluate().isEmpty; i++) {
+          await tester.dragFrom(Offset(size.width / 2, size.height * 0.7), Offset(0, -size.height * 0.3));
+          await c.settle();
+        }
+        return c.waitFor(text, seconds: 3);
+      }
+
+      Future<void> toTop() async {
+        final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+        for (var i = 0; i < 4; i++) {
+          await tester.dragFrom(Offset(size.width / 2, size.height * 0.3), Offset(0, size.height * 0.6));
+        }
+        await c.settle();
+      }
+
       /// A tab at the bottom, again until its page is there (the start page
       /// may just be rebuilding and swallow a tap, chapter 5).
       Future<void> tab(String label, Type page) async {
@@ -87,13 +108,17 @@ void main() {
 
       c.clearMessages();
       c.step('Space öffnen', 'Unten auf Spaces, dann Familie Berger antippen.',
-          'Die Seite von Familie Berger. Oben die Knöpfe, weiter unten 0 Frames mit Noch kein Frame und Frame verbinden.',
+          'Die Seite von Familie Berger. Oben die Knöpfe und das Frame-Abo, weiter unten 0 Frames mit Noch kein Frame und Frame verbinden.',
           explain: 'Ein Frame gehört immer zu einem Space und zeigt dessen Alben.');
       await tab('Spaces', SpacesScreen);
       c.screen('Spaces');
       await c.tap('Familie Berger', last: true);
       c.screen('Space');
-      await c.check('Space-Seite', () => c.waitFor('Frame verbinden', seconds: 10));
+      await c.check('Frame-Abo: Kostenlos, Probezeit beginnt mit dem ersten Frame', () async =>
+          await c.waitFor('Kostenlos', seconds: 10) && await c.waitFor('~Mit dem ersten Frame beginnen 2 Monate Probezeit', seconds: 1));
+      await c.check('Server: noch keine Probezeit', () async =>
+          (await TestBackend.select('space_plans', 'select=space_id')).isEmpty);
+      await c.check('Space-Seite', () => below('Frame verbinden'));
       await c.check('Noch kein Frame', () => c.waitFor('Noch kein Frame', seconds: 3));
       await c.snap();
 
@@ -102,6 +127,7 @@ void main() {
           'Frame einrichten: Wie soll der neue Frame heißen? mit einem Namensfeld, darunter Wer schaut auf diesen Frame? mit drei '
               'Möglichkeiten, Einfach bedienen ist gewählt. Weiter geht es erst mit einem Namen.',
           explain: 'Zuerst der Name, dann wer vor dem Frame sitzt. Danach richtet sich, welche Knöpfe der Frame zeigt.');
+      await toTop();
       await tapExact('Frame', first: true);
       c.screen('Frame einrichten');
       await c.check('Frage nach dem Namen', () => c.waitFor('Wie soll der neue Frame heißen', seconds: 8));
@@ -114,13 +140,14 @@ void main() {
           kind: 'Abzweigung', explain: 'Ohne Namen entsteht kein Frame.');
       await c.back();
       c.screen('Space');
-      await c.check('Space-Seite', () => c.waitFor('Noch kein Frame', seconds: 5));
+      await c.check('Space-Seite', () => below('Noch kein Frame', seconds: 5));
       await c.check('Kein Frame im Server', () async => (await frames()).isEmpty);
       await c.snap();
 
       c.clearMessages();
       c.step('Namen eingeben', 'Wieder auf Frame, dann Wohnzimmer eingeben.',
           'Unten erscheinen jetzt Ein anderes Gerät und Dieses Gerät.', explain: 'Mit einem Namen kann es weitergehen.');
+      await toTop();
       await tapExact('Frame', first: true);
       c.screen('Frame einrichten');
       await c.typeInto('Name', 'Wohnzimmer');
@@ -197,11 +224,12 @@ void main() {
       await c.snap();
 
       c.clearMessages();
-      c.step('Zurück zum Space', 'Oben links zurück.', 'Die Seite von Familie Berger: jetzt 1 Frame, Wohnzimmer mit grünem Punkt.',
-          explain: 'Der grüne Punkt heißt: der Frame ist eingeschaltet und verbunden.');
+      c.step('Zurück zum Space', 'Oben links zurück.', 'Die Seite von Familie Berger: im Frame-Abo jetzt Probezeit · noch 60 Tage; weiter unten 1 Frame, Wohnzimmer mit grünem Punkt.',
+          explain: 'Der grüne Punkt heißt: der Frame ist eingeschaltet und verbunden. Mit dem ersten Frame beginnt für den Space die kostenlose Probezeit von 2 Monaten.');
       await c.back();
       c.screen('Space');
-      await c.check('1 Frame', () => c.waitFor('1 Frame', seconds: 10));
+      await c.check('Frame-Abo: Probezeit, noch 60 Tage', () => c.waitFor('~Probezeit · noch 60 Tage', seconds: 10));
+      await c.check('1 Frame', () => below('1 Frame'));
       await c.check('Wohnzimmer', () => c.waitFor('Wohnzimmer', seconds: 3));
       await c.snap();
 

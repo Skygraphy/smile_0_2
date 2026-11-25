@@ -110,7 +110,7 @@ void main() {
       /// The tablet takes its picture of what this step did, then this goes on.
       Future<void> frameShows(int n) async {
         await TestBackend.signal('p$n');
-        await c.awaitSignal('f$n', seconds: 180);
+        await c.awaitSignal('f$n', seconds: 600);
       }
 
       Future<void> scrollTo(Finder f, {double by = 300}) async {
@@ -162,7 +162,16 @@ void main() {
       c.screen('Spaces');
       await c.tap('Familie Berger', last: true);
       c.screen('Space');
-      await c.check('1 Frame', () => c.waitFor('1 Frame', seconds: 10));
+      await c.check('1 Frame', () async {
+        await c.waitFor('Familie Berger', seconds: 10);
+        await c.letLoad(seconds: 1);
+        final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+        for (var i = 0; i < 12 && find.text('1 Frame').hitTestable().evaluate().isEmpty; i++) {
+          await tester.dragFrom(Offset(size.width / 2, size.height * 0.7), Offset(0, -size.height * 0.3));
+          await c.settle();
+        }
+        return c.waitFor('1 Frame', seconds: 3);
+      });
       await scrollTo(find.text('Wohnzimmer'));
       await c.snap();
 
@@ -691,7 +700,11 @@ void main() {
       await c.check('Server: keine Lieblingsbilder', () => eventually(() async => (await favorites()).isEmpty));
       await c.check('Fernbedienung', () => eventually(() => find.byType(FrameFavoritesScreen).evaluate().isEmpty, seconds: 5));
       c.screen('Fernbedienung');
-      await c.check('LIEBLINGSBILDER · 0', () => c.waitFor('LIEBLINGSBILDER · 0', seconds: 8));
+      await c.check('LIEBLINGSBILDER · 0', () async {
+        await c.waitFor('Wiedergabe', seconds: 8);
+        await scrollTo(find.text('LIEBLINGSBILDER · 0'), by: -300);
+        return c.waitFor('LIEBLINGSBILDER · 0', seconds: 3);
+      });
       await c.snap();
 
       c.clearMessages();

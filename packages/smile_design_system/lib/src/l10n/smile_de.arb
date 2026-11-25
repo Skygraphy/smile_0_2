@@ -82,7 +82,7 @@
   "preparing": "Wird vorbereitet …",
   "pauseZoomTitle": "Beim Anhalten weiter zoomen",
   "onThisDayTitle": "Heute vor einem Jahr",
-  "onThisDayHint": "Fotos, die an diesem Tag in früheren Jahren aufgenommen wurden, laufen heute zuerst.",
+  "onThisDayHint": "Fotos, die an diesem Tag in früheren Jahren aufgenommen wurden, kommen heute als jedes 10. Bild dazwischen.",
   "onThisDayYears": "{years, plural, =1{Heute vor einem Jahr} other{Heute vor {years} Jahren}}",
   "@onThisDayYears": {
     "placeholders": {

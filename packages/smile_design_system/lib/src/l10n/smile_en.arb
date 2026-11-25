@@ -47,7 +47,7 @@
   "preparing": "Preparing …",
   "pauseZoomTitle": "Keep zooming while stopped",
   "onThisDayTitle": "On this day",
-  "onThisDayHint": "Photos taken on this day in earlier years play first today.",
+  "onThisDayHint": "Photos taken on this day in earlier years come in as every 10th picture today.",
   "onThisDayYears": "{years, plural, =1{One year ago today} other{{years} years ago today}}",
   "fullHdTitle": "Full HD",
   "fullHdHint": "1080p, sharpest on a tablet. About 45 MB per minute of video, takes longer to send. Off: the level below applies.",

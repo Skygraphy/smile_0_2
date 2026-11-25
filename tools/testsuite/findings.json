@@ -382,5 +382,26 @@
     "detail": "Unter einem gelöschten Album stand „in Familie Berger · gelöscht von Anna Berger · endgültig weg am …“ – das wichtigste, das Datum, fehlte. Jetzt bis drei Zeilen, alles zu lesen.",
     "status": "behoben",
     "version": "0.0.17"
+  },
+  {
+    "no": 49,
+    "chapter": "ch08",
+    "title": "Wiedergabe: Wahl sprang zurück",
+    "detail": "Ein Neuladen, das vor dem letzten Speichern begonnen hatte, überschrieb kurz danach die gerade getroffene Wahl (zum Beispiel Endlosschleife). Jetzt bleibt die Wahl stehen, auch bei Bedienstufe und Frame-Einstellungen.",
+    "status": "behoben"
+  },
+  {
+    "no": 50,
+    "chapter": "ch11",
+    "title": "Großansicht: Tipps zu Titel und Herz kamen nie",
+    "detail": "Seit man im Vollbild durch alle Fotos wischen kann, zeigte die Großansicht die beiden Tipps „Hier kannst du nachträglich einen Titel setzen“ und „Mit dem Herz merkst du ein Foto“ nicht mehr an. Jetzt zeigen sie wieder auf ihre Knöpfe oben.",
+    "status": "behoben"
+  },
+  {
+    "no": 51,
+    "chapter": "ch13",
+    "title": "Heute vor einem Jahr: Hinweis veraltet",
+    "detail": "Unter dem Schalter stand noch „laufen heute zuerst“. Seit 25.11. kommen diese Fotos als jedes 10. Bild dazwischen; der Hinweis sagt das jetzt (auch auf Englisch).",
+    "status": "behoben"
   }
 ]

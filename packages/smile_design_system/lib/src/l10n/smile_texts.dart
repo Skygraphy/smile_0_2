@@ -383,7 +383,7 @@ abstract class SmileTexts {
   /// No description provided for @onThisDayHint.
   ///
   /// In de, this message translates to:
-  /// **'Fotos, die an diesem Tag in früheren Jahren aufgenommen wurden, laufen heute zuerst.'**
+  /// **'Fotos, die an diesem Tag in früheren Jahren aufgenommen wurden, kommen heute als jedes 10. Bild dazwischen.'**
   String get onThisDayHint;
 
   /// No description provided for @onThisDayYears.

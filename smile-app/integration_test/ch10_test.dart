@@ -611,7 +611,7 @@ void main() {
       await entry(nowAdmin, 'Du bist jetzt Admin');
       c.screen('Space');
       await c.check('Space-Seite', () => eventually(() => find.byType(SpaceInfoScreen).evaluate().isNotEmpty));
-      await c.check('Admins', () => c.waitFor('Admins', seconds: 10));
+      await c.check('Admins', () async => await c.waitFor('Die Hubers', seconds: 10) && await c.dragTo('Admins'));
       await c.snap();
 
       await home();

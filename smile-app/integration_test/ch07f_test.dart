@@ -59,14 +59,14 @@ void main() {
       final size = tester.view.physicalSize / tester.view.devicePixelRatio;
       final center = Offset(size.width / 2, size.height / 2);
 
-      /// Shows the button bar (a tap on the picture), until [expected] is there.
+      /// Shows the button bar (a long press on the picture; a tap only stops, Easy Stopping), until [expected] is there.
       Future<bool> bar(String expected) async {
         for (var i = 0; i < 20; i++) {
-          if (c.find_(expected).evaluate().isNotEmpty) return true;
-          await tester.tapAt(center);
+          if (c.find_(expected).hitTestable().evaluate().isNotEmpty) return true;
+          await tester.longPressAt(center);
           await c.letLoad(seconds: 1.5);
         }
-        return c.find_(expected).evaluate().isNotEmpty;
+        return c.find_(expected).hitTestable().evaluate().isNotEmpty;
       }
 
       /// One picture of what the phone just did ([n]: its signal).
@@ -89,7 +89,7 @@ void main() {
       /// A button of the bar: shown first, then tapped.
       Future<void> press(String label) async {
         await bar(label);
-        await tester.tap(c.find_(label).last, warnIfMissed: false);
+        await tester.tap(c.find_(label).hitTestable().evaluate().isEmpty ? c.find_(label).last : c.find_(label).hitTestable().last, warnIfMissed: false);
         c.logTap(label);
         await c.settle();
       }
@@ -105,7 +105,7 @@ void main() {
       }
 
       Future<void> ownButtons() async {
-        await own('Am Tablet selbst: Weiter', 'Am Tablet auf den Bildschirm tippen, dann Weiter.', 'Das nächste Foto.',
+        await own('Am Tablet selbst: Weiter', 'Am Tablet lange auf den Bildschirm drücken, dann Weiter.', 'Das nächste Foto.',
             'Mit Alles selbst kann man am Frame alles selbst machen.', () => press('Weiter'));
         await own('Am Tablet selbst: Zurück', 'Am Tablet Zurück antippen.', 'Wieder das vorige Foto.', 'Ein Foto zurück.',
             () => press('Zurück'));
@@ -209,14 +209,16 @@ void main() {
             'Alles, was in der App unter Wiedergabe steht (Kapitel 8 prüft es einzeln).', () async {
           await press('Einstellungen');
           c.screen('Frame: Einstellungen');
-          await c.check('Einstellungen', () => c.waitFor('Was läuft', seconds: 5));
+          await c.check('Einstellungen', () => c.waitFor('WAS LÄUFT', seconds: 5));
         });
-        await own('Am Tablet selbst: Einstellungen schließen', 'Am Tablet oben neben die Einstellungen tippen.', 'Wieder die Diashow.',
-            'Die Einstellungen schließen sich.', () async {
-          await c.tapAt(const Offset(40, 40), 'Schließen');
+        await own('Am Tablet selbst: Fertig', 'Am Tablet oben rechts Fertig antippen.', 'Wieder die Diashow.',
+            'Der große Fertig-Knopf schließt die Einstellungen; ohne Berührung schließen sie sich nach einer Minute von selbst.', () async {
+          await tester.tap(find.text('Fertig').last, warnIfMissed: false);
+          c.logTap('Fertig');
+          await c.settle();
           c.screen('Frame: Diashow');
-          await c.check('Zu', () => c.gone('Was läuft', seconds: 5));
-        }, kind: 'Abzweigung');
+          await c.check('Zu', () => c.gone('WAS LÄUFT', seconds: 5));
+        });
       }
 
       await after(2, 'Am Tablet: Sommerurlaub', 'Am Tablet hinschauen.', 'Der Frame zeigt jetzt das Foto aus Sommerurlaub 2026.',
@@ -239,29 +241,29 @@ void main() {
       await after(12, 'Am Tablet: Sommerurlaub über die Fernbedienung', 'Am Tablet hinschauen.', 'Der Frame zeigt Sommerurlaub 2026.',
           'Ein Tipp auf ein Album in der Fernbedienung zeigt es sofort.',
           checks: () => c.check('Sommerurlaub', () => eventually(() => c.find_('~Sommerurlaub 2026').evaluate().isNotEmpty, seconds: 20)));
-      await after(13, 'Am Tablet: Stufe 2', 'Am Tablet auf den Bildschirm tippen.', 'Unten Pause und ein großer Weiter-Knopf.',
+      await after(13, 'Am Tablet: Stufe 2', 'Am Tablet lange auf den Bildschirm drücken.', 'Unten Pause und ein großer Weiter-Knopf.',
           'Mehr gibt es auf dieser Stufe nicht.',
           checks: () async {
             await c.check('Weiter', () => bar('Weiter'));
             await c.check('Pause', () => c.find_('Pause').evaluate().isNotEmpty);
             await c.check('Kein Zurück', () => c.find_('Zurück').evaluate().isEmpty);
           });
-      await after(14, 'Am Tablet: Stufe 3', 'Am Tablet auf den Bildschirm tippen.', 'Unten Zurück, Pause, Weiter, Neueste und Merken.',
+      await after(14, 'Am Tablet: Stufe 3', 'Am Tablet lange auf den Bildschirm drücken.', 'Unten Zurück, Pause, Weiter, Neueste und Merken.',
           'Die Stufe Einfach.',
           checks: () async {
             await c.check('Zurück', () => bar('Zurück'));
             await c.check('Neueste', () => c.find_('Neueste').evaluate().isNotEmpty);
             await c.check('Merken', () => c.find_('Merken').evaluate().isNotEmpty);
           });
-      await after(15, 'Am Tablet: Stufe 4', 'Am Tablet auf den Bildschirm tippen.', 'Dazu Album, Übersicht, Dauer und Titel.',
+      await after(15, 'Am Tablet: Stufe 4', 'Am Tablet lange auf den Bildschirm drücken.', 'Dazu Album, Übersicht, Dauer und Titel.',
           'Die Stufe Komfort.',
           checks: () async {
             await c.check('Übersicht', () => bar('Übersicht'));
             await c.check('Dauer', () => c.find_('Dauer').evaluate().isNotEmpty);
           });
-      await after(16, 'Am Tablet: Stufe 5', 'Am Tablet auf den Bildschirm tippen.', 'Dazu Einstellungen.', 'Alles, was es gibt.',
+      await after(16, 'Am Tablet: Stufe 5', 'Am Tablet lange auf den Bildschirm drücken.', 'Dazu Einstellungen.', 'Alles, was es gibt.',
           checks: () => c.check('Einstellungen', () => bar('Einstellungen')), then: ownButtons);
-      await after(17, 'Am Tablet: ohne Weiter', 'Am Tablet auf den Bildschirm tippen.', 'Alle Knöpfe wie eben, nur Weiter fehlt.',
+      await after(17, 'Am Tablet: ohne Weiter', 'Am Tablet lange auf den Bildschirm drücken.', 'Alle Knöpfe wie eben, nur Weiter fehlt.',
           'Der einzelne Schalter wirkt sofort.', kind: 'Abzweigung',
           checks: () async {
             await c.check('Weiter weg', () => eventually(() async {
@@ -269,7 +271,7 @@ void main() {
               return c.find_('Weiter').evaluate().isEmpty;
             }, seconds: 30));
           });
-      await after(18, 'Am Tablet: wieder nur zuschauen', 'Am Tablet auf den Bildschirm tippen.', 'Keine Knöpfe, die Diashow läuft einfach.',
+      await after(18, 'Am Tablet: wieder nur zuschauen', 'Am Tablet lange auf den Bildschirm drücken.', 'Keine Knöpfe, die Diashow läuft einfach.',
           'Oma Hilde kann nichts verstellen.',
           checks: () => c.check('Keine Knöpfe', () async {
                 // Once the level has arrived: four taps, never a button.
@@ -277,7 +279,7 @@ void main() {
                     .every((r) => (r as Map)['control_level'] == 1), seconds: 20);
                 await c.letLoad(seconds: 3);
                 for (var i = 0; i < 4; i++) {
-                  await tester.tapAt(center);
+                  await tester.longPressAt(center);
                   await c.letLoad(seconds: 1.5);
                   if (c.find_('Pause').evaluate().isNotEmpty || c.find_('Einstellungen').evaluate().isNotEmpty) return false;
                 }

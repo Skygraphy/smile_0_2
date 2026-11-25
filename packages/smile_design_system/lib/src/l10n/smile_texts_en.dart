@@ -201,7 +201,7 @@ class SmileTextsEn extends SmileTexts {
 
   @override
   String get onThisDayHint =>
-      'Photos taken on this day in earlier years play first today.';
+      'Photos taken on this day in earlier years come in as every 10th picture today.';
 
   @override
   String onThisDayYears(int years) {

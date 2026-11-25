@@ -291,6 +291,19 @@ class Chapter {
     }
   }
 
+  /// Wipes over the screen (up, or down with [up] false) until [what] can
+  /// be tapped: works on pages with several scrollables underneath (the
+  /// Space page lies over the start page's list).
+  Future<bool> dragTo(String what, {bool up = true, int max = 14}) async {
+    await waitFor(what, seconds: 2);
+    final size = tester.view.physicalSize / tester.view.devicePixelRatio;
+    for (var i = 0; i < max && find_(what).hitTestable().evaluate().isEmpty; i++) {
+      await tester.dragFrom(Offset(size.width / 2, size.height * (up ? 0.7 : 0.3)), Offset(0, (up ? -1 : 1) * size.height * 0.3));
+      await settle();
+    }
+    return find_(what).hitTestable().evaluate().isNotEmpty;
+  }
+
   Future<bool> gone(String what, {double seconds = 5}) async {
     final sw = Stopwatch()..start();
     try {

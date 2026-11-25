@@ -866,13 +866,14 @@ void main() {
 
       c.clearMessages();
       c.step('Mit diesem Space geteilt', 'Zurück, unten Spaces, Familie Berger.',
-          'Auf der Seite von Familie Berger: Mit diesem Space geteilt, darin Bergtouren · Viewer.',
+          'Auf der Seite von Familie Berger: Mit dem Space Familie Berger geteilt, darin Bergtouren, aus dem Space Die Hubers · nur ansehen.',
           explain: 'Hier sieht Anna, welche fremden Alben ihr Space zeigt.');
       await c.back();
       c.screen('Startseite');
       await openSpace('Familie Berger');
-      await scrollTo(c.find_('Mit diesem Space geteilt'));
+      await c.check('Abschnitt', () => c.dragTo('Mit dem Space Familie Berger geteilt'));
       await c.check('Bergtouren', () => c.waitFor('Bergtouren', seconds: 5));
+      await c.check('Woher, nur ansehen', () => c.waitFor('~· nur ansehen', seconds: 2));
       await c.snap();
 
       Future<void> sharedInCard() async {
@@ -908,7 +909,7 @@ void main() {
       await c.snap();
 
       c.clearMessages();
-      c.step('Nicht mehr anzeigen', 'Bergtouren, Nicht mehr anzeigen, Nicht mehr anzeigen.', 'Mit diesem Space geteilt ist verschwunden.',
+      c.step('Nicht mehr anzeigen', 'Bergtouren, Nicht mehr anzeigen, Nicht mehr anzeigen.', 'Mit dem Space Familie Berger geteilt ist verschwunden.',
           explain: 'Familie Berger und ihr Frame zeigen Bergtouren nicht mehr.');
       await sharedInCard();
       await c.tap('Nicht mehr anzeigen', last: true);
@@ -916,7 +917,7 @@ void main() {
       await c.tap('Nicht mehr anzeigen', last: true);
       c.screen('Space');
       await c.check('Server: nicht mehr geteilt', () => eventually(() async => !await isShared(mountains, berger)));
-      await c.check('Abschnitt weg', () => c.gone('Mit diesem Space geteilt', seconds: 8));
+      await c.check('Abschnitt weg', () => c.gone('Mit dem Space Familie Berger geteilt', seconds: 8));
       await c.snap();
 
       await c.finish(appVersion: version);

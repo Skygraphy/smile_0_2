@@ -200,7 +200,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get onThisDayHint =>
-      'Fotos, die an diesem Tag in früheren Jahren aufgenommen wurden, laufen heute zuerst.';
+      'Fotos, die an diesem Tag in früheren Jahren aufgenommen wurden, kommen heute als jedes 10. Bild dazwischen.';
 
   @override
   String onThisDayYears(int years) {

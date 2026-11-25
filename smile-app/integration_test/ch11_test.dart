@@ -18,8 +18,11 @@ import 'package:smile_app/screens/frames_screen.dart';
 import 'package:smile_app/screens/news_screen.dart';
 import 'package:smile_app/screens/photo_viewer_screen.dart';
 import 'package:smile_app/screens/settings_screen.dart';
+import 'package:smile_app/screens/space_info_screen.dart';
+import 'package:smile_app/screens/spaces_screen.dart';
 import 'package:smile_app/services/frame_controls.dart';
 import 'package:smile_app/services/frame_service.dart';
+import 'package:smile_app/services/tip_cards.dart';
 import 'package:smile_design_system/smile_design_system.dart';
 
 import 'support/backend.dart';
@@ -81,8 +84,30 @@ void main() {
         }
       }
 
-      /// Over night: the day of the last tip is forgotten.
-      Future<void> nextDay() async => prefs.remove('tips_last_day');
+      /// Over night: the tips shown today are forgotten (up to 3 a day, 30
+      /// minutes apart since 0.0.18).
+      Future<void> nextDay() async {
+        await prefs.remove('tips_last_day');
+        await prefs.remove('tips_shown_at');
+      }
+
+      /// The tips of today, as if shown [minutesAgo] minutes ago.
+      Future<void> shownToday(List<int> minutesAgo) async {
+        final now = DateTime.now();
+        await prefs.setStringList('tips_shown_at', [
+          for (final m in minutesAgo) '${now.subtract(Duration(minutes: m)).millisecondsSinceEpoch}',
+        ]);
+      }
+
+      /// The ~200 "Wusstest du?" cards come at random: in this chapter they
+      /// count as seen, except where a step shows one on purpose.
+      List<String> allCards() => [
+            for (final e in tipCards.entries)
+              for (var i = 0; i < e.value.length; i++) '${e.key.name}/$i',
+          ];
+      Future<void> cardsOff({String? except}) async =>
+          prefs.setStringList('tip_cards_seen', [for (final k in allCards()) if (k != except) k]);
+      await cardsOff();
       List<String> seen() => prefs.getStringList('tips_seen') ?? const [];
       bool tipOpen() => find.text('Verstanden').evaluate().isNotEmpty;
 
@@ -200,9 +225,9 @@ void main() {
       await c.snap();
 
       c.clearMessages();
-      c.step('Nur ein Tipp am Tag', 'Zweimal zurück zur Startseite und dort eine Weile warten.',
+      c.step('Nicht gleich der nächste', 'Zweimal zurück zur Startseite und dort eine Weile warten.',
           'Die Startseite, kein weiterer Tipp.',
-          explain: 'Höchstens ein Tipp am Tag, damit Smile nicht nervt.');
+          explain: 'Zwischen zwei Tipps vergehen mindestens 30 Minuten, damit Smile nicht nervt.');
       await home();
       await c.check('Kein Tipp', () => noTip());
       await c.snap();
@@ -442,15 +467,26 @@ void main() {
 
       // ================================================================ Fernbedienung
       c.clearMessages();
-      c.step('Fernbedienung: Bedienstufe', 'Zurück zur Startseite, am nächsten Tag unten Frames, dann Wohnzimmer.',
-          'Die Fernbedienung, unten eine Karte: Mit der Bedienstufe legst du fest, was am Frame selbst bedient werden kann.',
-          explain: 'Drei Tipps gibt es zur Fernbedienung, einen pro Tag. In diesem Kapitel läuft kein Tablet, darum steht oben Verbunden · meldet sich gleich.');
+      c.step('Drei am Tag sind genug', 'Zurück zur Startseite, unten Frames, dann Wohnzimmer; heute gab es schon drei Tipps.',
+          'Die Fernbedienung, kein Tipp.', kind: 'Abzweigung',
+          explain: 'Höchstens drei Tipps am Tag. Die Testsuite tut so, als wären heute vor 100, 70 und 40 Minuten schon drei gekommen.');
       await home();
-      await nextDay();
+      final minuteOfDay = DateTime.now().hour * 60 + DateTime.now().minute;
+      // Three today (all longer than 30 minutes ago); just after midnight
+      // they would count for yesterday.
+      await shownToday(minuteOfDay > 100 ? [100, 70, 40] : [minuteOfDay, minuteOfDay, minuteOfDay].map((m) => m < 31 ? 31 : m).toList());
       await until(FramesScreen, () => tapExact('Frames'));
       c.screen('Frames');
       await until(FrameRemoteScreen, () => tapExact('Wohnzimmer'));
       c.screen('Fernbedienung');
+      if (minuteOfDay > 100) await c.check('Kein Tipp', () => noTip());
+      await c.snap();
+
+      c.clearMessages();
+      c.step('Fernbedienung: Bedienstufe', 'Eine halbe Stunde nach dem letzten Tipp, heute der erste, die Fernbedienung offen lassen.',
+          'Die Fernbedienung, unten eine Karte: Mit der Bedienstufe legst du fest, was am Frame selbst bedient werden kann.',
+          explain: 'Drei Tipps gibt es zur Fernbedienung. Der letzte Tipp liegt hier 31 Minuten zurück, also darf der nächste kommen. In diesem Kapitel läuft kein Tablet, darum steht oben Verbunden · meldet sich gleich.');
+      await shownToday([31]);
       await tip(_controlLevel);
       await c.snap();
       await understood('controlLevel');
@@ -494,6 +530,8 @@ void main() {
       await openSettings();
       await scrollTo(find.text('Tipps von vorne zeigen'));
       await c.tap('Tipps von vorne zeigen');
+      await c.check('Gesehene Karten vergessen', () => (prefs.getStringList('tip_cards_seen') ?? const []).isEmpty);
+      await cardsOff();
       await c.check('Meldung', () => c.waitFor('Die Tipps kommen wieder von vorne.', seconds: 3));
       await c.check('Gesehene vergessen', () => seen().isEmpty);
       await tip(_videoQuality);
@@ -503,6 +541,36 @@ void main() {
       c.step('Und wieder verstanden', 'Auf Verstanden tippen.', 'Die Karte verschwindet.', explain: 'Ab hier wieder einer am Tag.');
       await understood('videoQuality');
       c.screen('Einstellungen');
+      await c.snap();
+
+      // ================================================================ Wusstest du?
+      c.clearMessages();
+      c.step('Wusstest du?', 'Zurück zur Startseite, am nächsten Tag unten Spaces, dann Familie Berger, einen Moment warten.',
+          'Unten eine Karte mit WUSSTEST DU? und einem Hinweis zu Spaces, darunter Keine Tipps mehr und Verstanden.',
+          explain: 'Neben den Tipps zu einzelnen Knöpfen gibt es rund 200 kurze Karten, zufällig und passend zur Seite. '
+              'Sie zählen zu den drei am Tag. Hier ist nur eine einzige Karte noch nicht gesehen, damit klar ist, welche kommt.');
+      await home();
+      await nextDay();
+      await cardsOff(except: 'spaces/0');
+      await until(SpacesScreen, () => tapExact('Spaces'));
+      c.screen('Spaces');
+      await until(SpaceInfoScreen, () => tapExact('Familie Berger'));
+      c.screen('Space');
+      c.screen('Tipp');
+      await c.check('Karte erscheint', () => c.waitFor('WUSSTEST DU?', seconds: 20));
+      await c.check('Ganz zu lesen', () => c.fullyShown('WUSSTEST DU?'));
+      await c.snap();
+
+      c.clearMessages();
+      c.step('Karte verstanden', 'Auf Verstanden tippen, dann am nächsten Tag noch einmal Spaces.',
+          'Die Karte verschwindet und kommt nicht wieder.', explain: 'Jede Karte kommt nur einmal.');
+      // (Zurück zu Spaces und wieder hinein: dieselbe Seite bietet nichts mehr an.)
+      await c.tap('Verstanden');
+      c.screen('Space');
+      await c.check('Karte zu', () => c.gone('Verstanden', seconds: 3));
+      await c.check('Gemerkt: kommt nicht wieder', () => (prefs.getStringList('tip_cards_seen') ?? const []).contains('spaces/0'));
+      await nextDay();
+      await c.check('Kein Tipp', () => noTip());
       await c.snap();
 
       await c.finish(appVersion: version);

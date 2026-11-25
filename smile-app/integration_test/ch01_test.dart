@@ -364,16 +364,44 @@ void main() {
     await c.snap();
 
     c.step('Weiter', 'Auf Weiter tippen (hier absichtlich zweimal schnell hintereinander).',
-        'Willkommen bei Smile: die leere Alben-Liste mit zwei Wegen, Ich wurde eingeladen und Ich richte Smile ein.',
-        explain: 'Jetzt entsteht Annas Profil: Name und Bild werden zusammen gespeichert. Der doppelte Tipp darf nichts doppelt anlegen. Die Testsuite prüft in der Datenbank, dass es genau zwei Profile gibt (Anna und Paul), genau dieses Bild gespeichert ist und keine alten Bilddateien übrig sind.');
+        'Die kurze Einführung beginnt mit der ersten von drei Seiten: Alben.',
+        explain: 'Jetzt entsteht Annas Profil: Name und Bild werden zusammen gespeichert. Der doppelte Tipp darf nichts doppelt anlegen und darf auch keine Seite der Einführung überspringen. Die Testsuite prüft in der Datenbank, dass es genau zwei Profile gibt (Anna und Paul), genau dieses Bild gespeichert ist und keine alten Bilddateien übrig sind.');
     await c.tap('Weiter', twice: true);
-    c.screen('Startseite (leer)');
-    await c.waitFor('Willkommen bei Smile', seconds: 20);
+    c.screen('Einführung');
+    await c.check('Einführung, Seite 1: Alben', () => c.waitFor('Alben', seconds: 20));
+    await c.check('Zweiter Tipp blättert nicht weiter', () => c.gone('Spaces', seconds: 1));
     await c.check('Genau zwei Profile (Anna und Paul), nichts doppelt', () async => await rows('profiles') == 2);
     await c.check('Name gespeichert: Anna Berger', () async => (await profile())['display_name'] == 'Anna Berger');
     await c.check('Profilbild gespeichert: Frau, mittleres Alter',
         () async => await TestBackend.avatarSize((await profile())['avatar_path'] as String) == frauMittelSize);
     await c.check('Nur eine Profilbild-Datei, keine Überbleibsel', () async => await files() == 1);
+    await c.snap();
+
+    c.step('Einführung: Weiter', 'Weiter antippen.', 'Seite 2: Spaces.',
+        explain: 'Die Einführung erklärt in drei Seiten, was Alben, Spaces und Frames sind. Sie kommt nur einmal, gleich nach dem ersten Profil.');
+    await c.tap('Weiter');
+    await c.check('Seite 2: Spaces', () => c.waitFor('Spaces', seconds: 5));
+    await c.snap();
+
+    c.step('Einführung: wischen', 'Nach links wischen.', 'Seite 3: Frames. Überspringen ist weg, unten steht Los geht\'s.',
+        kind: 'Abzweigung', explain: 'Statt Weiter zu tippen kann man auch wischen. Auf der letzten Seite gibt es nichts mehr zu überspringen.');
+    await tester.fling(find.byType(PageView), const Offset(-600, 0), 1500);
+    c.logTap('Wischen');
+    await c.settle();
+    await c.check('Seite 3: Frames', () => c.waitFor('Frames', seconds: 5));
+    await c.check('Überspringen ist unsichtbar und ohne Wirkung', () {
+      final f = find.ancestor(of: find.text('Überspringen'), matching: find.byType(Opacity));
+      return f.evaluate().isNotEmpty && tester.widget<Opacity>(f.first).opacity == 0 &&
+          tester.widget<TextButton>(find.ancestor(of: find.text('Überspringen'), matching: find.byType(TextButton)).first).onPressed == null;
+    });
+    await c.snap();
+
+    c.step('Los geht\'s', 'Los geht\'s antippen.',
+        'Willkommen bei Smile: die leere Alben-Liste mit zwei Wegen, Ich wurde eingeladen und Ich richte Smile ein.',
+        explain: 'Die Einführung ist fertig. Ab jetzt öffnet Smile gleich die Startseite.');
+    await c.tap('Los geht\'s');
+    c.screen('Startseite (leer)');
+    await c.check('Startseite da', () => c.waitFor('Willkommen bei Smile', seconds: 10));
     await c.check('Kein Hinweis nur auf die E-Mail-Adresse', () => c.gone('~Eingeladen wirst du', seconds: 1));
     await c.snap();
 
@@ -416,6 +444,23 @@ void main() {
     await c.tap('Schließen');
     c.screen('Einstellungen');
     await c.waitFor('Smile-Namen wählen', seconds: 5);
+    await c.snap();
+
+    c.step('Einführung ansehen', 'Nach unten scrollen und Einführung ansehen antippen.', 'Die erste Seite der Einführung: Alben.',
+        kind: 'Abzweigung', explain: 'Die drei Seiten vom ersten Start lassen sich in den Einstellungen jederzeit noch einmal ansehen.');
+    await tester.scrollUntilVisible(find.text('Einführung ansehen'), 300, scrollable: find.byType(Scrollable).first);
+    await c.tap('Einführung ansehen');
+    c.screen('Einführung');
+    await c.check('Seite 1: Alben', () => c.waitFor('Alben', seconds: 5));
+    await c.snap();
+
+    c.step('Einführung überspringen', 'Überspringen antippen.', 'Wieder die Einstellungen.',
+        kind: 'Abzweigung', explain: 'Überspringen schließt die Einführung sofort.');
+    await c.tap('Überspringen');
+    c.screen('Einstellungen');
+    await c.check('Wieder in den Einstellungen', () => c.waitFor('Einführung ansehen', seconds: 5));
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 5000));
+    await c.settle();
     await c.snap();
 
     c.step('Profilbild ändern: abbrechen', 'Auf das Kamera-Symbol am Bild tippen und dann oben neben die Auswahl tippen.',
