@@ -4377,12 +4377,6 @@ class SmileTextsDe extends SmileTexts {
   String get screenshotReport => 'Melden';
 
   @override
-  String get shareAsReport => 'Als Meldung senden';
-
-  @override
-  String get shareAsReportHint => 'Für Fehler, Ideen und Fragen an Smile';
-
-  @override
   String get feedbackScreenAlong => 'wo du gerade warst';
 
   @override

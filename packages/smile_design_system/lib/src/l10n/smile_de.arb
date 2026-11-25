@@ -1872,8 +1872,6 @@
   "screenshotTaken": "Screenshot gemacht",
   "screenshotAsk": "Stimmt hier etwas nicht?",
   "screenshotReport": "Melden",
-  "shareAsReport": "Als Meldung senden",
-  "shareAsReportHint": "Für Fehler, Ideen und Fragen an Smile",
   "feedbackScreenAlong": "wo du gerade warst",
   "feedbackErrorsAlong": "die letzten Fehler der App (nur für uns)"
 }

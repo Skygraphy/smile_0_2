@@ -1183,8 +1183,6 @@
   "screenshotTaken": "Screenshot taken",
   "screenshotAsk": "Something wrong here?",
   "screenshotReport": "Report",
-  "shareAsReport": "Send as a report",
-  "shareAsReportHint": "For problems, ideas and questions to Smile",
   "feedbackScreenAlong": "where you just were",
   "feedbackErrorsAlong": "the app's last errors (only for us)"
 }

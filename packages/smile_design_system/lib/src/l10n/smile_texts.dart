@@ -7135,18 +7135,6 @@ abstract class SmileTexts {
   /// **'Melden'**
   String get screenshotReport;
 
-  /// No description provided for @shareAsReport.
-  ///
-  /// In de, this message translates to:
-  /// **'Als Meldung senden'**
-  String get shareAsReport;
-
-  /// No description provided for @shareAsReportHint.
-  ///
-  /// In de, this message translates to:
-  /// **'Für Fehler, Ideen und Fragen an Smile'**
-  String get shareAsReportHint;
-
   /// No description provided for @feedbackScreenAlong.
   ///
   /// In de, this message translates to:
