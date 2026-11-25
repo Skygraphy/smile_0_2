@@ -448,16 +448,30 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         _playlist = ordered(_albumEntries);
     }
     // "Heute vor einem Jahr" (2026-11-09, migrations/0100): what was taken
-    // on this day in earlier years plays first -- not in the rounds.
+    // on this day in earlier years comes back as every 10th picture, the
+    // day's ones taking turns (2026-11-25: once per round at the start went
+    // unnoticed) -- not in the rounds.
     if ((settings?.onThisDay ?? true) && !_newestRound && !_favoritesRound) {
       final today = _playlist.where(_isOnThisDay).toList();
-      if (today.isNotEmpty) _playlist = [...today, ..._playlist.where((e) => !_isOnThisDay(e))];
+      final rest = _playlist.where((e) => !_isOnThisDay(e)).toList();
+      if (today.isNotEmpty && rest.isNotEmpty) {
+        var turn = 0;
+        _playlist = [
+          for (final (i, e) in rest.indexed) ...[
+            if (i % (_onThisDayEvery - 1) == 0) today[turn++ % today.length],
+            e,
+          ],
+        ];
+      }
     }
     // "Keine Videos" (2026-10-18, migrations/0085): photos only.
     if (settings?.videoLength == 'none') _playlist = _playlist.where((e) => !e.isVideo).toList();
     final keep = keepId == null ? -1 : _playlist.indexWhere((e) => e.mediaItemId == keepId);
     _currentIndex = keep >= 0 ? keep : (_currentIndex < _playlist.length ? _currentIndex : 0);
   }
+
+  /// One of "Heute vor einem Jahr" among this many pictures.
+  static const _onThisDayEvery = 10;
 
   /// Taken on this day (month and day) in an earlier year.
   static bool _isOnThisDay(CachedMediaEntry e) {
@@ -519,13 +533,15 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   List<CachedMediaEntry> get _overviewItems {
     // Lieblingsbilder playing: the overview shows exactly those (2026-10-17).
     final favoritesOnly = _favoritesRound || (_settings?.contentMode == 'favorites');
-    if (favoritesOnly && _playlist.isNotEmpty) return _playlist;
-    if (!_newestRound) return _playlist;
+    // Each once: "Heute vor einem Jahr" comes up several times in what plays.
+    final playing = {for (final e in _playlist) e.mediaItemId: e}.values.toList();
+    if (favoritesOnly && playing.isNotEmpty) return playing;
+    if (!_newestRound) return playing;
     final album = [
       for (final e in _albumEntries)
         if (_settings?.videoLength != 'none' || !e.isVideo) e,
     ]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    return album.isEmpty ? _playlist : album;
+    return album.isEmpty ? playing : album;
   }
 
   void _playFavorites() {
