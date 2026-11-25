@@ -203,13 +203,13 @@ class UploadQueue extends ChangeNotifier {
         // (2026-10-12: a waiting video couldn't be played or sent).
         meta['source'] = file.path;
         tile = await MediaService.videoPosterBytes(File(file.path));
-        final taken = await MediaShrink.videoTakenAt(file.path);
+        final taken = await MediaShrink.videoTakenAt(file.path) ?? MediaShrink.takenAtFromName(file.path);
         if (taken != null) meta['taken_at'] = taken.toUtc().toIso8601String();
         if (tile != null) await File('${dir.path}/tile.jpg').writeAsBytes(tile);
       } else {
         tile = await file.readAsBytes();
         await File('${dir.path}/original').writeAsBytes(tile);
-        final taken = await MediaShrink.photoTakenAt(tile);
+        final taken = await MediaShrink.photoTakenAt(tile) ?? MediaShrink.takenAtFromName(file.path);
         if (taken != null) meta['taken_at'] = taken.toUtc().toIso8601String();
       }
       if (tile != null) meta['aspect_ratio'] = await _aspectRatio(tile);

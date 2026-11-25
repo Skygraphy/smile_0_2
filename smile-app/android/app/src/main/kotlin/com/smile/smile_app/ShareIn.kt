@@ -6,6 +6,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.provider.MediaStore
+import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
@@ -58,7 +60,10 @@ object ShareIn {
                     if (!type.startsWith("image/") && !type.startsWith("video/")) return@forEachIndexed
                     val ext = MimeTypeMap.getSingleton().getExtensionFromMimeType(type)
                         ?: if (type.startsWith("video/")) "mp4" else "jpg"
-                    val file = File(dir, "${now}_$i.$ext")
+                    // When it was taken, carried in the name ("_t<ms>"): a
+                    // WhatsApp picture has no EXIF date left (2026-11-25).
+                    val taken = takenAtOf(app, uri)
+                    val file = File(dir, if (taken != null) "${now}_${i}_t$taken.$ext" else "${now}_$i.$ext")
                     app.contentResolver.openInputStream(uri)?.use { input -> file.outputStream().use { input.copyTo(it) } }
                     if (file.length() > 0) paths.add(file.absolutePath) else file.delete()
                 } catch (_: Exception) {
@@ -68,6 +73,44 @@ object ShareIn {
             pending = paths
             Handler(Looper.getMainLooper()).post { channel?.invokeMethod("available", null) }
         }.start()
+    }
+
+    private val nameDate = Regex("""(?<!\d)((?:19|20)\d{2})(\d{2})(\d{2})(?:[_-]?(\d{2})(\d{2})(\d{2}))?(?!\d)""")
+
+    /**
+     * The gallery's date for it: MediaStore's DATE_TAKEN, else a date in its
+     * name (IMG-20241125-WA0003.jpg, Screenshot_20241125_183012.jpg), the way
+     * the gallery dates a WhatsApp picture. Null when neither says.
+     */
+    private fun takenAtOf(context: Context, uri: Uri): Long? {
+        var name: String? = null
+        try {
+            context.contentResolver.query(uri, null, null, null, null)?.use { c ->
+                if (c.moveToFirst()) {
+                    val ti = c.getColumnIndex(MediaStore.MediaColumns.DATE_TAKEN)
+                    if (ti >= 0 && !c.isNull(ti) && c.getLong(ti) > 0) return c.getLong(ti)
+                    val ni = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (ni >= 0) name = c.getString(ni)
+                }
+            }
+        } catch (_: Exception) {
+        }
+        val n = name ?: uri.lastPathSegment ?: return null
+        val m = nameDate.find(n) ?: return null
+        return try {
+            val (y, mo, d) = Triple(m.groupValues[1].toInt(), m.groupValues[2].toInt(), m.groupValues[3].toInt())
+            if (mo !in 1..12 || d !in 1..31) return null
+            val h = m.groupValues[4].toIntOrNull() ?: 12
+            val mi = m.groupValues[5].toIntOrNull() ?: 0
+            val s = m.groupValues[6].toIntOrNull() ?: 0
+            val cal = java.util.Calendar.getInstance()
+            cal.clear()
+            cal.set(y, mo - 1, d, h, mi, s)
+            val ms = cal.timeInMillis
+            if (ms > System.currentTimeMillis() + 86_400_000L) null else ms
+        } catch (_: Exception) {
+            null
+        }
     }
 
     @Suppress("DEPRECATION")

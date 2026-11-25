@@ -59,6 +59,16 @@ class MediaShrink {
     }
   }
 
+  /// The date a shared picture carried in its name (`_t<ms>`, ShareIn.kt:
+  /// the gallery's date, e.g. of a WhatsApp picture without EXIF;
+  /// 2026-11-25).
+  static DateTime? takenAtFromName(String path) {
+    final m = RegExp(r'_t(\d{11,13})\.\w+$').firstMatch(path);
+    if (m == null) return null;
+    final taken = DateTime.fromMillisecondsSinceEpoch(int.parse(m[1]!));
+    return taken.year < 1971 || taken.isAfter(DateTime.now().add(const Duration(days: 1))) ? null : taken;
+  }
+
   /// When a video was recorded (its metadata), like [photoTakenAt].
   static Future<DateTime?> videoTakenAt(String path) async {
     try {
