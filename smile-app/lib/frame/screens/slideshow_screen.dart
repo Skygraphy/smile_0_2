@@ -440,9 +440,15 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
         }
       case 'rotate':
         final albums = [..._assignedChannels]..sort((a, b) => (a.sortOrder ?? 0).compareTo(b.sortOrder ?? 0));
-        _playlist = [
-          for (final album in albums) ...ordered(all.where((e) => e.channelId == album.channelId).toList()),
-        ];
+        // "Zufällig" mixes all albums together (Ernst 2026-11-26: Rodeln
+        // and Enkelkinder should come mixed); otherwise album after album.
+        _playlist = order == 'shuffle'
+            ? ordered([
+                for (final album in albums) ...all.where((e) => e.channelId == album.channelId),
+              ])
+            : [
+                for (final album in albums) ...ordered(all.where((e) => e.channelId == album.channelId).toList()),
+              ];
         if (_playlist.isEmpty) _playlist = ordered(_albumEntries);
       default:
         _playlist = ordered(_albumEntries);

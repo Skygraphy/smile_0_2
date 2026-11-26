@@ -429,31 +429,6 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
             ],
           ),
 
-        // --- Papierkorb ---------------------------------------------------
-        if (_trash.isNotEmpty)
-          SmileInfoSection(
-            title: t.trashTitle,
-            children: [
-              for (final item in _trash)
-                SmileObjectTile(
-                  leading: SmileTypeBadge(
-                    icon: item.isSpace ? SmileIcons.space : SmileIcons.album,
-                    child: SmileInitialsTile(name: item.name, size: 40),
-                  ),
-                  title: item.name,
-                  subtitle: [
-                    if (item.spaceName != null) t.trashSpaceIn(item.spaceName!),
-                    t.trashGoneOn(_date(item.purgeAfter)),
-                  ].join(' · '),
-                  subtitleMaxLines: 2,
-                  trailing: IconButton(
-                    icon: Icon(SmileIcons.restore, color: Theme.of(context).colorScheme.primary),
-                    tooltip: t.actionRestore,
-                    onPressed: () => _run(() => widget.trashService.restore(item), success: t.restored(item.name), names: [item.name]),
-                  ),
-                ),
-            ],
-          ),
         // --- Verlauf (information only, never turns the icon coral) ----
         if (_history.isNotEmpty)
           SmileInfoSection(
@@ -494,6 +469,31 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
                 label: t.removeAll,
                 onTap: () => _dismiss([for (final e in _history) e['id'] as String]),
               ),
+            ],
+          ),
+        // --- Papierkorb ---------------------------------------------------
+        if (_trash.isNotEmpty)
+          SmileInfoSection(
+            title: t.trashTitle,
+            children: [
+              for (final item in _trash)
+                SmileObjectTile(
+                  leading: SmileTypeBadge(
+                    icon: item.isSpace ? SmileIcons.space : SmileIcons.album,
+                    child: SmileInitialsTile(name: item.name, size: 40),
+                  ),
+                  title: item.name,
+                  subtitle: [
+                    if (item.spaceName != null) t.trashSpaceIn(item.spaceName!),
+                    t.trashGoneOn(_date(item.purgeAfter)),
+                  ].join(' · '),
+                  subtitleMaxLines: 2,
+                  trailing: IconButton(
+                    icon: Icon(SmileIcons.restore, color: Theme.of(context).colorScheme.primary),
+                    tooltip: t.actionRestore,
+                    onPressed: () => _run(() => widget.trashService.restore(item), success: t.restored(item.name), names: [item.name]),
+                  ),
+                ),
             ],
           ),
         const SizedBox(height: 24),

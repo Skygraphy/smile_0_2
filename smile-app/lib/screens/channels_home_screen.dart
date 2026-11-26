@@ -20,6 +20,7 @@ import '../widgets/album_covers.dart';
 import '../widgets/home_slideshow.dart';
 import '../widgets/top_bar_actions.dart';
 import '../services/offline.dart';
+import 'album_info_screen.dart';
 import 'channel_feed_screen.dart';
 import 'scan_code_screen.dart';
 import 'space_info_screen.dart';
@@ -62,6 +63,10 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
   /// Spaces the caller manages (Admin or Co-Admin -- spaces_select returns
   /// only those); empty for a plain Member, who then gets no "Neues Album".
   List<_ManagedSpace> _managed = const [];
+
+  /// Spaces the caller manages (Admin/Co-Admin): their albums can get
+  /// "Person einladen" from the menu (2026-11-26).
+  Set<String> _managerSpaces = const {};
 
   @override
   void initState() {
@@ -145,6 +150,7 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
       final frames = countBySpace(results[2] as List);
       if (!mounted) return;
       setState(() {
+        _managerSpaces = {for (final row in (results[0] as List).cast<Map<String, dynamic>>()) row['id'] as String};
         _managed = [
           for (final row in (results[0] as List).cast<Map<String, dynamic>>())
             _ManagedSpace(
@@ -197,6 +203,71 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
     } catch (e) {
       if (mounted) setState(() => _errorMessage = t.actionFailed(errorReason(context, e)));
     }
+  }
+
+  /// Albums whose Space the caller manages: there they may invite.
+  List<ChannelWithActivity> get _invitableAlbums => [
+        for (final channel in _channels ?? const <ChannelWithActivity>[])
+          if (channel.spaces.any((s) => _managerSpaces.contains(s.id))) channel,
+      ];
+
+  /// "Person einladen" from the ⋮ menu (Ernst 2026-11-26): which album,
+  /// then that album's invite sheet (name, QR code to scan, e-mail).
+  Future<void> _invitePerson() async {
+    final t = SmileTexts.of(context);
+    final navigator = Navigator.of(context);
+    final albums = _invitableAlbums;
+    if (albums.isEmpty) return;
+    final album = albums.length == 1
+        ? albums.single
+        : await showModalBottomSheet<ChannelWithActivity>(
+            context: context,
+            showDragHandle: true,
+            isScrollControlled: true,
+            builder: (context) => SafeArea(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(SmileSpacing.l, 0, SmileSpacing.l, SmileSpacing.s),
+                      child: Text(t.invitePersonWhichAlbum, style: Theme.of(context).textTheme.titleMedium),
+                    ),
+                    Flexible(
+                      child: ListView(
+                        shrinkWrap: true,
+                        children: [
+                          for (final channel in albums)
+                            SmileObjectTile(
+                              leading: albumCover(
+                                channel.channelId,
+                                albumNameOf(channel.channelId, channel.channelName),
+                                {channel.channelId: channel},
+                              ),
+                              title: albumNameOf(channel.channelId, channel.channelName),
+                              subtitle: channel.spaces.isEmpty ? null : t.inSpaceLine(spaceNameOf(channel.spaces.first.id, channel.spaces.first.name)),
+                              onTap: () => Navigator.of(context).pop(channel),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: SmileSpacing.s),
+                  ],
+                ),
+              ),
+            ),
+          );
+    if (album == null || !mounted) return;
+    await navigator.push(MaterialPageRoute(
+      builder: (_) => AlbumInfoScreen(
+        channelId: album.channelId,
+        channelName: albumNameOf(album.channelId, album.channelName),
+        startInvite: true,
+      ),
+    ));
+    await _load();
   }
 
   Future<_ManagedSpace?> _pickSpace(List<_ManagedSpace> spaces) {
@@ -298,6 +369,15 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
           ...smileTopBarActions(
           onPhotoSent: _load,
           primary: _managed.isEmpty ? null : SmileMenuEntry(icon: SmileIcons.add, label: SmileTexts.of(context).newAlbum, onTap: _newAlbum),
+          secondary: _invitableAlbums.isEmpty
+              ? null
+              : SmileMenuEntry(
+                  icon: SmileIcons.invite,
+                  label: SmileTexts.of(context).inviteToAlbum,
+                  hint: SmileTexts.of(context).invitePersonMenuHint,
+                  onTap: _invitePerson,
+                ),
+          scanHint: SmileTexts.of(context).scanMenuHintAlbums,
           onChanged: _load,
           tipAnchors: _tipAnchors,
         ),

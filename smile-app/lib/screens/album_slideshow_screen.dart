@@ -219,7 +219,8 @@ class _AlbumSlideshowScreenState extends State<AlbumSlideshowScreen> {
       default:
         list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
     }
-    if (widget.albumByAlbum) {
+    // "Zufällig" mixes all albums together, like on the Frame (2026-11-26).
+    if (widget.albumByAlbum && _prefs.order != 'shuffle') {
       final albums = widget.albumOf.values.toSet().toList();
       int rank(MediaItem i) => albums.indexOf(widget.albumOf[i.id] ?? '');
       // A stable sort: the order above stays inside each album.

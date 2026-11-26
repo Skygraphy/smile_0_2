@@ -204,6 +204,7 @@ class _FramesScreenState extends State<FramesScreen> with SyncReload {
         title: SmileFitText(t.frames),
         actions: smileTopBarActions(
           primary: SmileMenuEntry(icon: SmileIcons.add, label: t.connectFrame, onTap: _setUpFrame),
+          scanHint: t.scanMenuHintFrames,
           onChanged: _load,
         ),
       ),

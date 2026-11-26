@@ -158,6 +158,7 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
         title: SmileFitText(t.spaces),
         actions: smileTopBarActions(
           primary: SmileMenuEntry(icon: SmileIcons.add, label: t.createSpace, onTap: _createSpace),
+          scanHint: t.scanMenuHintSpaces,
           onChanged: _load,
         ),
       ),

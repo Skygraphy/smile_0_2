@@ -17,21 +17,26 @@ import 'capture_choice.dart';
 List<Widget> smileTopBarActions({
   VoidCallback? onPhotoSent,
   SmileMenuEntry? primary,
+  SmileMenuEntry? secondary,
+  String? scanHint,
   VoidCallback? onChanged,
   ({GlobalKey camera, GlobalKey news, GlobalKey menu})? tipAnchors,
 }) =>
     [
       KeyedSubtree(key: tipAnchors?.camera, child: QuickCaptureButton(onDone: onPhotoSent)),
       KeyedSubtree(key: tipAnchors?.news, child: NewsButton()),
-      KeyedSubtree(key: tipAnchors?.menu, child: SmileOverflowMenu(primary: primary, onChanged: onChanged)),
+      KeyedSubtree(key: tipAnchors?.menu, child: SmileOverflowMenu(primary: primary, secondary: secondary, scanHint: scanHint, onChanged: onChanged)),
     ];
 
 /// One entry of the ⋮ menu.
 class SmileMenuEntry {
-  const SmileMenuEntry({required this.icon, required this.label, required this.onTap});
+  const SmileMenuEntry({required this.icon, required this.label, required this.onTap, this.hint});
 
   final IconData icon;
   final String label;
+
+  /// A small line under the label: what the entry is for (2026-11-26).
+  final String? hint;
   final VoidCallback onTap;
 }
 
@@ -39,17 +44,45 @@ class SmileMenuEntry {
 /// scannen" and "Einstellungen" (there is no Profil tab any more,
 /// 2026-10-13 -- the settings open as a page from here, like WhatsApp).
 class SmileOverflowMenu extends StatelessWidget {
-  const SmileOverflowMenu({super.key, this.primary, this.onChanged});
+  const SmileOverflowMenu({super.key, this.primary, this.secondary, this.scanHint, this.onChanged});
 
   final SmileMenuEntry? primary;
+  final SmileMenuEntry? secondary;
+
+  /// Under "Einladung scannen": what one scans on this tab (2026-11-26,
+  /// Ernst: "Code scannen" alone said nothing).
+  final String? scanHint;
   final VoidCallback? onChanged;
 
   @override
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
-    PopupMenuItem<VoidCallback> item(IconData icon, String label, VoidCallback onTap) => PopupMenuItem(
+    PopupMenuItem<VoidCallback> item(IconData icon, String label, VoidCallback onTap, {String? hint}) => PopupMenuItem(
           value: onTap,
-          child: Row(children: [Icon(icon, size: 20), const SizedBox(width: SmileSpacing.m), Text(label)]),
+          child: Row(
+            crossAxisAlignment: hint == null ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+            children: [
+              Padding(padding: EdgeInsets.only(top: hint == null ? 0 : 2), child: Icon(icon, size: 20)),
+              const SizedBox(width: SmileSpacing.m),
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label),
+                    if (hint != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          hint,
+                          style: TextStyle(fontSize: 12.5, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
     final navigator = Navigator.of(context);
     final entry = primary;
@@ -58,11 +91,12 @@ class SmileOverflowMenu extends StatelessWidget {
       tooltip: t.moreOptions,
       onSelected: (action) => action(),
       itemBuilder: (context) => [
-        if (entry != null) item(entry.icon, entry.label, entry.onTap),
+        if (entry != null) item(entry.icon, entry.label, entry.onTap, hint: entry.hint),
+        if (secondary case final second?) item(second.icon, second.label, second.onTap, hint: second.hint),
         item(SmileIcons.scan, t.scanCode, () async {
           await navigator.push(MaterialPageRoute(builder: (_) => const ScanCodeScreen()));
           onChanged?.call();
-        }),
+        }, hint: scanHint),
         item(SmileIcons.settings, t.settings, () {
           navigator.push(MaterialPageRoute(builder: (_) => SettingsScreen()));
         }),

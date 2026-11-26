@@ -2603,14 +2603,44 @@ abstract class SmileTexts {
   /// No description provided for @scanCode.
   ///
   /// In de, this message translates to:
-  /// **'Code scannen'**
+  /// **'Einladung scannen'**
   String get scanCode;
 
   /// No description provided for @scanHint.
   ///
   /// In de, this message translates to:
-  /// **'QR-Code in den Rahmen halten'**
+  /// **'Halte den QR-Code, den dir jemand zeigt, in den Rahmen. Das kann eine Einladung in ein Album sein, als Co-Admin oder Frame-Admin, die Karte einer Person oder ein Gutschein.'**
   String get scanHint;
+
+  /// No description provided for @scanMenuHintAlbums.
+  ///
+  /// In de, this message translates to:
+  /// **'Jemand zeigt dir einen QR-Code für ein Album'**
+  String get scanMenuHintAlbums;
+
+  /// No description provided for @scanMenuHintFrames.
+  ///
+  /// In de, this message translates to:
+  /// **'Zum Beispiel, um Frame-Admin zu werden'**
+  String get scanMenuHintFrames;
+
+  /// No description provided for @scanMenuHintSpaces.
+  ///
+  /// In de, this message translates to:
+  /// **'Zum Beispiel als Co-Admin oder um Alben anzulegen'**
+  String get scanMenuHintSpaces;
+
+  /// No description provided for @invitePersonMenuHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Album wählen, dann QR-Code zeigen oder Namen suchen'**
+  String get invitePersonMenuHint;
+
+  /// No description provided for @invitePersonWhichAlbum.
+  ///
+  /// In de, this message translates to:
+  /// **'In welches Album?'**
+  String get invitePersonWhichAlbum;
 
   /// No description provided for @typeCode.
   ///

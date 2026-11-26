@@ -49,6 +49,7 @@ class AlbumInfoScreen extends StatefulWidget implements FeedbackScreenLabel {
     required this.channelName,
     this.onRenamed,
     this.offerFrames = false,
+    this.startInvite = false,
     MembershipService? membershipService,
     ChannelService? channelService,
   })  : membershipService = membershipService ?? MembershipService(),
@@ -65,6 +66,10 @@ class AlbumInfoScreen extends StatefulWidget implements FeedbackScreenLabel {
   /// Opened from "X hat ein Album angelegt" (migrations/0109): ask at once
   /// which Frame(s) it should go on.
   final bool offerFrames;
+
+  /// Opened from "Person einladen" in the Alben tab's ⋮ menu (2026-11-26):
+  /// the invite sheet (name, QR code, e-mail) opens at once.
+  final bool startInvite;
   final MembershipService membershipService;
   final ChannelService channelService;
 
@@ -152,6 +157,12 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         if (row != null) _name = row['name'] as String;
         _errorMessage = null;
       });
+      if (widget.startInvite && !_inviteStarted && roster.callerIsSco) {
+        _inviteStarted = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) unawaited(_inviteMember());
+        });
+      }
       if (widget.offerFrames && !_framesOffered && _addableFrames.isNotEmpty) {
         _framesOffered = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -265,6 +276,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
   }
 
   bool _framesOffered = false;
+  bool _inviteStarted = false;
 
   /// "Auf welchem Frame zeigen?" (2026-11-19): after someone with "Darf
   /// Alben anlegen" made this album, the manager ticks the Frame(s). It is
@@ -896,7 +908,7 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
           ),
         if (isManager)
           SmileQuickActions(actions: [
-            SmileQuickAction(icon: SmileIcons.invite, label: t.actionInvite, onTap: _inviteMember),
+            SmileQuickAction(icon: SmileIcons.invite, label: t.inviteToAlbum, onTap: _inviteMember),
             if (roster.callerManagesSpace) SmileQuickAction(icon: SmileIcons.share, label: t.actionShare, onTap: _inviteShare),
           ]),
         // One tap onto a Frame (2026-10-14).

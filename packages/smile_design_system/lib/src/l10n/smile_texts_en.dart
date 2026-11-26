@@ -1567,10 +1567,28 @@ class SmileTextsEn extends SmileTexts {
   }
 
   @override
-  String get scanCode => 'Scan code';
+  String get scanCode => 'Scan invitation';
 
   @override
-  String get scanHint => 'Hold the QR code inside the frame';
+  String get scanHint =>
+      'Hold the QR code someone shows you inside the frame. It can be an invitation to an album, as co-admin or Frame admin, a person\'s card or a voucher.';
+
+  @override
+  String get scanMenuHintAlbums => 'Someone shows you a QR code for an album';
+
+  @override
+  String get scanMenuHintFrames => 'For example, to become a Frame admin';
+
+  @override
+  String get scanMenuHintSpaces =>
+      'For example as co-admin or to create albums';
+
+  @override
+  String get invitePersonMenuHint =>
+      'Pick an album, then show a QR code or search a name';
+
+  @override
+  String get invitePersonWhichAlbum => 'Which album?';
 
   @override
   String get typeCode => 'Type code';
