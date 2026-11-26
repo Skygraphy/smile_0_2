@@ -218,7 +218,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get fullHdHint =>
-      '1080p, am Tablet am schärfsten. Rund 45 MB pro Minute Video, braucht länger zum Senden. Aus: es gilt die Stufe darunter.';
+      'Beste Qualität für große Bildschirme. Braucht mehr Daten und länger zum Senden.';
 
   @override
   String get pauseZoomHint =>
@@ -306,7 +306,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get frameAdminHint =>
-      'Bestimmt bei diesem Frame alles: was am Frame bedient werden darf und welche Alben laufen.';
+      'Jemand, der diesen Frame mitbestimmt, zum Beispiel die Eltern eines Kindes. Legt fest, was am Frame bedient werden darf und welche Alben laufen.';
 
   @override
   String get inviteFrameAdmin => 'Frame-Admin einladen';
@@ -377,7 +377,7 @@ class SmileTextsDe extends SmileTexts {
   String get youAreFrameAdmin => 'du bist Frame-Admin';
 
   @override
-  String get unlockSection => 'Am Frame entsperren';
+  String get unlockSection => 'Kindersperre';
 
   @override
   String get unlockHint =>
@@ -627,7 +627,7 @@ class SmileTextsDe extends SmileTexts {
       'Die Person braucht bereits einen Smile-Account. Sie kann die Einladung annehmen oder ablehnen.';
 
   @override
-  String get shareWithSpace => 'Mit einem Space teilen';
+  String get shareWithSpace => 'Mit anderem Space teilen';
 
   @override
   String get shareWithSpaceHint =>
@@ -649,7 +649,8 @@ class SmileTextsDe extends SmileTexts {
   String get sharedViewOnly => 'Sieht das Album, trägt nichts bei';
 
   @override
-  String get notSharedYet => 'Noch mit keinem anderen Space geteilt';
+  String get notSharedYet =>
+      'Noch mit keinem anderen Space geteilt. Teilst du es, sieht zum Beispiel eine andere Familie das Album auf ihren Handys und Frames, kann aber nichts hinzufügen.';
 
   @override
   String get showsOn => 'Läuft auf';
@@ -1578,6 +1579,30 @@ class SmileTextsDe extends SmileTexts {
   String get scanCode => 'Einladung scannen';
 
   @override
+  String get albumTapForInfo => 'Tippen für Infos und Personen';
+
+  @override
+  String get addMediaShort => 'Foto oder Video';
+
+  @override
+  String get viewerFavorite => 'Lieblingsbild';
+
+  @override
+  String get viewerOnFrame => 'Am Frame zeigen';
+
+  @override
+  String get viewerMore => 'Mehr';
+
+  @override
+  String get smileNameSubtitle => 'So finden dich andere in Smile';
+
+  @override
+  String get myCardSubtitle => 'QR-Code, mit dem dich andere einladen';
+
+  @override
+  String get historyHint => 'Antippen öffnet, zur Seite wischen entfernt.';
+
+  @override
   String get scanHint =>
       'Halte den QR-Code, den dir jemand zeigt, in den Rahmen. Das kann eine Einladung in ein Album sein, als Co-Admin oder Frame-Admin, die Karte einer Person oder ein Gutschein.';
 
@@ -2138,7 +2163,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get favoritesEmptyHint =>
-      'Am Frame mit dem Herz merken – oder hier in einem Album beim Foto über das Herz oben rechts.';
+      'Am Frame mit dem Herz merken – oder hier in einem Album: Foto öffnen, unten auf Lieblingsbild.';
 
   @override
   String get favoritesRemove => 'Entfernen';
@@ -2753,7 +2778,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get homeSlideshowSettingsHint =>
-      'Dauer, Reihenfolge, Videos und Ton stellst du wie bisher in der Diashow über das Zahnrad ein.';
+      'Dauer, Reihenfolge, Videos und Ton stellst du in der Diashow über ⋮ → Einstellungen … ein.';
 
   @override
   String get homeSlideshowStart => 'Diashow starten';
@@ -2954,15 +2979,15 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get tipViewer04 =>
-      'Mit dem Herz oben machst du ein Foto zum Lieblingsbild eines Frames.';
+      'Mit Lieblingsbild unten machst du ein Foto zum Lieblingsbild eines Frames.';
 
   @override
   String get tipViewer05 =>
-      'Mit dem Frame-Symbol oben zeigst du das Foto sofort am Frame.';
+      'Mit Am Frame zeigen unten zeigst du das Foto sofort am Frame.';
 
   @override
   String get tipViewer06 =>
-      'Die Leiste oben bleibt beim Wischen stehen – ihre Knöpfe gelten fürs gezeigte Foto.';
+      'Die Leiste unten bleibt beim Wischen stehen – ihre Knöpfe gelten fürs gezeigte Foto.';
 
   @override
   String get tipViewer07 =>
@@ -2997,7 +3022,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get tipViewer15 =>
-      'Mit dem Titel-Symbol oben gibst du einem Foto nachträglich einen Titel.';
+      'Mit Titel unten gibst du einem Foto nachträglich einen Titel.';
 
   @override
   String get tipAlbumInfo01 =>

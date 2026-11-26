@@ -54,6 +54,9 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
   List<Map<String, dynamic>> _mySpaces = const [];
   List<TrashItem> _trash = const [];
   List<Map<String, dynamic>> _history = const [];
+
+  /// Loaded at least once: later load failures keep it quietly (2026-11-26).
+  bool _loadedOnce = false;
   Map<String, ChannelWithActivity> _covers = const {};
   String? _errorMessage;
 
@@ -113,10 +116,13 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
         _frameAdminInvites = results[4] as List<MyFrameAdminInvite>;
         _history = List<Map<String, dynamic>>.from(results[5] as List);
         _errorMessage = null;
+        _loadedOnce = true;
       });
     } catch (e) {
       if (CacheMissException.isIn(e)) return;
       if (!mounted) return;
+      // Something already shows: it stays, quietly (2026-11-26).
+      if (_loadedOnce) return;
       setState(() => _errorMessage = SmileTexts.of(context).newsLoadError(errorReason(context, e)));
     }
   }
@@ -434,6 +440,8 @@ class _NewsScreenState extends State<NewsScreen> with SyncReload {
           SmileInfoSection(
             title: t.history,
             children: [
+              // How it works, said once (2026-11-26).
+              SmileSectionHint(icon: SmileIcons.help, text: t.historyHint),
               for (final entry in _history)
                 Builder(
                   builder: (context) {

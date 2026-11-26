@@ -81,9 +81,11 @@ class _FramesScreenState extends State<FramesScreen> with SyncReload {
       if (CacheMissException.isIn(e)) return;
       if (!mounted) return;
       final offline = Offline.noteFailure(e);
+      final shown = _frames != null;
       setState(() {
         _frames ??= const [];
-        _errorMessage = offline ? null : SmileTexts.of(context).frameInfoLoadError(errorReason(context, e));
+        // Something already shows: it stays, quietly (2026-11-26).
+        if (!shown) _errorMessage = offline ? null : SmileTexts.of(context).frameInfoLoadError(errorReason(context, e));
       });
     }
   }

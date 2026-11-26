@@ -40,9 +40,11 @@ class _TrashScreenState extends State<TrashScreen> with SyncReload {
       });
     } catch (e) {
       if (!mounted) return;
+      final shown = _items != null;
       setState(() {
         _items ??= const [];
-        _errorMessage = SmileTexts.of(context).trashLoadError(errorReason(context, e));
+        // Something already shows: it stays, quietly (2026-11-26).
+        if (!shown) _errorMessage = SmileTexts.of(context).trashLoadError(errorReason(context, e));
       });
     }
   }

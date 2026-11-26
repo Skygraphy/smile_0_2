@@ -401,7 +401,7 @@ abstract class SmileTexts {
   /// No description provided for @fullHdHint.
   ///
   /// In de, this message translates to:
-  /// **'1080p, am Tablet am schärfsten. Rund 45 MB pro Minute Video, braucht länger zum Senden. Aus: es gilt die Stufe darunter.'**
+  /// **'Beste Qualität für große Bildschirme. Braucht mehr Daten und länger zum Senden.'**
   String get fullHdHint;
 
   /// No description provided for @pauseZoomHint.
@@ -545,7 +545,7 @@ abstract class SmileTexts {
   /// No description provided for @frameAdminHint.
   ///
   /// In de, this message translates to:
-  /// **'Bestimmt bei diesem Frame alles: was am Frame bedient werden darf und welche Alben laufen.'**
+  /// **'Jemand, der diesen Frame mitbestimmt, zum Beispiel die Eltern eines Kindes. Legt fest, was am Frame bedient werden darf und welche Alben laufen.'**
   String get frameAdminHint;
 
   /// No description provided for @inviteFrameAdmin.
@@ -653,7 +653,7 @@ abstract class SmileTexts {
   /// No description provided for @unlockSection.
   ///
   /// In de, this message translates to:
-  /// **'Am Frame entsperren'**
+  /// **'Kindersperre'**
   String get unlockSection;
 
   /// No description provided for @unlockHint.
@@ -1079,7 +1079,7 @@ abstract class SmileTexts {
   /// No description provided for @shareWithSpace.
   ///
   /// In de, this message translates to:
-  /// **'Mit einem Space teilen'**
+  /// **'Mit anderem Space teilen'**
   String get shareWithSpace;
 
   /// No description provided for @shareWithSpaceHint.
@@ -1121,7 +1121,7 @@ abstract class SmileTexts {
   /// No description provided for @notSharedYet.
   ///
   /// In de, this message translates to:
-  /// **'Noch mit keinem anderen Space geteilt'**
+  /// **'Noch mit keinem anderen Space geteilt. Teilst du es, sieht zum Beispiel eine andere Familie das Album auf ihren Handys und Frames, kann aber nichts hinzufügen.'**
   String get notSharedYet;
 
   /// No description provided for @showsOn.
@@ -2606,6 +2606,54 @@ abstract class SmileTexts {
   /// **'Einladung scannen'**
   String get scanCode;
 
+  /// No description provided for @albumTapForInfo.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippen für Infos und Personen'**
+  String get albumTapForInfo;
+
+  /// No description provided for @addMediaShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto oder Video'**
+  String get addMediaShort;
+
+  /// No description provided for @viewerFavorite.
+  ///
+  /// In de, this message translates to:
+  /// **'Lieblingsbild'**
+  String get viewerFavorite;
+
+  /// No description provided for @viewerOnFrame.
+  ///
+  /// In de, this message translates to:
+  /// **'Am Frame zeigen'**
+  String get viewerOnFrame;
+
+  /// No description provided for @viewerMore.
+  ///
+  /// In de, this message translates to:
+  /// **'Mehr'**
+  String get viewerMore;
+
+  /// No description provided for @smileNameSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'So finden dich andere in Smile'**
+  String get smileNameSubtitle;
+
+  /// No description provided for @myCardSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'QR-Code, mit dem dich andere einladen'**
+  String get myCardSubtitle;
+
+  /// No description provided for @historyHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Antippen öffnet, zur Seite wischen entfernt.'**
+  String get historyHint;
+
   /// No description provided for @scanHint.
   ///
   /// In de, this message translates to:
@@ -3575,7 +3623,7 @@ abstract class SmileTexts {
   /// No description provided for @favoritesEmptyHint.
   ///
   /// In de, this message translates to:
-  /// **'Am Frame mit dem Herz merken – oder hier in einem Album beim Foto über das Herz oben rechts.'**
+  /// **'Am Frame mit dem Herz merken – oder hier in einem Album: Foto öffnen, unten auf Lieblingsbild.'**
   String get favoritesEmptyHint;
 
   /// No description provided for @favoritesRemove.
@@ -4631,7 +4679,7 @@ abstract class SmileTexts {
   /// No description provided for @homeSlideshowSettingsHint.
   ///
   /// In de, this message translates to:
-  /// **'Dauer, Reihenfolge, Videos und Ton stellst du wie bisher in der Diashow über das Zahnrad ein.'**
+  /// **'Dauer, Reihenfolge, Videos und Ton stellst du in der Diashow über ⋮ → Einstellungen … ein.'**
   String get homeSlideshowSettingsHint;
 
   /// No description provided for @homeSlideshowStart.
@@ -4937,19 +4985,19 @@ abstract class SmileTexts {
   /// No description provided for @tipViewer04.
   ///
   /// In de, this message translates to:
-  /// **'Mit dem Herz oben machst du ein Foto zum Lieblingsbild eines Frames.'**
+  /// **'Mit Lieblingsbild unten machst du ein Foto zum Lieblingsbild eines Frames.'**
   String get tipViewer04;
 
   /// No description provided for @tipViewer05.
   ///
   /// In de, this message translates to:
-  /// **'Mit dem Frame-Symbol oben zeigst du das Foto sofort am Frame.'**
+  /// **'Mit Am Frame zeigen unten zeigst du das Foto sofort am Frame.'**
   String get tipViewer05;
 
   /// No description provided for @tipViewer06.
   ///
   /// In de, this message translates to:
-  /// **'Die Leiste oben bleibt beim Wischen stehen – ihre Knöpfe gelten fürs gezeigte Foto.'**
+  /// **'Die Leiste unten bleibt beim Wischen stehen – ihre Knöpfe gelten fürs gezeigte Foto.'**
   String get tipViewer06;
 
   /// No description provided for @tipViewer07.
@@ -5003,7 +5051,7 @@ abstract class SmileTexts {
   /// No description provided for @tipViewer15.
   ///
   /// In de, this message translates to:
-  /// **'Mit dem Titel-Symbol oben gibst du einem Foto nachträglich einen Titel.'**
+  /// **'Mit Titel unten gibst du einem Foto nachträglich einen Titel.'**
   String get tipViewer15;
 
   /// No description provided for @tipAlbumInfo01.

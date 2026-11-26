@@ -98,9 +98,11 @@ class _SpacesScreenState extends State<SpacesScreen> with SyncReload {
       if (!mounted) return;
       // Without this, a network/permission failure left _spaces null
       // forever -- a permanent spinner with no explanation.
+      final shown = _spaces != null;
       setState(() {
         _spaces ??= const [];
-        _errorMessage = SmileTexts.of(context).spacesLoadError(errorReason(context, e));
+        // Something already shows: it stays, quietly (2026-11-26).
+        if (!shown) _errorMessage = SmileTexts.of(context).spacesLoadError(errorReason(context, e));
       });
     }
   }

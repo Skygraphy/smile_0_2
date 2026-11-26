@@ -179,6 +179,8 @@ class _AlbumInfoScreenState extends State<AlbumInfoScreen> with SyncReload {
         Navigator.of(context).popUntil((route) => route.isFirst);
         return;
       }
+      // Something already shows: it stays, quietly (2026-11-26).
+      if (_roster != null) return;
       setState(() => _errorMessage = SmileTexts.of(context).albumInfoLoadError(errorReason(context, e)));
     }
   }

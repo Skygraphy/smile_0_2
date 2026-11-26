@@ -100,9 +100,11 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
     } catch (e) {
       if (CacheMissException.isIn(e)) return;
       if (!mounted) return;
+      final shown = _assignments != null;
       setState(() {
         _assignments ??= const [];
-        _errorMessage = SmileTexts.of(context).frameInfoLoadError(errorReason(context, e));
+        // Something already shows: it stays, quietly (2026-11-26).
+        if (!shown) _errorMessage = SmileTexts.of(context).frameInfoLoadError(errorReason(context, e));
       });
     }
   }

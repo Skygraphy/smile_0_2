@@ -219,7 +219,7 @@ class SmileTextsEn extends SmileTexts {
 
   @override
   String get fullHdHint =>
-      '1080p, sharpest on a tablet. About 45 MB per minute of video, takes longer to send. Off: the level below applies.';
+      'Best quality for large screens. Uses more data and takes longer to send.';
 
   @override
   String get pauseZoomHint =>
@@ -307,7 +307,7 @@ class SmileTextsEn extends SmileTexts {
 
   @override
   String get frameAdminHint =>
-      'Decides everything on this Frame: what can be used on it and which albums play.';
+      'Someone who has a say in this Frame, for example a child\'s parents. Decides what may be used on the Frame and which albums play.';
 
   @override
   String get inviteFrameAdmin => 'Invite a Frame admin';
@@ -378,7 +378,7 @@ class SmileTextsEn extends SmileTexts {
   String get youAreFrameAdmin => 'you\'re Frame admin';
 
   @override
-  String get unlockSection => 'Unlock on the Frame';
+  String get unlockSection => 'Child lock';
 
   @override
   String get unlockHint =>
@@ -627,7 +627,7 @@ class SmileTextsEn extends SmileTexts {
       'The person needs a Smile account already. They can accept or decline the invitation.';
 
   @override
-  String get shareWithSpace => 'Share with a Space';
+  String get shareWithSpace => 'Share with another Space';
 
   @override
   String get shareWithSpaceHint =>
@@ -649,7 +649,8 @@ class SmileTextsEn extends SmileTexts {
   String get sharedViewOnly => 'Sees the album, doesn\'t add anything';
 
   @override
-  String get notSharedYet => 'Not shared with any other Space yet';
+  String get notSharedYet =>
+      'Not shared with another Space yet. If you share it, another family, for example, sees the album on their phones and Frames but can\'t add anything.';
 
   @override
   String get showsOn => 'Playing on';
@@ -1571,6 +1572,30 @@ class SmileTextsEn extends SmileTexts {
   String get scanCode => 'Scan invitation';
 
   @override
+  String get albumTapForInfo => 'Tap for info and people';
+
+  @override
+  String get addMediaShort => 'Photo or video';
+
+  @override
+  String get viewerFavorite => 'Favorite';
+
+  @override
+  String get viewerOnFrame => 'Show on Frame';
+
+  @override
+  String get viewerMore => 'More';
+
+  @override
+  String get smileNameSubtitle => 'How others find you in Smile';
+
+  @override
+  String get myCardSubtitle => 'QR code others use to invite you';
+
+  @override
+  String get historyHint => 'Tap to open, swipe sideways to remove.';
+
+  @override
   String get scanHint =>
       'Hold the QR code someone shows you inside the frame. It can be an invitation to an album, as co-admin or Frame admin, a person\'s card or a voucher.';
 
@@ -2131,7 +2156,7 @@ class SmileTextsEn extends SmileTexts {
 
   @override
   String get favoritesEmptyHint =>
-      'Keep them on the Frame with the heart – or here in an album with the heart at the top right of a photo.';
+      'Keep them on the Frame with the heart – or here in an album: open a photo, then Favorite at the bottom.';
 
   @override
   String get favoritesRemove => 'Remove';
@@ -2746,7 +2771,7 @@ class SmileTextsEn extends SmileTexts {
 
   @override
   String get homeSlideshowSettingsHint =>
-      'You set duration, order, videos and sound in the slideshow, as before.';
+      'Duration, order, videos and sound are set in the slideshow under ⋮ → Settings …';
 
   @override
   String get homeSlideshowStart => 'Start slideshow';
@@ -2939,15 +2964,15 @@ class SmileTextsEn extends SmileTexts {
 
   @override
   String get tipViewer04 =>
-      'With the heart at the top you make a photo a favorite of a Frame.';
+      'With Favorite at the bottom you make a photo a favorite of a Frame.';
 
   @override
   String get tipViewer05 =>
-      'With the Frame icon at the top you show the photo on the Frame right away.';
+      'With Show on Frame at the bottom you show the photo on the Frame right away.';
 
   @override
   String get tipViewer06 =>
-      'The bar at the top stays put while swiping – its buttons apply to the photo shown.';
+      'The bar at the bottom stays put while swiping – its buttons apply to the photo shown.';
 
   @override
   String get tipViewer07 =>
@@ -2980,7 +3005,7 @@ class SmileTextsEn extends SmileTexts {
 
   @override
   String get tipViewer15 =>
-      'With the caption icon at the top you give a photo a caption afterwards.';
+      'With Caption at the bottom you give a photo a caption afterwards.';
 
   @override
   String get tipAlbumInfo01 =>

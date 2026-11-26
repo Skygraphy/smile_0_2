@@ -124,6 +124,99 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
     messenger.showSnackBar(SnackBar(content: Text(saved == 1 ? t.savedOne : t.saveFailed)));
   }
 
+  Widget _actionBar(SmileTexts t, MediaItem item, bool favorite) {
+    Widget action({Key? key, required IconData icon, Color? color, required String label, required String tooltip, required VoidCallback onTap}) =>
+        Expanded(
+          child: InkWell(
+            key: key,
+            onTap: onTap,
+            child: Tooltip(
+              message: tooltip,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: SmileSpacing.s),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon, color: color ?? Colors.white),
+                    const SizedBox(height: 4),
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+    final children = <Widget>[
+      if (widget.onFavorite != null)
+        action(
+          key: _heartKey,
+          icon: favorite ? SmileIcons.heartFilled : SmileIcons.heart,
+          color: favorite ? SmileTheme.primary : null,
+          label: t.viewerFavorite,
+          tooltip: t.favoriteFor,
+          onTap: () async {
+            Tips.markUsed(TipId.favoriteHeart);
+            final now = await widget.onFavorite!(item);
+            if (now != null && mounted) setState(() => _favorites[item.id] = now);
+          },
+        ),
+      if (widget.onShowOnFrame != null)
+        action(icon: SmileIcons.frame, label: t.viewerOnFrame, tooltip: t.showOnFrameNow, onTap: () => widget.onShowOnFrame!(item)),
+      if (widget.canEditCaption(item))
+        action(
+          key: _captionKey,
+          icon: SmileIcons.caption,
+          label: t.captionShort,
+          tooltip: t.captionEdit,
+          onTap: () async {
+            Tips.markUsed(TipId.captionLater);
+            final now = await widget.onEditCaption(item, _captionOf(item));
+            if (now != null && mounted) setState(() => _captions[item.id] = now.isEmpty ? null : now);
+          },
+        ),
+      if (widget.onDelete != null) action(icon: SmileIcons.delete, label: t.actionDelete, tooltip: t.actionDelete, onTap: () => _delete(item)),
+      // Out of Smile (2026-11-05): share on, or into the gallery -- always last.
+      if (MediaExport.canExport(item))
+        Expanded(
+          child: PopupMenuButton<VoidCallback>(
+            tooltip: t.moreOptions,
+            onSelected: (action) => action(),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: () => _shareOut(item),
+                child: Row(children: [const Icon(SmileIcons.forward, size: 20), const SizedBox(width: SmileSpacing.m), Text(t.shareOutMenu)]),
+              ),
+              PopupMenuItem(
+                value: () => _save(item),
+                child: Row(children: [const Icon(SmileIcons.saveToPhone, size: 20), const SizedBox(width: SmileSpacing.m), Text(t.saveToPhone)]),
+              ),
+            ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: SmileSpacing.s),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(SmileIcons.more, color: Colors.white),
+                  const SizedBox(height: 4),
+                  Text(t.viewerMore, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                ],
+              ),
+            ),
+          ),
+        ),
+    ];
+    if (children.isEmpty) return const SizedBox.shrink();
+    return Material(
+      color: Colors.black,
+      child: SafeArea(top: false, child: Row(children: children)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = SmileTexts.of(context);
@@ -136,53 +229,11 @@ class _MediaPagerScreenState extends State<MediaPagerScreen> {
         backgroundColor: Colors.black38,
         foregroundColor: Colors.white,
         leading: IconButton(icon: const Icon(SmileIcons.back), onPressed: () => Navigator.of(context).pop()),
-        actions: [
-          if (widget.onFavorite != null)
-            IconButton(
-              key: _heartKey,
-              icon: Icon(favorite ? SmileIcons.heartFilled : SmileIcons.heart, color: favorite ? SmileTheme.primary : null),
-              tooltip: t.favoriteFor,
-              onPressed: () async {
-                Tips.markUsed(TipId.favoriteHeart);
-                final now = await widget.onFavorite!(item);
-                if (now != null && mounted) setState(() => _favorites[item.id] = now);
-              },
-            ),
-          if (widget.onShowOnFrame != null)
-            IconButton(icon: const Icon(SmileIcons.frame), tooltip: t.showOnFrameNow, onPressed: () => widget.onShowOnFrame!(item)),
-          if (widget.canEditCaption(item))
-            IconButton(
-              key: _captionKey,
-              icon: const Icon(SmileIcons.caption),
-              tooltip: t.captionEdit,
-              onPressed: () async {
-                Tips.markUsed(TipId.captionLater);
-                final now = await widget.onEditCaption(item, _captionOf(item));
-                if (now != null && mounted) setState(() => _captions[item.id] = now.isEmpty ? null : now);
-              },
-            ),
-          if (widget.onDelete != null)
-            IconButton(icon: const Icon(SmileIcons.delete), tooltip: t.actionDelete, onPressed: () => _delete(item)),
-          // The ⋮ always rightmost (Ernst 2026-11-05).
-          // Out of Smile (2026-11-05): share on, or into the gallery.
-          if (MediaExport.canExport(item))
-            PopupMenuButton<VoidCallback>(
-              icon: const Icon(SmileIcons.more),
-              tooltip: t.moreOptions,
-              onSelected: (action) => action(),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: () => _shareOut(item),
-                  child: Row(children: [const Icon(SmileIcons.forward, size: 20), const SizedBox(width: SmileSpacing.m), Text(t.shareOutMenu)]),
-                ),
-                PopupMenuItem(
-                  value: () => _save(item),
-                  child: Row(children: [const Icon(SmileIcons.saveToPhone, size: 20), const SizedBox(width: SmileSpacing.m), Text(t.saveToPhone)]),
-                ),
-              ],
-            ),
-        ],
       ),
+      // The actions with words, at the bottom (2026-11-26, Ernst: the
+      // app has to be clear to people who do not know it): five bare
+      // symbols at the top said nothing.
+      bottomNavigationBar: _actionBar(t, item, favorite),
       // Variant C (Ernst 2026-10-28): a black gap between the pictures, and
       // the leaving one shrinks a little and fades, the coming one grows in
       // -- soft between upright and landscape photos.

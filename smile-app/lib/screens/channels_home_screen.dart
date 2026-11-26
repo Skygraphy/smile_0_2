@@ -118,10 +118,12 @@ class _ChannelsHomeScreenState extends State<ChannelsHomeScreen> with SyncReload
     } catch (e) {
       if (!mounted) return;
       final offline = Offline.isConnectionError(e);
+      final shown = _channels != null;
       setState(() {
         _channels ??= const [];
         // Offline: the hint above says it; the list as last loaded stays.
-        _errorMessage = offline ? null : SmileTexts.of(context).albumsLoadError(errorReason(context, e));
+        // Something already shows: it stays, quietly (2026-11-26).
+        if (!shown) _errorMessage = offline ? null : SmileTexts.of(context).albumsLoadError(errorReason(context, e));
       });
     }
   }

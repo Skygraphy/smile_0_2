@@ -121,6 +121,8 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
       if (profile?.handle != null) unawaited(Tips.markUsed(TipId.smileName));
     } catch (e) {
       if (!mounted) return;
+      // Something already shows: it stays, quietly (2026-11-26).
+      if (_profile != null) return;
       setState(() => _errorMessage = SmileTexts.of(context).profileLoadError(errorReason(context, e)));
     }
   }
@@ -380,12 +382,13 @@ class _SettingsScreenState extends State<SettingsScreen> with SyncReload {
                     SmileObjectTile(
                       leading: Icon(SmileIcons.handle, color: scheme.onSurfaceVariant),
                       title: profile.handle != null ? '@${profile.handle}' : t.smileNameChoose,
-                      subtitle: profile.handle != null ? t.smileName : null,
+                      subtitle: t.smileNameSubtitle,
                       onTap: _editHandle,
                     ),
                     SmileObjectTile(
                       leading: Icon(SmileIcons.card, color: scheme.onSurfaceVariant),
                       title: t.myCard,
+                      subtitle: t.myCardSubtitle,
                       onTap: _openCard,
                     ),
                   ],

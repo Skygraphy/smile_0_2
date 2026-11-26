@@ -362,10 +362,13 @@ class MembershipService {
   /// channel side, since only the linked Space's *own* owner may revoke.
   Future<List<SharedChannelSummary>> listSharedChannelsForSpace(String spaceId) async {
     final rows = await supabase.from('channel_shares').select('channel_id, channels(name)').eq('space_id', spaceId);
-    return (rows as List).cast<Map<String, dynamic>>().map((row) {
-      final channel = row['channels'] as Map<String, dynamic>;
-      return SharedChannelSummary(channelId: row['channel_id'] as String, channelName: channel['name'] as String);
-    }).toList();
+    // A shared album in the trash is not readable any more (its embed comes
+    // back null): skip it -- it broke the whole Space page (2026-11-26).
+    return [
+      for (final row in (rows as List).cast<Map<String, dynamic>>())
+        if (row['channels'] case final Map<String, dynamic> channel)
+          SharedChannelSummary(channelId: row['channel_id'] as String, channelName: channel['name'] as String),
+    ];
   }
 
   /// Which Space each album shared into [spaceId] comes from (2026-11-06):

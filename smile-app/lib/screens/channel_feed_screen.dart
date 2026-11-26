@@ -1506,7 +1506,23 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                           children: [
                             albumCover(widget.channelId, _shownName, _covers, size: 36),
                             const SizedBox(width: SmileSpacing.m),
-                            Expanded(child: SmileFitText(_shownName)),
+                            // "Tippen für Infos und Personen" (2026-11-26): the way
+                            // to the info page was only known to those who knew.
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SmileFitText(_shownName),
+                                  Text(
+                                    t.albumTapForInfo,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -1564,11 +1580,13 @@ class _ChannelFeedScreenState extends State<ChannelFeedScreen> with SyncReload {
                       child: const Icon(SmileIcons.camera),
                     ),
                     const SizedBox(height: 12),
-                    FloatingActionButton(
+                    // With a word (2026-11-26): a bare "+" said nothing.
+                    FloatingActionButton.extended(
                       heroTag: null,
                       tooltip: t.addMedia,
                       onPressed: _pickAndUpload,
-                      child: const Icon(SmileIcons.add),
+                      icon: const Icon(SmileIcons.add),
+                      label: Text(t.addMediaShort),
                     ),
                   ],
                 )

@@ -66,9 +66,11 @@ class _ShareInScreenState extends State<ShareInScreen> with SyncReload {
       });
     } catch (e) {
       if (!mounted) return;
+      final shown = _channels != null;
       setState(() {
         _channels ??= const [];
-        _errorMessage = SmileTexts.of(context).albumsLoadError(errorReason(context, e));
+        // Something already shows: it stays, quietly (2026-11-26).
+        if (!shown) _errorMessage = SmileTexts.of(context).albumsLoadError(errorReason(context, e));
       });
     }
   }

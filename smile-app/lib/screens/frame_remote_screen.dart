@@ -136,9 +136,11 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
     } catch (e) {
       if (CacheMissException.isIn(e)) return;
       if (!mounted) return;
+      final shown = _assignments != null;
       setState(() {
         _assignments ??= const [];
-        _errorMessage = SmileTexts.of(context).frameInfoLoadError(errorReason(context, e));
+        // Something already shows: it stays, quietly (2026-11-26).
+        if (!shown) _errorMessage = SmileTexts.of(context).frameInfoLoadError(errorReason(context, e));
       });
     }
   }
@@ -775,14 +777,15 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _RoundButton(icon: SmileIcons.previous, tooltip: t.ctrlBack, onTap: () => _command('back')),
+                          _RoundButton(icon: SmileIcons.previous, tooltip: t.ctrlBack, label: t.ctrlBack, onTap: () => _command('back')),
                           _RoundButton(
                             icon: _remotePaused ? SmileIcons.playFilled : SmileIcons.pause,
                             tooltip: _remotePaused ? t.ctrlPlay : t.ctrlPause,
+                            label: _remotePaused ? t.slideshowResume : t.slideshowPause,
                             main: true,
                             onTap: () => _command(_remotePaused ? 'play' : 'pause'),
                           ),
-                          _RoundButton(icon: SmileIcons.nextItem, tooltip: t.ctrlNext, onTap: () => _command('next')),
+                          _RoundButton(icon: SmileIcons.nextItem, tooltip: t.ctrlNext, label: t.ctrlNext, onTap: () => _command('next')),
                         ],
                       ),
                       const SizedBox(height: SmileSpacing.m),
@@ -885,18 +888,8 @@ class _FrameRemoteScreenState extends State<FrameRemoteScreen> with SyncReload {
                           onTap: () => _setVideoSound(!frame.videoSound),
                         ),
                       ),
-                      const SizedBox(width: SmileSpacing.m),
-                      Expanded(
-                        child: _Tile(
-                          icon: SmileIcons.controls,
-                          label: t.controlLevel,
-                          value: _levelName(t, frame),
-                          on: true,
-                          onTap: () => _openPage(
-                            (f, spaceId) => FrameControlsScreen(frame: f, spaceId: spaceId, frameService: _service),
-                          ),
-                        ),
-                      ),
+                      // The "Bedienstufe" tile is gone (2026-11-26): it opened the
+                      // same page as "Bedienung am Frame" right below.
                     ],
                   ),
                   const SizedBox(height: SmileSpacing.m),
@@ -1103,31 +1096,41 @@ class _Label extends StatelessWidget {
 
 /// A remote-control button: round and big; coral for the main one.
 class _RoundButton extends StatelessWidget {
-  const _RoundButton({required this.icon, required this.tooltip, required this.onTap, this.main = false});
+  const _RoundButton({required this.icon, required this.tooltip, required this.label, required this.onTap, this.main = false});
 
   final IconData icon;
   final String tooltip;
+
+  /// The word under the button (2026-11-26): bare symbols said nothing.
+  final String label;
   final VoidCallback onTap;
   final bool main;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: main ? scheme.primary : scheme.surfaceContainerHighest,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: SizedBox(
-            width: 64,
-            height: 64,
-            child: Icon(icon, size: 28, color: main ? scheme.onPrimary : scheme.onSurface),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Tooltip(
+          message: tooltip,
+          child: Material(
+            color: main ? scheme.primary : scheme.surfaceContainerHighest,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: SizedBox(
+                width: 64,
+                height: 64,
+                child: Icon(icon, size: 28, color: main ? scheme.onPrimary : scheme.onSurface),
+              ),
+            ),
           ),
         ),
-      ),
+        const SizedBox(height: 6),
+        Text(label, style: TextStyle(fontSize: 12.5, color: scheme.onSurfaceVariant)),
+      ],
     );
   }
 }

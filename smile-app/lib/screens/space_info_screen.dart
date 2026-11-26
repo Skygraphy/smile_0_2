@@ -21,6 +21,7 @@ import '../services/membership_service.dart';
 import '../services/space_service.dart';
 import '../services/sync_bus.dart';
 import '../widgets/email_dialog.dart';
+import '../widgets/frame_status.dart';
 import '../widgets/invite_sheet.dart';
 import '../services/invite_service.dart';
 import 'contacts_invite_screen.dart';
@@ -265,9 +266,11 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
     } catch (e) {
       if (CacheMissException.isIn(e)) return;
       if (!mounted) return;
+      final shown = _albums != null;
       setState(() {
         _albums ??= const [];
-        _errorMessage = SmileTexts.of(context).spaceInfoLoadError(errorReason(context, e));
+        // Something already shows: it stays, quietly (2026-11-26).
+        if (!shown) _errorMessage = SmileTexts.of(context).spaceInfoLoadError(errorReason(context, e));
       });
     }
   }
@@ -574,7 +577,8 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
   }
 
   String _frameStatus(SmileTexts t, SmileFrame frame) => switch (frame.lifecycleState) {
-        'active' => t.frameActive,
+        // Same words as the Frames tab (2026-11-26): Online / Offline seit ...
+        'active' => frameStatusLine(t, frame),
         'revoked' => t.frameRevoked,
         _ => t.framePending,
       };
@@ -642,9 +646,9 @@ class _SpaceInfoScreenState extends State<SpaceInfoScreen> with SyncReload {
           renameTooltip: t.renameSpace,
         ),
         SmileQuickActions(actions: [
-          SmileQuickAction(icon: SmileIcons.add, label: t.album, onTap: _createAlbum),
-          SmileQuickAction(icon: SmileIcons.frame, label: t.frame, onTap: _connectFrame),
-          if (isAdmin) SmileQuickAction(icon: SmileIcons.coAdmin, label: t.roleCoAdmin, onTap: _inviteCoAdmin),
+          SmileQuickAction(icon: SmileIcons.add, label: t.createAlbum, onTap: _createAlbum),
+          SmileQuickAction(icon: SmileIcons.frame, label: t.connectFrame, onTap: _connectFrame),
+          if (isAdmin) SmileQuickAction(icon: SmileIcons.coAdmin, label: t.inviteCoAdmin, onTap: _inviteCoAdmin),
         ]),
         // Frame plan and storage (2026-11-11): only for who manages it.
         if (_plan != null) _planCard(t, _plan!),
