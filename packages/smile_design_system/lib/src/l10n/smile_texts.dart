@@ -419,7 +419,7 @@ abstract class SmileTexts {
   /// No description provided for @easyStopTitle.
   ///
   /// In de, this message translates to:
-  /// **'Easy Stopping'**
+  /// **'Antippen hält an'**
   String get easyStopTitle;
 
   /// No description provided for @easyStopHint.
@@ -569,7 +569,7 @@ abstract class SmileTexts {
   /// No description provided for @qrScanHintFrameAdmin.
   ///
   /// In de, this message translates to:
-  /// **'Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Frame-Admin wird man nur per QR-Code vor Ort.'**
+  /// **'Mit der Handykamera scannen oder in Smile: ⋮ → Einladung scannen. Frame-Admin wird man nur per QR-Code vor Ort.'**
   String get qrScanHintFrameAdmin;
 
   /// No description provided for @inviteFrameAdminFrom.
@@ -767,13 +767,13 @@ abstract class SmileTexts {
   /// No description provided for @roleMember.
   ///
   /// In de, this message translates to:
-  /// **'Member'**
+  /// **'Mitglied'**
   String get roleMember;
 
   /// No description provided for @roleViewer.
   ///
   /// In de, this message translates to:
-  /// **'Viewer'**
+  /// **'Nur ansehen'**
   String get roleViewer;
 
   /// No description provided for @admins.
@@ -821,7 +821,7 @@ abstract class SmileTexts {
   /// No description provided for @actionShare.
   ///
   /// In de, this message translates to:
-  /// **'Mit Space teilen'**
+  /// **'Mit anderem Space teilen'**
   String get actionShare;
 
   /// No description provided for @actionAdd.
@@ -935,7 +935,7 @@ abstract class SmileTexts {
   /// No description provided for @albumsEmptyMessage.
   ///
   /// In de, this message translates to:
-  /// **'Lege einen Space an oder nimm eine Einladung an.'**
+  /// **'Lädt dich jemand ein, erscheint das Album hier. Selbst anfangen: unten Spaces → Space anlegen.'**
   String get albumsEmptyMessage;
 
   /// No description provided for @openSpaces.
@@ -1001,7 +1001,7 @@ abstract class SmileTexts {
   /// No description provided for @requestMembership.
   ///
   /// In de, this message translates to:
-  /// **'Member werden'**
+  /// **'Mitmachen anfragen'**
   String get requestMembership;
 
   /// No description provided for @requestSent.
@@ -1103,7 +1103,7 @@ abstract class SmileTexts {
   /// No description provided for @wantsToJoin.
   ///
   /// In de, this message translates to:
-  /// **'Möchte Member werden'**
+  /// **'Möchte mitmachen'**
   String get wantsToJoin;
 
   /// No description provided for @wantsToShare.
@@ -1439,13 +1439,13 @@ abstract class SmileTexts {
   /// No description provided for @framePending.
   ///
   /// In de, this message translates to:
-  /// **'Wartet auf Kopplung'**
+  /// **'Noch nicht mit einem Tablet verbunden'**
   String get framePending;
 
   /// No description provided for @frameRevoked.
   ///
   /// In de, this message translates to:
-  /// **'Widerrufen'**
+  /// **'Abgeschaltet'**
   String get frameRevoked;
 
   /// No description provided for @inviteCoAdmin.
@@ -1637,7 +1637,7 @@ abstract class SmileTexts {
   /// No description provided for @showsAlbums.
   ///
   /// In de, this message translates to:
-  /// **'Zeigt'**
+  /// **'Diese Alben laufen hier'**
   String get showsAlbums;
 
   /// No description provided for @noAlbumAssigned.
@@ -1751,19 +1751,19 @@ abstract class SmileTexts {
   /// No description provided for @revokeFrame.
   ///
   /// In de, this message translates to:
-  /// **'Frame widerrufen'**
+  /// **'Frame abschalten'**
   String get revokeFrame;
 
   /// No description provided for @revokeFrameMessage.
   ///
   /// In de, this message translates to:
-  /// **'Der Frame verliert sofort jeden Zugriff und löscht seine Fotos. Du kannst ihn jederzeit wieder aktivieren.'**
+  /// **'Der Frame verliert sofort jeden Zugriff und löscht seine Fotos. Du kannst ihn jederzeit wieder einschalten.'**
   String get revokeFrameMessage;
 
   /// No description provided for @reactivateFrame.
   ///
   /// In de, this message translates to:
-  /// **'Frame wieder aktivieren'**
+  /// **'Frame wieder einschalten'**
   String get reactivateFrame;
 
   /// No description provided for @newsEmptyTitle.
@@ -1811,7 +1811,7 @@ abstract class SmileTexts {
   /// No description provided for @inviteMemberFrom.
   ///
   /// In de, this message translates to:
-  /// **'{name} lädt dich als Member ein'**
+  /// **'{name} lädt dich in das Album ein'**
   String inviteMemberFrom(String name);
 
   /// No description provided for @inviteShareFrom.
@@ -1823,7 +1823,7 @@ abstract class SmileTexts {
   /// No description provided for @requestMemberFrom.
   ///
   /// In de, this message translates to:
-  /// **'{name} möchte Member werden'**
+  /// **'{name} möchte mitmachen'**
   String requestMemberFrom(String name);
 
   /// No description provided for @requestShareFrom.
@@ -1973,7 +1973,7 @@ abstract class SmileTexts {
   /// No description provided for @pictureUrl.
   ///
   /// In de, this message translates to:
-  /// **'Bild-URL'**
+  /// **'Internetadresse des Bildes'**
   String get pictureUrl;
 
   /// No description provided for @load.
@@ -2129,7 +2129,7 @@ abstract class SmileTexts {
   /// No description provided for @framePairRevoked.
   ///
   /// In de, this message translates to:
-  /// **'Dieser Frame wurde widerrufen.'**
+  /// **'Dieser Frame wurde abgeschaltet.'**
   String get framePairRevoked;
 
   /// No description provided for @framePairFailed.
@@ -2153,7 +2153,7 @@ abstract class SmileTexts {
   /// No description provided for @frameRevokedScreen.
   ///
   /// In de, this message translates to:
-  /// **'Dieser Frame wurde widerrufen.\nEin Admin des Space kann ihn in der Smile-App wieder aktivieren.'**
+  /// **'Dieser Frame wurde abgeschaltet.\n\nEin Admin des Space kann ihn in der Smile-App wieder einschalten.'**
   String get frameRevokedScreen;
 
   /// No description provided for @frameNoPhotos.
@@ -2567,13 +2567,13 @@ abstract class SmileTexts {
   /// No description provided for @qrScanHint.
   ///
   /// In de, this message translates to:
-  /// **'Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Oder den Code eintippen.'**
+  /// **'Mit der Handykamera scannen oder in Smile: ⋮ → Einladung scannen. Oder den Code eintippen.'**
   String get qrScanHint;
 
   /// No description provided for @qrScanHintCoAdmin.
   ///
   /// In de, this message translates to:
-  /// **'Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Co-Admin wird man nur per QR-Code vor Ort.'**
+  /// **'Mit der Handykamera scannen oder in Smile: ⋮ → Einladung scannen. Co-Admin wird man nur per QR-Code vor Ort.'**
   String get qrScanHintCoAdmin;
 
   /// No description provided for @qrValid.
@@ -2801,7 +2801,7 @@ abstract class SmileTexts {
   /// No description provided for @tileAlbumSwitch.
   ///
   /// In de, this message translates to:
-  /// **'Wechsel am Frame'**
+  /// **'Album am Frame wechseln'**
   String get tileAlbumSwitch;
 
   /// No description provided for @valueOn.
@@ -3023,19 +3023,19 @@ abstract class SmileTexts {
   /// No description provided for @qualityHighHint.
   ///
   /// In de, this message translates to:
-  /// **'720p, sehr scharf – rund 24 MB pro Minute Video.'**
+  /// **'Sehr scharf – rund 24 MB pro Minute Video.'**
   String get qualityHighHint;
 
   /// No description provided for @qualityMediumHint.
   ///
   /// In de, this message translates to:
-  /// **'Genau wie WhatsApp (480p) – rund 12 MB pro Minute Video.'**
+  /// **'Wie bei WhatsApp – rund 12 MB pro Minute Video.'**
   String get qualityMediumHint;
 
   /// No description provided for @qualityLowHint.
   ///
   /// In de, this message translates to:
-  /// **'360p, für kleine Bildschirme – rund 6 MB pro Minute Video. Am schnellsten gesendet.'**
+  /// **'Für kleine Bildschirme – rund 6 MB pro Minute Video. Am schnellsten gesendet.'**
   String get qualityLowHint;
 
   /// No description provided for @ctrlBack.
@@ -3437,7 +3437,7 @@ abstract class SmileTexts {
   /// No description provided for @remoteHint.
   ///
   /// In de, this message translates to:
-  /// **'Funktioniert auf jeder Bedienstufe.'**
+  /// **'Damit steuerst du den Frame vom Handy aus, egal was am Frame selbst erlaubt ist.'**
   String get remoteHint;
 
   /// No description provided for @remoteNewest.
@@ -3833,7 +3833,7 @@ abstract class SmileTexts {
   /// No description provided for @inviteMessageCodeFallback.
   ///
   /// In de, this message translates to:
-  /// **'Falls der Link nicht geht: In Smile ⋮ → Code scannen → Code eintippen: {code}'**
+  /// **'Falls der Link nicht geht: In Smile ⋮ → Einladung scannen → Code eintippen: {code}'**
   String inviteMessageCodeFallback(String code);
 
   /// No description provided for @smileName.
@@ -4589,7 +4589,7 @@ abstract class SmileTexts {
   /// No description provided for @whoWatchesLater.
   ///
   /// In de, this message translates to:
-  /// **'Später jederzeit änderbar unter Frame → ⋮ → Bedienung.'**
+  /// **'Später jederzeit änderbar: Frames → Frame antippen → Bedienung am Frame.'**
   String get whoWatchesLater;
 
   /// No description provided for @rotateWithDeviceHint.
@@ -4709,7 +4709,7 @@ abstract class SmileTexts {
   /// No description provided for @tipAlbums09.
   ///
   /// In de, this message translates to:
-  /// **'Über ⋮ → Code scannen trittst du mit einem QR-Code einem Album bei.'**
+  /// **'Über ⋮ → Einladung scannen trittst du mit einem QR-Code einem Album bei.'**
   String get tipAlbums09;
 
   /// No description provided for @tipAlbums10.
@@ -5225,7 +5225,7 @@ abstract class SmileTexts {
   /// No description provided for @tipFrames08.
   ///
   /// In de, this message translates to:
-  /// **'Einen Frame kannst du vorübergehend sperren – und später wieder freigeben.'**
+  /// **'Einen Frame kannst du vorübergehend abschalten – und später wieder einschalten.'**
   String get tipFrames08;
 
   /// No description provided for @tipFrames09.
@@ -5387,7 +5387,7 @@ abstract class SmileTexts {
   /// No description provided for @tipControls01.
   ///
   /// In de, this message translates to:
-  /// **'Easy Stopping: Ein Tippen auf den Frame hält das Bild an, noch eins lässt es weiterlaufen.'**
+  /// **'Antippen hält an: Ein Tippen auf den Frame hält das Bild an, noch eins lässt es weiterlaufen.'**
   String get tipControls01;
 
   /// No description provided for @tipControls02.
@@ -5969,31 +5969,31 @@ abstract class SmileTexts {
   /// No description provided for @membershipRequestFailed.
   ///
   /// In de, this message translates to:
-  /// **'Anfrage fehlgeschlagen: {reason}'**
+  /// **'Die Anfrage hat nicht geklappt. {reason}'**
   String membershipRequestFailed(String reason);
 
   /// No description provided for @withdrawFailed.
   ///
   /// In de, this message translates to:
-  /// **'Zurückziehen fehlgeschlagen: {reason}'**
+  /// **'Das Zurückziehen hat nicht geklappt. {reason}'**
   String withdrawFailed(String reason);
 
   /// No description provided for @deleteFailedShort.
   ///
   /// In de, this message translates to:
-  /// **'Löschen fehlgeschlagen.'**
+  /// **'Das Löschen hat nicht geklappt. Bitte versuch es noch einmal.'**
   String get deleteFailedShort;
 
   /// No description provided for @hideFailedShort.
   ///
   /// In de, this message translates to:
-  /// **'Ausblenden fehlgeschlagen.'**
+  /// **'Das Ausblenden hat nicht geklappt. Bitte versuch es noch einmal.'**
   String get hideFailedShort;
 
   /// No description provided for @unhideFailedShort.
   ///
   /// In de, this message translates to:
-  /// **'Einblenden fehlgeschlagen.'**
+  /// **'Das Einblenden hat nicht geklappt. Bitte versuch es noch einmal.'**
   String get unhideFailedShort;
 
   /// No description provided for @photosNotDeleted.
@@ -6089,13 +6089,13 @@ abstract class SmileTexts {
   /// No description provided for @errNotAlbumManager.
   ///
   /// In de, this message translates to:
-  /// **'Du bist nicht berechtigt, dieses Album zu verwalten.'**
+  /// **'Das dürfen nur Admin und Co-Admins dieses Albums.'**
   String get errNotAlbumManager;
 
   /// No description provided for @errRequestPending.
   ///
   /// In de, this message translates to:
-  /// **'Es gibt bereits eine offene Einladung/Anfrage.'**
+  /// **'Diese Person ist schon eingeladen. Sie hat noch nicht geantwortet.'**
   String get errRequestPending;
 
   /// No description provided for @errNotSpaceAdmin.
@@ -6700,7 +6700,7 @@ abstract class SmileTexts {
   /// No description provided for @liveStateQuiet.
   ///
   /// In de, this message translates to:
-  /// **'Ruhezeit, der Bildschirm ist dunkel.'**
+  /// **'Nachtruhe, der Bildschirm ist dunkel.'**
   String get liveStateQuiet;
 
   /// No description provided for @liveStateOverview.
@@ -6910,7 +6910,7 @@ abstract class SmileTexts {
   /// No description provided for @albumCreatorsHint.
   ///
   /// In de, this message translates to:
-  /// **'Noch niemand. Wen du einlädst, kann hier eigene Alben anlegen und verwalten. Andere Alben, die Frames und den Space verwaltest weiter nur du und die Co-Administratoren.'**
+  /// **'Noch niemand. Wen du einlädst, kann hier eigene Alben anlegen und verwalten. Andere Alben, die Frames und den Space verwaltest weiter nur du mit den Co-Admins.'**
   String get albumCreatorsHint;
 
   /// No description provided for @offerFramesTitle.
@@ -6964,7 +6964,7 @@ abstract class SmileTexts {
   /// No description provided for @qrScanHintAlbumCreator.
   ///
   /// In de, this message translates to:
-  /// **'Die Person scannt den Code mit Smile (Neuigkeiten, Scan-Symbol oben). Danach kann sie in diesem Space Alben anlegen.'**
+  /// **'Die Person scannt den Code mit der Handykamera oder in Smile: ⋮ → Einladung scannen. Danach kann sie in diesem Space Alben anlegen.'**
   String get qrScanHintAlbumCreator;
 
   /// No description provided for @inviteAlbumCreatorFrom.
@@ -6988,7 +6988,7 @@ abstract class SmileTexts {
   /// No description provided for @albumRightGiveBackMessage.
   ///
   /// In de, this message translates to:
-  /// **'Du kannst dann in {space} keine neuen Alben mehr anlegen. Deine Alben bleiben, verwaltet werden sie dann vom Administrator.'**
+  /// **'Du kannst dann in {space} keine neuen Alben mehr anlegen. Deine Alben bleiben, verwaltet werden sie dann vom Admin.'**
   String albumRightGiveBackMessage(String space);
 
   /// No description provided for @proposeOnlyHint.

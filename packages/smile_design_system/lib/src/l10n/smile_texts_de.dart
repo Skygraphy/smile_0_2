@@ -228,7 +228,7 @@ class SmileTextsDe extends SmileTexts {
   String get tipDidYouKnow => 'WUSSTEST DU?';
 
   @override
-  String get easyStopTitle => 'Easy Stopping';
+  String get easyStopTitle => 'Antippen hält an';
 
   @override
   String get easyStopHint =>
@@ -321,7 +321,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get qrScanHintFrameAdmin =>
-      'Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Frame-Admin wird man nur per QR-Code vor Ort.';
+      'Mit der Handykamera scannen oder in Smile: ⋮ → Einladung scannen. Frame-Admin wird man nur per QR-Code vor Ort.';
 
   @override
   String inviteFrameAdminFrom(String name) {
@@ -441,10 +441,10 @@ class SmileTextsDe extends SmileTexts {
   String get lockNow => 'Sperren';
 
   @override
-  String get roleMember => 'Member';
+  String get roleMember => 'Mitglied';
 
   @override
-  String get roleViewer => 'Viewer';
+  String get roleViewer => 'Nur ansehen';
 
   @override
   String get admins => 'Admins';
@@ -470,7 +470,7 @@ class SmileTextsDe extends SmileTexts {
   String get actionInvite => 'Einladen';
 
   @override
-  String get actionShare => 'Mit Space teilen';
+  String get actionShare => 'Mit anderem Space teilen';
 
   @override
   String get actionAdd => 'Neu anlegen';
@@ -532,7 +532,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get albumsEmptyMessage =>
-      'Lege einen Space an oder nimm eine Einladung an.';
+      'Lädt dich jemand ein, erscheint das Album hier. Selbst anfangen: unten Spaces → Space anlegen.';
 
   @override
   String get openSpaces => 'Spaces öffnen';
@@ -568,7 +568,7 @@ class SmileTextsDe extends SmileTexts {
   }
 
   @override
-  String get requestMembership => 'Member werden';
+  String get requestMembership => 'Mitmachen anfragen';
 
   @override
   String get requestSent => 'Anfrage gesendet';
@@ -640,7 +640,7 @@ class SmileTextsDe extends SmileTexts {
   String get invitedWaiting => 'Eingeladen · Annahme ausstehend';
 
   @override
-  String get wantsToJoin => 'Möchte Member werden';
+  String get wantsToJoin => 'Möchte mitmachen';
 
   @override
   String get wantsToShare => 'Möchte das Album mit dem eigenen Space sehen';
@@ -848,10 +848,10 @@ class SmileTextsDe extends SmileTexts {
   String get frameActive => 'Aktiv';
 
   @override
-  String get framePending => 'Wartet auf Kopplung';
+  String get framePending => 'Noch nicht mit einem Tablet verbunden';
 
   @override
-  String get frameRevoked => 'Widerrufen';
+  String get frameRevoked => 'Abgeschaltet';
 
   @override
   String get inviteCoAdmin => 'Co-Admin einladen';
@@ -965,7 +965,7 @@ class SmileTextsDe extends SmileTexts {
       'Wer vor dem Frame steht, kann selbst zwischen den Alben wechseln.';
 
   @override
-  String get showsAlbums => 'Zeigt';
+  String get showsAlbums => 'Diese Alben laufen hier';
 
   @override
   String get noAlbumAssigned => 'Noch kein Album zugewiesen';
@@ -1033,14 +1033,14 @@ class SmileTextsDe extends SmileTexts {
       'Der Frame zeigt die Fotos dieses Albums dann nicht mehr. Das Album und seine Fotos bleiben erhalten.';
 
   @override
-  String get revokeFrame => 'Frame widerrufen';
+  String get revokeFrame => 'Frame abschalten';
 
   @override
   String get revokeFrameMessage =>
-      'Der Frame verliert sofort jeden Zugriff und löscht seine Fotos. Du kannst ihn jederzeit wieder aktivieren.';
+      'Der Frame verliert sofort jeden Zugriff und löscht seine Fotos. Du kannst ihn jederzeit wieder einschalten.';
 
   @override
-  String get reactivateFrame => 'Frame wieder aktivieren';
+  String get reactivateFrame => 'Frame wieder einschalten';
 
   @override
   String get newsEmptyTitle => 'Keine Neuigkeiten';
@@ -1070,7 +1070,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String inviteMemberFrom(String name) {
-    return '$name lädt dich als Member ein';
+    return '$name lädt dich in das Album ein';
   }
 
   @override
@@ -1080,7 +1080,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String requestMemberFrom(String name) {
-    return '$name möchte Member werden';
+    return '$name möchte mitmachen';
   }
 
   @override
@@ -1181,7 +1181,7 @@ class SmileTextsDe extends SmileTexts {
   String get pictureFromWeb => 'Von einer Internetadresse laden';
 
   @override
-  String get pictureUrl => 'Bild-URL';
+  String get pictureUrl => 'Internetadresse des Bildes';
 
   @override
   String get load => 'Laden';
@@ -1268,7 +1268,7 @@ class SmileTextsDe extends SmileTexts {
       'Der Code ist abgelaufen. Lass dir in der Smile-App einen neuen anzeigen.';
 
   @override
-  String get framePairRevoked => 'Dieser Frame wurde widerrufen.';
+  String get framePairRevoked => 'Dieser Frame wurde abgeschaltet.';
 
   @override
   String get framePairFailed => 'Verbinden fehlgeschlagen.';
@@ -1283,7 +1283,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get frameRevokedScreen =>
-      'Dieser Frame wurde widerrufen.\nEin Admin des Space kann ihn in der Smile-App wieder aktivieren.';
+      'Dieser Frame wurde abgeschaltet.\n\nEin Admin des Space kann ihn in der Smile-App wieder einschalten.';
 
   @override
   String get frameNoPhotos => 'Noch keine Fotos';
@@ -1552,11 +1552,11 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get qrScanHint =>
-      'Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Oder den Code eintippen.';
+      'Mit der Handykamera scannen oder in Smile: ⋮ → Einladung scannen. Oder den Code eintippen.';
 
   @override
   String get qrScanHintCoAdmin =>
-      'Mit der Handykamera scannen oder in Smile: ⋮ → Code scannen. Co-Admin wird man nur per QR-Code vor Ort.';
+      'Mit der Handykamera scannen oder in Smile: ⋮ → Einladung scannen. Co-Admin wird man nur per QR-Code vor Ort.';
 
   @override
   String get qrValid => 'Gilt 24 Stunden.';
@@ -1706,7 +1706,7 @@ class SmileTextsDe extends SmileTexts {
   String get tileVideoSound => 'Ton bei Videos';
 
   @override
-  String get tileAlbumSwitch => 'Wechsel am Frame';
+  String get tileAlbumSwitch => 'Album am Frame wechseln';
 
   @override
   String get valueOn => 'An';
@@ -1829,16 +1829,15 @@ class SmileTextsDe extends SmileTexts {
   String get qualityLow => 'Niedrig';
 
   @override
-  String get qualityHighHint =>
-      '720p, sehr scharf – rund 24 MB pro Minute Video.';
+  String get qualityHighHint => 'Sehr scharf – rund 24 MB pro Minute Video.';
 
   @override
   String get qualityMediumHint =>
-      'Genau wie WhatsApp (480p) – rund 12 MB pro Minute Video.';
+      'Wie bei WhatsApp – rund 12 MB pro Minute Video.';
 
   @override
   String get qualityLowHint =>
-      '360p, für kleine Bildschirme – rund 6 MB pro Minute Video. Am schnellsten gesendet.';
+      'Für kleine Bildschirme – rund 6 MB pro Minute Video. Am schnellsten gesendet.';
 
   @override
   String get ctrlBack => 'Zurück';
@@ -2052,7 +2051,8 @@ class SmileTextsDe extends SmileTexts {
   String get remoteTitle => 'Fernbedienung';
 
   @override
-  String get remoteHint => 'Funktioniert auf jeder Bedienstufe.';
+  String get remoteHint =>
+      'Damit steuerst du den Frame vom Handy aus, egal was am Frame selbst erlaubt ist.';
 
   @override
   String remoteNewest(int n) {
@@ -2289,7 +2289,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String inviteMessageCodeFallback(String code) {
-    return 'Falls der Link nicht geht: In Smile ⋮ → Code scannen → Code eintippen: $code';
+    return 'Falls der Link nicht geht: In Smile ⋮ → Einladung scannen → Code eintippen: $code';
   }
 
   @override
@@ -2728,7 +2728,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get whoWatchesLater =>
-      'Später jederzeit änderbar unter Frame → ⋮ → Bedienung.';
+      'Später jederzeit änderbar: Frames → Frame antippen → Bedienung am Frame.';
 
   @override
   String get rotateWithDeviceHint =>
@@ -2804,7 +2804,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get tipAlbums09 =>
-      'Über ⋮ → Code scannen trittst du mit einem QR-Code einem Album bei.';
+      'Über ⋮ → Einladung scannen trittst du mit einem QR-Code einem Album bei.';
 
   @override
   String get tipAlbums10 =>
@@ -3143,7 +3143,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get tipFrames08 =>
-      'Einen Frame kannst du vorübergehend sperren – und später wieder freigeben.';
+      'Einen Frame kannst du vorübergehend abschalten – und später wieder einschalten.';
 
   @override
   String get tipFrames09 =>
@@ -3248,7 +3248,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get tipControls01 =>
-      'Easy Stopping: Ein Tippen auf den Frame hält das Bild an, noch eins lässt es weiterlaufen.';
+      'Antippen hält an: Ein Tippen auf den Frame hält das Bild an, noch eins lässt es weiterlaufen.';
 
   @override
   String get tipControls02 =>
@@ -3619,22 +3619,25 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String membershipRequestFailed(String reason) {
-    return 'Anfrage fehlgeschlagen: $reason';
+    return 'Die Anfrage hat nicht geklappt. $reason';
   }
 
   @override
   String withdrawFailed(String reason) {
-    return 'Zurückziehen fehlgeschlagen: $reason';
+    return 'Das Zurückziehen hat nicht geklappt. $reason';
   }
 
   @override
-  String get deleteFailedShort => 'Löschen fehlgeschlagen.';
+  String get deleteFailedShort =>
+      'Das Löschen hat nicht geklappt. Bitte versuch es noch einmal.';
 
   @override
-  String get hideFailedShort => 'Ausblenden fehlgeschlagen.';
+  String get hideFailedShort =>
+      'Das Ausblenden hat nicht geklappt. Bitte versuch es noch einmal.';
 
   @override
-  String get unhideFailedShort => 'Einblenden fehlgeschlagen.';
+  String get unhideFailedShort =>
+      'Das Einblenden hat nicht geklappt. Bitte versuch es noch einmal.';
 
   @override
   String photosNotDeleted(int count) {
@@ -3709,11 +3712,11 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get errNotAlbumManager =>
-      'Du bist nicht berechtigt, dieses Album zu verwalten.';
+      'Das dürfen nur Admin und Co-Admins dieses Albums.';
 
   @override
   String get errRequestPending =>
-      'Es gibt bereits eine offene Einladung/Anfrage.';
+      'Diese Person ist schon eingeladen. Sie hat noch nicht geantwortet.';
 
   @override
   String get errNotSpaceAdmin => 'Nur der Admin kann das tun.';
@@ -4113,7 +4116,7 @@ class SmileTextsDe extends SmileTexts {
   String get liveStatePaused => 'Angehalten';
 
   @override
-  String get liveStateQuiet => 'Ruhezeit, der Bildschirm ist dunkel.';
+  String get liveStateQuiet => 'Nachtruhe, der Bildschirm ist dunkel.';
 
   @override
   String get liveStateOverview => 'Die Übersicht ist offen.';
@@ -4238,7 +4241,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get albumCreatorsHint =>
-      'Noch niemand. Wen du einlädst, kann hier eigene Alben anlegen und verwalten. Andere Alben, die Frames und den Space verwaltest weiter nur du und die Co-Administratoren.';
+      'Noch niemand. Wen du einlädst, kann hier eigene Alben anlegen und verwalten. Andere Alben, die Frames und den Space verwaltest weiter nur du mit den Co-Admins.';
 
   @override
   String get offerFramesTitle => 'Auf welchem Frame zeigen?';
@@ -4271,7 +4274,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String get qrScanHintAlbumCreator =>
-      'Die Person scannt den Code mit Smile (Neuigkeiten, Scan-Symbol oben). Danach kann sie in diesem Space Alben anlegen.';
+      'Die Person scannt den Code mit der Handykamera oder in Smile: ⋮ → Einladung scannen. Danach kann sie in diesem Space Alben anlegen.';
 
   @override
   String inviteAlbumCreatorFrom(String name) {
@@ -4288,7 +4291,7 @@ class SmileTextsDe extends SmileTexts {
 
   @override
   String albumRightGiveBackMessage(String space) {
-    return 'Du kannst dann in $space keine neuen Alben mehr anlegen. Deine Alben bleiben, verwaltet werden sie dann vom Administrator.';
+    return 'Du kannst dann in $space keine neuen Alben mehr anlegen. Deine Alben bleiben, verwaltet werden sie dann vom Admin.';
   }
 
   @override

@@ -52,7 +52,7 @@ export const en: PushTexts = {
     body: "The tablet was restarted, e.g. after a power cut. If the Frame was pinned, please pin it again.",
   }),
   framePaired: (p) => ({ title: "Frame connected", body: `The Frame ${p.frame} in ${p.space} is now connected and showing photos.` }),
-  frameRevoked: (p) => ({ title: "Frame revoked", body: `${p.actor ?? en.someone} revoked the Frame ${p.frame} in ${p.space}.` }),
+  frameRevoked: (p) => ({ title: "Frame switched off", body: `${p.actor ?? en.someone} switched off the Frame ${p.frame} in ${p.space}.` }),
   frameReactivated: (p) => ({ title: "Frame active again", body: `${p.actor ?? en.someone} reactivated the Frame ${p.frame} in ${p.space}.` }),
   frameRenamed: (p) => ({ title: "Frame renamed", body: `${p.actor ?? en.someone} renamed the Frame ${p.oldName} to ${p.newName}.` }),
   frameVideoSound: (p) => ({
@@ -113,7 +113,7 @@ export const en: PushTexts = {
   albumCoverNew: (p) => ({ title: "New cover", body: `${p.actor ?? en.someone} set a new cover for ${p.album}.` }),
   memberInvite: (p) => ({
     title: "Invitation to an album",
-    body: `You were invited as a member of the album ${p.album}. Accept under Activity.`,
+    body: `You were invited to the album ${p.album}. Accept under Activity.`,
   }),
   shareInvite: (p) => ({
     title: "Album shared with you",
@@ -135,7 +135,7 @@ export const en: PushTexts = {
     title: "New request",
     body: p.share
       ? `${p.name ?? en.someone} would like to see the album ${p.album} with their own Space. Answer under Activity.`
-      : `${p.name ?? en.someone} would like to become a member of the album ${p.album}. Answer under Activity.`,
+      : `${p.name ?? en.someone} would like to join the album ${p.album}. Answer under Activity.`,
   }),
   inviteDecided: (p) => {
     const verb = p.accepted ? "accepted" : "declined";
@@ -152,7 +152,7 @@ export const en: PushTexts = {
       title: "Request answered",
       body: p.share
         ? `Your request to see the album ${p.album} with your Space was ${verb}.`
-        : `Your request to become a member of the album ${p.album} was ${verb}.`,
+        : `Your request to join the album ${p.album} was ${verb}.`,
     };
   },
   inviteExpired: (p) => ({
@@ -167,7 +167,7 @@ export const en: PushTexts = {
     title: "Request expired",
     body: p.share
       ? `Your request to see the album ${p.album} with your Space wasn't answered.`
-      : `Your request to become a member of the album ${p.album} wasn't answered.`,
+      : `Your request to join the album ${p.album} wasn't answered.`,
   }),
 
   // --- Spaces and co-admins ---

@@ -68,8 +68,8 @@ const de = {
     body: `Der Frame ${p.frame} in ${p.space} ist jetzt verbunden und zeigt Fotos.`,
   }),
   frameRevoked: (p: { actor: Who; frame: string; space: string }): Notice => ({
-    title: "Frame widerrufen",
-    body: `${p.actor ?? de.someone} hat den Frame ${p.frame} in ${p.space} widerrufen.`,
+    title: "Frame abgeschaltet",
+    body: `${p.actor ?? de.someone} hat den Frame ${p.frame} in ${p.space} abgeschaltet.`,
   }),
   frameReactivated: (p: { actor: Who; frame: string; space: string }): Notice => ({
     title: "Frame wieder aktiv",
@@ -153,7 +153,7 @@ const de = {
   }),
   memberInvite: (p: { album: string }): Notice => ({
     title: "Einladung ins Album",
-    body: `Du wurdest als Member ins Album ${p.album} eingeladen. Annehmen unter Neuigkeiten.`,
+    body: `Du wurdest ins Album ${p.album} eingeladen. Annehmen unter Neuigkeiten.`,
   }),
   shareInvite: (p: { album: string }): Notice => ({
     title: "Album mit dir geteilt",
@@ -181,7 +181,7 @@ const de = {
     title: "Neue Anfrage",
     body: p.share
       ? `${p.name ?? de.someone} möchte das Album ${p.album} mit dem eigenen Space sehen. Antworten unter Neuigkeiten.`
-      : `${p.name ?? de.someone} möchte Member im Album ${p.album} werden. Antworten unter Neuigkeiten.`,
+      : `${p.name ?? de.someone} möchte im Album ${p.album} mitmachen. Antworten unter Neuigkeiten.`,
   }),
   inviteDecided: (p: { name: Who; album: string; share: boolean; accepted: boolean }): Notice => {
     const verb = p.accepted ? "angenommen" : "abgelehnt";
@@ -198,7 +198,7 @@ const de = {
       title: "Anfrage beantwortet",
       body: p.share
         ? `Deine Anfrage, das Album ${p.album} mit deinem Space zu sehen, wurde ${verb}.`
-        : `Deine Anfrage, Member im Album ${p.album} zu werden, wurde ${verb}.`,
+        : `Deine Anfrage, im Album ${p.album} mitzumachen, wurde ${verb}.`,
     };
   },
   inviteExpired: (p: { name: Who; album: string }): Notice => ({
@@ -213,7 +213,7 @@ const de = {
     title: "Anfrage abgelaufen",
     body: p.share
       ? `Deine Anfrage, das Album ${p.album} mit deinem Space zu sehen, wurde nicht beantwortet.`
-      : `Deine Anfrage, Member im Album ${p.album} zu werden, wurde nicht beantwortet.`,
+      : `Deine Anfrage, im Album ${p.album} mitzumachen, wurde nicht beantwortet.`,
   }),
 
   // --- Spaces and Co-Admins ---
