@@ -106,6 +106,10 @@ class TestBackend {
   static Future<List> patch(String table, String query, Map<String, Object?> body) async =>
       await _send('PATCH', '/rest/v1/$table?$query', body: body, headers: {'Prefer': 'return=representation'}) as List;
 
+  /// New rows as the server would (chapter 16: who may make voucher cards).
+  static Future<List> insert(String table, Object body) async =>
+      await _send('POST', '/rest/v1/$table', body: body, headers: {'Prefer': 'return=representation'}) as List;
+
   /// Size of a file in the avatars bucket (null: no such file).
   static Future<int?> avatarSize(String path) async {
     final res = await http.get(Uri.parse('$url/storage/v1/object/public/avatars/$path'));

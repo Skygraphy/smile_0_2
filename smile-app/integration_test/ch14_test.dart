@@ -98,7 +98,7 @@ void main() {
 
       /// Back to the start page (Alben), wherever the app is.
       Future<void> home() async {
-        for (var i = 0; i < 5 && find.byType(SpacesScreen).evaluate().isEmpty && c.find_('Neuigkeiten').evaluate().isEmpty; i++) {
+        for (var i = 0; i < 6 && (app.navigatorKey.currentState?.canPop() ?? false); i++) {
           await c.back();
         }
         await tapExact('Alben');
@@ -209,13 +209,18 @@ void main() {
       await c.snap();
 
       c.clearMessages();
-      c.step('Schon Frame-Admin', 'Weitere Person einladen antippen.', 'Bei Lena steht Schon Frame-Admin oder Admin; ein Tipp tut nichts.',
-          kind: 'Abzweigung', explain: 'Niemand wird doppelt eingeladen.');
+      c.step('Schon Frame-Admin', 'Weitere Person einladen antippen, im Suchfeld Lena eingeben, Lena antippen.',
+          'In der Liste steht nur Tom. Mit der Suche erscheint Lena ausgegraut mit Schon Frame-Admin oder Admin; ein Tipp tut nichts.',
+          kind: 'Abzweigung', explain: 'Wer schon Frame-Admin ist, steht gar nicht erst zur Wahl. Niemand wird doppelt eingeladen.');
       await tapExact('Weitere Person einladen');
       c.screen('Einladen');
+      await c.check('Nur Tom', () async => await c.waitFor('Tom Berger', seconds: 8) && c.find_('Lena Huber').evaluate().length == 1);
+      await c.typeInto('', 'Lena', logAs: 'Eingabefeld: Suche');
       await c.check('Hinweis', () => c.waitFor('~Schon Frame-Admin oder Admin', seconds: 8));
       await c.tap('Lena Huber', last: true, seconds: 3);
       await c.check('Server: keine neue Einladung', () async => (await frameInvites(wohnzimmer.id, lena.id)).length == 1);
+      await c.check('Server: Tom nicht eingeladen', () async => (await frameInvites(wohnzimmer.id, await TestBackend.userId(tomMail))).isEmpty);
+      await c.hideKeyboard();
       await c.snap();
       await backTo(FrameRemoteScreen);
       if (c.find_('Frame-Admin von Wohnzimmer').evaluate().isNotEmpty) await c.back();
@@ -288,7 +293,7 @@ void main() {
       await until(FrameRemoteScreen, () => tapExact('Kinderzimmer'));
       c.screen('Fernbedienung');
       await c.letLoad(seconds: 2);
-      await c.check('Bedienung am Frame', () => c.waitFor('Bedienung am Frame', seconds: 8));
+      await c.check('Bedienung am Frame', () => c.dragTo('Bedienung am Frame'));
       await menu();
       c.screen('Menü der Fernbedienung');
       await c.check('Kein Bild ändern', () => c.never('Bild ändern', seconds: 2));
