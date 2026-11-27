@@ -163,6 +163,9 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   Timer? _hideNewFrom;
   Set<String>? _knownIds;
 
+  /// The last full sync was still the first fill (see _apply).
+  bool _justFilled = false;
+
   int _shuffleSeed = DateTime.now().millisecondsSinceEpoch;
 
   // --- Clock and Nachtruhe --------------------------------------------
@@ -325,9 +328,18 @@ class _SlideshowScreenState extends State<SlideshowScreen> with WidgetsBindingOb
   void _apply(SyncResult result, {bool early = false}) {
     final all = result.allEntries.isNotEmpty ? result.allEntries : result.entries;
     final known = _knownIds;
-    var arrived = known == null || result.firstFill
+    // The sync right after the first fill still counts as filling: the
+    // first result may have held only the album shown, and the other
+    // albums' photos must not come as "N neue Fotos" (testsuite ch13,
+    // 2026-11-27).
+    var arrived = known == null || result.firstFill || _justFilled
         ? const <CachedMediaEntry>[]
         : all.where((e) => !known.contains(e.mediaItemId)).toList();
+    if (result.firstFill) {
+      _justFilled = true;
+    } else if (!early) {
+      _justFilled = false;
+    }
     if (early) {
       _heldArrived.addAll(arrived);
       arrived = const [];

@@ -118,7 +118,7 @@ void main() {
           await c.waitFor('Kostenlos', seconds: 10) && await c.waitFor('~Mit dem ersten Frame beginnen 2 Monate Probezeit', seconds: 1));
       await c.check('Server: noch keine Probezeit', () async =>
           (await TestBackend.select('space_plans', 'select=space_id')).isEmpty);
-      await c.check('Space-Seite', () => below('Frame verbinden'));
+      await c.check('Space-Seite', () => below('Noch kein Frame'));
       await c.check('Noch kein Frame', () => c.waitFor('Noch kein Frame', seconds: 3));
       await c.snap();
 

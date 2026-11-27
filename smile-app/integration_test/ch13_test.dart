@@ -111,7 +111,12 @@ void main() {
       /// A switch row by its title (scrolled into sight first).
       Future<void> flip(String title) async {
         final tile = find.widgetWithText(SwitchListTile, title);
-        await scrollTo(tile);
+        // The switch may lie above (e.g. Beim Anhalten weiter zoomen): try down, then up.
+        try {
+          await scrollTo(tile);
+        } on StateError {
+          await scrollTo(tile, by: -300);
+        }
         await tester.tap(tile, warnIfMissed: false);
         c.logTap(title);
         await c.settle();

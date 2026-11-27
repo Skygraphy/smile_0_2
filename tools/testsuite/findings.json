@@ -403,5 +403,12 @@
     "title": "Heute vor einem Jahr: Hinweis veraltet",
     "detail": "Unter dem Schalter stand noch „laufen heute zuerst“. Seit 25.11. kommen diese Fotos als jedes 10. Bild dazwischen; der Hinweis sagt das jetzt (auch auf Englisch).",
     "status": "behoben"
+  },
+  {
+    "no": 52,
+    "chapter": "ch13",
+    "title": "Frame: „neue Fotos“ gleich nach dem Verbinden",
+    "detail": "Direkt nach dem Verbinden stand am Frame „N neue Fotos … antippen“, obwohl beim ersten Laden kein Hinweis kommen soll. Das erste Laden kannte manchmal nur das gerade laufende Album; beim nächsten Abgleich zählten die Fotos der anderen Alben als neu. Jetzt zählt auch dieser Abgleich noch zum ersten Laden.",
+    "status": "behoben"
   }
 ]

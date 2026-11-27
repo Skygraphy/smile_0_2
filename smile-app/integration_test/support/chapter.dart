@@ -304,6 +304,47 @@ class Chapter {
     return find_(what).hitTestable().evaluate().isNotEmpty;
   }
 
+  /// [what] is on screen and not faded out: a text inside a fully
+  /// transparent AnimatedOpacity/Opacity/FadeTransition does not count (the
+  /// Frame keeps its "Angehalten"/"Läuft weiter" sign in the tree, invisible).
+  bool visibleNow(String what) {
+    for (final element in find_(what).evaluate()) {
+      var hidden = false;
+      element.visitAncestorElements((a) {
+        final w = a.widget;
+        if ((w is AnimatedOpacity && w.opacity == 0) ||
+            (w is Opacity && w.opacity == 0) ||
+            (w is FadeTransition && w.opacity.value < 0.05)) {
+          hidden = true;
+          return false;
+        }
+        return true;
+      });
+      if (!hidden) return true;
+    }
+    return false;
+  }
+
+  /// [what] becomes visible (see [visibleNow]) within [seconds].
+  Future<bool> showsUp(String what, {double seconds = 5}) async {
+    final end = DateTime.now().add(Duration(milliseconds: (seconds * 1000).round()));
+    while (DateTime.now().isBefore(end)) {
+      if (visibleNow(what)) return true;
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    return visibleNow(what);
+  }
+
+  /// [what] does not become visible for [seconds] (see [visibleNow]).
+  Future<bool> neverShows(String what, {double seconds = 5}) async {
+    final end = DateTime.now().add(Duration(milliseconds: (seconds * 1000).round()));
+    while (DateTime.now().isBefore(end)) {
+      await tester.pump(const Duration(milliseconds: 200));
+      if (visibleNow(what)) return false;
+    }
+    return true;
+  }
+
   /// [what] does not show up for [seconds] (for things that must stay away).
   Future<bool> never(String what, {double seconds = 15}) async {
     final end = DateTime.now().add(Duration(milliseconds: (seconds * 1000).round()));

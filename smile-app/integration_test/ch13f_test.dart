@@ -112,13 +112,13 @@ void main() {
           'Antippen hält an: auch wer nur zuschaut, kann ein Foto anhalten und in Ruhe ansehen. Nach 10 Minuten läuft es von selbst weiter.',
           checks: () async {
         await tapScreen();
-        await c.check('Angehalten', () => c.waitFor('Angehalten', seconds: 3));
-        await c.check('Hinweis: nochmal tippen', () => c.waitFor('Nochmal tippen, dann geht es weiter', seconds: 1));
+        await c.check('Angehalten', () => c.showsUp('Angehalten', seconds: 3));
+        await c.check('Hinweis: nochmal tippen', () => c.showsUp('Nochmal tippen, dann geht es weiter', seconds: 1));
       }, then: () async {
         await own('Am Tablet: nochmal tippen', 'Noch einmal auf das Bild tippen.', 'Kurz Läuft weiter, die Diashow geht weiter.',
             'Der zweite Tipp lässt es weiterlaufen.', () async {
           await tapScreen();
-          await c.check('Läuft weiter', () => c.waitFor('Läuft weiter', seconds: 3));
+          await c.check('Läuft weiter', () => c.showsUp('Läuft weiter', seconds: 3));
         });
       });
 
@@ -128,7 +128,7 @@ void main() {
         await c.check('Einstellung angekommen', () => eventually(() async => (await row())['easy_stop'] == false, seconds: 10));
         await c.letLoad(seconds: 3);
         await tapScreen();
-        await c.check('Nicht angehalten', () => never('Angehalten', seconds: 4));
+        await c.check('Nicht angehalten', () => c.neverShows('Angehalten', seconds: 4));
       });
 
       // ================================================================ Neue Fotos
@@ -144,7 +144,7 @@ void main() {
             'Ein Tipp zeigt, was neu ist; danach geht die Diashow wie vorher weiter.', () async {
           await tapScreen();
           await c.check('Hinweis weg', () => c.gone('~2 neue Fotos', seconds: 5));
-          await c.check('Nicht angehalten', () => never('Angehalten', seconds: 2));
+          await c.check('Nicht angehalten', () => c.neverShows('Angehalten', seconds: 2));
           await c.letLoad(seconds: 2);
         });
       });
@@ -156,10 +156,15 @@ void main() {
       });
 
       // ================================================================ Heute vor einem Jahr
-      await after(5, 'Am Tablet: Heute vor einem Jahr', 'Am Tablet warten, bis der Sonnenuntergang kommt.',
+      await after(5, 'Am Tablet: Heute vor einem Jahr', 'Am Tablet den Hinweis auf das neue Foto antippen, dann warten, bis der Sonnenuntergang kommt.',
           'Unten links: Heute vor einem Jahr · und das Jahr.',
-          'Das Foto kommt heute immer wieder als jedes 10. Bild dazwischen.',
+          'Das Foto kommt heute immer wieder als jedes 10. Bild dazwischen. Solange ein Hinweis auf Neues steht, wartet dieser Hinweis, damit sich unten nichts überlappt.',
           checks: () async {
+        // The sunset arrives as a new photo: its hint first (it hides the pill).
+        if (await eventually(() => c.find_('antippen').evaluate().isNotEmpty, seconds: 60)) {
+          await tapScreen();
+          await c.letLoad(seconds: 2);
+        }
         await c.check('Hinweis unten links', () => eventually(() => c.find_('~Heute vor einem Jahr').evaluate().isNotEmpty, seconds: 240));
       });
 
