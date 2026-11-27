@@ -168,7 +168,8 @@ void main() {
       int page() => tester.widget<PageView>(find.byType(PageView)).controller!.page!.round();
 
       Future<void> swipe({required bool left}) async {
-        await tester.fling(find.byType(PageView), Offset(left ? -600 : 600, 0), 1500);
+        // Slowly, like a finger: one page per swipe (a fling skipped pages).
+        await tester.timedDrag(find.byType(PageView), Offset(left ? -300 : 300, 0), const Duration(milliseconds: 600));
         c.logTap(left ? 'Nach links wischen' : 'Nach rechts wischen');
         await c.settle();
         await tester.pump(const Duration(milliseconds: 600));
@@ -430,10 +431,10 @@ void main() {
       await c.check('Vorschau', () => c.waitFor('Senden', seconds: 10));
       await c.snap();
 
-      c.step('Geteilte Fotos senden', 'Senden antippen.',
+      c.step('Geteilte Fotos senden', 'Rechts unten auf den Pfeil (Senden) tippen.',
           'Das Album Sommerurlaub 2026 öffnet sich; die zwei Fotos kommen unten dazu.',
           explain: 'Gesendet wird wie immer über die Warteschlange, auch wenn Smile gleich geschlossen wird.');
-      await tapExact('Senden');
+      await c.tap('Senden', twice: true);
       c.screen('Album');
       await c.check('Album offen', () => eventually(() => find.byType(ChannelFeedScreen).evaluate().isNotEmpty, seconds: 10));
       await c.check('Server: drei Fotos im Sommerurlaub', () => eventually(() async => (await items(summer)).length == 3, seconds: 90));

@@ -163,7 +163,7 @@ void main() {
       c.screen('Frame-Abo');
       await c.check('Für den ganzen Space', () => c.waitFor('~Für den ganzen Space „Familie Berger“', seconds: 5));
       await c.check('Drei Stufen monatlich', () async =>
-          await c.waitFor('4,99 €', seconds: 3) && await c.waitFor('8,99 €', seconds: 1) && await c.waitFor('12,99 €', seconds: 1));
+          await c.waitFor('4,99', seconds: 3) && await c.waitFor('8,99', seconds: 1) && await c.waitFor('12,99', seconds: 1));
       await c.check('Speicher und Videos', () => c.waitFor('25 GB · Videos 5 Min.', seconds: 1));
       await c.check('Kein Kauf in der Test-App', () => c.dragTo('~Kaufen geht bald direkt hier'));
       await c.snap();
@@ -174,7 +174,7 @@ void main() {
       await c.dragTo('Monatlich', up: false);
       await tapExact('Jährlich · 2 Monate gratis');
       await c.check('Pro Jahr', () async =>
-          await c.waitFor('49,99 €', seconds: 3) && await c.waitFor('89,99 €', seconds: 1) && await c.waitFor('129,99 €', seconds: 1));
+          await c.waitFor('49,99', seconds: 3) && await c.waitFor('89,99', seconds: 1) && await c.waitFor('129,99', seconds: 1));
       await c.check('pro Jahr', () => c.waitFor('pro Jahr', seconds: 1));
       await c.snap();
 

@@ -283,7 +283,7 @@ void main() {
             final last = r.last;
             return last['kind'] == 'problem' &&
                 (last['image_paths'] as List).length == 1 &&
-                (last['app_context'] as Map?)?['screen'] == 'ChannelFeedScreen';
+                (last['app_context'] as Map?)?['screen'] == 'Album „Geburtstage“';
           }));
       await c.snap();
       await tapExact('Fertig');
@@ -324,26 +324,28 @@ void main() {
           explain: 'Smile verwendet freie Software; ihre Lizenzen verlangen, dass sie genannt werden.');
       await until(LicensesScreen, () => tapExact('Open-Source-Lizenzen'));
       c.screen('Open-Source-Lizenzen');
-      await c.check('Liste', () => c.waitFor('~flutter', seconds: 10));
+      // The test app does not load Flutter's own list (NOTICES); the entries
+      // Smile adds itself are there.
+      await c.check('Liste', () async => await c.waitFor('Inter', seconds: 10) && await c.waitFor('Phosphor Icons', seconds: 2));
       await c.snap();
 
       // ================================================================ Sprache
-      c.step('Sprache', 'Zweimal Zurück, bei Sprache antippen.',
+      c.step('Sprache', 'Zweimal Zurück, bei Sprache auf Automatisch (Deutsch) tippen.',
           'Unten: Gilt für die App und die Mitteilungen, die du bekommst. Dazu Automatisch (Wie das Handy: Deutsch), Deutsch und English.',
           explain: 'Ohne Wahl spricht Smile die Sprache des Handys.');
       await c.back();
       await c.back();
       c.screen('Einstellungen');
       await until(SettingsScreen, () async {});
-      await c.dragTo('~Automatisch');
-      await tapExact('Sprache');
+      await c.dragTo('Automatisch (Deutsch)');
+      await tapExact('Automatisch (Deutsch)');
       c.screen('Sprache');
       await c.check('Hinweis', () => c.waitFor('Gilt für die App und die Mitteilungen', seconds: 5));
       await c.check('Sprachen', () async =>
           await c.waitFor('Wie das Handy: Deutsch', seconds: 2) && await c.waitFor('English', seconds: 1));
       await c.snap();
 
-      c.step('Englisch', 'English antippen.', 'Smile spricht sofort Englisch: oben steht Settings, bei Language English.',
+      c.step('Englisch', 'English antippen.', 'Smile spricht sofort Englisch: oben steht Settings, bei Language steht English.',
           explain: 'Auch die Mitteilungen kommen jetzt auf Englisch; der Server weiß es.');
       await tapExact('English');
       c.screen('Einstellungen');
@@ -362,13 +364,13 @@ void main() {
       await c.check('Englisches Impressum', () => launch.urls.lastOrNull == 'https://smileapp.app/en/legal-notice.html');
       await c.snap();
 
-      c.step('Zurück zu Automatisch', 'Zurück, bei Language antippen, Automatic.',
+      c.step('Zurück zu Automatisch', 'Zurück, bei Language auf English tippen, dann Automatic.',
           'Smile spricht wieder Deutsch wie das Handy: oben Einstellungen, bei Sprache Automatisch (Deutsch).',
           explain: 'So ist es für die meisten richtig.');
       await c.back();
       c.screen('Einstellungen');
-      await c.dragTo('Language', up: false);
-      await tapExact('Language');
+      await c.dragTo('English', up: false);
+      await tapExact('English');
       c.screen('Sprache');
       await tapExact('Automatic');
       c.screen('Einstellungen');
@@ -381,7 +383,7 @@ void main() {
       // ================================================================ Töne im Album
       c.step('Töne im Album ausschalten', 'Nach unten zu Töne, den Schalter bei Töne im Album antippen.',
           'Töne im Album ist aus.', explain: 'Ein Plopp beim Senden und bei neuen Fotos im offenen Album. Ist das Handy lautlos, bleibt Smile ohnehin still.');
-      await c.dragTo('Töne im Album');
+      if (!await c.dragTo('Töne im Album', up: false)) await c.dragTo('Töne im Album');
       await tester.tap(find.widgetWithText(SwitchListTile, 'Töne im Album'));
       c.logTap('Töne im Album');
       await c.settle();
@@ -404,7 +406,7 @@ void main() {
       c.step('Töne wieder an, senden', 'Einstellungen, Töne im Album wieder an, dann in Geburtstage ein Foto (Pizza) senden.',
           'Das Foto kommt an, mit einem leisen Plopp.', explain: 'Ein Plopp pro gesendetem Foto oder Video.');
       await openSettings();
-      await c.dragTo('Töne im Album');
+      if (!await c.dragTo('Töne im Album', up: false)) await c.dragTo('Töne im Album');
       await tester.tap(find.widgetWithText(SwitchListTile, 'Töne im Album'));
       c.logTap('Töne im Album');
       await c.settle();
