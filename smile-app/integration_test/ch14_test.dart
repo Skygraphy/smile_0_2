@@ -16,7 +16,6 @@ import 'package:smile_app/screens/space_info_screen.dart';
 import 'package:smile_app/screens/spaces_screen.dart';
 import 'package:smile_app/services/frame_controls.dart';
 import 'package:smile_app/services/frame_service.dart';
-import 'package:smile_design_system/smile_design_system.dart';
 
 import 'support/backend.dart';
 import 'support/chapter.dart';
@@ -150,11 +149,11 @@ void main() {
 
       // ================================================================ Lena wird Frame-Admin von Wohnzimmer
       c.step('Ausgangslage', 'Unten auf Frames, dann Wohnzimmer, nach unten zu Frame-Admin.',
-          'Die Fernbedienung von Wohnzimmer. Unter FRAME-ADMIN: Bestimmt bei diesem Frame alles … und Frame-Admin einladen.',
+          'Die Fernbedienung von Wohnzimmer. Unter FRAME-ADMIN: Jemand, der diesen Frame mitbestimmt … und Frame-Admin einladen.',
           explain: 'Noch hat niemand außer Anna bei diesem Frame etwas zu sagen.');
       await openFrame('Wohnzimmer');
       await c.dragTo('Frame-Admin einladen');
-      await c.check('Erklärung', () => c.waitFor('~Bestimmt bei diesem Frame alles', seconds: 3));
+      await c.check('Erklärung', () => c.waitFor('~Jemand, der diesen Frame mitbestimmt', seconds: 3));
       await c.check('Server: noch niemand', () async => (await frameInvites(wohnzimmer.id, lena.id)).isEmpty);
       await c.snap();
 

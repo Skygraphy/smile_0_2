@@ -269,10 +269,10 @@ void main() {
       await c.snap();
 
       c.clearMessages();
-      c.step('Über den Knopf Co-Admin', 'Ganz oben auf den Knopf Co-Admin tippen, Paul suchen und antippen.', 'Paul ist wieder eingeladen.',
+      c.step('Über den Knopf Co-Admin einladen', 'Ganz oben auf den Knopf Co-Admin einladen tippen, Paul suchen und antippen.', 'Paul ist wieder eingeladen.',
           kind: 'Abzweigung', explain: 'Derselbe Weg über den Knopf oben.');
       await toTop();
-      await tapExact('Co-Admin', first: true);
+      await tapExact('Co-Admin einladen', first: true);
       c.screen('Einladen');
       await pick('Paul Berger');
       c.screen('Space');
@@ -578,18 +578,18 @@ void main() {
       await home();
       c.clearMessages();
       c.step('Geteilt mit', 'Auf der Startseite Sommerurlaub 2026 öffnen, oben auf den Namen.',
-          'Die Seite des Albums, weiter unten Geteilt mit: Noch mit keinem anderen Space geteilt, darunter Mit einem Space teilen.',
+          'Die Seite des Albums, weiter unten Geteilt mit: Noch mit keinem anderen Space geteilt, darunter Mit anderem Space teilen.',
           explain: 'Ein Album lässt sich mit einem anderen Space teilen. Dort sieht man es nur an und auf den Frames, trägt aber nichts bei.');
       await openInfo('Sommerurlaub 2026');
       await scrollTo(c.find_('Noch mit keinem anderen Space geteilt'));
       await c.snap();
 
       c.clearMessages();
-      c.step('Mit Space teilen', 'Ganz oben auf den Knopf Mit Space teilen.',
-          'Mit einem Space teilen: Lena und Paul mit Verwaltet einen Space. Tom fehlt, er verwaltet keinen Space.',
+      c.step('Mit anderem Space teilen', 'Ganz oben auf den Knopf Mit anderem Space teilen.',
+          'Mit anderem Space teilen: Lena und Paul mit Verwaltet einen Space. Tom fehlt, er verwaltet keinen Space.',
           explain: 'Geteilt wird mit jemandem, der einen Space verwaltet. Er wählt beim Annehmen, mit welchem.');
       await toTop();
-      await tapExact('Mit Space teilen');
+      await tapExact('Mit anderem Space teilen', first: true);
       c.screen('Einladen');
       await c.check('Verwaltet einen Space', () => c.waitFor('~Verwaltet einen Space', seconds: 5));
       // Only in the sheet: the page behind lists Tom as a member.
@@ -626,11 +626,11 @@ void main() {
       await c.snap();
 
       c.clearMessages();
-      c.step('Lena nimmt an', 'Unten Mit einem Space teilen, Lena Huber. Lena nimmt an.',
+      c.step('Lena nimmt an', 'Unten Mit anderem Space teilen, Lena Huber. Lena nimmt an.',
           'Bei Geteilt mit steht Familie Huber: Sieht das Album, trägt nichts bei.',
           explain: 'Familie Huber sieht Sommerurlaub 2026 jetzt, auch auf ihren Frames.');
-      await scrollTo(c.find_('Mit einem Space teilen'));
-      await c.tap('Mit einem Space teilen');
+      await scrollTo(c.find_('Mit anderem Space teilen').last);
+      await c.tap('Mit anderem Space teilen', last: true);
       c.screen('Einladen');
       await c.tap('Lena Huber', last: true);
       c.screen('Album-Infos');
@@ -701,10 +701,10 @@ void main() {
       await c.snap();
 
       c.clearMessages();
-      c.step('Teilen per QR-Code', 'Mit einem Space teilen, QR-Code zeigen. Lena scannt ihn. Dann oben links zurück.',
+      c.step('Teilen per QR-Code', 'Mit anderem Space teilen, QR-Code zeigen. Lena scannt ihn. Dann oben links zurück.',
           'Familie Huber steht sofort bei Geteilt mit.', explain: 'Vor Ort gescannt, ohne weiteres Ja.');
-      await scrollTo(c.find_('Mit einem Space teilen'));
-      await c.tap('Mit einem Space teilen');
+      await scrollTo(c.find_('Mit anderem Space teilen').last);
+      await c.tap('Mit anderem Space teilen', last: true);
       c.screen('Einladen');
       await c.tap('QR-Code zeigen');
       c.screen('QR-Code');
@@ -719,11 +719,11 @@ void main() {
       await c.check('Familie Huber', () => c.waitFor('Sieht das Album, trägt nichts bei', seconds: 20));
 
       c.clearMessages();
-      c.step('Einladungslink zum Teilen', 'Mit einem Space teilen, Einladungslink teilen.',
+      c.step('Einladungslink zum Teilen', 'Mit anderem Space teilen, Einladungslink teilen.',
           'Android öffnet die Auswahl zum Teilen. Darin ein Link zum Teilen von Sommerurlaub 2026 und für den Notfall der Code.',
           kind: 'Abzweigung', explain: 'Wer den Link bekommt, braucht noch Annas Ja.');
-      await scrollTo(c.find_('Mit einem Space teilen'));
-      await c.tap('Mit einem Space teilen');
+      await scrollTo(c.find_('Mit anderem Space teilen').last);
+      await c.tap('Mit anderem Space teilen', last: true);
       c.screen('Einladen');
       await c.tap('Einladungslink teilen');
       c.screen('Album-Infos');
@@ -837,17 +837,17 @@ void main() {
       await home();
       c.clearMessages();
       c.step('Ein geteiltes Album', 'Auf der Startseite Bergtouren öffnen.',
-          'Das Album Bergtouren; unten statt des Plus der Knopf Member werden.',
+          'Das Album Bergtouren; unten statt des Plus der Knopf Mitmachen anfragen.',
           explain: 'Anna sieht Bergtouren jetzt nur noch, weil es mit Familie Berger geteilt ist. Mitmachen kann sie, wenn Lena zustimmt.');
       await until(ChannelFeedScreen, () => c.tap('Bergtouren'));
       c.screen('Album');
-      await c.check('Member werden', () => c.waitFor('Member werden', seconds: 10));
+      await c.check('Mitmachen anfragen', () => c.waitFor('Mitmachen anfragen', seconds: 10));
       await c.snap();
 
       c.clearMessages();
-      c.step('Member werden', 'Member werden antippen.', 'Der Knopf heißt jetzt Anfrage gesendet.',
+      c.step('Mitmachen anfragen', 'Mitmachen anfragen antippen.', 'Der Knopf heißt jetzt Anfrage gesendet.',
           explain: 'Lena entscheidet, ob Anna auch Fotos senden darf.');
-      await c.tap('Member werden');
+      await c.tap('Mitmachen anfragen');
       await c.check('Anfrage gesendet', () => c.waitFor('Anfrage gesendet', seconds: 8));
       await c.check('Server: Anfrage', () => eventually(() async => (await TestBackend.select('channel_membership_requests',
               'select=id&channel_id=eq.$mountains&user_id=eq.$annaId&direction=eq.request&status=eq.pending'))
@@ -855,10 +855,10 @@ void main() {
       await c.snap();
 
       c.clearMessages();
-      c.step('Anfrage zurücknehmen', 'Anfrage gesendet antippen.', 'Wieder Member werden.', kind: 'Abzweigung',
+      c.step('Anfrage zurücknehmen', 'Anfrage gesendet antippen.', 'Wieder Mitmachen anfragen.', kind: 'Abzweigung',
           explain: 'Die Anfrage lässt sich zurücknehmen.');
       await c.tap('Anfrage gesendet');
-      await c.check('Member werden', () => c.waitFor('Member werden', seconds: 8));
+      await c.check('Mitmachen anfragen', () => c.waitFor('Mitmachen anfragen', seconds: 8));
       await c.check('Server: keine Anfrage', () => eventually(() async => (await TestBackend.select('channel_membership_requests',
               'select=id&channel_id=eq.$mountains&user_id=eq.$annaId&direction=eq.request&status=eq.pending'))
           .isEmpty));

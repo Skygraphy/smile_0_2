@@ -128,7 +128,7 @@ void main() {
               'Möglichkeiten, Einfach bedienen ist gewählt. Weiter geht es erst mit einem Namen.',
           explain: 'Zuerst der Name, dann wer vor dem Frame sitzt. Danach richtet sich, welche Knöpfe der Frame zeigt.');
       await toTop();
-      await tapExact('Frame', first: true);
+      await tapExact('Frame verbinden', first: true);
       c.screen('Frame einrichten');
       await c.check('Frage nach dem Namen', () => c.waitFor('Wie soll der neue Frame heißen', seconds: 8));
       await c.check('Ohne Namen kein Weiter', () => c.gone('Ein anderes Gerät', seconds: 1));
@@ -148,7 +148,7 @@ void main() {
       c.step('Namen eingeben', 'Wieder auf Frame, dann Wohnzimmer eingeben.',
           'Unten erscheinen jetzt Ein anderes Gerät und Dieses Gerät.', explain: 'Mit einem Namen kann es weitergehen.');
       await toTop();
-      await tapExact('Frame', first: true);
+      await tapExact('Frame verbinden', first: true);
       c.screen('Frame einrichten');
       await c.typeInto('Name', 'Wohnzimmer');
       await c.hideKeyboard();

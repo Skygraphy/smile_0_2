@@ -170,7 +170,7 @@ void main() {
       await frameShows(7);
 
       c.clearMessages();
-      c.step('Pause', 'Auf den Pause-Knopf in der Mitte tippen.', 'Der Knopf zeigt jetzt Abspielen; der Frame hält an und zeigt Pause.',
+      c.step('Pause', 'Auf den Pause-Knopf in der Mitte tippen.', 'Unter dem Knopf steht jetzt Weiter abspielen; der Frame hält an und zeigt Pause.',
           explain: 'Praktisch, wenn ein Foto länger stehen bleiben soll.');
       await remote('Pause');
       await c.check('Abspielen-Knopf', () => eventually(() => find.byTooltip('Abspielen').evaluate().isNotEmpty, seconds: 3));
@@ -178,7 +178,7 @@ void main() {
       await frameShows(8);
 
       c.clearMessages();
-      c.step('Abspielen', 'Auf Abspielen tippen.', 'Wieder der Pause-Knopf; der Frame läuft weiter.', explain: 'Die Diashow geht weiter.');
+      c.step('Abspielen', 'Auf Abspielen tippen.', 'Wieder der Pause-Knopf mit Anhalten darunter; der Frame läuft weiter.', explain: 'Die Diashow geht weiter.');
       await remote('Abspielen');
       await c.check('Pause-Knopf', () => eventually(() => find.byTooltip('Pause').evaluate().isNotEmpty, seconds: 3));
       await c.snap();
@@ -213,8 +213,8 @@ void main() {
       c.step('Bedienstufe öffnen', 'Nach unten wischen und auf Bedienstufe (Nur zuschauen) tippen.',
           'Bedienung am Frame: die Erklärung, darunter die Stufen 1 bis 5 (Nur zuschauen ist gewählt) und weiter unten einzelne Schalter.',
           explain: 'Die App steuert den Frame immer vollständig. Die Stufe legt fest, was die Person vor dem Frame selbst tun darf.');
-      await tester.scrollUntilVisible(c.find_('Bedienstufe'), 300, scrollable: find.byType(Scrollable).first);
-      await until(FrameControlsScreen, () => c.tap('Bedienstufe'));
+      await tester.scrollUntilVisible(c.find_('Bedienung am Frame'), 300, scrollable: find.byType(Scrollable).first);
+      await until(FrameControlsScreen, () => c.tap('Bedienung am Frame'));
       c.screen('Bedienung am Frame');
       await c.check('Stufen', () => c.waitFor('Blättern', seconds: 5));
       await c.snap();

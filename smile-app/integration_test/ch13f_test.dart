@@ -106,10 +106,10 @@ void main() {
       });
       await TestBackend.signal('f0');
 
-      // ================================================================ Easy Stopping
+      // ================================================================ Antippen hält an
       await after(1, 'Am Tablet: antippen hält an', 'Am Tablet einmal auf das Bild tippen.',
           'In der Mitte kurz Angehalten mit Nochmal tippen, dann geht es weiter; danach unten rechts ein kleines Zeichen.',
-          'Easy Stopping: auch wer nur zuschaut, kann ein Foto anhalten und in Ruhe ansehen. Nach 10 Minuten läuft es von selbst weiter.',
+          'Antippen hält an: auch wer nur zuschaut, kann ein Foto anhalten und in Ruhe ansehen. Nach 10 Minuten läuft es von selbst weiter.',
           checks: () async {
         await tapScreen();
         await c.check('Angehalten', () => c.waitFor('Angehalten', seconds: 3));
@@ -122,7 +122,7 @@ void main() {
         });
       });
 
-      await after(2, 'Am Tablet: ohne Easy Stopping', 'Am Tablet auf das Bild tippen.', 'Nichts passiert, die Diashow läuft weiter.',
+      await after(2, 'Am Tablet: Antippen hält nicht an', 'Am Tablet auf das Bild tippen.', 'Nichts passiert, die Diashow läuft weiter.',
           'Ausgeschaltet hält ein Tipp nichts an (bei Nur zuschauen gibt es dann gar nichts zu tippen).', kind: 'Abzweigung',
           checks: () async {
         await c.check('Einstellung angekommen', () => eventually(() async => (await row())['easy_stop'] == false, seconds: 10));

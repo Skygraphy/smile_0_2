@@ -59,6 +59,8 @@ class SmileOverflowMenu extends StatelessWidget {
     final t = SmileTexts.of(context);
     PopupMenuItem<VoidCallback> item(IconData icon, String label, VoidCallback onTap, {String? hint}) => PopupMenuItem(
           value: onTap,
+          // More air around an entry with an explanation (Ernst 2026-11-27).
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: hint == null ? 0 : 10),
           child: Row(
             crossAxisAlignment: hint == null ? CrossAxisAlignment.center : CrossAxisAlignment.start,
             children: [

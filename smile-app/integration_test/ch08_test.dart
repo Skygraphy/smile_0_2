@@ -39,7 +39,7 @@ void main() {
         id: 'ch08',
         title: 'Frame-Einstellungen und Wiedergabe',
         intro: 'Anna richtet den Frame Wohnzimmer ein: Lieblingsbilder, was in welcher Reihenfolge läuft, Uhr, Nachtruhe, '
-            'welche Alben er zeigt, Name und Bild. Sie widerruft ihn probeweise und aktiviert ihn wieder. Zum Schluss stellt '
+            'welche Alben er zeigt, Name und Bild. Sie schaltet ihn probeweise ab und wieder ein. Zum Schluss stellt '
             'Oma Hilde am Tablet selbst die Wiedergabe ein. Schritte am Tablet sind mit Am Tablet gekennzeichnet.');
     const version = String.fromEnvironment('SMILE_APP_VERSION', defaultValue: '0.0.1');
     await freshAnna(tester, c);
@@ -1072,7 +1072,7 @@ void main() {
       await c.typeInto('https://', mountainsUrl);
       await c.tap('Laden', last: true);
       c.screen('Frame-Seite');
-      await c.check('Fenster zu', () => c.gone('Bild-URL', seconds: 15));
+      await c.check('Fenster zu', () => c.gone('Internetadresse des Bildes', seconds: 15));
       await c.check('Server: neues Bild', () => newPicture(before));
       await c.hideKeyboard();
       await c.snap();
@@ -1106,26 +1106,26 @@ void main() {
       await c.check('Frame-Seite', () => eventually(() => find.byType(CreateFrameScreen).evaluate().isEmpty, seconds: 5));
 
       c.clearMessages();
-      c.step('Widerrufen: Frage', 'Frame widerrufen antippen.',
-          'Frame widerrufen? Der Frame verliert sofort jeden Zugriff und löscht seine Fotos.', explain: 'Zum Beispiel, wenn das Tablet verloren ging.');
-      await scrollTo(c.find_('Frame widerrufen'));
-      await c.tap('Frame widerrufen');
-      c.screen('Frame widerrufen?');
+      c.step('Abschalten: Frage', 'Frame abschalten antippen.',
+          'Frame abschalten? Der Frame verliert sofort jeden Zugriff und löscht seine Fotos.', explain: 'Zum Beispiel, wenn das Tablet verloren ging.');
+      await scrollTo(c.find_('Frame abschalten'));
+      await c.tap('Frame abschalten');
+      c.screen('Frame abschalten?');
       await c.check('Frage', () => c.waitFor('Der Frame verliert sofort jeden Zugriff', seconds: 3));
       await c.snap();
 
       c.clearMessages();
-      c.step('Widerrufen: Abbrechen', 'Abbrechen antippen.', 'Der Frame bleibt aktiv.', kind: 'Abzweigung', explain: 'Nichts passiert.');
+      c.step('Abschalten: Abbrechen', 'Abbrechen antippen.', 'Der Frame bleibt aktiv.', kind: 'Abzweigung', explain: 'Nichts passiert.');
       await c.tap('Abbrechen');
       c.screen('Frame-Seite');
       await c.check('Server: aktiv', () async => (await frameRow())['lifecycle_state'] == 'active');
       await c.snap();
 
       c.clearMessages();
-      c.step('Widerrufen: daneben tippen', 'Frame widerrufen, dann oben neben die Frage tippen.', 'Die Frage schließt sich, der Frame bleibt aktiv.',
+      c.step('Abschalten: daneben tippen', 'Frame abschalten, dann oben neben die Frage tippen.', 'Die Frage schließt sich, der Frame bleibt aktiv.',
           kind: 'Abzweigung', explain: 'Wie Abbrechen.');
-      await c.tap('Frame widerrufen');
-      c.screen('Frame widerrufen?');
+      await c.tap('Frame abschalten');
+      c.screen('Frame abschalten?');
       await c.waitFor('Der Frame verliert sofort jeden Zugriff', seconds: 3);
       await c.tapAt(const Offset(200, 100), 'Schließen');
       c.screen('Frame-Seite');
@@ -1134,27 +1134,27 @@ void main() {
       await c.snap();
 
       c.clearMessages();
-      c.step('Widerrufen', 'Frame widerrufen, dann Widerrufen.',
-          'Oben steht Widerrufen, unten Frame wieder aktivieren. Am Tablet steht: Dieser Frame wurde widerrufen.',
+      c.step('Abschalten', 'Frame abschalten, dann Abschalten.',
+          'Oben steht Abgeschaltet, unten Frame wieder einschalten. Am Tablet steht: Dieser Frame wurde abgeschaltet.',
           explain: 'Der Frame zeigt nichts mehr, bis er wieder aktiviert wird.');
-      await c.tap('Frame widerrufen');
-      c.screen('Frame widerrufen?');
-      await c.tap('Widerrufen', last: true);
+      await c.tap('Frame abschalten');
+      c.screen('Frame abschalten?');
+      await c.tap('Abschalten', last: true);
       c.screen('Frame-Seite');
-      await c.check('Server: widerrufen', () => saved('lifecycle_state', 'revoked'));
-      await scrollTo(c.find_('Frame wieder aktivieren'));
-      await c.check('Frame wieder aktivieren', () => c.waitFor('Frame wieder aktivieren', seconds: 5));
+      await c.check('Server: abgeschaltet', () => saved('lifecycle_state', 'revoked'));
+      await scrollTo(c.find_('Frame wieder einschalten'));
+      await c.check('Frame wieder einschalten', () => c.waitFor('Frame wieder einschalten', seconds: 5));
       await c.check('Kein Anderes Gerät verbinden', () => c.gone('Anderes Gerät verbinden', seconds: 1));
       await c.snap();
       await frameShows(10);
 
       c.clearMessages();
-      c.step('Wieder aktivieren', 'Frame wieder aktivieren antippen.',
-          'Wieder Aktiv und Frame widerrufen. Das Tablet lädt die Fotos neu und zeigt wieder die Diashow.',
+      c.step('Wieder aktivieren', 'Frame wieder einschalten antippen.',
+          'Wieder Aktiv und Frame abschalten. Das Tablet lädt die Fotos neu und zeigt wieder die Diashow.',
           explain: 'Ohne neues Koppeln: der Frame macht einfach weiter.');
-      await c.tap('Frame wieder aktivieren');
+      await c.tap('Frame wieder einschalten');
       await c.check('Server: aktiv', () => saved('lifecycle_state', 'active'));
-      await c.check('Frame widerrufen', () => c.waitFor('Frame widerrufen', seconds: 5));
+      await c.check('Frame abschalten', () => c.waitFor('Frame abschalten', seconds: 5));
       await c.snap();
       await frameShows(11);
 
@@ -1194,8 +1194,8 @@ void main() {
           explain: 'Ab Stufe 5 gibt es am Frame den Knopf Einstellungen mit derselben Wiedergabe wie in der App.');
       await backTo(FrameRemoteScreen);
       c.screen('Fernbedienung');
-      await scrollTo(c.find_('Bedienstufe'));
-      await until(FrameControlsScreen, () => c.tap('Bedienstufe'));
+      await scrollTo(c.find_('Bedienung am Frame'));
+      await until(FrameControlsScreen, () => c.tap('Bedienung am Frame'));
       c.screen('Bedienung am Frame');
       await tapExact('Alles selbst');
       await c.check('Server: Stufe 5', () => saved('control_level', 5));

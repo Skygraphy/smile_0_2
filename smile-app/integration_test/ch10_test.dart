@@ -176,7 +176,7 @@ void main() {
       await c.check('Verlauf', () => c.waitFor('Verlauf', seconds: 10));
       await c.check('Lena', () => c.waitFor('Lena Huber hat die Einladung ins Album Geburtstage angenommen.', seconds: 5));
       await c.check('Tom', () => c.waitFor('Tom Berger hat die Einladung ins Album Geburtstage angenommen.', seconds: 5));
-      await c.check('Wanderungen', () => c.waitFor('Du wurdest als Member ins Album Wanderungen eingeladen. Annehmen unter Neuigkeiten.', seconds: 5));
+      await c.check('Wanderungen', () => c.waitFor('Du wurdest ins Album Wanderungen eingeladen. Annehmen unter Neuigkeiten.', seconds: 5));
       await c.snap();
 
       c.clearMessages();
@@ -397,9 +397,9 @@ void main() {
       await home();
       c.clearMessages();
       c.step('Neue Anfrage', 'Nichts tun: Tom möchte zurück ins Album Geburtstage.',
-          'Mitteilung: Neue Anfrage, Tom Berger möchte Member im Album Geburtstage werden. Die Glocke wird korallfarben.',
+          'Mitteilung: Neue Anfrage, Tom Berger möchte im Album Geburtstage mitmachen. Die Glocke wird korallfarben.',
           explain: 'Korall heißt: Hier wartet jemand auf deine Antwort. Der Punkt allein heißt nur: Neues zum Lesen.');
-      const asked = 'Tom Berger möchte Member im Album Geburtstage werden. Antworten unter Neuigkeiten.';
+      const asked = 'Tom Berger möchte im Album Geburtstage mitmachen. Antworten unter Neuigkeiten.';
       final mark8 = pushes.length;
       await tom.insert('channel_membership_requests', {'channel_id': birthdays, 'user_id': tom.id, 'direction': 'request'});
       await c.check('Push', () => arrives(asked, from: mark8));
@@ -408,7 +408,7 @@ void main() {
 
       c.clearMessages();
       c.step('Anfrage in Neuigkeiten', 'Auf die Glocke tippen.',
-          'Oben unter Anfragen: Geburtstage, Tom Berger möchte Member werden, mit Häkchen und Kreuz. Unten im Verlauf: Neue Anfrage.',
+          'Oben unter Anfragen: Geburtstage, Tom Berger möchte mitmachen, mit Häkchen und Kreuz. Unten im Verlauf: Neue Anfrage.',
           explain: 'Die Anfrage bleibt oben stehen, bis Anna entschieden hat. Der Verlaufseintrag ist nur die Meldung dazu.');
       await openNews();
       await c.check('Anfragen', () => c.waitFor('Anfragen', seconds: 10));
@@ -434,7 +434,7 @@ void main() {
       await c.check('Server: Tom ist zurück', () => eventually(() async =>
           (await TestBackend.select('channel_members', 'select=user_id&channel_id=eq.$birthdays&user_id=eq.${tom.id}')).isNotEmpty));
       await c.check('Tom bekommt Bescheid',
-          () => eventually(() => hasEntry(tom.id, 'Deine Anfrage, Member im Album Geburtstage zu werden, wurde angenommen.')));
+          () => eventually(() => hasEntry(tom.id, 'Deine Anfrage, im Album Geburtstage mitzumachen, wurde angenommen.')));
       await c.check('Anna nicht', () async {
         await c.letLoad(seconds: 3);
         return pushes.skip(mark9).isEmpty;
@@ -447,10 +447,10 @@ void main() {
       await tray.cancelAll();
       c.clearMessages();
       c.step('Einladung ins Album', 'Nichts tun: Lena lädt Anna wieder in ihr Album Bergtouren ein.',
-          'Mitteilung: Einladung ins Album, Du wurdest als Member ins Album Bergtouren eingeladen. Annehmen unter Neuigkeiten. '
+          'Mitteilung: Einladung ins Album, Du wurdest ins Album Bergtouren eingeladen. Annehmen unter Neuigkeiten. '
               'Die Glocke wird korallfarben.',
           explain: 'Eine Einladung wartet auf Annas Antwort.');
-      const invited = 'Du wurdest als Member ins Album Bergtouren eingeladen. Annehmen unter Neuigkeiten.';
+      const invited = 'Du wurdest ins Album Bergtouren eingeladen. Annehmen unter Neuigkeiten.';
       final mark10 = pushes.length;
       await lena.edge('invite-channel-member', {'channel_id': mountains, 'user_id': annaId});
       await c.check('Push', () => arrives(invited, from: mark10));
@@ -460,7 +460,7 @@ void main() {
 
       c.clearMessages();
       c.step('Auf die Mitteilung tippen', 'Oben auf die Mitteilung tippen.',
-          'Neuigkeiten geht auf: unter Einladungen Bergtouren, Lena Huber lädt dich als Member ein, mit Häkchen und Kreuz.',
+          'Neuigkeiten geht auf: unter Einladungen Bergtouren, Lena Huber lädt dich in das Album ein, mit Häkchen und Kreuz.',
           explain: 'Die Mitteilung selbst führt an dieselbe Stelle wie ihr Eintrag im Verlauf.');
       await tapNotification(invited);
       c.screen('Neuigkeiten');

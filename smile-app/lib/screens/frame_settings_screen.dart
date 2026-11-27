@@ -139,7 +139,7 @@ class _FrameSettingsScreenState extends State<FrameSettingsScreen> with SyncRelo
         context,
         title: '${t.revokeFrame}?',
         message: t.revokeFrameMessage,
-        confirmLabel: t.frameRevoked,
+        confirmLabel: t.actionSwitchOff,
         destructive: true,
       );
       if (!confirmed) return;

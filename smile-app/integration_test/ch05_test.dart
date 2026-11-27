@@ -221,7 +221,7 @@ void main() {
       // ================================================================ Per Smile-Name
       c.clearMessages();
       c.step('Ausgangslage', 'Smile ist geöffnet, Anna ist auf der Seite des Albums Geburtstage.',
-          'Oben Einladen und Mit Space teilen. Bei den Personen nur Anna selbst (Du) als Admin.',
+          'Oben Person einladen und Mit anderem Space teilen. Bei den Personen nur Anna selbst (Du) als Admin.',
           explain: 'So endet Kapitel 4. Im Album ist bisher nur Anna.');
       await c.check('Nur Anna im Album', () async =>
           (await TestBackend.select('channel_members', 'select=user_id&channel_id=eq.$birthdays')).length == 1);
@@ -233,7 +233,7 @@ void main() {
           'Von unten erscheint In Geburtstage einladen: ein Suchfeld, der Hinweis, dass Anna in Smile noch niemanden kennt, '
               'und darunter Aus Kontakten, QR-Code zeigen, Einladungslink teilen und Per E-Mail einladen.',
           explain: 'Wie bei WhatsApp: zuerst die Leute, die man schon kennt, dann die anderen Wege.');
-      await c.tap('Einladen');
+      await c.tap('Person einladen');
       c.screen('Einladen');
       await c.check('Titel', () => c.waitFor('In Geburtstage einladen', seconds: 5));
       await c.check('Noch niemand bekannt', () => c.waitFor('Noch niemand, den du in Smile kennst', seconds: 5));
@@ -257,7 +257,7 @@ void main() {
           'Niemand gefunden. Fremde nur mit ganzem @Smile-Namen.',
           kind: 'Abzweigung',
           explain: 'Wen man noch nicht aus einem gemeinsamen Album kennt, findet man nicht über den Namen. So kann niemand einfach Fremde suchen.');
-      await c.tap('Einladen');
+      await c.tap('Person einladen');
       c.screen('Einladen');
       await c.typeInto('Name oder @Smile-Name', 'Paul');
       await c.hideKeyboard();
@@ -311,7 +311,7 @@ void main() {
 
       c.clearMessages();
       c.step('Paul nimmt an', 'Nichts tun: Paul nimmt die Einladung auf seinem Handy an.',
-          'Ohne Zutun steht Paul jetzt als Member in der Liste, oben 2 Personen.',
+          'Ohne Zutun steht Paul jetzt als Mitglied in der Liste, oben 2 Personen.',
           explain: 'Was Paul auf seinem Handy macht, kommt bei Anna von selbst an.');
       final paulInvite = (await requestOf(birthdays, paul.id))!['id'];
       await paul.patch('channel_membership_requests', 'id=eq.$paulInvite', {'status': 'accepted'});
@@ -322,7 +322,7 @@ void main() {
 
       c.clearMessages();
       c.step('Personenkarte', 'Auf Paul Berger tippen.',
-          'Von unten: Pauls Bild, sein Name, Member und Stellt Fotos und Videos ins Album. Darunter Aus dem Album entfernen.',
+          'Von unten: Pauls Bild, sein Name, Mitglied und Stellt Fotos und Videos ins Album. Darunter Aus dem Album entfernen.',
           explain: 'Jede Person in der Liste lässt sich antippen und zeigt, was ihre Rolle bedeutet.');
       await c.tap('Paul Berger');
       c.screen('Personenkarte');
@@ -398,7 +398,7 @@ void main() {
       c.step('QR-Code zeigen', 'Einladen, dann QR-Code zeigen.',
           'Eine Seite mit einem großen QR-Code, darunter ein Code wie K7P-2QX, eine Erklärung, Gilt 24 Stunden und Neuen Code erstellen.',
           explain: 'Für jemanden, der neben einem steht: Wer den QR-Code scannt, ist sofort im Album.');
-      await c.tap('Einladen');
+      await c.tap('Person einladen');
       c.screen('Einladen');
       await c.tap('QR-Code zeigen');
       c.screen('QR-Code');
@@ -420,7 +420,7 @@ void main() {
 
       c.clearMessages();
       c.step('Paul scannt den QR-Code', 'Paul hält sein Handy auf den QR-Code. Dann oben links zurück.',
-          'Auf der Seite des Albums steht Paul sofort als Member, ohne dass Anna etwas bestätigt.',
+          'Auf der Seite des Albums steht Paul sofort als Mitglied, ohne dass Anna etwas bestätigt.',
           explain: 'Wer den QR-Code scannt, steht neben Anna. Darum muss sie nicht noch einmal zustimmen.');
       final scanned = await paul.edge('redeem-invite-code', {'code': code, 'via': 'qr'});
       await c.check('Paul ist drin', () => scanned['status'] == 'joined');
@@ -436,7 +436,7 @@ void main() {
           'Android öffnet die Auswahl zum Teilen (WhatsApp, SMS und so weiter). Darin steht: Komm in mein Smile-Album Geburtstage! '
               'mit einem Link und für den Notfall der Code.',
           explain: 'Den Link kann Anna zum Beispiel per WhatsApp schicken. Wer ihn so bekommt, braucht noch ihr Ja.');
-      await c.tap('Einladen');
+      await c.tap('Person einladen');
       c.screen('Einladen');
       await c.tap('Einladungslink teilen');
       c.screen('Album-Infos');
@@ -447,12 +447,12 @@ void main() {
 
       c.clearMessages();
       c.step('Lena fragt an', 'Nichts tun: Lena hat den Link bekommen und tippt ihn an.',
-          'Bei den Personen erscheint Lena Huber mit Möchte Member werden, rechts ein Häkchen und ein Kreuz.',
+          'Bei den Personen erscheint Lena Huber mit Möchte mitmachen, rechts ein Häkchen und ein Kreuz.',
           explain: 'Über einen Link kommt man nicht sofort ins Album: Anna entscheidet.');
       final lenaAsk = await lena.edge('redeem-invite-code', {'code': code, 'via': 'typed'});
       await c.check('Anfrage im Server', () => lenaAsk['status'] == 'requested');
-      await c.check('Lena fragt', () => c.waitFor('Möchte Member werden', seconds: 20));
-      await c.check('Ganz zu lesen, nicht abgeschnitten', () => c.fullyShown('Möchte Member werden'));
+      await c.check('Lena fragt', () => c.waitFor('Möchte mitmachen', seconds: 20));
+      await c.check('Ganz zu lesen, nicht abgeschnitten', () => c.fullyShown('Möchte mitmachen'));
       await c.letLoad();
       await c.snap();
 
@@ -466,11 +466,11 @@ void main() {
 
       c.clearMessages();
       c.step('Anfrage annehmen', 'Lena fragt noch einmal. Diesmal rechts auf das Häkchen (Annehmen) tippen.',
-          'Lena steht jetzt als Member in der Liste, oben 3 Personen.',
+          'Lena steht jetzt als Mitglied in der Liste, oben 3 Personen.',
           explain: 'Lena ist im Album und kann Fotos und Videos senden.');
       final lenaAgain = await lena.edge('redeem-invite-code', {'code': code, 'via': 'typed'});
       await c.check('Zweite Anfrage', () => lenaAgain['status'] == 'requested');
-      await c.waitFor('Möchte Member werden', seconds: 20);
+      await c.waitFor('Möchte mitmachen', seconds: 20);
       await c.tap('Annehmen');
       await c.check('Lena im Album', () => eventually(() => isMember(birthdays, lena.id)));
       await c.check('3 Personen', () => c.waitFor('3 Personen', seconds: 8));
@@ -481,7 +481,7 @@ void main() {
       c.step('Per E-Mail: Abbrechen', 'Einladen, Per E-Mail einladen, dann Abbrechen.',
           'Zuerst fragt Smile nach der E-Mail-Adresse. Nach Abbrechen ist die Frage weg.', kind: 'Abzweigung',
           explain: 'Ohne Adresse passiert nichts.');
-      await c.tap('Einladen');
+      await c.tap('Person einladen');
       c.screen('Einladen');
       await c.tap('Per E-Mail einladen');
       c.screen('E-Mail-Frage');
@@ -495,7 +495,7 @@ void main() {
       c.step('Per E-Mail: ohne Smile', 'Einladen, Per E-Mail einladen, sophie.wagner@example.com eingeben, Einladen.',
           'Auf der Seite steht: Diese Person hat noch keinen Smile-Account.', kind: 'Abzweigung',
           explain: 'Per E-Mail geht es nur mit Leuten, die schon Smile haben. Für alle anderen gibt es den Link oder die Kontakte.');
-      await c.tap('Einladen');
+      await c.tap('Person einladen');
       c.screen('Einladen');
       await c.tap('Per E-Mail einladen');
       c.screen('E-Mail-Frage');
@@ -510,7 +510,7 @@ void main() {
       c.step('Per E-Mail einladen', 'Einladen, Per E-Mail einladen, tom.berger@example.com eingeben, Einladen.',
           'Der Hinweis ist weg. Bei den Personen steht Tom Berger mit Eingeladen · Annahme ausstehend.',
           explain: 'Tom hat Smile schon. Er findet die Einladung bei sich in den Neuigkeiten.');
-      await c.tap('Einladen');
+      await c.tap('Person einladen');
       c.screen('Einladen');
       await c.tap('Per E-Mail einladen');
       c.screen('E-Mail-Frage');
@@ -537,7 +537,7 @@ void main() {
       c.step('Kontakte: die Erklärung', 'Einladen, dann Aus Kontakten.',
           'Kontakte in Smile finden: was Smile mit dem Telefonbuch macht, unten Weiter und Nicht jetzt.',
           explain: 'Bevor Android nach dem Telefonbuch fragt, erklärt Smile, wozu.');
-      await c.tap('Einladen');
+      await c.tap('Person einladen');
       c.screen('Einladen');
       await c.tap('Aus Kontakten');
       c.screen('Kontakte');
@@ -556,7 +556,7 @@ void main() {
       c.step('Kontakte: nicht erlaubt', 'Einladen, Aus Kontakten, Weiter. Android fragt, ob Smile die Kontakte sehen darf: Nicht zulassen.',
           'Smile darf deine Kontakte noch nicht sehen. Du kannst es in den Einstellungen erlauben. Darunter Einstellungen öffnen.',
           kind: 'Abzweigung', explain: 'Ohne Erlaubnis sieht Smile nichts vom Telefonbuch.');
-      await c.tap('Einladen');
+      await c.tap('Person einladen');
       c.screen('Einladen');
       await c.tap('Aus Kontakten');
       c.screen('Kontakte');
@@ -577,7 +577,7 @@ void main() {
           'Die Kontakte: oben IN SMILE mit Paul, Lena (beide blass, Schon im Album) und Tom (Einladen), darunter NOCH NICHT IN SMILE '
               'von A bis Z, rechts eine Buchstabenleiste.',
           explain: 'Smile prüft nur verschlüsselt, wer schon Smile hat. Die Adressen selbst verlassen das Handy nicht.');
-      await c.tap('Einladen');
+      await c.tap('Person einladen');
       c.screen('Einladen');
       await c.tap('Aus Kontakten');
       c.screen('Kontakte');
@@ -714,14 +714,14 @@ void main() {
 
       c.clearMessages();
       c.step('Eine Einladung bekommen', 'Lena lädt Anna in ihr Album Wanderungen ein. Anna tippt oben auf Neuigkeiten.',
-          'Unter Einladungen: Wanderungen, Lena Huber lädt dich als Member ein, mit Häkchen und Kreuz.',
+          'Unter Einladungen: Wanderungen, Lena Huber lädt dich in das Album ein, mit Häkchen und Kreuz.',
           explain: 'Einladungen an einen selbst warten in den Neuigkeiten.');
       final invited = await lena.edge('invite-channel-member', {'channel_id': hiking, 'user_id': annaId});
       await c.check('Eingeladen', () => invited['status'] == 'invited');
       await c.tap('Neuigkeiten', seconds: 10);
       c.screen('Neuigkeiten');
-      await c.check('Einladung', () => c.waitFor('Lena Huber lädt dich als Member ein', seconds: 20));
-      await c.check('Ganz zu lesen, nicht abgeschnitten', () => c.fullyShown('Lena Huber lädt dich als Member ein'));
+      await c.check('Einladung', () => c.waitFor('Lena Huber lädt dich in das Album ein', seconds: 20));
+      await c.check('Ganz zu lesen, nicht abgeschnitten', () => c.fullyShown('Lena Huber lädt dich in das Album ein'));
       await c.snap();
 
       c.clearMessages();
@@ -742,13 +742,13 @@ void main() {
       await c.snap();
 
       c.clearMessages();
-      c.step('Code scannen', 'Oben rechts auf die drei Punkte, dann Code scannen.',
-          'Die Seite Code scannen: hier wäre das Kamerabild mit einem Rahmen, unten Code eintippen.',
+      c.step('Einladung scannen', 'Oben rechts auf die drei Punkte, dann Einladung scannen.',
+          'Die Seite Einladung scannen: hier wäre das Kamerabild mit einem Rahmen, unten Code eintippen.',
           explain: 'Mit der Kamera scannt man den QR-Code, den jemand zeigt. In der Test-App bleibt die Kamera aus.');
       await c.tap('Weitere Optionen');
       c.screen('Menü');
-      await c.tap('Code scannen');
-      c.screen('Code scannen');
+      await c.tap('Einladung scannen');
+      c.screen('Einladung scannen');
       await c.check('Code eintippen', () => c.waitFor('Code eintippen', seconds: 8));
       await c.snap();
 
@@ -763,18 +763,18 @@ void main() {
 
       c.clearMessages();
       c.step('Code eintippen: daneben tippen', 'OK, Code eintippen, dann oben neben die Frage tippen.',
-          'Die Frage schließt sich, wieder die Seite Code scannen.', kind: 'Abzweigung', explain: 'Nichts passiert.');
+          'Die Frage schließt sich, wieder die Seite Einladung scannen.', kind: 'Abzweigung', explain: 'Nichts passiert.');
       await c.tap('OK');
-      c.screen('Code scannen');
+      c.screen('Einladung scannen');
       await openCodeDialog();
       await c.tapAt(const Offset(200, 100), 'Schließen');
-      c.screen('Code scannen');
+      c.screen('Einladung scannen');
       await c.hideKeyboard();
       await c.check('Frage zu', () => c.gone('z. B.', seconds: 5));
       await c.snap();
 
       c.clearMessages();
-      c.step('Code scannen verlassen', 'Oben links zurück.', 'Wieder die Startseite.', kind: 'Abzweigung',
+      c.step('Einladung scannen verlassen', 'Oben links zurück.', 'Wieder die Startseite.', kind: 'Abzweigung',
           explain: 'Die Seite schließt sich.');
       await c.back();
       c.screen('Startseite');
@@ -783,13 +783,13 @@ void main() {
 
       final lenaCode = (await lena.edge('create-invite-code', {'kind': 'album_member', 'target_id': mountains}))['code'] as String;
       c.clearMessages();
-      c.step('Code eintippen', 'Drei Punkte, Code scannen, Code eintippen und Lenas Code für Bergtouren eingeben, OK.',
+      c.step('Code eintippen', 'Drei Punkte, Einladung scannen, Code eintippen und Lenas Code für Bergtouren eingeben, OK.',
           'Anfrage gesendet: Die Admins von Bergtouren entscheiden. Du bekommst Bescheid.',
           explain: 'Ein abgetippter Code kommt meist per Nachricht. Darum entscheidet Lena noch.');
       await c.tap('Weitere Optionen');
       c.screen('Menü');
-      await c.tap('Code scannen');
-      c.screen('Code scannen');
+      await c.tap('Einladung scannen');
+      c.screen('Einladung scannen');
       await openCodeDialog();
       await c.typeInto('z. B.', pretty(lenaCode));
       await c.tap('OK');
@@ -894,9 +894,9 @@ void main() {
       c.clearMessages();
       c.step('Ich wurde eingeladen', 'Ich wurde eingeladen antippen, Code eintippen, Lenas Code für Wanderungen eingeben, OK.',
           'Anfrage gesendet: Die Admins von Wanderungen entscheiden.',
-          explain: 'Ich wurde eingeladen führt auf dieselbe Seite wie Code scannen.');
+          explain: 'Ich wurde eingeladen führt auf dieselbe Seite wie Einladung scannen.');
       await c.tap('Ich wurde eingeladen');
-      c.screen('Code scannen');
+      c.screen('Einladung scannen');
       await openCodeDialog();
       await c.typeInto('z. B.', pretty(hikingCode));
       await c.tap('OK');
@@ -911,7 +911,7 @@ void main() {
       c.screen('Startseite (leer)');
       await c.tap('Neuigkeiten', seconds: 10);
       c.screen('Neuigkeiten');
-      await c.check('Annas Einladung', () => c.waitFor('Anna Berger lädt dich als Member ein', seconds: 20));
+      await c.check('Annas Einladung', () => c.waitFor('Anna Berger lädt dich in das Album ein', seconds: 20));
       await c.tap('Annehmen');
       await c.check('Meldung', () => c.waitFor('Geburtstage ist jetzt in deinen Alben', seconds: 8));
       await c.check('Tom im Album', () => eventually(() => isMember(birthdays, tom.id)));

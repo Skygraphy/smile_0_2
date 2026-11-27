@@ -224,9 +224,9 @@ void main() {
           'Jetzt zeigen auf der Seite des Frames wirkt sofort.', checks: () => c.check('Sommerurlaub', () => shows('Sommerurlaub 2026')));
       await after(9, 'Am Tablet: Album entfernt', 'Am Tablet hinschauen.', 'Der Frame zeigt wieder Geburtstage.',
           'Sommerurlaub 2026 ist nicht mehr auf dem Frame.', checks: () => c.check('Geburtstage', () => shows('Geburtstage')));
-      await after(10, 'Am Tablet: widerrufen', 'Am Tablet hinschauen.', 'Dieser Frame wurde widerrufen. Ein Admin des Space kann ihn in der Smile-App wieder aktivieren.',
+      await after(10, 'Am Tablet: abgeschaltet', 'Am Tablet hinschauen.', 'Dieser Frame wurde abgeschaltet. Ein Admin des Space kann ihn in der Smile-App wieder einschalten.',
           'Die Fotos sind vom Tablet gelöscht.',
-          checks: () => c.check('Widerrufen', () => eventually(() => c.find_('Dieser Frame wurde widerrufen').evaluate().isNotEmpty, seconds: 60)));
+          checks: () => c.check('Abgeschaltet', () => eventually(() => c.find_('Dieser Frame wurde abgeschaltet').evaluate().isNotEmpty, seconds: 60)));
       await after(11, 'Am Tablet: wieder aktiv', 'Am Tablet hinschauen.', 'Die Diashow läuft wieder mit den Fotos von Geburtstage.',
           'Das Tablet lädt die Fotos neu.', checks: () => c.check('Geburtstage', () => shows('Geburtstage', seconds: 120)));
       await after(12, 'Am Tablet: Alles selbst', 'Am Tablet lange auf den Bildschirm drücken.', 'Unten alle Knöpfe, ganz rechts Einstellungen.',

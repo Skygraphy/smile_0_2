@@ -1754,6 +1754,12 @@ abstract class SmileTexts {
   /// **'Frame abschalten'**
   String get revokeFrame;
 
+  /// No description provided for @actionSwitchOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Abschalten'**
+  String get actionSwitchOff;
+
   /// No description provided for @revokeFrameMessage.
   ///
   /// In de, this message translates to:

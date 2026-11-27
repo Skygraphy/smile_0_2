@@ -269,7 +269,7 @@ void main() {
         kind: 'Abzweigung', explain: 'Der Dialog geht zu, nichts wird geladen oder geändert.');
     await c.tap('Abbrechen');
     c.screen('Begrüßung');
-    await c.check('Dialog geschlossen', () => c.gone('Bild-URL', seconds: 3));
+    await c.check('Dialog geschlossen', () => c.gone('Internetadresse des Bildes', seconds: 3));
     await c.snap();
 
     c.step('Internetadresse: daneben tippen', 'Noch einmal Von einer Internetadresse laden wählen und oben neben den Dialog tippen.',
@@ -278,7 +278,7 @@ void main() {
     await openUrlDialog();
     await c.tapAt(const Offset(200, 90), 'Schließen');
     c.screen('Begrüßung');
-    await c.check('Dialog geschlossen', () => c.gone('Bild-URL', seconds: 3));
+    await c.check('Dialog geschlossen', () => c.gone('Internetadresse des Bildes', seconds: 3));
     await c.snap();
 
     c.step('Internetadresse: Bild laden', 'Von einer Internetadresse laden wählen, die Adresse eines Bildes eingeben und Laden antippen.',
@@ -289,7 +289,7 @@ void main() {
     await c.typeInto('https://', portraitUrl);
     await c.tap('Laden', last: true);
     c.screen('Begrüßung');
-    await c.check('Dialog geschlossen', () => c.gone('Bild-URL', seconds: 15));
+    await c.check('Dialog geschlossen', () => c.gone('Internetadresse des Bildes', seconds: 15));
     await c.hideKeyboard();
     await c.look();
     await c.check('Bild im Kreis (Frau, älter: gelb)', () => c.colorIn('SmileAvatar', '#f1c98b'));
@@ -406,7 +406,7 @@ void main() {
     await c.snap();
 
     // ---------------------------------------------------------------- Menü
-    c.step('Menü öffnen', 'Oben rechts auf die drei Punkte tippen.', 'Das Menü zeigt Code scannen und Einstellungen.',
+    c.step('Menü öffnen', 'Oben rechts auf die drei Punkte tippen.', 'Das Menü zeigt Einladung scannen und Einstellungen.',
         explain: 'Das Menü oben rechts gibt es auf jeder Hauptseite.');
     await c.tap('Weitere Optionen');
     c.screen('Menü');
@@ -417,7 +417,7 @@ void main() {
         kind: 'Abzweigung', explain: 'Ein Tipp daneben schließt das Menü ohne Aktion.');
     await c.tapAt(const Offset(100, 500), 'Menü schließen');
     c.screen('Startseite (leer)');
-    await c.check('Menü zu', () => c.gone('Code scannen', seconds: 3));
+    await c.check('Menü zu', () => c.gone('Einladung scannen', seconds: 3));
     await c.snap();
 
     c.step('Einstellungen', 'Drei Punkte, dann Einstellungen antippen.',
@@ -717,25 +717,25 @@ void main() {
 
     // ---------------------------------------------------------------- Videos senden
     c.step('Videos senden: Hoch', 'Zurück zu den Einstellungen und bei Videos senden Hoch antippen.',
-        'Darunter steht: 720p, sehr scharf, rund 24 MB pro Minute Video.',
+        'Darunter steht: Sehr scharf, rund 24 MB pro Minute Video.',
         kind: 'Abzweigung', explain: 'Bestimmt, wie stark Videos vor dem Senden verkleinert werden. Die Einstellung gilt nur für dieses Handy.');
     await c.back();
     c.screen('Einstellungen');
     await c.tap('Hoch');
-    await c.check('Hinweis 720p', () => c.waitFor('~720p, sehr scharf', seconds: 3));
+    await c.check('Hinweis 720p', () => c.waitFor('~Sehr scharf', seconds: 3));
     await c.check('Hoch koralle', () => c.colorIn('SegmentedButton<VideoQuality>', '#FF6F61', fx: 0.07, fy: 0.5));
     await c.snap();
 
-    c.step('Videos senden: Niedrig', 'Niedrig antippen.', 'Darunter steht: 360p, für kleine Bildschirme, rund 6 MB pro Minute.',
+    c.step('Videos senden: Niedrig', 'Niedrig antippen.', 'Darunter steht: Für kleine Bildschirme, rund 6 MB pro Minute.',
         kind: 'Abzweigung', explain: 'Kleinste Dateien, am schnellsten gesendet.');
     await c.tap('Niedrig');
-    await c.check('Hinweis 360p', () => c.waitFor('~360p', seconds: 3));
+    await c.check('Hinweis 360p', () => c.waitFor('~Für kleine Bildschirme', seconds: 3));
     await c.snap();
 
-    c.step('Videos senden: Mittel', 'Mittel antippen (so war es eingestellt).', 'Darunter steht wieder: Genau wie WhatsApp (480p).',
+    c.step('Videos senden: Mittel', 'Mittel antippen (so war es eingestellt).', 'Darunter steht wieder: Wie bei WhatsApp.',
         kind: 'Abzweigung', explain: 'Zurück auf den Standard, damit die folgenden Kapitel vom gleichen Stand ausgehen.');
     await c.tap('Mittel');
-    await c.check('Hinweis 480p', () => c.waitFor('~Genau wie WhatsApp', seconds: 3));
+    await c.check('Hinweis 480p', () => c.waitFor('~Wie bei WhatsApp', seconds: 3));
     await c.check('Mittel koralle', () => c.colorIn('SegmentedButton<VideoQuality>', '#FF6F61', fx: 0.38, fy: 0.5));
     await c.snap();
 

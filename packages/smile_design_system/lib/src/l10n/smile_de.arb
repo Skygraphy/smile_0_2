@@ -527,6 +527,7 @@
   },
   "removeFromFrameMessage": "Der Frame zeigt die Fotos dieses Albums dann nicht mehr. Das Album und seine Fotos bleiben erhalten.",
   "revokeFrame": "Frame abschalten",
+  "actionSwitchOff": "Abschalten",
   "revokeFrameMessage": "Der Frame verliert sofort jeden Zugriff und löscht seine Fotos. Du kannst ihn jederzeit wieder einschalten.",
   "reactivateFrame": "Frame wieder einschalten",
   "newsEmptyTitle": "Keine Neuigkeiten",

@@ -1037,6 +1037,9 @@ class SmileTextsDe extends SmileTexts {
   String get revokeFrame => 'Frame abschalten';
 
   @override
+  String get actionSwitchOff => 'Abschalten';
+
+  @override
   String get revokeFrameMessage =>
       'Der Frame verliert sofort jeden Zugriff und löscht seine Fotos. Du kannst ihn jederzeit wieder einschalten.';
 

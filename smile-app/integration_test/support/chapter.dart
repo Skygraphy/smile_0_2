@@ -304,6 +304,16 @@ class Chapter {
     return find_(what).hitTestable().evaluate().isNotEmpty;
   }
 
+  /// [what] does not show up for [seconds] (for things that must stay away).
+  Future<bool> never(String what, {double seconds = 15}) async {
+    final end = DateTime.now().add(Duration(milliseconds: (seconds * 1000).round()));
+    while (DateTime.now().isBefore(end)) {
+      await tester.pump(const Duration(milliseconds: 300));
+      if (find_(what).evaluate().isNotEmpty) return false;
+    }
+    return true;
+  }
+
   Future<bool> gone(String what, {double seconds = 5}) async {
     final sw = Stopwatch()..start();
     try {

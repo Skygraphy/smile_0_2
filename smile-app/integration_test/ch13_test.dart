@@ -3,7 +3,7 @@
 // in Kapitel 7 und 8 (pN vom Handy, fN vom Tablet).
 // Startet wie Kapitel 8: das Tablet ist der Frame Wohnzimmer (Nur
 // zuschauen) mit Sommerurlaub 2026 und Geburtstage, es läuft Geburtstage.
-// Neu seit 0.0.17: Easy Stopping, Hinweis und Ton bei neuen Fotos, kein
+// Neu seit 0.0.17: Antippen hält an, Hinweis und Ton bei neuen Fotos, kein
 // Hinweis beim ersten Laden, Heute vor einem Jahr, Kindersperre, Live
 // ansehen, Bild des Frames, Frame neu verbinden.
 import 'dart:async';
@@ -151,26 +151,26 @@ void main() {
       await c.snap();
       await frameShows(1);
 
-      // ================================================================ Easy Stopping
+      // ================================================================ Antippen hält an
       c.clearMessages();
-      c.step('Easy Stopping ausschalten', 'Bedienung am Frame öffnen und ganz oben Easy Stopping ausschalten.',
+      c.step('Antippen hält an: aus', 'Bedienung am Frame öffnen und ganz oben den Schalter Antippen hält an ausschalten.',
           'Der Schalter ist aus, darunter ist jetzt Eigene Auswahl gewählt.',
-          explain: 'Easy Stopping gehört zu jeder Bedienstufe. Ausgeschaltet weicht der Frame von Nur zuschauen ab, darum Eigene Auswahl.');
+          explain: 'Antippen hält an gehört zu jeder Bedienstufe. Ausgeschaltet weicht der Frame von Nur zuschauen ab, darum Eigene Auswahl.');
       await scrollTo(find.text('Bedienung am Frame'));
       await until(FrameControlsScreen, () => tapExact('Bedienung am Frame'));
       c.screen('Bedienung am Frame');
-      await flip('Easy Stopping');
-      await c.check('Server: Easy Stopping aus', () => saved('easy_stop', false));
+      await flip('Antippen hält an');
+      await c.check('Server: Antippen hält an aus', () => saved('easy_stop', false));
       await c.check('Server: Eigene Auswahl', () => saved('control_level', null));
-      await c.check('Schalter aus', () => !switchOn('Easy Stopping'));
+      await c.check('Schalter aus', () => !switchOn('Antippen hält an'));
       await c.snap();
       await frameShows(2);
 
       c.clearMessages();
-      c.step('Easy Stopping wieder ein', 'Easy Stopping wieder einschalten.', 'Der Schalter ist an, oben wieder Nur zuschauen.',
+      c.step('Antippen hält an: wieder ein', 'Den Schalter Antippen hält an wieder einschalten.', 'Der Schalter ist an, oben wieder Nur zuschauen.',
           explain: 'Alles wieder wie in Nur zuschauen.');
-      await flip('Easy Stopping');
-      await c.check('Server: Easy Stopping an', () => saved('easy_stop', true));
+      await flip('Antippen hält an');
+      await c.check('Server: Antippen hält an an', () => saved('easy_stop', true));
       await c.check('Server: wieder Stufe 1', () => saved('control_level', 1));
       await c.snap();
       await backTo(FrameRemoteScreen);
@@ -244,7 +244,7 @@ void main() {
 
       // ================================================================ Kindersperre
       c.clearMessages();
-      c.step('Code festlegen', 'Nach unten zu Am Frame entsperren, Code festlegen, 1234 eingeben, OK, noch einmal 1234, OK.',
+      c.step('Code festlegen', 'Nach unten zu Kindersperre, Code festlegen, 1234 eingeben, OK, noch einmal 1234, OK.',
           'Unten kurz Code gespeichert; dort steht jetzt Ein Code ist festgelegt, mit Code ändern und Code entfernen.',
           explain: 'Mit dem Code lässt sich am Frame alles freischalten, auch wenn Oma Hilde nur zuschaut. Die Testsuite prüft, dass am Server nur ein Hash liegt.');
       await scrollTo(find.text('Code festlegen'));

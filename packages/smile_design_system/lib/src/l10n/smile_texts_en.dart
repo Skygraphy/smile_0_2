@@ -1034,6 +1034,9 @@ class SmileTextsEn extends SmileTexts {
   String get revokeFrame => 'Switch off Frame';
 
   @override
+  String get actionSwitchOff => 'Switch off';
+
+  @override
   String get revokeFrameMessage =>
       'The Frame loses all access right away and deletes its photos. You can switch it back on at any time.';
 

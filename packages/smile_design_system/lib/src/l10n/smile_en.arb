@@ -276,6 +276,7 @@
   "removeFromFrameTitle": "Remove {album} from the Frame?",
   "removeFromFrameMessage": "The Frame won't show this album's photos anymore. The album and its photos are kept.",
   "revokeFrame": "Switch off Frame",
+  "actionSwitchOff": "Switch off",
   "revokeFrameMessage": "The Frame loses all access right away and deletes its photos. You can switch it back on at any time.",
   "reactivateFrame": "Switch Frame back on",
   "newsEmptyTitle": "No activity",

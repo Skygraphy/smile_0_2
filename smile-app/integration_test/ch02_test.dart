@@ -202,7 +202,7 @@ void main() {
       await c.snap();
 
       c.step('Menü: Album anlegen', 'Drei Punkte, Album anlegen, dann Abbrechen.',
-          'Dasselbe Fenster wie beim Knopf Album; nach Abbrechen entsteht kein Album.',
+          'Dasselbe Fenster wie beim Knopf Album anlegen; nach Abbrechen entsteht kein Album.',
           kind: 'Abzweigung', explain: 'Der dritte Weg zum selben Fenster.');
       await c.tap('Weitere Optionen');
       c.screen('Menü des Space');
@@ -363,7 +363,7 @@ void main() {
       await c.typeInto('https://', houseUrl);
       await c.tap('Laden', last: true);
       c.screen('Space');
-      await c.check('Fenster zu', () => c.gone('Bild-URL', seconds: 15));
+      await c.check('Fenster zu', () => c.gone('Internetadresse des Bildes', seconds: 15));
       await c.check('Neues Bild gespeichert', () async {
         for (var i = 0; i < 40; i++) {
           final now = (await space())['avatar_path'];
@@ -377,9 +377,9 @@ void main() {
       await c.snap();
 
       // ---------------------------------------------------------------- Alben anlegen
-      c.step('Album anlegen: Abbrechen', 'Auf den Knopf Album tippen, dann Abbrechen.', 'Das Fenster schließt sich, es entsteht kein Album.',
+      c.step('Album anlegen: Abbrechen', 'Auf den Knopf Album anlegen tippen, dann Abbrechen.', 'Das Fenster schließt sich, es entsteht kein Album.',
           kind: 'Abzweigung', explain: 'Abbrechen legt nichts an.');
-      await tapExact('Album');
+      await c.tap('Album anlegen');
       c.screen('Album anlegen');
       await c.waitFor('Anlegen', seconds: 3);
       await c.tap('Abbrechen', last: true);
@@ -388,10 +388,10 @@ void main() {
       await c.hideKeyboard();
       await c.snap();
 
-      c.step('Erstes Album anlegen', 'Auf den Knopf Album tippen, Urlaub 2026 eingeben und Anlegen antippen.',
+      c.step('Erstes Album anlegen', 'Auf den Knopf Album anlegen tippen, Urlaub 2026 eingeben und Anlegen antippen.',
           'Unter 1 Album steht Urlaub 2026.',
           explain: 'Ein Album gehört immer zu einem Space. Fotos und Videos werden in Alben gesendet, und ein Frame zeigt Alben.');
-      await tapExact('Album');
+      await c.tap('Album anlegen');
       c.screen('Album anlegen');
       await c.waitFor('Anlegen', seconds: 3);
       await c.typeInto('Name', 'Urlaub 2026');
@@ -426,7 +426,7 @@ void main() {
       await c.snap();
 
       c.step('Infos zum Album', 'Oben auf den Namen des Albums tippen.',
-          'Die Seite des Albums: Name mit Stift, Einladen und Mit Space teilen, die Personen (Anna) und unten Album löschen.',
+          'Die Seite des Albums: Name mit Stift, Person einladen und Mit anderem Space teilen, die Personen (Anna) und unten Album löschen.',
           explain: 'Wie in WhatsApp: ein Tipp auf den Namen öffnet die Infos.');
       await c.tap('Infos zum Album');
       c.screen('Album-Infos');
@@ -554,7 +554,7 @@ void main() {
       await c.typeInto('https://', beachUrl);
       await c.tap('Laden', last: true);
       c.screen('Album-Infos');
-      await c.check('Fenster zu', () => c.gone('Bild-URL', seconds: 15));
+      await c.check('Fenster zu', () => c.gone('Internetadresse des Bildes', seconds: 15));
       await c.check('Neues Titelbild gespeichert', () async {
         for (var i = 0; i < 40; i++) {
           final now = (await album('Sommerurlaub 2026'))['cover_path'];
@@ -591,7 +591,7 @@ void main() {
       await c.snap();
 
       // ---------------------------------------------------------------- Neues Album über das Menü
-      c.step('Menü der Startseite', 'Oben rechts auf die drei Punkte tippen.', 'Das Menü zeigt Neues Album, Code scannen und Einstellungen.',
+      c.step('Menü der Startseite', 'Oben rechts auf die drei Punkte tippen.', 'Das Menü zeigt Neues Album, Einladung scannen und Einstellungen.',
           kind: 'Abzweigung', explain: 'Wer einen Space verwaltet, kann auch von der Startseite aus ein Album anlegen.');
       await c.tap('Weitere Optionen');
       c.screen('Menü');
