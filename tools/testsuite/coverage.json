@@ -35,7 +35,10 @@
       "DH": "Bild ändern",
       "Die Hubers": "Space umbenennen",
       "WA · Wanderungen 2026": "Urlaub 2026",
-      "KL · Klettersteige": "Urlaub 2026"
+      "KL · Klettersteige": "Urlaub 2026",
+      "FE": "Bild ändern",
+      "Ferienhaus": "Space umbenennen",
+      "Lena Huber · Co-Admin": "Paul Berger"
     },
     "Space anlegen": {
       "Eingabefeld: Bitte gib einen Namen ein.": "Eingabefeld: Name"
@@ -48,7 +51,13 @@
       "Sommerurlaub 2026": "Infos zum Album",
       "WE · Weihnachten": "Infos zum Album",
       "GE · Geburtstage": "Infos zum Album",
-      "WA · Wanderungen 2026": "Infos zum Album"
+      "WA · Wanderungen 2026": "Infos zum Album",
+      "UR · Urlaub 2026 · Tippen für Infos und Personen": "Infos zum Album",
+      "Sommerurlaub 2026 · Tippen für Infos und Personen": "Infos zum Album",
+      "WE · Weihnachten · Tippen für Infos und Personen": "Infos zum Album",
+      "GE · Geburtstage · Tippen für Infos und Personen": "Infos zum Album",
+      "WA · Wanderungen 2026 · Tippen für Infos und Personen": "Infos zum Album",
+      "KL · Kletterkurs · Tippen für Infos und Personen": "Infos zum Album"
     },
     "Album-Infos": {
       "UR": "Bild ändern",
@@ -83,7 +92,8 @@
       "Noch keine Fotos": "Bildschirm antippen",
       "Erster Abend am Meer": "Bildschirm antippen",
       "Omas 80. Geburtstag": "Bildschirm antippen",
-      "Obst für alle": "Bildschirm antippen"
+      "Obst für alle": "Bildschirm antippen",
+      "Code-Kästchen": "Ziffer"
     },
     "Diashow-Auswahl": {
       "Code-Kästchen": "50"
@@ -100,7 +110,9 @@
     "Fernbedienung": {
       "Bedienung am Frame · Nur zuschauen": "Bedienstufe",
       "Geburtstage · läuft gerade": "Sommerurlaub 2026",
-      "Geburtstage": "Sommerurlaub 2026"
+      "Geburtstage": "Sommerurlaub 2026",
+      "WO": "Bild ändern",
+      "WA · Wanderungen · läuft gerade": "Sommerurlaub 2026"
     },
     "Frame: Album wählen": {
       "Geburtstage": "Sommerurlaub 2026"
@@ -120,10 +132,17 @@
       "Stube": "Frame umbenennen"
     },
     "Einstellungen": {
-      "Bevorzugter Frame · Wohnzimmer · Ein Tipp auf das Frame-Symbol im Album zeigt es dort sofort.": "Jedes Mal fragen"
+      "Bevorzugter Frame · Wohnzimmer · Ein Tipp auf das Frame-Symbol im Album zeigt es dort sofort.": "Jedes Mal fragen",
+      "AB": "Profilbild ändern"
     },
     "Frame: Einstellungen": {
       "Wie ein Foto (20 s)": "Wie ein Foto (10 s)"
+    },
+    "Album": {
+      "Screenshot gemacht · Stimmt hier etwas nicht?": "Melden"
+    },
+    "Foto": {
+      "Am Frame zeigen": "Jetzt am Frame zeigen"
     }
   },
   "Space": {
@@ -166,7 +185,10 @@
     "Lieblingsbilder": "Foto",
     "Spaces": "Familie Berger",
     "Space-Auswahl": "Familie Berger",
-    "Neuigkeiten": "Einladung beantwortet"
+    "Neuigkeiten": "Einladung beantwortet",
+    "Neues Album in …": "Familie Huber",
+    "In welches Album?": "Sommerurlaub 2026",
+    "Gutschein einlösen": "ändern"
   },
   "Frame-Code": {
     "Zurück": "ch08"
@@ -189,9 +211,30 @@
       "TIPP",
       "Verstanden",
       "Keine Tipps mehr"
+    ],
+    "Einstellungen (Englisch)": [
+      "English",
+      "About Smile"
+    ],
+    "Über Smile (Englisch)": [
+      "Legal notice"
+    ],
+    "Sprache (Englisch)": [
+      "Automatic"
     ]
   },
   "_sameAs": {
-    "Startseite (leer)": "Startseite"
+    "Startseite (leer)": "Startseite",
+    "Album (leer)": "Album",
+    "Foto": [
+      "Vollbild"
+    ],
+    "Video": [
+      "Foto",
+      "Vollbild"
+    ],
+    "Vollbild": [
+      "Foto"
+    ]
   }
 }

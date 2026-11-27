@@ -255,6 +255,15 @@ void main() {
       await c.check('Speichern', () => c.waitFor('Aufs Handy speichern', seconds: 1));
       await c.snap();
 
+      c.step('Mehr: daneben tippen', 'Oben neben das Menü tippen, dann wieder Mehr.', 'Das Menü schließt sich; danach ist es wieder offen.',
+          kind: 'Abzweigung', explain: 'Ein Tipp daneben schließt das Menü, ohne etwas zu tun.');
+      await c.tapAt(const Offset(200, 300), 'Menü schließen');
+      c.screen('Vollbild');
+      await c.check('Zu', () => c.gone('Teilen …', seconds: 3));
+      await more();
+      await c.check('Wieder offen', () => c.waitFor('Teilen …', seconds: 3));
+      await c.snap();
+
       c.step('Teilen', 'Teilen … antippen.',
           'Kurz Wird vorbereitet …, dann das Teilen-Menü von Android mit der Torte, etwa für WhatsApp oder eine E-Mail.',
           explain: 'Das Teilen-Menü gehört zu Android. Die Testsuite fängt ab, was Smile ihm übergibt: genau ein Foto.');
@@ -375,6 +384,22 @@ void main() {
           kind: 'Abzweigung', explain: 'Abbrechen speichert nichts.');
       await c.tap('Abbrechen', last: true);
       c.screen('Album');
+      await c.check('Nichts gespeichert', () async {
+        await c.letLoad(seconds: 1);
+        return gallery.isEmpty;
+      });
+      await c.snap();
+
+      c.step('Ganzes Album: daneben tippen', 'Noch einmal drei Punkte, Ganzes Album speichern, dann oben neben die Frage tippen.',
+          'Die Frage schließt sich, nichts wird gespeichert.', kind: 'Abzweigung', explain: 'Ein Tipp daneben wirkt wie Abbrechen.');
+      await c.tap('Weitere Optionen');
+      c.screen('Menü des Albums');
+      await tapExact('Ganzes Album speichern');
+      c.screen('Frage');
+      await c.waitFor('4 Fotos und Videos aufs Handy speichern?', seconds: 5);
+      await c.tapAt(const Offset(200, 100), 'Schließen');
+      c.screen('Album');
+      await c.check('Zu', () => c.gone('4 Fotos und Videos aufs Handy speichern?', seconds: 3));
       await c.check('Nichts gespeichert', () async {
         await c.letLoad(seconds: 1);
         return gallery.isEmpty;

@@ -198,6 +198,20 @@ void main() {
           await c.letLoad(seconds: 1);
         }
 
+        await own('Am Tablet: Code-Feld schließen', 'Oben links neben das Feld tippen, dann wieder lange auf die Uhr drücken.',
+            'Das Feld geht zu und beim langen Drücken wieder auf.', 'Wer sich vertippt hat oder es sich anders überlegt, schließt das Feld.',
+            kind: 'Abzweigung', () async {
+          await c.tapAt(const Offset(40, 40), 'Schließen');
+          await c.check('Zu', () => c.gone('Code eingeben', seconds: 3));
+          // As before the first opening: the Frame settles a moment before a long press opens it again.
+          await c.letLoad(seconds: 3);
+          for (var i = 0; i < 3 && c.find_('Code eingeben').evaluate().isEmpty; i++) {
+            await tester.longPressAt(clock);
+            c.logTap('Lange auf die Uhr');
+            await c.letLoad(seconds: 1.5);
+          }
+          await c.check('Wieder offen', () => c.waitFor('Code eingeben', seconds: 3));
+        });
         await own('Am Tablet: falscher Code', '0000 eintippen.', 'Falscher Code; das Feld bleibt offen.',
             'Nach drei falschen Versuchen muss man eine Minute warten.', kind: 'Abzweigung', () async {
           await digits('0000');

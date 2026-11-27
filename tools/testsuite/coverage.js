@@ -13,7 +13,7 @@ const rows = declared._rows ?? {};
 // page below is covered on its own screen.
 const overlays = declared._overlays ?? {};
 // The same page in another state (e.g. the start page while still empty):
-// its taps count for both.
+// its taps count for both. A list: several such pages (Foto, Video, Vollbild).
 const sameAs = declared._sameAs ?? {};
 
 const screens = new Map(); // screen -> Map(label -> {seen:[chapter,step], tested:[...], later})
@@ -56,7 +56,8 @@ for (const [screen, m] of screens) {
   for (const [label, e] of m) {
     if (ignored.has(label)) continue;
     if (overlays[screen] && !overlays[screen].some(p => label.startsWith(p))) continue;
-    const hit = taps.filter(t => (t.screen === screen || t.screen === sameAs[screen]) && matches(label, t.label, screen));
+    const same = [].concat(sameAs[screen] ?? []);
+    const hit = taps.filter(t => (t.screen === screen || same.includes(t.screen)) && matches(label, t.label, screen));
     const promise = Object.entries(declared[screen] ?? {}).find(([prefix]) => label.startsWith(prefix));
     let status = "offen", where = null;
     if (hit.length) { status = "geprüft"; where = [...new Set(hit.map(h => h.chapter))]; tested++; }

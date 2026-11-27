@@ -382,6 +382,20 @@ void main() {
       await c.snap();
 
       c.clearMessages();
+      c.step('Neues Album in …: daneben tippen', 'Oben neben die Frage tippen, dann noch einmal drei Punkte und Neues Album.',
+          'Die Frage schließt sich, nichts wird angelegt; danach ist sie wieder da.', kind: 'Abzweigung',
+          explain: 'Ein Tipp daneben bricht ab.');
+      await c.tapAt(const Offset(200, 100), 'Schließen');
+      c.screen('Startseite');
+      await c.check('Zu', () => c.gone('Neues Album in …', seconds: 3));
+      await c.tap('Weitere Optionen');
+      c.screen('Menü');
+      await c.tap('Neues Album');
+      c.screen('Neues Album in …');
+      await c.check('Wieder da', () => c.waitFor('Neues Album in …', seconds: 5));
+      await c.snap();
+
+      c.clearMessages();
       c.step('Album in Familie Huber', 'Familie Huber antippen, Kletterkurs eingeben und Anlegen antippen.',
           'Das Fenster zeigt in Familie Huber; danach öffnet sich das leere Album Kletterkurs.',
           explain: 'Das Album gehört Anna, liegt aber in Lenas Space. Anna verwaltet es selbst.');

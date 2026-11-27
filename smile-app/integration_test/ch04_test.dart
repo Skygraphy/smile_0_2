@@ -161,14 +161,14 @@ void main() {
       await c.check('Album offen', () => c.waitFor('Geburtstage', seconds: 10));
       await c.snap();
 
-      c.step('Foto öffnen', 'Auf den Herbstwald tippen.', 'Der Herbstwald füllt den Bildschirm, oben Zurück und das Zeichen für den Titel.',
+      c.step('Foto öffnen', 'Auf den Herbstwald tippen.', 'Der Herbstwald füllt den Bildschirm. Oben links Zurück, unten Knöpfe mit Wörtern: Titel, Löschen und Mehr.',
           explain: 'Im Album ist ein Foto zugeschnitten; hier ist es ganz zu sehen.');
       await tapItem(herbst, 'Foto');
       c.screen('Foto');
       await c.check('Großansicht mit Titel-Knopf', () => c.waitFor('Titel bearbeiten', seconds: 5));
       await c.snap();
 
-      c.step('Titel hinzufügen', 'Auf das Titel-Zeichen tippen, Herbst im Park eingeben und Speichern antippen.',
+      c.step('Titel hinzufügen', 'Unten auf Titel tippen, Herbst im Park eingeben und Speichern antippen.',
           'Unten im Bild steht jetzt Herbst im Park.',
           explain: 'Auch nachträglich kann ein Foto einen Titel bekommen, aber nur von dem, der es gesendet hat (oder vom Admin).');
       await c.tap('Titel bearbeiten');
@@ -182,7 +182,7 @@ void main() {
       await c.hideKeyboard();
       await c.snap();
 
-      c.step('Titel bearbeiten: Abbrechen', 'Noch einmal auf das Titel-Zeichen tippen, dann Abbrechen.',
+      c.step('Titel bearbeiten: Abbrechen', 'Noch einmal unten auf Titel tippen, dann Abbrechen.',
           'Der Titel bleibt Herbst im Park.', kind: 'Abzweigung', explain: 'Abbrechen ändert nichts.');
       await c.tap('Titel bearbeiten');
       c.screen('Titel bearbeiten');
@@ -193,7 +193,7 @@ void main() {
       await c.hideKeyboard();
       await c.snap();
 
-      c.step('Titel ändern', 'Auf das Titel-Zeichen tippen, Herbstspaziergang eingeben und Speichern.',
+      c.step('Titel ändern', 'Unten auf Titel tippen, Herbstspaziergang eingeben und Speichern.',
           'Unten im Bild steht jetzt Herbstspaziergang.', explain: 'Der alte Titel wird ersetzt.');
       await c.tap('Titel bearbeiten');
       c.screen('Titel bearbeiten');
@@ -205,7 +205,7 @@ void main() {
       await c.hideKeyboard();
       await c.snap();
 
-      c.step('Titel löschen', 'Auf das Titel-Zeichen tippen, dann rechts im Feld auf den Papierkorb (Titel löschen).',
+      c.step('Titel löschen', 'Unten auf Titel tippen, dann rechts im Feld auf den Papierkorb (Titel löschen).',
           'Das Fenster schließt sich, das Foto hat keinen Titel mehr.',
           kind: 'Abzweigung', explain: 'Mit einem Tipp ist der Titel weg; das Foto bleibt.');
       await c.tap('Titel bearbeiten');
@@ -447,6 +447,16 @@ void main() {
       await c.check('Menü mit Anhalten, Ton, Titel und Einstellungen', () async =>
           await c.waitFor('Anhalten', seconds: 1) && await c.waitFor('Videos mit Ton', seconds: 1) &&
           await c.waitFor('Titel anzeigen', seconds: 1));
+      await c.snap();
+
+      c.step('Diashow-Menü: daneben tippen', 'Neben das Menü tippen, dann wieder auf den Bildschirm und die drei Punkte.',
+          'Das Menü schließt sich, die Diashow läuft weiter; danach ist das Menü wieder offen.', kind: 'Abzweigung',
+          explain: 'Ein Tipp daneben schließt das Menü, ohne etwas zu ändern.');
+      await c.tapAt(const Offset(60, 500), 'Menü schließen');
+      c.screen('Diashow');
+      await c.check('Zu', () => c.gone('Titel anzeigen', seconds: 3));
+      await openMenu();
+      await c.check('Wieder offen', () => c.waitFor('Titel anzeigen', seconds: 3));
       await c.snap();
 
       c.step('Diashow: Anhalten', 'Anhalten wählen, dann wieder die drei Punkte.',

@@ -116,7 +116,7 @@ void main() {
       }
 
       Future<void> typeCode(String code) async {
-        await c.typeInto('SMILE-XXXX-XXXX', code, logAs: 'Eingabefeld: Code');
+        await c.typeInto('SMILE-XXXX-XXXX', code);
         await c.hideKeyboard();
         await tapExact('Einlösen');
       }
@@ -137,6 +137,17 @@ void main() {
       await c.check('Videos bis 2 Minuten', () => c.waitFor('~Videos bis 2 Minuten', seconds: 3));
       await c.check('Gutschein einlösen', () => c.dragTo('Gutschein einlösen'));
       await c.check('Server: noch kein Abo', () async => (await plans(berger)).isEmpty);
+      await c.snap();
+
+      c.step('Kostenlos antippen', 'Auf Kostenlos tippen, dann oben links Zurück.',
+          'Die Seite Frame-Abo mit den Stufen; Zurück führt wieder zu Familie Berger.', kind: 'Abzweigung',
+          explain: 'Auch ohne Frame kann man sich die Stufen schon ansehen.');
+      await until(PlanScreen, () => c.tap('Kostenlos', last: true));
+      c.screen('Frame-Abo');
+      await c.check('Stufen', () => c.waitFor('4,99', seconds: 5));
+      await c.back();
+      c.screen('Space');
+      await c.check('Zurück', () => eventually(() => find.byType(PlanScreen).evaluate().isEmpty));
       await c.snap();
 
       c.step('Probezeit', 'Anna verbindet den Frame Wohnzimmer (wie in Kapitel 6). Zurück und Familie Berger noch einmal öffnen.',
@@ -178,6 +189,11 @@ void main() {
       await c.check('pro Jahr', () => c.waitFor('pro Jahr', seconds: 1));
       await c.snap();
 
+      c.step('Monatlich', 'Monatlich antippen.', 'Wieder die Preise pro Monat.', kind: 'Abzweigung', explain: 'Hin und her, wie man möchte.');
+      await tapExact('Monatlich');
+      await c.check('Pro Monat', () async => await c.waitFor('4,99', seconds: 3) && await c.waitFor('pro Monat', seconds: 1));
+      await c.snap();
+
       // ================================================================ Gutscheine
       c.step('Gutschein einlösen', 'Ganz unten Gutschein einlösen.',
           'Gutschein einlösen: oben Für den Space Familie Berger, darunter das Feld SMILE-XXXX-XXXX, Einlösen und QR-Code scannen.',
@@ -187,6 +203,28 @@ void main() {
       c.screen('Gutschein einlösen');
       await c.check('Für Familie Berger', () => c.waitFor('Familie Berger', seconds: 5));
       await c.check('Feld und Knöpfe', () async => await c.waitFor('Einlösen', seconds: 3) && await c.waitFor('QR-Code scannen', seconds: 1));
+      await c.snap();
+
+      c.step('Space ändern', 'Rechts bei Für den Space auf ändern tippen, dann Familie Berger.',
+          'Unten Für welchen Space? mit Familie Berger (Häkchen) und Ferienhaus; nach dem Tipp bleibt Familie Berger.',
+          kind: 'Abzweigung', explain: 'Wer mehrere Spaces verwaltet, wählt hier, wofür der Gutschein gilt.');
+      await tapExact('ändern');
+      c.screen('Für welchen Space?');
+      await c.check('Frage', () async => await c.waitFor('Für welchen Space?', seconds: 5) && await c.waitFor('Ferienhaus', seconds: 1));
+      await tapExact('Familie Berger');
+      c.screen('Gutschein einlösen');
+      await c.check('Bleibt Familie Berger', () => c.waitFor('Familie Berger', seconds: 3));
+      await c.snap();
+
+      c.step('QR-Code scannen', 'QR-Code scannen antippen, dann Zurück.',
+          'Die Kamera öffnet sich, um den QR-Code der Karte zu lesen; Zurück führt wieder zum Feld.', kind: 'Abzweigung',
+          explain: 'Die Test-App schaltet die Kamera nicht ein; das Bild bleibt hier dunkel.');
+      await tapExact('QR-Code scannen');
+      c.screen('QR-Code scannen');
+      await c.letLoad(seconds: 1);
+      await c.back();
+      c.screen('Gutschein einlösen');
+      await c.check('Wieder das Feld', () => c.waitFor('Einlösen', seconds: 5));
       await c.snap();
 
       c.step('Falscher Code', 'SMILE-AAAA-BBBB eingeben, Einlösen.', 'Rot: Diesen Code gibt es nicht. Prüf ihn bitte noch einmal.',
@@ -286,6 +324,37 @@ void main() {
       await c.check('Gutschein', () => c.waitFor('~Gutschein · bis', seconds: 3));
       await c.check('Videos bis 5 Minuten', () => c.waitFor('~Videos bis 5 Minuten', seconds: 3));
       await c.snap();
+
+      c.step('Laufendes Abo ansehen', 'Auf 1 Frame · aktiv tippen, dann Zurück.',
+          'Frame-Abo: die Stufe 1 Frame ist hervorgehoben (deins).', kind: 'Abzweigung',
+          explain: 'So sieht man, welche Stufe der Space gerade hat.');
+      await until(PlanScreen, () => c.tap('1 Frame · aktiv', last: true));
+      c.screen('Frame-Abo');
+      await c.check('deins', () => c.waitFor('deins', seconds: 5));
+      await c.snap();
+      await c.back();
+      c.screen('Space');
+
+      c.step('Kein Abo', 'Ein Jahr später: Probezeit und Gutschein sind vorbei. Ferienhaus noch einmal öffnen.',
+          'Frame-Abo: Kein Abo – Die Frames zeigen weiter alle Fotos, bekommen aber keine neuen. Darunter Abo wählen.',
+          explain: 'Nichts wird gelöscht; die Frames bekommen nur keine neuen Fotos, bis wieder ein Abo oder Gutschein da ist.');
+      final past = DateTime.now().subtract(const Duration(days: 1)).toUtc().toIso8601String();
+      final longAgo = DateTime.now().subtract(const Duration(days: 500)).toUtc().toIso8601String();
+      await TestBackend.patch('space_plans', 'space_id=eq.$ferienhaus', {'starts_at': longAgo, 'ends_at': past});
+      await TestBackend.insert('space_plans', {'space_id': ferienhaus, 'source': 'trial', 'frames': 10000, 'starts_at': longAgo, 'ends_at': past});
+      await openSpace('Ferienhaus');
+      await c.check('Kein Abo', () => c.dragTo('Kein Abo'));
+      await c.check('Keine neuen Fotos', () => c.waitFor('~bekommen aber keine neuen', seconds: 3));
+      await c.check('Abo wählen', () => c.dragTo('Abo wählen'));
+      await c.snap();
+
+      c.step('Abo wählen', 'Abo wählen antippen, dann Zurück.', 'Die Seite Frame-Abo mit den Stufen.', explain: 'Von hier geht es zum Abo.');
+      await until(PlanScreen, () => tapExact('Abo wählen'));
+      c.screen('Frame-Abo');
+      await c.check('Stufen', () => c.waitFor('4,99', seconds: 5));
+      await c.snap();
+      await c.back();
+      c.screen('Space');
 
       // ================================================================ Zu viele Versuche
       c.step('Zu viele Versuche', 'Gutschein einlösen, noch viermal einen falschen Code eingeben, dann noch einen.',

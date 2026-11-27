@@ -144,9 +144,11 @@ void main() {
           c.screen('Frame: Album wählen');
           await c.check('Album wählen', () => c.waitFor('Album wählen', seconds: 5));
         });
-        await own('Am Tablet selbst: Album, daneben tippen', 'Am Tablet oben neben die Auswahl tippen.', 'Die Auswahl schließt sich, das Album bleibt.',
+        await own('Am Tablet selbst: Album, Fertig', 'Am Tablet Fertig antippen, ohne ein Album zu wählen.', 'Die Auswahl schließt sich, das Album bleibt.',
             'Nichts passiert.', () async {
-          await c.tapAt(const Offset(40, 40), 'Schließen');
+          await tester.tap(find.text('Fertig').last, warnIfMissed: false);
+          c.logTap('Fertig');
+          await c.settle();
           c.screen('Frame: Diashow');
           await c.check('Zu', () => c.gone('Album wählen', seconds: 5));
         }, kind: 'Abzweigung');
@@ -177,9 +179,11 @@ void main() {
           c.screen('Frame: Dauer');
           await c.check('Frage', () => c.waitFor('Wie lange soll ein Foto', seconds: 5));
         });
-        await own('Am Tablet selbst: Dauer, daneben tippen', 'Am Tablet oben neben die Frage tippen.', 'Die Frage schließt sich, die Dauer bleibt.',
+        await own('Am Tablet selbst: Dauer, Fertig', 'Am Tablet Fertig antippen, ohne eine Dauer zu wählen.', 'Die Frage schließt sich, die Dauer bleibt.',
             'Nichts passiert.', () async {
-          await c.tapAt(const Offset(40, 40), 'Schließen');
+          await tester.tap(find.text('Fertig').last, warnIfMissed: false);
+          c.logTap('Fertig');
+          await c.settle();
           c.screen('Frame: Diashow');
           await c.check('Zu', () => c.gone('Wie lange soll ein Foto', seconds: 5));
         }, kind: 'Abzweigung');
@@ -203,6 +207,63 @@ void main() {
             () async {
           await press('Titel');
           await c.check('Server: Titel an', () => eventually(() async => (await wohnzimmer()).first['show_captions'] == true));
+        }, kind: 'Abzweigung');
+        // The sound button shows only while a video plays: Geburtstage, on to a video.
+        Future<void> toVideo() async {
+          for (var i = 0; i < 10; i++) {
+            await bar('Weiter');
+            if (c.find_('Ton aus').hitTestable().evaluate().isNotEmpty) return;
+            await tester.tap(c.find_('Weiter').hitTestable().last, warnIfMissed: false);
+            c.logTap('Weiter');
+            await c.letLoad(seconds: 1.5);
+          }
+        }
+        await own('Am Tablet selbst: Ton aus', 'Am Tablet Album, Geburtstage, mit Weiter zu einem Video, dann in der Mitte Ton aus.',
+            'Die Frage Nur bei diesem Video oder Bei allen Videos.',
+            'Während ein Video läuft, steht in der Mitte ein großer Ton-Knopf: für dieses Video oder für alle.', () async {
+          await press('Album');
+          c.screen('Frame: Album wählen');
+          await c.waitFor('Album wählen', seconds: 5);
+          await tester.tap(find.text('Geburtstage').last, warnIfMissed: false);
+          c.logTap('Geburtstage');
+          await c.settle();
+          c.screen('Frame: Diashow');
+          await toVideo();
+          await tester.tap(c.find_('Ton aus').last, warnIfMissed: false);
+          c.logTap('Ton aus');
+          await c.settle();
+          c.screen('Frame: Ton');
+          await c.check('Frage', () async => await c.waitFor('Nur bei diesem Video', seconds: 5) && await c.waitFor('Bei allen Videos', seconds: 1));
+        });
+        await own('Am Tablet selbst: Ton nur hier aus', 'Nur bei diesem Video antippen.', 'Kurz Ton aus, nur bei diesem Video; die Einstellung bleibt.',
+            'Gilt nur, solange dieses Video läuft.', () async {
+          await tester.tap(find.text('Nur bei diesem Video').last, warnIfMissed: false);
+          c.logTap('Nur bei diesem Video');
+          await c.settle();
+          c.screen('Frame: Diashow');
+          await c.check('Meldung', () => c.waitFor('Ton aus, nur bei diesem Video', seconds: 3));
+          await c.check('Server: Ton bleibt an', () async => (await wohnzimmer()).first['video_sound'] == true);
+        });
+        await own('Am Tablet selbst: Ton für alle', 'Am Tablet Ton an antippen, dann Bei allen Videos.', 'Kurz Ab jetzt alle Videos mit Ton.',
+            'Bei allen Videos ändert die Einstellung des Frames, wie in der App unter Wiedergabe.', () async {
+          await bar('Ton an');
+          await tester.tap(c.find_('Ton an').last, warnIfMissed: false);
+          c.logTap('Ton an');
+          await c.settle();
+          c.screen('Frame: Ton');
+          await c.waitFor('Bei allen Videos', seconds: 5);
+          await tester.tap(find.text('Bei allen Videos').last, warnIfMissed: false);
+          c.logTap('Bei allen Videos');
+          await c.settle();
+          c.screen('Frame: Diashow');
+          await c.check('Meldung', () => c.waitFor('Ab jetzt alle Videos mit Ton', seconds: 3));
+          await c.check('Server: Ton an', () async => (await wohnzimmer()).first['video_sound'] == true);
+          // Back to Sommerurlaub, as before.
+          await press('Album');
+          await c.waitFor('Album wählen', seconds: 5);
+          await tester.tap(find.text('Sommerurlaub 2026').last, warnIfMissed: false);
+          await c.settle();
+          await c.check('Wieder Sommerurlaub', () => eventually(() => c.find_('~Sommerurlaub 2026').evaluate().isNotEmpty, seconds: 10));
         }, kind: 'Abzweigung');
         await own('Am Tablet selbst: Einstellungen', 'Am Tablet Einstellungen antippen.',
             'Die Wiedergabe-Einstellungen groß am Frame: Was läuft, Reihenfolge, Videos, Füllen und mehr.',

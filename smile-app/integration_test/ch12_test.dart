@@ -408,13 +408,13 @@ void main() {
       await c.snap();
 
       c.clearMessages();
-      c.step('Papierkorb in Neuigkeiten', 'Oben auf Neuigkeiten.',
+      c.step('Papierkorb in Neuigkeiten', 'Oben auf Neuigkeiten, nach unten unter den Verlauf.',
           'Unter Papierkorb: Familie Berger, endgültig weg am … (in 30 Tagen), mit dem Knopf zum Wiederherstellen.',
           explain: 'Ein gelöschter Space hat keine Seite mehr; sein Papierkorb steht darum auch in Neuigkeiten.');
       await until(NewsScreen, () => c.tap('Neuigkeiten'));
       c.screen('Neuigkeiten');
-      await c.check('Papierkorb', () => c.waitFor('Papierkorb', seconds: 10));
-      await c.check('Familie Berger', () => c.waitFor('Familie Berger', seconds: 3));
+      await c.check('Papierkorb', () => c.dragTo('Papierkorb'));
+      await c.check('Familie Berger', () => c.dragTo('Familie Berger'));
       await c.snap();
 
       c.clearMessages();

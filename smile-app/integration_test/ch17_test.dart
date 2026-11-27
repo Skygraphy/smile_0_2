@@ -13,6 +13,8 @@ import 'package:smile_app/main.dart' as app;
 import 'package:smile_app/screens/about_screen.dart';
 import 'package:smile_app/screens/channel_feed_screen.dart';
 import 'package:smile_app/screens/feedback_screen.dart';
+import 'package:smile_app/screens/frame_remote_screen.dart';
+import 'package:smile_app/screens/frames_screen.dart';
 import 'package:smile_app/screens/licenses_screen.dart';
 import 'package:smile_app/screens/settings_screen.dart';
 import 'package:smile_app/services/frame_service.dart';
@@ -182,12 +184,20 @@ void main() {
       await c.check('Senden ausgegraut', () => !sendEnabled());
       await c.snap();
 
+      c.step('Art wählen', 'Frage antippen, dann wieder Etwas geht nicht.', 'Immer ist genau eine Art gewählt.', kind: 'Abzweigung',
+          explain: 'Die Art hilft dem Smile-Team, die Meldung richtig einzuordnen.');
+      await tapExact('Frage');
+      await c.check('Frage gewählt', () => tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Frage')).selected);
+      await tapExact('Etwas geht nicht');
+      await c.check('Etwas geht nicht gewählt', () => tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Etwas geht nicht')).selected);
+      await c.snap();
+
       c.step('Idee mit Bild', 'Idee oder Wunsch antippen, den Text schreiben, beim Plus das Bild Strand wählen.',
           'Idee oder Wunsch ist gewählt, der Text steht im Feld, darunter das Bild mit einem kleinen Kreuz. Senden ist jetzt rot.',
           explain: 'Bis zu drei Bilder, etwa Fotos von einem Frame oder Bildschirmfotos.');
       await c.dragTo('Idee oder Wunsch', up: false);
       await tapExact('Idee oder Wunsch');
-      await c.typeInto('Was ist passiert?', 'Schön wäre ein Kalender mit unseren Fotos.', logAs: 'Eingabefeld: Text');
+      await c.typeInto('Was ist passiert?', 'Schön wäre ein Kalender mit unseren Fotos.');
       await c.hideKeyboard();
       await tester.tap(find.byIcon(SmileIcons.add).last, warnIfMissed: false);
       c.logTap('Bild hinzufügen');
@@ -272,7 +282,7 @@ void main() {
 
       c.step('Problem senden', 'Den Text schreiben, Senden.', 'Danke, ist angekommen!',
           explain: 'Beim Smile-Team kommt an, auf welcher Seite es war, dazu das Bild.');
-      await c.typeInto('Was ist passiert?', 'Das Video ruckelt am Anfang.', logAs: 'Eingabefeld: Text');
+      await c.typeInto('Was ist passiert?', 'Das Video ruckelt am Anfang.');
       await c.hideKeyboard();
       await c.dragTo('Senden');
       await tapExact('Senden');
@@ -329,6 +339,28 @@ void main() {
       await c.check('Liste', () async => await c.waitFor('Inter', seconds: 10) && await c.waitFor('Phosphor Icons', seconds: 2));
       await c.snap();
 
+      c.step('Eine Lizenz lesen', 'Phosphor Icons antippen, dann Zurück.', 'Der Lizenztext von Phosphor Icons (MIT).',
+          explain: 'Jede Lizenz lässt sich im vollen Wortlaut lesen.');
+      await tapExact('Phosphor Icons');
+      c.screen('Lizenztext');
+      await c.check('Text', () => c.waitFor('~Permission is hereby granted', seconds: 5));
+      await c.snap();
+      await c.back();
+      c.screen('Open-Source-Lizenzen');
+
+      c.step('Lizenzen durchsuchen', 'Ins Suchfeld Inter eingeben, dann Inter antippen und Zurück.',
+          'Nur noch Inter steht in der Liste; dahinter der Lizenztext (OFL).', kind: 'Abzweigung',
+          explain: 'Bei vielen Bausteinen findet man so schnell den gesuchten.');
+      await c.typeInto('', 'Inter');
+      await c.hideKeyboard();
+      await c.check('Nur Inter', () => c.gone('Phosphor Icons', seconds: 3));
+      await tapExact('Inter');
+      c.screen('Lizenztext');
+      await c.check('OFL', () => c.waitFor('~Open Font License', seconds: 5));
+      await c.snap();
+      await c.back();
+      c.screen('Open-Source-Lizenzen');
+
       // ================================================================ Sprache
       c.step('Sprache', 'Zweimal Zurück, bei Sprache auf Automatisch (Deutsch) tippen.',
           'Unten: Gilt für die App und die Mitteilungen, die du bekommst. Dazu Automatisch (Wie das Handy: Deutsch), Deutsch und English.',
@@ -348,7 +380,7 @@ void main() {
       c.step('Englisch', 'English antippen.', 'Smile spricht sofort Englisch: oben steht Settings, bei Language steht English.',
           explain: 'Auch die Mitteilungen kommen jetzt auf Englisch; der Server weiß es.');
       await tapExact('English');
-      c.screen('Einstellungen');
+      c.screen('Einstellungen (Englisch)');
       await c.check('Settings', () => c.waitFor('Settings', seconds: 5));
       await c.check('Server: Englisch', () => eventually(() async =>
           (await TestBackend.select('profiles', 'select=language&user_id=eq.$annaId')).first['language'] == 'en'));
@@ -359,7 +391,7 @@ void main() {
           explain: 'Auch die Seiten der Website kommen in der gewählten Sprache.');
       await c.dragTo('About Smile');
       await until(AboutScreen, () => tapExact('About Smile'));
-      c.screen('Über Smile');
+      c.screen('Über Smile (Englisch)');
       await tapExact('Legal notice');
       await c.check('Englisches Impressum', () => launch.urls.lastOrNull == 'https://smileapp.app/en/legal-notice.html');
       await c.snap();
@@ -368,16 +400,89 @@ void main() {
           'Smile spricht wieder Deutsch wie das Handy: oben Einstellungen, bei Sprache Automatisch (Deutsch).',
           explain: 'So ist es für die meisten richtig.');
       await c.back();
-      c.screen('Einstellungen');
+      c.screen('Einstellungen (Englisch)');
       await c.dragTo('English', up: false);
       await tapExact('English');
-      c.screen('Sprache');
+      c.screen('Sprache (Englisch)');
       await tapExact('Automatic');
       c.screen('Einstellungen');
       await c.check('Einstellungen', () => c.waitFor('Einstellungen', seconds: 5));
       await c.check('Automatisch (Deutsch)', () => c.waitFor('Automatisch (Deutsch)', seconds: 5));
       await c.check('Server: Deutsch', () => eventually(() async =>
           (await TestBackend.select('profiles', 'select=language&user_id=eq.$annaId')).first['language'] == 'de'));
+      await c.snap();
+
+      c.step('Deutsch fest wählen', 'Bei Sprache auf Automatisch (Deutsch) tippen, Deutsch wählen.',
+          'Bei Sprache steht jetzt Deutsch statt Automatisch.', kind: 'Abzweigung',
+          explain: 'Fest gewählt bleibt Smile auf Deutsch, auch wenn das Handy später eine andere Sprache spricht.');
+      await c.dragTo('Automatisch (Deutsch)');
+      await tapExact('Automatisch (Deutsch)');
+      c.screen('Sprache');
+      await tapExact('Deutsch');
+      c.screen('Einstellungen');
+      await c.check('Nicht mehr automatisch', () => c.gone('Automatisch (Deutsch)', seconds: 3));
+      await c.check('Deutsch', () => c.waitFor('Deutsch', seconds: 5));
+      await c.snap();
+
+      c.step('Sprache: daneben tippen', 'Bei Sprache auf Deutsch tippen, oben neben die Auswahl tippen.', 'Die Auswahl schließt sich, Deutsch bleibt.',
+          kind: 'Abzweigung', explain: 'Ein Tipp daneben ändert nichts.');
+      await tapExact('Deutsch');
+      c.screen('Sprache');
+      await c.waitFor('Gilt für die App und die Mitteilungen', seconds: 5);
+      await c.tapAt(const Offset(200, 100), 'Schließen');
+      c.screen('Einstellungen');
+      await c.check('Zu', () async { await c.settle(); return find.byType(RadioListTile<String>).evaluate().isEmpty; });
+      await c.snap();
+
+      c.step('Wieder Automatisch', 'Bei Sprache auf Deutsch tippen, Automatisch wählen.', 'Wieder Automatisch (Deutsch).',
+          explain: 'Zurück wie vorher.');
+      await tapExact('Deutsch');
+      c.screen('Sprache');
+      await tapExact('Automatisch');
+      c.screen('Einstellungen');
+      await c.check('Automatisch (Deutsch)', () => c.waitFor('Automatisch (Deutsch)', seconds: 5));
+      await c.snap();
+
+      // ================================================================ Sprache am Frame
+      Future<List> frameRow() => TestBackend.select('frames', 'select=language&id=eq.${wohnzimmer.id}');
+      c.step('Sprache am Frame', 'Zurück, unten Frames, Wohnzimmer, Wiedergabe. Bei Sprache am Frame English antippen.',
+          'English ist gewählt; der Frame zeigt Uhr, Hinweise und Knöpfe jetzt auf Englisch.',
+          explain: 'Jeder Frame hat seine eigene Sprache, etwa für Großeltern, die eine andere Sprache sprechen als die Familie.');
+      await home();
+      await until(FramesScreen, () => tapExact('Frames'));
+      c.screen('Frames');
+      await until(FrameRemoteScreen, () => tapExact('Wohnzimmer'));
+      c.screen('Fernbedienung');
+      await c.letLoad(seconds: 2);
+      await c.dragTo('Wiedergabe');
+      await tapExact('Wiedergabe');
+      c.screen('Wiedergabe');
+      await c.check('Sprache am Frame', () => c.dragTo('Wie das Tablet'));
+      await tapExact('English');
+      await c.check('Server: Englisch', () => eventually(() async => (await frameRow()).first['language'] == 'en'));
+      await c.snap();
+
+      c.step('Frame: Deutsch, dann wie das Tablet', 'Deutsch antippen, dann Wie das Tablet.',
+          'Zuerst Deutsch, am Ende wieder Wie das Tablet.', kind: 'Abzweigung', explain: 'Ohne Wahl spricht der Frame die Sprache des Tablets.');
+      await tapExact('Deutsch');
+      await c.check('Server: Deutsch', () => eventually(() async => (await frameRow()).first['language'] == 'de'));
+      await tapExact('Wie das Tablet');
+      await c.check('Server: wie das Tablet', () => eventually(() async => (await frameRow()).first['language'] == null));
+      await c.snap();
+
+      c.step('Bild des Frames: Auswahl', 'Zurück, oben auf das runde Bild von Wohnzimmer tippen, dann neben die Auswahl.',
+          'Unten die Auswahl für das Bild; ein Tipp daneben schließt sie, nichts ändert sich.', kind: 'Abzweigung',
+          explain: 'Wie ein Space hat auch ein Frame ein Bild.');
+      await c.back();
+      c.screen('Fernbedienung');
+      // The picture is at the very top; the page is still scrolled down to Wiedergabe.
+      await c.dragTo('Bild ändern', up: false);
+      await c.tap('Bild ändern');
+      c.screen('Bild für den Space');
+      await c.check('Auswahl', () => c.waitFor('Vorhandenes Bild', seconds: 5));
+      await c.tapAt(const Offset(200, 100), 'Schließen');
+      c.screen('Fernbedienung');
+      await c.check('Zu', () => c.gone('Vorhandenes Bild', seconds: 3));
       await c.snap();
 
       // ================================================================ Töne im Album
@@ -416,6 +521,26 @@ void main() {
       await sendPhoto('Pizza');
       await c.check('Server: angekommen', () => eventually(() async => await mediaCount() == before + 1, seconds: 60));
       await c.check('Ein Plopp', () => eventually(() => sounds.length == 1 && sounds.single == 'send', seconds: 5));
+      await c.snap();
+
+      // ================================================================ Datenschutz vor der Anmeldung
+      c.step('Datenschutz vor der Anmeldung', 'Einstellungen, Abmelden, bestätigen; auf der Anmeldung unten Datenschutzerklärung antippen.',
+          'Der Browser öffnet smileapp.app/datenschutz.html.',
+          explain: 'Die Datenschutzerklärung ist schon vor dem ersten Anmelden erreichbar.');
+      await openSettings();
+      await c.dragTo('Abmelden');
+      await c.tap('Abmelden');
+      c.screen('Abmelden-Frage');
+      await c.waitFor('Möchtest du dich wirklich abmelden', seconds: 5);
+      await c.tap('Abmelden', last: true);
+      c.screen('Anmeldung');
+      await c.waitFor('Code anfordern', seconds: 10);
+      await c.hideKeyboard();
+      launch.urls.clear();
+      await tester.tapOnText(find.textRange.ofSubstring('Datenschutzerklärung'));
+      c.logTap('Datenschutzerklärung');
+      await c.settle();
+      await c.check('Datenschutz', () => launch.urls.lastOrNull == 'https://smileapp.app/datenschutz.html');
       await c.snap();
 
       await c.finish(appVersion: version);

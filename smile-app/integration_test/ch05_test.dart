@@ -942,6 +942,45 @@ void main() {
       await c.hideKeyboard();
       await c.snap();
 
+      // ---------------------------------------------------------------- Person einladen über das Menü
+      c.clearMessages();
+      c.step('Person einladen: welches Album?', 'Oben rechts die drei Punkte, Person einladen.',
+          'Unten die Frage In welches Album? mit Annas eigenen Alben: Geburtstage, Sommerurlaub 2026 und Weihnachten.',
+          explain: 'Von der Startseite aus fragt Smile zuerst, wohin. Wanderungen fehlt: dort lädt Lena ein.');
+      await c.tap('Weitere Optionen');
+      c.screen('Menü');
+      await c.tap('Person einladen', last: true);
+      c.screen('In welches Album?');
+      await c.check('Frage', () => c.waitFor('In welches Album?', seconds: 5));
+      await c.check('Annas Alben', () async =>
+          await c.waitFor('Sommerurlaub 2026', seconds: 3) && await c.waitFor('Weihnachten', seconds: 1));
+      await c.check('Ohne Wanderungen', () => find.descendant(of: find.byType(BottomSheet), matching: find.text('Wanderungen')).evaluate().isEmpty);
+      await c.snap();
+
+      c.step('Welches Album: daneben tippen', 'Oben neben die Frage tippen.', 'Die Frage schließt sich, nichts passiert.',
+          kind: 'Abzweigung', explain: 'Ein Tipp daneben schließt die Frage.');
+      await c.tapAt(const Offset(200, 100), 'Schließen');
+      c.screen('Startseite');
+      await c.check('Zu', () => c.gone('In welches Album?', seconds: 3));
+      await c.snap();
+
+      c.step('Person einladen ins Album', 'Noch einmal drei Punkte, Person einladen, Sommerurlaub 2026.',
+          'Die Seite von Sommerurlaub 2026 öffnet sich, darüber gleich Person einladen mit Suchfeld, Bekannten und QR-Code zeigen.',
+          explain: 'Ab hier geht es weiter wie beim Einladen im Album.');
+      await c.tap('Weitere Optionen');
+      c.screen('Menü');
+      await c.tap('Person einladen', last: true);
+      c.screen('In welches Album?');
+      await c.tap('Sommerurlaub 2026', last: true);
+      c.screen('Einladen');
+      await c.check('Album-Seite', () => eventually(() => find.byType(AlbumInfoScreen).evaluate().isNotEmpty, seconds: 10));
+      await c.check('Einladen offen', () => c.waitFor('QR-Code zeigen', seconds: 10));
+      await c.snap();
+      for (var i = 0; i < 4 && find.byType(AlbumInfoScreen).evaluate().isNotEmpty; i++) {
+        await c.back();
+      }
+      c.screen('Startseite');
+
       await c.finish(appVersion: version);
     } catch (e) {
       await c.finish(appVersion: version, error: e);

@@ -314,7 +314,7 @@ void main() {
       final obst = (await TestBackend.select('media_items', 'select=id&caption=eq.${Uri.encodeComponent('Obst für alle')}')).first['id'] as String;
       c.clearMessages();
       c.step('Foto im Album öffnen', 'Zweimal zurück, unten Alben, Geburtstage öffnen und auf die Obstschale tippen.',
-          'Die Obstschale groß, oben das Herz (Lieblingsbild für den Frame) und Jetzt am Frame zeigen.',
+          'Die Obstschale groß, unten unter anderem Lieblingsbild (das Herz) und Am Frame zeigen.',
           explain: 'Aus jedem Foto heraus geht es direkt auf den Frame.');
       await c.back();
       await c.back();
@@ -342,7 +342,7 @@ void main() {
       await c.snap();
 
       c.clearMessages();
-      c.step('Jetzt am Frame zeigen', 'Auf Jetzt am Frame zeigen tippen.', 'Der Frame zeigt sofort die Obstschale mit dem Titel Obst für alle.',
+      c.step('Jetzt am Frame zeigen', 'Unten auf Am Frame zeigen tippen.', 'Der Frame zeigt sofort die Obstschale mit dem Titel Obst für alle.',
           explain: 'Gut, wenn man gerade über ein bestimmtes Foto spricht.');
       await tester.tap(find.byTooltip('Jetzt am Frame zeigen').first, warnIfMissed: false);
       c.logTap('Jetzt am Frame zeigen');
@@ -351,7 +351,7 @@ void main() {
       await frameShows(20);
 
       c.clearMessages();
-      c.step('Lieblingsbild', 'Oben auf das Herz tippen.', 'Das Herz ist jetzt gefüllt und koralle; die Obstschale ist ein Lieblingsbild von Wohnzimmer.',
+      c.step('Lieblingsbild', 'Unten auf Lieblingsbild (das Herz) tippen.', 'Das Herz ist jetzt gefüllt und koralle; die Obstschale ist ein Lieblingsbild von Wohnzimmer.',
           explain: 'Lieblingsbilder laufen am Frame auf Wunsch als eigene Runde.');
       await tester.tap(find.byTooltip('Lieblingsbild für den Frame').first, warnIfMissed: false);
       c.logTap('Lieblingsbild für den Frame');
