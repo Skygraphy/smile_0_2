@@ -168,11 +168,11 @@ void main() {
       await c.check('Kein Kauf in der Test-App', () => c.dragTo('~Kaufen geht bald direkt hier'));
       await c.snap();
 
-      c.step('Jährlich', 'Oben Jährlich · 2 Monate gratis antippen.',
+      c.step('Jährlich', 'Oben Jährlich (darunter klein 2 Monate gratis) antippen.',
           'Die Preise pro Jahr: 49,99 €, 89,99 €, 129,99 €.', kind: 'Abzweigung',
           explain: 'Wer jährlich zahlt, bekommt 2 Monate geschenkt.');
       await c.dragTo('Monatlich', up: false);
-      await tapExact('Jährlich · 2 Monate gratis');
+      await tapExact('Jährlich');
       await c.check('Pro Jahr', () async =>
           await c.waitFor('49,99', seconds: 3) && await c.waitFor('89,99', seconds: 1) && await c.waitFor('129,99', seconds: 1));
       await c.check('pro Jahr', () => c.waitFor('pro Jahr', seconds: 1));

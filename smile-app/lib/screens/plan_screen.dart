@@ -226,7 +226,18 @@ class _PlanScreenState extends State<PlanScreen> {
                 showSelectedIcon: false,
                 segments: [
                   ButtonSegment(value: false, label: Text(t.planMonthly)),
-                  ButtonSegment(value: true, label: Text('${t.planYearly} · ${t.planYearlyBonus}', overflow: TextOverflow.ellipsis)),
+                  // The bonus small under the word, so both are whole
+                  // (2026-11-27, Ernst: "2 Monate gra…" was cut off).
+                  ButtonSegment(
+                    value: true,
+                    label: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(t.planYearly),
+                        Text(t.planYearlyBonus, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ),
                 ],
                 selected: {_yearly},
                 onSelectionChanged: (s) => setState(() => _yearly = s.first),
