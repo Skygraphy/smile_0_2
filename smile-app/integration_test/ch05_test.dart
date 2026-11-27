@@ -298,9 +298,9 @@ void main() {
       c.clearMessages();
       c.step('Person einladen', 'Unten bei den Personen auf Person einladen tippen, @paul.berger suchen und Paul antippen.',
           'Paul steht wieder mit Eingeladen · Annahme ausstehend da.',
-          kind: 'Abzweigung', explain: 'Person einladen öffnet dasselbe wie Einladen oben.');
-      await tester.scrollUntilVisible(c.find_('Person einladen'), 300, scrollable: find.byType(Scrollable).first);
-      await c.tap('Person einladen');
+          kind: 'Abzweigung', explain: 'Person einladen öffnet dasselbe wie der Knopf oben.');
+      await tester.scrollUntilVisible(c.find_('Person einladen').last, 300, scrollable: find.byType(Scrollable).first);
+      await c.tap('Person einladen', last: true);
       c.screen('Einladen');
       await c.typeInto('Name oder @Smile-Name', '@paul.berger');
       await c.hideKeyboard();
