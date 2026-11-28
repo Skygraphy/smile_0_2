@@ -5,7 +5,9 @@
 // selbst: anhalten, neue Fotos ansehen, Code eingeben.
 import 'dart:async';
 
+import 'package:flutter/material.dart' show ModalBarrier, debugPrint;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:smile_design_system/smile_design_system.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:smile_app/frame/frame.dart' as frame;
 import 'package:smile_app/main.dart' as app;
@@ -176,6 +178,23 @@ void main() {
 
       // ================================================================ Kindersperre
       final clock = Offset(size.width - 100, 60);
+      // The code field opens while the finger is still down, and the
+      // Navigator then cancels that finger. The test binding treats this
+      // cancel as a "device" event and drops it, so the photo's zoom view
+      // kept the finger and took every later touch for a pinch (2026-11-28;
+      // the real app gets the cancel). While holding, such events go through.
+      Future<void> holdClock() async {
+        binding.shouldPropagateDevicePointerEvents = true;
+        try {
+          final g = await tester.startGesture(clock);
+          await Future<void>.delayed(const Duration(milliseconds: 1200));
+          await tester.pump();
+          await g.up();
+          await tester.pump();
+        } finally {
+          binding.shouldPropagateDevicePointerEvents = false;
+        }
+      }
       await after(7, 'Am Tablet: lange auf die Uhr', 'Am Tablet oben rechts lange drücken (dort, wo die Uhr steht).',
           'Ein dunkles Feld mit Code eingeben und Ziffern 1 bis 0.',
           'Mit dem Code aus der App lässt sich der Frame entsperren, auch bei Nur zuschauen.',
@@ -183,7 +202,7 @@ void main() {
         await c.check('Code angekommen', () => eventually(() async => (await row())['unlock_code_hash'] != null, seconds: 10));
         await c.letLoad(seconds: 3);
         for (var i = 0; i < 3 && c.find_('Code eingeben').evaluate().isEmpty; i++) {
-          await tester.longPressAt(clock);
+          await holdClock();
           c.logTap('Lange auf die Uhr');
           await c.letLoad(seconds: 1.5);
         }
@@ -198,17 +217,24 @@ void main() {
           await c.letLoad(seconds: 1);
         }
 
-        await own('Am Tablet: Code-Feld schließen', 'Oben links neben das Feld tippen, dann wieder lange auf die Uhr drücken.',
+        await own('Am Tablet: Code-Feld schließen', 'Im Feld unten links auf ✕ tippen, dann wieder lange auf die Uhr drücken.',
             'Das Feld geht zu und beim langen Drücken wieder auf.', 'Wer sich vertippt hat oder es sich anders überlegt, schließt das Feld.',
             kind: 'Abzweigung', () async {
-          await c.tapAt(const Offset(40, 40), 'Schließen');
+          await tester.tap(find.byIcon(SmileIcons.close).last, warnIfMissed: false);
+          c.logTap('Schließen');
           await c.check('Zu', () => c.gone('Code eingeben', seconds: 3));
           // As before the first opening: the Frame settles a moment before a long press opens it again.
           await c.letLoad(seconds: 3);
           for (var i = 0; i < 3 && c.find_('Code eingeben').evaluate().isEmpty; i++) {
-            await tester.longPressAt(clock);
+            await holdClock();
             c.logTap('Lange auf die Uhr');
             await c.letLoad(seconds: 1.5);
+          }
+          if (c.find_('Code eingeben').evaluate().isEmpty) {
+            // Diagnosis: what a long press on the clock reaches right now.
+            final path = tester.hitTestOnBinding(clock).path.map((e) => e.target.runtimeType).take(12).join(' < ');
+            debugPrint('  Uhr-Treffer: $path');
+            debugPrint('  Barrieren: ${find.byType(ModalBarrier).evaluate().length}');
           }
           await c.check('Wieder offen', () => c.waitFor('Code eingeben', seconds: 3));
         });

@@ -379,7 +379,9 @@ void main() {
       await c.check('Titel', () => c.waitFor('Frame neu verbinden', seconds: 5));
       await c.letLoad(seconds: 2);
       await c.snap();
-      await backTo(FrameRemoteScreen);
+      // Fertig at the bottom closes it, like Zurück.
+      if (find.text('Fertig').hitTestable().evaluate().isEmpty) await c.dragTo('Fertig', up: false);
+      await until(FrameRemoteScreen, () => tapExact('Fertig'));
       c.screen('Fernbedienung');
       // The tablet stays this Frame: nothing was paired anew.
       await c.check('Server: weiter derselbe Frame', () async => (await frameRow())['lifecycle_state'] == 'active');

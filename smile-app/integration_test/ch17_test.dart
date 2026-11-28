@@ -12,6 +12,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:smile_app/main.dart' as app;
 import 'package:smile_app/screens/about_screen.dart';
 import 'package:smile_app/screens/channel_feed_screen.dart';
+import 'package:smile_app/screens/channels_home_screen.dart';
 import 'package:smile_app/screens/feedback_screen.dart';
 import 'package:smile_app/screens/frame_remote_screen.dart';
 import 'package:smile_app/screens/frames_screen.dart';
@@ -133,6 +134,8 @@ void main() {
 
       Future<void> openAlbum() async {
         await home();
+        // The start page may still show another tab (Frames, from the Frame steps).
+        if (find.byType(ChannelsHomeScreen).evaluate().isEmpty) await tapExact('Alben');
         await until(ChannelFeedScreen, () => c.tap('Geburtstage', last: true));
         c.screen('Album');
         await c.waitFor('~Du:', seconds: 15);
@@ -366,6 +369,7 @@ void main() {
           'Unten: Gilt für die App und die Mitteilungen, die du bekommst. Dazu Automatisch (Wie das Handy: Deutsch), Deutsch und English.',
           explain: 'Ohne Wahl spricht Smile die Sprache des Handys.');
       await c.back();
+      c.screen('Über Smile');
       await c.back();
       c.screen('Einstellungen');
       await until(SettingsScreen, () async {});
@@ -486,8 +490,10 @@ void main() {
       await c.snap();
 
       // ================================================================ Töne im Album
-      c.step('Töne im Album ausschalten', 'Nach unten zu Töne, den Schalter bei Töne im Album antippen.',
+      c.step('Töne im Album ausschalten', 'Zurück zur Startseite, ⋮, Einstellungen, nach unten zu Töne, den Schalter bei Töne im Album antippen.',
           'Töne im Album ist aus.', explain: 'Ein Plopp beim Senden und bei neuen Fotos im offenen Album. Ist das Handy lautlos, bleibt Smile ohnehin still.');
+      await home();
+      await openSettings();
       if (!await c.dragTo('Töne im Album', up: false)) await c.dragTo('Töne im Album');
       await tester.tap(find.widgetWithText(SwitchListTile, 'Töne im Album'));
       c.logTap('Töne im Album');

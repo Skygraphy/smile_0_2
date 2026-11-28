@@ -38,7 +38,8 @@
       "KL · Klettersteige": "Urlaub 2026",
       "FE": "Bild ändern",
       "Ferienhaus": "Space umbenennen",
-      "Lena Huber · Co-Admin": "Paul Berger"
+      "Lena Huber · Co-Admin": "Paul Berger",
+      "Kein Abo · Die Frames zeigen weiter alle Fotos, bekommen aber keine neuen.": "Abo wählen"
     },
     "Space anlegen": {
       "Eingabefeld: Bitte gib einen Namen ein.": "Eingabefeld: Name"
@@ -143,6 +144,9 @@
     },
     "Foto": {
       "Am Frame zeigen": "Jetzt am Frame zeigen"
+    },
+    "Frame neu verbinden": {
+      "Zurück": "Fertig"
     }
   },
   "Space": {
@@ -221,6 +225,10 @@
     ],
     "Sprache (Englisch)": [
       "Automatic"
+    ],
+    "Frame: Ton": [
+      "Nur bei diesem Video",
+      "Bei allen Videos"
     ]
   },
   "_sameAs": {
